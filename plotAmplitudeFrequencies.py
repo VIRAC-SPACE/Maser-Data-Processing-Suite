@@ -19,7 +19,7 @@ def usage():
     print ('Usage: '+sys.argv[0]+' log file')
     
 if __name__=="__main__":
-    if len(sys.argv) < 2:
+    if len(sys.argv) < 3:
         usage()
         sys.exit(1)
 
@@ -33,8 +33,6 @@ if __name__=="__main__":
     scan = logfile[scanNumber]
     Systemtemperature1u = float(scan["Systemtemperature"][0])
     Systemtemperature9u = float(scan["Systemtemperature"][1])
-    
-    #print data[:, [0]]
     
     plt.plot(data[:, [0]], data[:, [1]] * Systemtemperature1u)
     plt.grid(True)
