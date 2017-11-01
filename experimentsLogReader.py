@@ -11,6 +11,8 @@ time.tzset()
 
 timeFormat = "%Yy%jd%Hh%Mm%Ss"
 
+logFile = dict()
+
 def file_size(fname):
         statinfo = os.stat(fname)
         return statinfo.st_size
@@ -18,14 +20,6 @@ def file_size(fname):
 def usage():
     print ('Usage: '+sys.argv[0]+' log file')
     
-def FileCheck(fn):
-    try:
-        open(fn, "r")
-        return 1
-    except IOError:
-        print "Error: File does not appear to exist."
-        return 0
-
 if __name__=="__main__":
     if len(sys.argv) < 2:
         usage()
@@ -197,7 +191,13 @@ if __name__=="__main__":
         
         datafile.write("End;" + scan_names[scan] + ";----------------------;")
         datafile.write("\n")
-     
+         
+        
+        
+    for i in range(0, len(scan_names)):
+        logFile[scan_names[i]] = {"Systemtemperature":Systemtemperatures[i]}
+
+    print(logFile)
     logfile.close()
     datafile.close()
     sys.exit(0)
