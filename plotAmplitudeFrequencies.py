@@ -2,12 +2,13 @@
 
 import os
 import sys
-import subprocess
-import ast
 import numpy as np
 from matplotlib import pyplot as plt
+from PyAstronomy import pyasl
+from time import strptime
+import scipy.constants
 
-from experimentsLogReader import *
+from experimentsLogReader import ExperimentLogReader
 
 def file_len(fname):
     with open(fname) as f:
@@ -17,6 +18,15 @@ def file_len(fname):
 
 def usage():
     print ('Usage: '+sys.argv[0]+' log file' + 'data file')
+    
+def dopler(ObservedFrequency, velocityReceiver):
+    c = scipy.constants.speed_of_light
+    f0 = 6668519200 # Hz 
+    lo = 6100000000 # Hz
+    
+    velocitySoure = (-((ObservedFrequency/f0)-1)*c + (velocityReceiver * 1000))/1000
+    return velocitySoure
+    
     
 if __name__=="__main__":
     if len(sys.argv) < 3:
@@ -55,6 +65,45 @@ if __name__=="__main__":
     plt.plot(data[:, [0]], data[:, [2]] * Systemtemperature9u * scale9U)
     plt.grid(True)
     plt.xlabel('Mhz')
+    plt.legend("9u")
+    plt.show()
+     
+    longitude = 21.8605
+    latitude = 57.5546
+    altitude = 87.30
+    
+    ra = float(scan["Ra"][0]) + float(scan["Ra"][1])/60 + float(scan["Ra"][2])/3600
+    dec = float(scan["Dec"][0]) + float(scan["Dec"][1])/60 + float(scan["Dec"][2])/3600
+    
+    date = scan["dates"]
+    year = float(date.split(" ")[2])
+    day = float(date.split(" ")[0])
+    month = strptime(date.split(" ")[1],'%b').tm_mon
+    startTime = scan["startTime"]
+    hours = float(startTime.split(":")[0])
+    minutes = float(startTime.split(":")[1])
+    seconds = float(startTime.split(":")[2])
+    
+    JDN = (1461 * (year + 4800 + (month - 14)/12))/4 +(367 * (month - 2 - 12 * ((month - 14)/12)))/12 - (3 * ((year + 4900 + (month - 14)/12)/100))/4 + day - 32075
+    jd = JDN + ((hours-12)/24) + minutes/1440 + seconds/864000
+    
+    corr, hjd = pyasl.helcorr(longitude, latitude, altitude, \
+            ra, dec, jd, debug=True)
+    
+    print("Barycentric correction [km/s]: ", corr)
+    print("Heliocentric Julian day: ", hjd)
+    
+    FreqStart = float(scan["FreqStart"])
+    
+    plt.plot(dopler(data[:, [0]] + FreqStart, corr),      data[:, [1]] * Systemtemperature1u * scale1U)
+    plt.grid(True)
+    plt.xlabel('velocity')
+    plt.legend("1u")
+    plt.show()
+    
+    plt.plot(dopler(data[:, [0]],corr),     data[:, [2]] * Systemtemperature9u * scale9U)
+    plt.grid(True)
+    plt.xlabel('velocity')
     plt.legend("9u")
     plt.show()
     

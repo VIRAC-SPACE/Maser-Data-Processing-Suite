@@ -132,8 +132,10 @@ class ExperimentLogReader():
             self.DurationsSec.append(DurMin.seconds/60)
             
         for f in range(0, len(self.scan_names)):
-            self.FreqStart.append(float(self.FreqBBC1s[f]) + float(self.loas[f]))
-            self.FreqStop.append(float(self.FreqBBC2s[f])  + float(self.locs[f]))
+            self.FreqStart.append(float(self.FreqBBC1s[f-1]) + float(self.loas[f-1]))
+            self.FreqStop.append(float(self.FreqBBC2s[f-1])  + float(self.locs[f-1]))
+            
+        print(len(self.FreqBBC1s), " " , len(self.loas), " ", len(self.scan_names))
             
     def writeOutput(self):
         self.datafile.write("Start;Header;")
@@ -176,10 +178,10 @@ class ExperimentLogReader():
             self.datafile.write("Systemtemperature2;9u;" + self.Systemtemperatures[scan][1] + ";")
             self.datafile.write("\n")
             
-            self.datafile.write("FreqBBC1;" + self.FreqBBC1s[scan] + ";Mhz")
+            self.datafile.write("FreqBBC1;" + self.FreqBBC1s[scan -1] + ";Mhz")
             self.datafile.write("\n")
             
-            self.datafile.write("FreqBBC2;" + self.FreqBBC2s[scan] + ";Mhz")
+            self.datafile.write("FreqBBC2;" + self.FreqBBC2s[scan - 1] + ";Mhz")
             self.datafile.write("\n")
             
             self.datafile.write("FreqStart;" + str(self.FreqStart[scan]) + ";Mhz")
@@ -197,8 +199,8 @@ class ExperimentLogReader():
         logs["location"] = self.Location
         
         for i in range(0, len(self.scan_names)):
-            logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i]}
-            
+            logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates[i], "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i]}
+
         return logs
         
     def __del__(self):
@@ -210,7 +212,8 @@ if __name__=="__main__":
         usage()
         sys.exit(1)
         
-    experimentLogReader  = ExperimentLogReader(sys.argv[1])
+    
+    experimentLogReader = ExperimentLogReader(sys.argv[1])
     experimentLogReader.writeOutput()
     sys.exit(0)
         
