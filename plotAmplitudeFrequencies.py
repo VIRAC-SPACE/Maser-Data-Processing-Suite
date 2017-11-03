@@ -16,33 +16,46 @@ def file_len(fname):
     return i + 1
 
 def usage():
-    print ('Usage: '+sys.argv[0]+' log file')
+    print ('Usage: '+sys.argv[0]+' log file' + 'data file')
     
 if __name__=="__main__":
     if len(sys.argv) < 3:
         usage()
         sys.exit(1)
-
-    proc = subprocess.Popen(['python', './experimentsLogReader.py',  sys.argv[1]], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    logfile =  ast.literal_eval(proc.communicate()[0])
-
+    
+    logs  = ExperimentLogReader(sys.argv[1]).getLgs()
+    
     data = np.fromfile(sys.argv[2], dtype="float64", count=-1, sep=" ") .reshape((file_len(sys.argv[2]),5))
     data = np.delete(data, (0), axis=0)
     
     scanNumber = sys.argv[2].split(".")[0].split("_")[1][1:len(sys.argv[2])]
-    scan = logfile[scanNumber]
+    scan = logs[scanNumber]
     Systemtemperature1u = float(scan["Systemtemperature"][0])
     Systemtemperature9u = float(scan["Systemtemperature"][1])
     
-    plt.plot(data[:, [0]], data[:, [1]] * Systemtemperature1u)
+    scale1U = 1
+    scale9U = 1
+    
+    location = logs["location"]
+    
+    if location == "IRBENE":
+        scale1U = 12
+        scale9U = 12
+        
+    elif location == "IRBENE16":
+        scale1U = 26
+        scale9U = 26
+    
+    plt.plot(data[:, [0]], data[:, [1]] * Systemtemperature1u * scale1U)
     plt.grid(True)
     plt.xlabel('Mhz')
     plt.legend("1u")
     plt.show()
     
-    plt.plot(data[:, [0]], data[:, [2]] * Systemtemperature9u)
+    plt.plot(data[:, [0]], data[:, [2]] * Systemtemperature9u * scale9U)
     plt.grid(True)
     plt.xlabel('Mhz')
     plt.legend("9u")
     plt.show()
+    
     sys.exit(0)
