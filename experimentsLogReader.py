@@ -43,9 +43,17 @@ class ExperimentLogReader():
         self.locs = list()
         self.tcount = 0
         self.Location = ""
+        self.bbc1count = 0
+        self.bbc2count = 0
+        self.temp = list()
+        self.scan_count = 0
+        self.loacount = 0
+        self.loccount = 0
         
         self.logfile = open(self.logs, "r")
         self.datafile = open("m80ir.log".split(".")[0] + "sch.dat", "w")
+        
+        print self.datafile
         
         for x in range(0, file_size(self.logs)):
             logLine = self.logfile.readline()
@@ -53,11 +61,12 @@ class ExperimentLogReader():
             if "location" in logLine:
                 self.Location = logLine.split(";")[1].split(",")[1].strip()
             
-            if "scan_name" in logLine:
+            elif "scan_name" in logLine:
+                self.scan_count = self.scan_count + 1
                 self.scan_name = logLine.split(":")[3].split(",")[0].split("=")[1][2:].lstrip("0")
                 self.scan_names.append(self.scan_name)
                 
-            if "source="  in logLine:
+            elif "source="  in logLine:
                 self.source = logLine.split(":")[3].split(",")[0].split("=")[1] + "," + logLine.split(":")[3].split(",")[1]  + "," + logLine.split(":")[3].split(",")[2]
                 self.sources.append(self.source)
                 
@@ -84,7 +93,7 @@ class ExperimentLogReader():
                 self.ra = list()
                 self.dec = list()
                 
-            if "scan_check" in logLine and "no" in logLine:
+            elif "scan_check" in logLine and "no" in logLine:
                 datestring = logLine.split(",")[4].split(".")[0] + "s"
                 tupletime = time.strptime(datestring, "%Yy%jd%Hh%Mm%Ss");
                 year = tupletime.__getattribute__("tm_year")
@@ -92,17 +101,17 @@ class ExperimentLogReader():
                 month = datetime.date(1900, int(tupletime.__getattribute__("tm_mon")) , 1).strftime('%B')[0:3]
                 self.dates.append(str(day) + " " + month + " " + str(year))
                 
-            if "disk_record=on" in logLine:
+            elif "disk_record=on" in logLine:
                 timeStart =  logLine.split(".")[2]
                 self.timeStarts.append(timeStart)  
             
-            if "disk_record=of" in logLine:
+            elif "disk_record=of" in logLine:
                 timeStop =  logLine.split(".")[2]
                 self.timeStops.append(timeStop)
                 
-            if "/tsys/" in logLine:
+            elif "/tsys/" in logLine:
                 self.tcount =  self.tcount + 1
-                t = Systemtemperature = logLine.split("/")[2].split(",")[1]
+                t  = logLine.split("/")[2].split(",")[1]
                 self.SystemtemperaturesForScan.append(t)
                     
                 if  self.tcount == 2:
@@ -110,32 +119,84 @@ class ExperimentLogReader():
                     self.tcount = 0
                     self.SystemtemperaturesForScan = list()
                         
-            if "/bbc01=" in logLine:
+            elif "/bbc01=" in logLine:
+                self.bbc1count =  self.bbc1count + 1
+                
+                if self.scan_count != self.bbc1count:
+                    self.FreqBBC1s.append(0)
+                    self.bbc1count =  self.bbc1count + 1
+                
                 FreqBBC1 =  logLine.split("=")[1].split(",")[0]
                 self.FreqBBC1s.append(FreqBBC1)
             
-            if "/bbc02=" in logLine:
+            elif "/bbc02=" in logLine:
+                self.bbc2count =  self.bbc2count + 1
+                
+                if self.scan_count != self.bbc2count:
+                    self.FreqBBC2s.append(0)
+                    self.bbc2count =  self.bbc2count + 1
+                    
                 FreqBBC2 =  logLine.split("=")[1].split(",")[0]
                 self.FreqBBC2s.append(FreqBBC2)
             
-            if "lo=loa" in logLine:
+            elif "lo=loa" in logLine:
+                self.loacount = self.loacount + 1
+                
+                if self.scan_count != self.loacount:
+                    self.loas.append(0)
+                    self.loacount =  self.loacount + 1
                 loa =  logLine.split("=")[1].split(",")[1]
                 self.loas.append(loa)
             
-            if "lo=loc" in logLine:
+            elif "lo=loc" in logLine:
+                self.loccount = self.loccount + 1
+                
+                if self.scan_count != self.loccount:
+                    self.locs.append(0)
+                    self.loccount =  self.loccount + 1
+                
                 loc =  logLine.split("=")[1].split(",")[1]
-                self.locs.append(loc)                          
-    
+                self.locs.append(loc)
+                
+            #elif  "/bbc01/" in logLine:
+                #self.bbc1count =  self.bbc1count + 1
+                #if self.bbc1count == 1:
+                    #bbc1 = logLine.split("/")[2].split(",")[0]
+                    #self.FreqBBC1s.append(bbc1)
+                #elif self.bbc1count == 6:
+                    #self.bbc1count = 0
+            
+            #elif  "/bbc02/" in logLine:
+                #print(logLine)
+                #self.bbc2count =  self.bbc2count + 1
+                #if self.bbc2count == 1:
+                    #bbc2 = logLine.split("/")[2].split(",")[0]
+                    #self.FreqBBC2s.append(bbc2)
+                #elif self.bbc2count == 6:
+                    #self.bbc2count = 0
+        
+        if len(self.scan_names) > len(self.FreqBBC1s):
+            self.FreqBBC1s.append(0)
+            
+        if len(self.scan_names) > len(self.FreqBBC2s):
+            self.FreqBBC2s.append(0)
+            
+        if len(self.scan_names) > len(self.loas):
+            self.loas.append(0)
+        
+        if len(self.scan_names) > len(self.locs):
+            self.locs.append(0)
+                        
         for y in range(0, len(self.scan_names)):
             DurMin =datetime.datetime.strptime(self.timeStops[y], "%H:%M:%S") -  datetime.datetime.strptime(self.timeStarts[y], "%H:%M:%S")
             self.DurationsMin.append(DurMin.seconds)
             self.DurationsSec.append(DurMin.seconds/60)
             
         for f in range(0, len(self.scan_names)):
-            self.FreqStart.append(float(self.FreqBBC1s[f-1]) + float(self.loas[f-1]))
-            self.FreqStop.append(float(self.FreqBBC2s[f-1])  + float(self.locs[f-1]))
-            
-        print(len(self.FreqBBC1s), " " , len(self.loas), " ", len(self.scan_names))
+            self.FreqStart.append(float(self.FreqBBC1s[f]) + float(self.loas[f]))
+            self.FreqStop.append(float(self.FreqBBC2s[f])  + float(self.locs[f]))
+        
+        print(len(self.FreqStart), " ", len(self.scan_names), " ", len(self.FreqBBC1s), " ", len(self.FreqBBC2s))
             
     def writeOutput(self):
         self.datafile.write("Start;Header;")
@@ -178,10 +239,10 @@ class ExperimentLogReader():
             self.datafile.write("Systemtemperature2;9u;" + self.Systemtemperatures[scan][1] + ";")
             self.datafile.write("\n")
             
-            self.datafile.write("FreqBBC1;" + self.FreqBBC1s[scan -1] + ";Mhz")
+            self.datafile.write("FreqBBC1;" + str(self.FreqBBC1s[scan]) + ";Mhz")
             self.datafile.write("\n")
             
-            self.datafile.write("FreqBBC2;" + self.FreqBBC2s[scan - 1] + ";Mhz")
+            self.datafile.write("FreqBBC2;" + str(self.FreqBBC2s[scan]) + ";Mhz")
             self.datafile.write("\n")
             
             self.datafile.write("FreqStart;" + str(self.FreqStart[scan]) + ";Mhz")
@@ -215,5 +276,6 @@ if __name__=="__main__":
     
     experimentLogReader = ExperimentLogReader(sys.argv[1])
     experimentLogReader.writeOutput()
+    experimentLogReader.__del__()
     sys.exit(0)
         

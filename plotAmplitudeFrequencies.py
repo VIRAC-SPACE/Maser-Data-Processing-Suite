@@ -7,6 +7,9 @@ from matplotlib import pyplot as plt
 from PyAstronomy import pyasl
 from time import strptime
 import scipy.constants
+import jdcal
+from jdcal import gcal2jd
+import datetime
 
 from experimentsLogReader import ExperimentLogReader
 
@@ -23,10 +26,9 @@ def dopler(ObservedFrequency, velocityReceiver):
     c = scipy.constants.speed_of_light
     f0 = 6668519200 # Hz 
     lo = 6100000000 # Hz
-    
     velocitySoure = (-((ObservedFrequency/f0)-1)*c + (velocityReceiver * 1000))/1000
+    #print("velocitySoure ", velocitySoure, " ObservedFrequency ", ObservedFrequency  )
     return velocitySoure
-    
     
 if __name__=="__main__":
     if len(sys.argv) < 3:
@@ -76,32 +78,38 @@ if __name__=="__main__":
     dec = float(scan["Dec"][0]) + float(scan["Dec"][1])/60 + float(scan["Dec"][2])/3600
     
     date = scan["dates"]
-    year = float(date.split(" ")[2])
-    day = float(date.split(" ")[0])
+    print("data", date)
+    year = int(date.split(" ")[2])
+    day = int(date.split(" ")[0])
     month = strptime(date.split(" ")[1],'%b').tm_mon
     startTime = scan["startTime"]
-    hours = float(startTime.split(":")[0])
-    minutes = float(startTime.split(":")[1])
-    seconds = float(startTime.split(":")[2])
+    print("startTime ", startTime)
+    hours = int(startTime.split(":")[0])
+    minutes = int(startTime.split(":")[1])
+    seconds = int(startTime.split(":")[2])
     
-    JDN = (1461 * (year + 4800 + (month - 14)/12))/4 +(367 * (month - 2 - 12 * ((month - 14)/12)))/12 - (3 * ((year + 4900 + (month - 14)/12)/100))/4 + day - 32075
-    jd = JDN + ((hours-12)/24) + minutes/1440 + seconds/864000
+    #JDN = (1461 * (year + 4800 + (month - 14)/12))/4 +(367 * (month - 2 - 12 * ((month - 14)/12)))/12 - (3 * ((year + 4900 + (month - 14)/12)/100))/4 + day - 32075
+    JDN = sum(gcal2jd(year, month, day))
+    jd = JDN + ((hours-12.0)/24.0) + (minutes/1440.0) + (seconds/86400.0)
     
     corr, hjd = pyasl.helcorr(longitude, latitude, altitude, \
             ra, dec, jd, debug=True)
     
+    print("ra ", scan["Ra"])
+    print("dec ", scan["Dec"])
     print("Barycentric correction [km/s]: ", corr)
     print("Heliocentric Julian day: ", hjd)
     
-    FreqStart = float(scan["FreqStart"])
-    
-    plt.plot(dopler(data[:, [0]] + FreqStart, corr),      data[:, [1]] * Systemtemperature1u * scale1U)
+    #FreqStart = float(scan["FreqStart"])
+    FreqStart = 6668.83
+    print("FreqStart", FreqStart)
+    plt.plot(dopler((data[:, [0]] + FreqStart) * (10 ** 6), corr),      data[:, [1]] * Systemtemperature1u * scale1U)
     plt.grid(True)
     plt.xlabel('velocity')
     plt.legend("1u")
     plt.show()
     
-    plt.plot(dopler(data[:, [0]],corr),     data[:, [2]] * Systemtemperature9u * scale9U)
+    plt.plot(dopler((data[:, [0]] + FreqStart) * (10 ** 6), corr),     data[:, [2]] * Systemtemperature9u * scale9U)
     plt.grid(True)
     plt.xlabel('velocity')
     plt.legend("9u")
