@@ -45,13 +45,14 @@ class ExperimentLogReader():
         self.Location = ""
         self.bbc1count = 0
         self.bbc2count = 0
-        self.temp = list()
         self.scan_count = 0
         self.loacount = 0
         self.loccount = 0
+        self.sourcecount = 0
+        self.datecount = 0
         
         self.logfile = open(self.logs, "r")
-        self.datafile = open("m80ir.log".split(".")[0] + "sch.dat", "w")
+        self.datafile = open(self.logs.split(".")[0] + "sch.dat", "w")
         
         print self.datafile
         
@@ -60,13 +61,30 @@ class ExperimentLogReader():
         
             if "location" in logLine:
                 self.Location = logLine.split(";")[1].split(",")[1].strip()
+                year = logLine.split(".")[0]
+                dayNumber = logLine.split(".")[1]
+                date = datetime.datetime(int(year), 1, 1) + datetime.timedelta(int(dayNumber) - 1)
+                day = date.day
+                monthNr = date.month
+                month = datetime.date(1900, int(monthNr) , 1).strftime('%B')[0:3]
+                
+                self.dates.append(str(day) + " " + month + " " + str(year))
             
-            elif "scan_name" in logLine:
+            elif "scan_name=no" in logLine:
                 self.scan_count = self.scan_count + 1
                 self.scan_name = logLine.split(":")[3].split(",")[0].split("=")[1][2:].lstrip("0")
                 self.scan_names.append(self.scan_name)
                 
             elif "source="  in logLine:
+                self.sourcecount =  self.sourcecount + 1
+                
+                if self.scan_count != self.sourcecount:
+                    self.RAs.append([0,0,0])
+                    self.DECs.append([0,0,0])
+                    self.sources.append("None")
+                    self.Epochs.append(0)
+                    self.sourcecount =  self.sourcecount + 1
+                
                 self.source = logLine.split(":")[3].split(",")[0].split("=")[1] + "," + logLine.split(":")[3].split(",")[1]  + "," + logLine.split(":")[3].split(",")[2]
                 self.sources.append(self.source)
                 
@@ -92,14 +110,6 @@ class ExperimentLogReader():
                 
                 self.ra = list()
                 self.dec = list()
-                
-            elif "scan_check" in logLine and "no" in logLine:
-                datestring = logLine.split(",")[4].split(".")[0] + "s"
-                tupletime = time.strptime(datestring, "%Yy%jd%Hh%Mm%Ss");
-                year = tupletime.__getattribute__("tm_year")
-                day = tupletime.__getattribute__("tm_mday")
-                month = datetime.date(1900, int(tupletime.__getattribute__("tm_mon")) , 1).strftime('%B')[0:3]
-                self.dates.append(str(day) + " " + month + " " + str(year))
                 
             elif "disk_record=on" in logLine:
                 timeStart =  logLine.split(".")[2]
@@ -214,7 +224,7 @@ class ExperimentLogReader():
             self.datafile.write("Source;" + self.sources[scan] + ";")
             self.datafile.write("\n")
             
-            self.datafile.write("Date;" + self.dates[scan] + ";")
+            self.datafile.write("Date;" + self.dates[0] + ";")
             self.datafile.write("\n")
             
             self.datafile.write("TimeStart;" + self.timeStarts[scan] + ";" + "UT;")
@@ -260,7 +270,7 @@ class ExperimentLogReader():
         logs["location"] = self.Location
         
         for i in range(0, len(self.scan_names)):
-            logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates[i], "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i]}
+            logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates[0], "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i]}
 
         return logs
         
@@ -273,7 +283,6 @@ if __name__=="__main__":
         usage()
         sys.exit(1)
         
-    
     experimentLogReader = ExperimentLogReader(sys.argv[1])
     experimentLogReader.writeOutput()
     experimentLogReader.__del__()
