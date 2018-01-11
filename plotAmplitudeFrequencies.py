@@ -5,15 +5,10 @@ import os
 import sys
 import numpy as np
 from matplotlib import pyplot as plt
-#from PyAstronomy import pyasl
 from time import strptime
 import scipy.constants
-#import jdcal
-#from jdcal import gcal2jd
-import datetime
-
-from math import pi
-from numpy import cos, sin
+from scipy import interpolate
+from scipy.interpolate import interp1d
 
 from experimentsLogReader import ExperimentLogReader
 
@@ -25,13 +20,19 @@ def file_len(fname):
 
 def usage():
     print ('Usage: '+sys.argv[0]+' log file' + 'data file')
-    
 
+def calibration(station, Tsys):
+    scale = 1
+    if station == "IRBENE":
+        scale = 12
+        
+    elif station == "IRBENE16":
+        scale = 26
+    return scale*Tsys
     
 def dopler(ObservedFrequency, velocityReceiver):
     c = scipy.constants.speed_of_light
     f0 = 6668519200 # Hz 
-    lo = 6100000000 # Hz
     velocitySoure = (-((ObservedFrequency/f0)-1)*c + (velocityReceiver * 1000))/1000
     #print("velocitySoure ", velocitySoure, " ObservedFrequency ", ObservedFrequency  )
     return velocitySoure
@@ -77,12 +78,29 @@ if __name__=="__main__":
     data = np.fromfile(sys.argv[2], dtype="float64", count=-1, sep=" ") .reshape((file_len(sys.argv[2]),5))
     data = np.delete(data, (0), axis=0)
     
+    #slito punktu izdzesana
+    outliersMask = is_outlier(data[:, [0]])
+    data = data[outliersMask]
+    
     logs  = ExperimentLogReader(sys.argv[1]).getLgs()
     scanNumber = sys.argv[2].split(".")[0].split("_")[1][1:len(sys.argv[2])]
     scan = logs[scanNumber]
     Systemtemperature1u = float(scan["Systemtemperature"][0])
     Systemtemperature9u = float(scan["Systemtemperature"][1])
     
+    location = logs["location"]
+    
+    plt.plot(data[:, [0]], data[:, [1]] * calibration(location, Systemtemperature1u), 'ro')
+    plt.grid(True)
+    plt.xlabel('Mhz')
+    plt.legend("1u")
+    plt.show()
+    
+    plt.plot(data[:, [0]], data[:, [2]] * calibration(location, Systemtemperature9u), 'ro')
+    plt.grid(True)
+    plt.xlabel('Mhz')
+    plt.legend("9u")
+    plt.show()
     
     timeStr = scan['startTime'].replace(":", " ")
     dateStrList = scan['dates'].split()
@@ -91,100 +109,64 @@ if __name__=="__main__":
     RaStr = " ".join(scan["Ra"])
     DecStr = " ".join(scan["Dec"])
     dopsetPar= dateStr + " " + timeStr + " " + RaStr + " " + DecStr
-    print scan
-    print dopsetPar
     
-    outliersMask = is_outlier(data[:, [0]])
-    data = data[outliersMask]
-      
-    scale1U = 1
-    scale9U = 1
+    os.system("./dopsetpy_v1.5 "+dopsetPar)
     
-    location = logs["location"]
-    
-    if location == "IRBENE":
-        scale1U = 12
-        scale9U = 12
-        
-    elif location == "IRBENE16":
-        scale1U = 26
-        scale9U = 26
-    ''' 
-    plt.scatter(data[:, [0]], data[:, [1]] * Systemtemperature1u * scale1U)
-    plt.grid(True)
-    plt.xlabel('Mhz')
-    plt.legend("1u")
-    plt.show()
-    
-    plt.scatter(data[:, [0]], data[:, [2]] * Systemtemperature9u * scale9U)
-    plt.grid(True)
-    plt.xlabel('Mhz')
-    plt.legend("9u")
-    plt.show()
-     
-    longitude = 21.8605
-    latitude = 57.5546
-    altitude = 87.30
-    
-    ra = float(scan["Ra"][0]) + float(scan["Ra"][1])/60.0 + float(scan["Ra"][2])/3600.0
-    dec = float(scan["Dec"][0]) + float(scan["Dec"][1])/60.0 + float(scan["Dec"][2])/3600.0
-    
-    date = scan["dates"]
-    print("data", date)
-    year = int(date.split(" ")[2])
-    day = int(date.split(" ")[0])
-    month = strptime(date.split(" ")[1],'%b').tm_mon
-    startTime = scan["startTime"]
-    print("startTime ", startTime)
-    hours = int(startTime.split(":")[0])
-    minutes = int(startTime.split(":")[1])
-    seconds = int(startTime.split(":")[2])
-    
-    #JDN = (1461 * (year + 4800 + (month - 14)/12))/4 +(367 * (month - 2 - 12 * ((month - 14)/12)))/12 - (3 * ((year + 4900 + (month - 14)/12)/100))/4 + day - 32075
-    JDN = sum(gcal2jd(year, month, day))
-    jd = JDN + hmsm_to_days(hours, minutes, minutes ) # ((hours-12.0)/24.0) + (minutes/1440.0) + (seconds/86400.0)
-    
-    print("ra ", ra)
-    print("dec ", dec)
-    corr, hjd = pyasl.helcorr(longitude, latitude, altitude, \
-            ra, dec, jd, debug=True)
-   
-    print("ra ", scan["Ra"])
-    print("dec ", scan["Dec"])
-    print("Barycentric correction [km/s]: ", corr)
-    print("Heliocentric Julian day: ", hjd)
-    print("hmsm_to_days ", hmsm_to_days(hours, minutes, minutes ) )
-    
-    FreqStart = float(scan["FreqStart"])
-    #FreqStart = 6668.83
-    print("FreqStart", FreqStart)
-    print("from logs ", scan)
-    
-    
-    heli, bary = pyasl.baryvel(jd, deq=2000.0)
+    # dopsetpy parametru nolasisana
+    with open('lsrShift.dat') as openfileobject:
+        for line in openfileobject:
+            Header = line.split(';')
+            vards = Header[0]
+            if vards == "Date":
+                dateStr = Header[1]
+            elif vards == "Time":
+                laiks = Header[1]
+            elif vards == "RA":
+                RaStr = Header[1]
+            elif vards == "DEC":
+                DecStr = Header[1]
+            elif vards == "Source":
+                Source = Header[1]
+            elif vards == "LSRshift":
+                lsrShift = Header[1]
+            elif vards == "MJD":
+                mjd = Header[1]
+                print "MJD: \t",mjd
+            elif vards == "Vobs":
+                Vobs = Header[1]
+                print "Vobs: \t",Vobs
+            elif vards == "AtFreq":
+                AtFreq = Header[1]
+                print "At Freq: \t",AtFreq
+            elif vards == "FreqShift":
+                FreqShift = Header[1]
+                print "FreqShift: \t",FreqShift
+            elif vards == "VelTotal":
+                VelTotal = float(Header[1])
+                print "VelTotal: \t",VelTotal
+            #Header +=1
 
-    print("Earth's velocity at JD: ", jd)
-    print("Heliocentric velocity [km/s]: ", heli)
-    print("Barycentric velocity [km/s] : ", bary)
+    Vobs = float(Vobs)
+    lsrCorr = float(lsrShift)*1.e6 # for MHz
+     
+    FreqStart = scan["FreqStart"] 
+    x = dopler((data[:, [0]] + FreqStart) * (10 ** 6), VelTotal)
+   
+    y = data[:, [1]] * calibration(location, Systemtemperature1u)
+    x = np.arange(0,y.size )
+    print x.size, y.size
+    f = interp1d([1,2,3],[1,4,6])
     
-    vh, vb = pyasl.baryCorr(jd, ra, dec, deq=2000.0)
-    print("Barycentric velocity of Earth toward Sirius: ", vb)
-    print("super ", x_keckhelio(ra, dec, epoch=2000.0, jd=jd, tai=None, longitude=longitude, latitude=latitude, altitude=altitude, obs='irbene'))
-    
-    dvelh, dvelb = pyasl.baryvel(jd, 2000.0)
-    print ("dvelh ", dvelh)
-    print ("dvelb ", dvelb)
-    
-    plt.scatter(dopler((data[:, [0]] + FreqStart) * (10 ** 6), corr),      data[:, [1]] * Systemtemperature1u * scale1U)
+    plt.plot(dopler((data[:, [0]] + FreqStart) * (10 ** 6), VelTotal), data[:, [1]] * calibration(location, Systemtemperature1u), 'ro')
     plt.grid(True)
     plt.xlabel('velocity')
     plt.legend("1u")
     plt.show()
     
-    plt.scatter(dopler((data[:, [0]] + FreqStart) * (10 ** 6), x_keckhelio(ra, dec, epoch=2000.0, jd=jd, tai=None, longitude=longitude, latitude=latitude, altitude=altitude, obs='irbene')),     data[:, [2]] * Systemtemperature9u * scale9U)
+    plt.plot(dopler((data[:, [0]] + FreqStart) * (10 ** 6), VelTotal), data[:, [2]] * calibration(location, Systemtemperature1u), 'ro')
     plt.grid(True)
     plt.xlabel('velocity')
     plt.legend("9u")
     plt.show()
-    '''
+    
     sys.exit(0)

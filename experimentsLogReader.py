@@ -219,7 +219,7 @@ class ExperimentLogReader():
                         
         for y in range(0, len(self.scan_names)):
             try:
-                print(len(self.scan_names), " ", len(self.timeStops), " ", len(self.timeStarts))
+                #print(len(self.scan_names), " ", len(self.timeStops), " ", len(self.timeStarts))
                 #print self.scan_names
                 DurMin =datetime.datetime.strptime(self.timeStops[y], "%H:%M:%S") -  datetime.datetime.strptime(self.timeStarts[y], "%H:%M:%S")
                 self.DurationsMin.append(DurMin.seconds)
@@ -262,7 +262,6 @@ class ExperimentLogReader():
             self.datafile.write("Duration;" + str(self.DurationsMin[scan]) + ";sec;" + str(self.DurationsSec[scan]) + ";min")
             self.datafile.write("\n")
             
-            print self.RAs[scan]
             self.datafile.write("RA;" + " ".join(self.RAs[scan]) + ";")
             self.datafile.write("\n")
             

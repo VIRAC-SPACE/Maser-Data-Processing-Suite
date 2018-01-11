@@ -322,7 +322,7 @@ except:
 #caling dopsetpy - calculating reciver LSR velocity
 dopsetPar= dateStr + " " + timeStr + " " + RaStr + " " +DecStr
 print "dopsetPar "  + dopsetPar 
-os.system("./dopsetpy_v1.4 "+dopsetPar)
+os.system("./dopsetpy_v1.5 "+dopsetPar)
 with open('lsrShift.dat') as openfileobject:
     for line in openfileobject:
         Header = line.split(';')
@@ -357,7 +357,7 @@ with open('lsrShift.dat') as openfileobject:
         nHeader +=1
 
 
-#Vobs = float(Vobs)
+Vobs = float(Vobs)
 lsrCorr = float(lsrShift)*1.e6 # for MHz
 
 print 
