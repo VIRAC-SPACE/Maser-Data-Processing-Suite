@@ -1,7 +1,7 @@
 # Methanol Maser Spectral Line Scrip
 # by K.Berzins & A.Aberfelds 2016
 # Requires python2, dopsetpy.f
-# Ver.3.22 alpha
+# Ver.3.31 alpha
 
 #def FWHM(X,Y):
 #    half_max = max(Y) / 2.
@@ -15,47 +15,28 @@
 #    return X[right_idx] - X[left_idx] #return the difference (full width) 
 
 from scipy.interpolate import splrep, sproot, splev
+import scipy.constants
 #import scipy.interpolate
 
-def calibration1(Experiment,elevation,nPoints):
-    # nPoints - number of points are needed to determine witch autocorelation gridding was used for amplitude cal
-    scaleA = 26
-    scaleAA=scaleA*Tsys_1u
-    CAL = 1 # Jy
-    if "RT16" in Experiment:
-        scaleA=26
-        A = 1.0 # Jy/deg
-        B = 1.0 # scale
-        if elevation > 0:
-            elevation = 0 # maximum gain reached
-    elif "RT32" in Experiment:
-        scaleA = 12 # is smaller than that (efficiency of RT32 is greater than RT-16)
-        A = 1 # Jy/degi from calibrator fit
-        B = 0 # Jy from calibrator fit
-    x = A * elevation + B
-    scale = CAL * scaleAA
-    print "Calibratin_1u = ", scale
-    return scale
-def calibration2(Experiment,elevation,nPoints):
-    # nPoints - number of points are needed to determine witch autocorelation gridding was used for amplitude cal
-    scaleA = 26
-    scaleAB=scaleA*Tsys_9u
-    CAL = 1 # Jy
-    if "RT16" in Experiment:
-        scaleA=26
-        A = 1.0 # Jy/deg
-        B = 1.0 # scale
-        if elevation > 0:
-            elevation = 0 # maximum gain reached
-    elif "RT32" in Experiment:
-        scaleA = 12 # is smaller than that (efficiency of RT32 is greater than RT-16)
-        A = 1 # Jy/degi from calibrator fit
-        B = 0 # Jy from calibrator fit
-    x = A * elevation + B
-    scale = CAL * scaleAB
-    print "Calibratin_9u = ", scale
-    return scale    
+#Relative unit -> K -Jy transformation calculation----------------------------------
+def calibration1(Station,Tsys):
+    if "IRBENE16" in stationStr:
+        scale1=26
+    elif "IRBENE" in stationStr:
+        scale1=12
+    scale1u=scale1*Tsys_1u
+    return scale1u
 
+def calibration2(Station,Tsys):
+    if "IRBENE16" in stationStr:
+        scale1=26
+    elif "IRBENE" in stationStr:
+        scale1=12
+    scale9u=scale1*Tsys_9u
+    return scale9u      
+    
+#----------------------------------------------------------------------------------    
+  
 def FWHM(x, y, k=10):
     """
     Determine full-with-half-maximum of a peaked set of points, x and y.
@@ -82,46 +63,15 @@ def FWHM(x, y, k=10):
                 "the dataset is flat (e.g. all zeros).")
     else:
         return abs(roots[1] - roots[0])
-
-
-def freq2speed (Freq,FreqLAB,Freq1,Freq2,FreqShift,VelLSR):
-    global c #= 299792.458 # km/s
-    Freq = float(Freq)
-    HalfBand = (float(Freq2) - float(Freq1)) / 2
-    VelLSR = float(VelLSR)
-    FreqVID = FreqLAB + FreqShift - VelLSR * FreqLAB / c
-    Freq0 = FreqVID - HalfBand # netiek izmantots
-    FreqCorr = Freq1 - Freq0
-    #V = (FreqVID - (Freq + Freq0) ) / FreqVID * c + VelLSR # km/s
-    V = (FreqVID - (Freq + Freq1) ) / FreqLAB * c + VelLSR # km/s
-    #print Freq, FreqLAB, FreqVID, V, Freq0, Freq1, Freq2, HalfBand 
-    return V
-
-def freq2speed2 (frequency,f0,HalfBand,lsrCorr,freqLAB,Vobs):
-    global c #= 299792.458 # km/s
-
-    #lsrCorr = 0.	# Already included
-    #lo = 0. 		# Already included
-
-
-    f0 = float(f0)
-    HalfBand = float(HalfBand)
-    frequency = float(frequency)
-
-    #errCorr = 4*f0/c
-    #print "lsrCorr= ",lsrCorr, errCorr
-
-    #deltaV = -(frequency - (f0-lo) - lsrCorr ) / f0 * c
-    #deltaV = -(frequency - (f0-lo) - lsrCorr +errCorr ) / f0 * c
-    #deltaV = -(frequency - (f0-lo) - lsrCorr) / (f0-lo) * c
-    #deltaV = -(frequency - (f0-lo) - lsrCorr) / (f0-lo) * c
-    deltaV = -(frequency - (f0+HalfBand) + lsrCorr) / (f0+HalfBand) * c
-
-    deltaV = deltaV - 0.1 # Due to rounding error 10 kHz !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    #print f0,lo,frequency, float(f0)-float(lo)
-    return deltaV
-
+        
+        
+#radial velocity calculation
+def freq2vel (ObservedFrequency,VelReceiver):
+    c = scipy.constants.speed_of_light
+    f0 = 6668519200 # Hz 
+    VelSource = (c*(f0-ObservedFrequency)/f0)/1000+VelReceiver
+    return VelSource
+ 
 def rangex (X,Y1,Y2,X0,deltaX):
     NN = len(X)
     print "NN=",NN
@@ -136,9 +86,58 @@ def rangex (X,Y1,Y2,X0,deltaX):
            YY1.append(Y1[i])
            YY2.append(Y2[i])
     return XX0,YY1,YY2
+#________________________________________________________________
+#Allovs to select points from plot
+class MyClick(object):
+    def __init__(self):
+        # initialize mode
+        self._mode = 1 
+        self.peak = []
+        self.pk = [] # new - list where to store artists/pts already picked
+        
+    def press(self, event):
+        """record last key pressed"""
+        sys.stdout.flush()
+        if event.key == '1':   
+            self._mode = 1 
+            print('Peak Mode')
 
+        elif event.key == '4':
+            self._mode = 4
+            print('Delete Mode')
 
-def onkeyclick (event):
+	elif event.key == '5' or event.key=='q' or event.key=='Q':
+	    self._mode = 0
+	    print('LOG_EVENT: Exit editing mode.')
+	    plt.close()
+
+    def pick(self,event):
+        mouseevent = event.mouseevent
+        artist = event.artist
+        x, y = np.array(artist.get_xdata()), np.array(artist.get_ydata()) #used numpy array for argsort feature
+        ind = event.ind
+
+        #remove = [artist for artist in self.peak if artist.contains()]
+
+        if self._mode == 1:
+            # peak
+            peakind = y[ind].argsort()[-1:] #argsort to find peak
+            self.peak.append(zip(x[ind[peakind]], y[ind[peakind]])) #save peak
+            pt, = ax.plot(x[ind[peakind]],y[ind[peakind]],'ro',picker=5) #new
+            self.pk.append(ind[peakind])  #new - store into a list
+            print('peak: ', zip(x[ind[peakind]], y[ind[peakind]]))
+            pass
+
+        elif self._mode == 4:
+            # delete
+            for i in self.pk:   # this loop can probably be done in 1 line
+                for j in ind:
+                  if i == artist: #see if point in list matches current point
+                    i.remove()  #remove the point
+                        
+        fig.canvas.draw()
+#_______________________________________________________________________
+def onkeyclick (event):   #def for regon selection and grafth manigment
     global NrCut,valuesFromPlot,NN,aa1,aa2
     global bb1,bb2,lineCut,Nline
     if event.xdata==None:
@@ -191,12 +190,11 @@ def onkeyclick (event):
     if event.key=='5' or event.key=='q' or event.key=='Q':
         plt.close('all')
     return
+#_________________________________________________________
 
 def dummyLineRead (fileUnit,nr):
    for i in range(nr):
        line=fileUnit.readline()
-       #i+=1
-       #print i,": ",line
    return
 
 def is_number(s):
@@ -210,80 +208,74 @@ def is_number(s):
 from scipy import signal
 
 import sys, os
+import re
 if len(sys.argv[:]) > 1:
     filename = sys.argv[1]
 else:
-    filename='m34_n01.dat' # Filename in format <ExperimentCode>_<Scan_Number>.dat
+    filename='m82_n19.dat' # Filename in format <ExperimentCode>_<Scan_Number>.dat
 
 print
 print "Data file: \t",filename
 
 baseName = filename[:-8]
-scanNrStr = filename[5:7]
+start='m*_n'
+end='.dat'
+scanNrStr = re.search('%s(.*)%s' % (start, end), filename).group(1)
 print "Scan Nr: "+scanNrStr
 irSchedPrms = baseName+"sch.dat"
-
+irLOGPrms = baseName+"irsch.dat" #open log reader made file
 #------------------------------------------------------------------------------------
-#irSchedPrms="m34sch.dat"
-print
-print "Sched parameter file: \t",irSchedPrms
+print "Experment LOG file: \t",irLOGPrms
 
-fpar = open(irSchedPrms,'r')
+logpar = open(irLOGPrms,'r')
 
-line = fpar.readline() # Start;Header;
-while "End;Header" not in line:
-    line = fpar.readline()
-    Header = line.split(';')
+line1 = logpar.readline() # Start;Header;
+while "End;Header" not in line1:
+    line1 = logpar.readline()
+    Header = line1.split(';')
     vards = Header[0]
     if vards == "Station":
         stationStr = Header[1]
-    elif vards == "Experiment":
-        ExperimentStr = Header[1]
-    elif vards == "Exp_Code":
-        ExpCode = Header[1]
-
-
+    
 print "Station: ",stationStr
-print "Experiment: ",ExperimentStr
-print "Exp. Code: ",ExpCode	# ExperimentCode
 print
 
-
-while "Scan;"+scanNrStr not in line:
-	line = fpar.readline()
-	if line is None:
-		print "Data not found ERROR"
-		break
-
-#print line
-
+while "Scan;"+scanNrStr not in line1:
+  line1 = logpar.readline()
+  if line1 is None:
+    print "Data not found ERROR"
+    break
+# reading info from **irsch.dat file
 nHeader=1
 vards="Scan"
 while vards != "End":
-    line=fpar.readline()
-    #print line.strip()
-    Header = line.split(';')
+    line1 = logpar.readline()
+    Header = line1.split(';')
     vards = Header[0]
     if vards == "Date":
         dateStr = Header[1]
-    elif vards == "Time":
+    elif vards == "TimeStart":
         laiks = Header[1]
+    elif vards == "TimeStop":
+        TimeStop = Header[1]    
     elif vards == "RA":
         RaStr = Header[1]
     elif vards == "DEC":
         DecStr = Header[1]
     elif vards == "Source":
         Source = Header[1]
+        Source = Source.split(",")
+        Source = Source[0]
     elif vards == "FreqStart":
-        Freq1 = Header[1]
+        FreqStart = float(Header[1])
     elif vards == "FreqStop":
         Freq2 = Header[1]
     elif vards == "FreqBBC1":
         FreqBBC1 = Header[1]
-    elif vards == "ElevationStart":
-        EL0 = float(Header[1])
-    elif vards == "ElevationStop":
-        EL9 = float(Header[1])
+    elif vards == "Systemtemperature1":
+        Tsys_1u = float(Header[2])
+    elif vards == "Systemtemperature2":
+        Tsys_9u = float(Header[2])
     elif vards == "AzimuthStart":
         AZ0 = Header[1]
     elif vards == "AzimuthStop":
@@ -291,19 +283,13 @@ while vards != "End":
     elif vards == "VelocityLSR":
         VelLSR = float(Header[1])
     nHeader +=1
-
+    
 print
 print "Source: ",Source
 print "RA,Dec: ",RaStr+", "+DecStr
-print
-EL = (float(EL9) + float(EL0))/2.	# Average source elevation during the scan
-AZ = (float(AZ9) + float(AZ0))/2.	# Average source azimuth during the scan
-
-
-# MAnual correction !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#VelLSR = VelLSR - Vobs ## THIS SHOULD BE INVESTIGATED !
-
-
+print("FreqStart", FreqStart )  
+print("Tsys_1u", Tsys_1u )
+print("Tsys_9u", Tsys_9u )
 #------------------------------------------------------------------------------------
 global bb1,bb2,lineCut,Nline
 bb1 = bb2 = Nline= 0
@@ -315,24 +301,9 @@ aa1=0
 aa2=0
 NN=0
 valuesFromPlot = []
-
-f0 = 6668519200 # Hz 
-lo = 6100000000 # Hz
-
-global c
-c = 299792.458 # km/s
-
-
 #------------------------------------------------------------------------------------
 # Read Data
-f = open(filename)
-#while True :
-#    line = f.readline()
-#    print line
-#    if ("" == line):
-#        print "file finished"
-#        break
-#quit()
+f = open(filename, 'r')
 
 print "DateTime =", dateStr
 
@@ -348,9 +319,9 @@ except:
     print
     print "Warning: Can not get Time from data file!" 
     print
-
+#caling dopsetpy - calculating reciver LSR velocity
 dopsetPar= dateStr + " " + timeStr + " " + RaStr + " " +DecStr
-print dopsetPar 
+print "dopsetPar "  + dopsetPar 
 os.system("./dopsetpy_v1.4 "+dopsetPar)
 with open('lsrShift.dat') as openfileobject:
     for line in openfileobject:
@@ -380,34 +351,14 @@ with open('lsrShift.dat') as openfileobject:
         elif vards == "FreqShift":
             FreqShift = Header[1]
             print "FreqShift: \t",FreqShift
+        elif vards == "VelTotal":
+            VelTotal = float(Header[1])
+            print "VelTotal: \t",VelTotal
         nHeader +=1
 
 
-Vobs = float(Vobs)
-#Vobs = Vobs -0.1 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#print
-#print "LSR shift MHz=", lsrShift
+#Vobs = float(Vobs)
 lsrCorr = float(lsrShift)*1.e6 # for MHz
-
-# For frequency calculation:
-FreqLAB = float(6668.5192)	# MHz
-FreqVEX = float(6668.)		# MHz
-LO = 6100.		# MHz
-#V0 = 60.		# km/s
-#global c = 299792.5 		# km/s
-
-Freq1 = float(Freq1)
-FreqBBC1 = float(FreqBBC1)
-FreqShift = float(FreqShift)
-
-#print "#DEBUG", Freq1, FreqBBC1, FreqVEX, Freq1-FreqBBC1
-#deltaF = FreqLAB - FreqVEX
-#f0 = float(Freq1) + deltaF
-
-#NEW aproach
-f0 = Freq1 + FreqLAB - FreqVEX # + FreqShift
-
-FreqVidus = FreqLAB + FreqShift - VelLSR * FreqLAB / c
 
 print 
 frequency = []
@@ -416,28 +367,16 @@ amplitude = []
 amplit2 = []	# 2nd polarization
 
 k=0
+next(f) # skiping first line
 for line in f.xreadlines():
     line = ' '.join(line.split())
     var = line.split(' ')
-    #print line
-    # print var[0],var[1]
-    #var[0] = var[0] / 10.0e6 # Hz => MHz
-    #   var[1] = float(var[1])*1.e11
     var[1] = float(var[1])
-
-    #var[0] = float(var[0]) + float(Freq1) + deltaF
-    var[0] = float(var[0]) # + f0
-
-
-
+    var[0] = float(var[0])
+     
     frequency.append(var[0])
-    #velocity.append((freq2speed2(var[0],f0,-1.,0.,FreqLAB)+VelLSR+Vobs))
-    #velocity.append((freq2speed2(var[0],f0,-1.,0.,FreqLAB)+VelLSR))
-    #velocity.append((freq2speed2(var[0],f0,1.,0.,FreqLAB)+VelLSR+Vobs))
-    #velocity.append((freq2speed2(var[0],f0,1.,0.,FreqLAB,Vobs)+VelLSR))
-    #velocity.append((freq2speed(var[0],FreqLAB,FreqBBC1,Freq1,Freq2,Vobs)+VelLSR))
-    velocity.append(freq2speed(var[0],FreqLAB,Freq1,Freq2,FreqShift,VelLSR))
-
+    velocity.append(freq2vel((var[0]+FreqStart)*10**6,VelTotal))# freqvency to velocity transformation
+    
     if float(var[1]) > 10.: ###################### clean
     	#print var[1] 
     	var[1] = 0.
@@ -449,6 +388,7 @@ for line in f.xreadlines():
     k +=1
 
 f.close()
+
 #------------------------------------------------------------------------------------
 pointCountOriginal = k
 #print 4*f0/c
@@ -459,20 +399,6 @@ print "Number of datapoints: \t\t", k
 
 
 #------------------------------------------------------------------------------------
-# Calibration
-# This is RT32 specific calibration number:
-scaleA = 33 # Amplitude callibration for 10^10 W => Jy for R&S
-scaleA = 26
-Tsys_1u=input("Please enter Tsys_1u=: ")
-print "Tsys_1u=", Tsys_1u
-Tsys_9u=input("Please enter Tsys_9u=: ")
-print "Tsys_9u=", Tsys_9u
-scaleAA = calibration1 (ExperimentStr, EL, pointCountOriginal)
-scaleAB = calibration2 (ExperimentStr, EL, pointCountOriginal)
-scaleA = 26
-print "New scaleA: ",scaleA
-#------------------------------------------------------------------------------------
-
 import ast
 
 cutFolder = "cuts/"
@@ -500,20 +426,101 @@ if cutFileIr:
 import matplotlib; from matplotlib import pyplot as plt
 import numpy as np
 
-### ? a = amplitude[:100]+amplitude[-100:]
+scale1u=calibration1(stationStr,Tsys_1u)
+scale9u=calibration2(stationStr,Tsys_9u)
+print 'scale1u', scale1u
+print 'scale9u', scale9u
 a = amplitude
 a0 = np.average(a)
 print "Level offset draft: \t\t",a0 
-amplitude0 = (amplitude-a0) * scaleAA 
-
-#a2 = amplit2
-#a20 = np.average(a2)
-#print "Level offset draft: \t\t",a02
-
-amplit20 = (amplit2-a0) * scaleAB
+amplitude0 = (amplitude-a0) * scale1u 
+amplit20 = (amplit2-a0) * scale9u
 
 print min(velocity),max(velocity)
+#_______________________________________________________________________
+#Taking off Chebeshef filter bondery regons
+velocity=velocity[900:3200]
+amplitude0=amplitude0[900:3200]
+amplit20=amplit20[900:3200]
+#------------------------------------------------------------------------------------------------
+# Select bad points!
+fig = plt.figure()
+fig.add_subplot(111) #,xticks=[],yticks=[])
+ax = plt.axes()
+#plt.plot(velocity,amplitude0,'go')
+plt.plot(velocity,amplitude0,'bo',picker=5)
+#plt.plot(velocity,amplit20,'ro')
 
+plt.xlabel ('Velocity (km sec$^{-1}$)')
+plt.ylabel ('Flux density (Jy)')
+plt.title (filename[:-4]+"  "+Source)
+plt.title ("Select bad data points from amplitude0")
+
+amticks=1. # Multiplicatin factor for Y max range in plot to fit all graph
+asmax = max(amplitude0)
+#print asmax,asmax//amticks*amticks
+
+am0 = min(amplitude0)
+am9 = (asmax//amticks+1)*amticks # Y range
+plt.ylim([am0,am9]) # Y range
+#use point selec moule
+browser = MyClick()
+cid = fig.canvas.mpl_connect('pick_event', browser.pick)
+cid = fig.canvas.mpl_connect('key_press_event', browser.press)
+
+plt.show()
+#----------------------------------------------------------------------------------
+#bad point remuve from data arrays
+selectedPoints = browser.pk
+print selectedPoints
+am11=[]
+for i in selectedPoints:
+  print i
+  am11.append(i)
+amplitude0=np.delete(amplitude0, am11)
+velocity=np.delete(velocity, am11)
+amplit20=np.delete(amplit20, am11)
+#------------------------------------------------------------------------------------------------
+# Select bad points!
+fig = plt.figure()
+fig.add_subplot(111) #,xticks=[],yticks=[])
+ax = plt.axes()
+#plt.plot(velocity,amplitude0,'go')
+plt.plot(velocity,amplit20,'bo',picker=5)
+#plt.plot(velocity,amplit20,'ro')
+
+plt.xlabel ('Velocity (km sec$^{-1}$)')
+plt.ylabel ('Flux density (Jy)')
+plt.title (filename[:-4]+"  "+Source)
+plt.title ("Select bad data points from amplit20")
+
+amticks=1. # Multiplicatin factor for Y max range in plot to fit all graph
+asmax = max(amplit20)
+#print asmax,asmax//amticks*amticks
+
+am0 = min(amplit20)
+am9 = (asmax//amticks+1)*amticks # Y range
+plt.ylim([am0,am9]) # Y range
+#use point selec moule
+browser = MyClick()
+cid = fig.canvas.mpl_connect('pick_event', browser.pick)
+cid = fig.canvas.mpl_connect('key_press_event', browser.press)
+
+plt.show()
+#----------------------------------------------------------------------------------    
+#bad point remuve from data arrays
+selectedPoints = browser.pk
+print selectedPoints
+am00=[]
+for i in selectedPoints:
+  print i
+  am00.append(i)
+  
+print am00
+amplitude0=np.delete(amplitude0, am00)
+velocity=np.delete(velocity, am00)
+amplit20=np.delete(amplit20, am00)  
+#------------------------------------------------------------------------------------------------
 # Produce initial plot raw data with noise with level offset
 fig = plt.figure()
 fig.add_subplot(111) #,xticks=[],yticks=[])
@@ -545,9 +552,8 @@ am9 = (asmax//amticks+1)*amticks # Y range
 plt.ylim([am0,am9]) # Y range
 
 cid = fig.canvas.mpl_connect('key_press_event',onkeyclick)
-
 plt.show()
-
+#----------------------------------------------------------------------------------
 print "Number of Selected Cut Regions:",NN
 valuesFromPlot.sort()
 #print valuesFromPlot
@@ -574,7 +580,7 @@ amplTmp = amplitude0[:]
 amplTmp2 = amplit20[:]
 
 #print "Size= ",len(velTmp)
-pointCount = pointCountOriginal
+pointCount = len(velocity)
 
 # Array velocity is sorted at this point!
 for i in range (NN):
@@ -613,14 +619,7 @@ velBgrFit = np.arange (min(velBgr),max(velBgr),1)
 amplBgrFit = fitBgr(velBgrFit)
 amplBgrFit2 = fitBgr2(velBgrFit)
 
-#---------------------------------------------------------------
-# Calculate Background Noise
-sigma3 = round(3*np.std(amplBgr-fitBgr(velBgr)),1)
-sigma32 = round(3*np.std(amplBgr2-fitBgr2(velBgr)),1)
-print "Background 3sigma Polarization_R: ", sigma3
-print "Background 3sigma Polarization_L: ", sigma32
 
-#---------------------------------------------------------------
 
 import pylab
 
@@ -642,11 +641,19 @@ y1 = 0.05 * (max(amplBgr) - min(amplBgr))*(-1) + max(amplBgr)
 #x1 = -30.
 #y1 = 1.
 #print x1,y1
-plt.text(x1, y1, r'$3\sigma=$'+str(sigma3)+' Jy')
+#plt.text(x1, y1, r'$3\sigma=$'+str(sigma3)+' Jy')
 plt.show()
-
+# fixing data to 0 level
 amplCalibrated = amplitude0-fitBgr(velocity)
 amplCalibrated2 = amplit20-fitBgr2(velocity)
+
+#---------------------------------------------------------------
+# Calculate Background Noise
+sigma_1u=round(3*np.std(amplCalibrated[0:500]))
+sigma_9u=round(3*np.std(amplCalibrated2[0:500]))
+print("3simgma L polarization: ",sigma_1u)
+print("3simgma R polarization: ",sigma_9u)
+#---------------------------------------------------------------
 
 # Calculate line parameters
 #------------------------------------------------------
@@ -666,9 +673,6 @@ if Nline > 0:
         del amplBgr[:]
         amplLine = []
         for j in range (pointCount):
-      	    #print "ij",i,j,nBgr
-            #print valuesFromPlot[i][0],valuesFromPlot[i][1]
-            #print velTmp[j]
             if velocity[j] > lineCut[i][0] and velocity[j] < lineCut[i][1]:
                 velLine.append(velocity[j])
                 amplLine.append(amplCalibrated[j])
@@ -679,23 +683,11 @@ if Nline > 0:
         hwy = [max(amplLine)/2,max(amplLine)/2] 
         print i,lineCut[i][0],lineCut[i][1],"\t Line max = ",max(amplLine),max(amplLine)/2
     
-    #print signal.find_peaks_cwt(velLine,amplLine)
-    #fff = FWHM(velLine,amplLine)
-    #print fff
-    #print i,nBgr
-
-#if nBgr == 0:
-#    velBgr = velTmp # Assume no signal all is background :) 
-#    amplBgr = amplTmp # Assume no signal all is background :) 
-
-#fitBgr =np.poly1d(np.polyfit(velBgr, amplBgr,7))
-
 #------------------------------------------------------
 
 fig = plt.figure()
 fig.add_subplot(111) #,xticks=[],yticks=[])
 
-#plt.plot(velocity,amplitude0-fitBgr(velocity),'go')
 plt.plot(velocity,amplCalibrated,'k-')
 plt.plot(velocity,amplCalibrated2,'k:')
 plt.xlabel ('Velocity (km sec$^{-1}$)', fontsize=20)
@@ -719,7 +711,6 @@ print "MAX amplitude Jy ",asmax
 if os.path.isdir(figFolder):  
     pylab.savefig(figFolder+filename[0:-4]+'.eps')
     pylab.savefig(figFolder+filename[0:-4]+'.jpg')
-    pylab.savefig(figFolder+filename[0:-4]+'.pdf')
 else:
     print "Please create folder to save plot images: ",figFolder
     print "Warning: Plot images are NOT saved!"
@@ -731,7 +722,7 @@ fileOut1 = filename
 fileOut1 +=".out"
 print "Calibrated data out: \t\t\t",fileOut1
 fout = open(fileOut1,'w')
-for i in range (pointCountOriginal):
+for i in range (len(velocity)):
     #print >> fout , velocity[i],(amplitude0[i]-fitBgr(velocity[i]))
     poll = amplitude0[i]-fitBgr(velocity[i])
     polk = amplit20[i]-fitBgr2(velocity[i]) # TODO Change Bgr2
@@ -747,21 +738,14 @@ fig.add_subplot(111) #,xticks=[],yticks=[])
 
 #
 velrange = 20. # half-range
-XX0,YY1,YY2 = rangex(velocity,amplCalibrated,amplCalibrated2,VelLSR,velrange)
+XX0,YY1,YY2 = rangex(velocity,amplCalibrated,amplCalibrated2,np.mean(velocity),velrange)
 
 velocity = XX0
 amplCalibrated = YY1
 amplCalibrated2 = YY2
 
-#plt.plot(velocity,amplitude0-fitBgr(velocity),'go')
-#plt.plot(velocity,amplCalibrated,'r-')
-#plt.plot(velocity,amplCalibrated2,'c-')
-#plt.xlabel ('Velocity (km sec$^{-1}$)')
-#plt.ylabel ('Flux density (Jy)')
-#plt.title (filename[:-4]+"  "+Source)
 plt.plot(velocity,amplCalibrated,'k:')
 plt.plot(velocity,amplCalibrated2,'k-')
-#plt.plot(velocity,(np.array(amplCalibrated) + np.array(amplCalibrated2))/2,'k-')
 plt.xlabel ('Velocity (km sec$^{-1}$)', fontsize=20)
 plt.ylabel ('Flux density (Jy)', fontsize=20 )
 plt.title (filename[:-4]+"  "+Source)
@@ -786,7 +770,6 @@ print "MAX amplitude L polarization Jy ",asmax2
 if os.path.isdir(figFolder):  
     pylab.savefig(figFolder+filename[0:-4]+'.eps')
     pylab.savefig(figFolder+filename[0:-4]+'.jpg')
-    pylab.savefig(figFolder+filename[0:-4]+'.pdf')
 else:
     print "Please create folder to save plot images: ",figFolder
     print "Warning: Plot images are NOT saved!"
@@ -797,14 +780,6 @@ plt.show()
 fig = plt.figure()
 fig.add_subplot(111) #,xticks=[],yticks=[])
 
-#
-#velrange = 10. # half-range
-#XX0,YY1,YY2 = rangex(velocity,amplCalibrated,amplCalibrated2,VelLSR,velrange)
-
-#velocity = XX0
-#amplCalibrated = YY1
-#amplCalibrated2 = YY2
-#!!!!!!!!!!!!!!!!!!
 amplAverage = (np.array(amplCalibrated) + np.array(amplCalibrated2))/2 # <R,L>
 
 #Fiting from Astro.py-----------------------------------------------------------
@@ -814,24 +789,19 @@ from astropy.modeling import models, fitting
 from astropy.modeling.models import MexicanHat1D, Gaussian1D
 
 # Create kernel
-#trap = Trapezoid1DKernel(4, slope=1, mode='oversample',factor=2) // strada labi
-trap = Trapezoid1DKernel(4, slope=1, mode='oversample',factor=2)
-gaus = Gaussian1DKernel(stddev=2, x_size=19, mode='center', factor=100)
-mex = MexicanHat1DKernel(0.7, x_size=1, mode='oversample', factor=500000)
-han = np.hanning(12) 
-han=han/han.sum()   #normalaizing
-hann = np.convolve(han, amplAverage, mode='SAME')
+#trap = Trapezoid1DKernel(4, slope=1, mode='oversample',factor=2) // works good
+#trap = Trapezoid1DKernel(4, slope=1, mode='oversample',factor=2) #works good
+gaus = Gaussian1DKernel(stddev=2, x_size=19, mode='center', factor=100) #givs best convol. 
+#mex = MexicanHat1DKernel(0.7, x_size=1, mode='oversample', factor=500000)
+#han = np.hanning(12) 
+#han=han/han.sum()   #normalaizing
+#hann = np.convolve(han, amplAverage, mode='SAME')
 # Convolve data
 z = convolve(amplAverage, gaus)
-# pagaidam nestradaa!!!!!!!!!!!
-# Fit the data using a Gaussian
-#g_init = models.Gaussian1D(amplitude=1., mean=0, stddev=1.)
-#fit_g = fitting.LevMarLSQFitter()
-#gg = fit_g(g_init, velocity[i], amplAverage)
 #-------------------------------------------------------------------------------
 
 plt.plot(velocity,amplAverage,'k:')
-plt.plot(velocity,z,'r-')
+plt.plot(velocity,z,'r-') #ploting convolved data
 #plt.plot(velocity,hann,'g-')
 plt.xlabel ('Velocity (km sec$^{-1}$)', fontsize=20)
 plt.ylabel ('Flux density (Jy)', fontsize=20)
@@ -840,20 +810,14 @@ plt.title (filename[:-4]+"  "+Source+" <R,L> MJD="+mjd)
 if Nline > 0:
     plt.plot(hwx,hwy,'b-')
 
-#amticks=10. # Multiplicatin factor for Y max range in plot to fit all graph
-#amticks=350.
 asmax = max(amplAverage)
-#am0 = min(amplCalibrated)
-#am9 = (asmax//amticks+1)*amticks # Y range
 plt.ylim([am0,am9]) # Y range
-#plt.xlim([55,65])
 cid = fig.canvas.mpl_connect('key_press_event',onkeyclick)
 print "MAX amplitude <R,L> Jy ",asmax
 
 if os.path.isdir(figFolder):  
     pylab.savefig(figFolder+filename[0:-4]+'av.eps')
     pylab.savefig(figFolder+filename[0:-4]+'av.jpg')
-    pylab.savefig(figFolder+filename[0:-4]+'av.pdf')
 else:
     print "Please create folder to save plot images: ",figFolder
     print "Warning: Plot images are NOT saved!"
@@ -867,17 +831,19 @@ from peakutils.plot import plot as pplot
 # Plot Astropy fit vith local maxim POINTS
 zz=np.array(z)
 vv=np.array(velocity)
-indexes = peakutils.indexes(zz, thres=0.2, min_dist=3)
+#smart thres fiding!!!
+smartthres=0.9*sigma_1u/asmax
+print("% smaler as max vill be serched",smartthres)
+indexes = peakutils.indexes(zz, thres=smartthres, min_dist=3)
 print(indexes)
 print(vv[indexes], zz[indexes])
 fig = plt.figure()
 ax = fig.add_subplot(111)
-for xy in zip(vv[indexes], zz[indexes]):                                       # <--
+for xy in zip(vv[indexes], zz[indexes]):                        # <--
     ax.annotate('(%.2f, %.1f)' % xy, xy=xy, textcoords='data') # <--
 fig.add_subplot(111) #,xticks=[],yticks=[])
 plt.plot(velocity,z,'k-')
 plt.plot(vv[indexes], zz[indexes], 'ro')
-#plt.plot(velocity,hann,'g-')
 plt.xlabel ('Velocity (km sec$^{-1}$)', fontsize=20)
 plt.ylabel ('Flux density (Jy)', fontsize=20)
 plt.title (filename[:-4]+"  "+Source+"Fit... MJD="+mjd)
@@ -885,20 +851,15 @@ plt.title (filename[:-4]+"  "+Source+"Fit... MJD="+mjd)
 if Nline > 0:
     plt.plot(hwx,hwy,'b-')
 
-#amticks=10. # Multiplicatin factor for Y max range in plot to fit all graph
-#amticks=350.
 asmax = max(amplAverage)
-#am0 = min(amplCalibrated)
-#am9 = (asmax//amticks+1)*amticks # Y range
+
 plt.ylim([am0,am9]) # Y range
-#plt.xlim([55,65])
 cid = fig.canvas.mpl_connect('key_press_event',onkeyclick)
 print "MAX amplitude <R,L> Jy ",asmax
 
 if os.path.isdir(figFolder):  
     pylab.savefig(figFolder+filename[0:-4]+'fit.eps')
     pylab.savefig(figFolder+filename[0:-4]+'fit.jpg')
-    pylab.savefig(figFolder+filename[0:-4]+'fit.pdf')
 else:
     print "Please create folder to save plot images: ",figFolder
     print "Warning: Plot images are NOT saved!"
