@@ -7,8 +7,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 from time import strptime
 import scipy.constants
-from scipy import interpolate
-from scipy.interpolate import interp1d
 
 from experimentsLogReader import ExperimentLogReader
 
@@ -81,6 +79,7 @@ if __name__=="__main__":
     #slito punktu izdzesana
     outliersMask = is_outlier(data[:, [0]])
     data = data[outliersMask]
+    dataPoints = data.shape[0]
     
     logs  = ExperimentLogReader(sys.argv[1]).getLgs()
     scanNumber = sys.argv[2].split(".")[0].split("_")[1][1:len(sys.argv[2])]
@@ -148,22 +147,50 @@ if __name__=="__main__":
 
     Vobs = float(Vobs)
     lsrCorr = float(lsrShift)*1.e6 # for MHz
+    
+    m = 0
+    n = dataPoints
      
     FreqStart = scan["FreqStart"] 
+  
     x = dopler((data[:, [0]] + FreqStart) * (10 ** 6), VelTotal)
-   
-    y = data[:, [1]] * calibration(location, Systemtemperature1u)
-    x = np.arange(0,y.size )
-    print x.size, y.size
-    f = interp1d([1,2,3],[1,4,6])
+    xlist = list()
     
-    plt.plot(dopler((data[:, [0]] + FreqStart) * (10 ** 6), VelTotal), data[:, [1]] * calibration(location, Systemtemperature1u), 'ro')
+    y1 = data[:, [1]] * calibration(location, Systemtemperature1u)
+    y1list = list()
+    
+    y2 = data[:, [2]] * calibration(location, Systemtemperature1u)
+    y2list = list()
+    
+    xarray = np.ones(dataPoints)
+    y1array = np.ones(dataPoints)
+    y2array = np.zeros(dataPoints)
+    
+    for i in range(0,dataPoints):
+        xarray[i] = x[i]
+    
+    y1array = np.zeros(dataPoints)
+    for j in range(0,dataPoints):
+        y1array[j] = y1[j]
+    
+    for k in range(0,dataPoints):
+        y2array[k] = y2[k]
+    
+    z = np.polyfit(xarray, y1array, 29)
+    p = np.poly1d(z)
+    
+    z2 = np.polyfit(xarray, y2array, 29)
+    p2 = np.poly1d(z2)
+    
+    plt.plot(x , p(x), 'r')
+    plt.plot(x, y1, 'yo')
     plt.grid(True)
     plt.xlabel('velocity')
-    plt.legend("1u")
+    plt.legend("1u")    
     plt.show()
     
-    plt.plot(dopler((data[:, [0]] + FreqStart) * (10 ** 6), VelTotal), data[:, [2]] * calibration(location, Systemtemperature1u), 'ro')
+    plt.plot(x , p2(x), 'r')
+    plt.plot(x, y1, 'yo')
     plt.grid(True)
     plt.xlabel('velocity')
     plt.legend("9u")
