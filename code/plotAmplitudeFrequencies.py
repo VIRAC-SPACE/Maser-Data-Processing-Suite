@@ -208,7 +208,7 @@ if __name__=="__main__":
     plt.plot(x , p(x), 'r', label='Poly Fit')
     plt.plot(x, t1(x), 'b', label='Trapezoid')
     plt.plot(x, g1(x), 'g', label='Gaussian')
-    plt.plot(x, y1, 'ko', label='Data Points')
+    #plt.plot(x, y1, 'ko', label='Data Points')
     plt.grid(True)
     plt.xlabel('velocity')
     plt.legend(loc=2)
