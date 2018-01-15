@@ -111,7 +111,7 @@ if __name__=="__main__":
     DecStr = " ".join(scan["Dec"])
     dopsetPar= dateStr + " " + timeStr + " " + RaStr + " " + DecStr
     
-    os.system("./dopsetpy_v1.5 "+dopsetPar)
+    os.system("code/dopsetpy_v1.5 "+dopsetPar)
     
     # dopsetpy parametru nolasisana
     with open('lsrShift.dat') as openfileobject:
@@ -227,9 +227,9 @@ if __name__=="__main__":
     plt.title("9u Polarization")
     plt.show()
     
-    indexes_u1 = find_peaks_cwt(xarray, g2(xarray))
+    #indexes_u1 = find_peaks_cwt(xarray, g2(xarray))
     #indexes_u9 = find_peaks_cwt(x, y2)
     
-    print indexes_u1
+    #print indexes_u1
     
     sys.exit(0)

@@ -52,7 +52,7 @@ class ExperimentLogReader():
         self.datecount = 0
         
         self.logfile = open(self.logs, "r")
-        self.datafile = open(self.logs.split(".")[0] + "sch.dat", "w")
+        self.datafile = open("prettyLogs/" + self.logs.split(".")[0].split("/")[1] + "sch.dat", "w")
         
         #print self.datafile
         
@@ -301,9 +301,12 @@ class ExperimentLogReader():
         logs["location"] = self.Location
         
         for i in range(0, len(self.scan_names)):
-            logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates[0], "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i]}
+            logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates[0], "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sources[i]}
 
         return logs
+    
+    def getAllScansNumbers(self):
+        return  self.scan_names
         
     def __del__(self):
         self.logfile.close()
@@ -314,7 +317,7 @@ if __name__=="__main__":
         usage()
         sys.exit(1)
         
-    experimentLogReader = ExperimentLogReader(sys.argv[1])
+    experimentLogReader = ExperimentLogReader("logs/" + sys.argv[1])
     experimentLogReader.writeOutput()
     experimentLogReader.__del__()
     sys.exit(0)
