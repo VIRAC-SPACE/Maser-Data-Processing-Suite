@@ -7,6 +7,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 from time import strptime
 import scipy.constants
+from astropy.modeling import models, fitting
+from scipy.signal import find_peaks_cwt
 
 from experimentsLogReader import ExperimentLogReader
 
@@ -182,18 +184,52 @@ if __name__=="__main__":
     z2 = np.polyfit(xarray, y2array, 29)
     p2 = np.poly1d(z2)
     
-    plt.plot(x , p(x), 'r')
-    plt.plot(x, y1, 'yo')
+    # Fit the data using a box model
+    t_init = models.Trapezoid1D(amplitude=1., x_0=0., width=1., slope=0.5)
+    fit_t = fitting.LevMarLSQFitter()
+    t1 = fit_t(t_init, x, y1)
+    
+    # Fit the data using a Gaussian
+    g_init = models.Gaussian1D(amplitude=1., mean=0, stddev=1.)
+    fit_g = fitting.LevMarLSQFitter()
+    g1 = fit_g(g_init, x, y1)
+    
+    t_init = models.Trapezoid1D(amplitude=1., x_0=0., width=1., slope=0.5)
+    fit_t = fitting.LevMarLSQFitter()
+    t2 = fit_t(t_init, x, y2)
+    
+    # Fit the data using a Gaussian
+    g_init = models.Gaussian1D(amplitude=1., mean=0, stddev=1.)
+    fit_g = fitting.LevMarLSQFitter()
+    g2 = fit_g(g_init, x, y2)
+     
+    #1u
+    plt.figure()
+    plt.plot(x , p(x), 'r', label='Poly Fit')
+    plt.plot(x, t1(x), 'b', label='Trapezoid')
+    plt.plot(x, g1(x), 'g', label='Gaussian')
+    plt.plot(x, y1, 'ko', label='Data Points')
     plt.grid(True)
     plt.xlabel('velocity')
-    plt.legend("1u")    
+    plt.legend(loc=2)
+    plt.title("1u Polarization")   
     plt.show()
     
-    plt.plot(x , p2(x), 'r')
-    plt.plot(x, y1, 'yo')
+    #9u
+    plt.figure()
+    plt.plot(x , p2(x), 'r', label='Poly Fit')
+    plt.plot(x, t2(x), 'b', label='Trapezoid')
+    plt.plot(x, g2(x), 'g', label='Gaussian')
+    plt.plot(x, y2, 'ko', label='Data Points')
     plt.grid(True)
     plt.xlabel('velocity')
-    plt.legend("9u")
+    plt.legend(loc=2)
+    plt.title("9u Polarization")
     plt.show()
+    
+    indexes_u1 = find_peaks_cwt(xarray, g2(xarray))
+    #indexes_u9 = find_peaks_cwt(x, y2)
+    
+    print indexes_u1
     
     sys.exit(0)
