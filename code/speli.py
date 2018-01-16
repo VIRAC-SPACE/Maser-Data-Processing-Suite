@@ -212,7 +212,7 @@ import re
 if len(sys.argv[:]) > 1:
     filename = sys.argv[1]
 else:
-    filename='m82_n19.dat' # Filename in format <ExperimentCode>_<Scan_Number>.dat
+    filename='dataFiles/m82_n19.dat' # Filename in format <ExperimentCode>_<Scan_Number>.dat
 
 print
 print "Data file: \t",filename
@@ -223,7 +223,8 @@ end='.dat'
 scanNrStr = re.search('%s(.*)%s' % (start, end), filename).group(1)
 print "Scan Nr: "+scanNrStr
 irSchedPrms = baseName+"sch.dat"
-irLOGPrms = baseName+"irsch.dat" #open log reader made file
+#irLOGPrms = "prettyLogs/" + baseName+"irsch.dat" #open log reader made file
+irLOGPrms = "prettyLogs/" + "m82irsch.dat"
 #------------------------------------------------------------------------------------
 print "Experment LOG file: \t",irLOGPrms
 
