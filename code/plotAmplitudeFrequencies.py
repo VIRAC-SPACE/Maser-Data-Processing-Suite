@@ -77,7 +77,7 @@ if __name__=="__main__":
     if len(sys.argv) < 3:
         usage()
         sys.exit(1)
-      
+    
     data = np.fromfile(sys.argv[2], dtype="float64", count=-1, sep=" ") .reshape((file_len(sys.argv[2]),5))
     data = np.delete(data, (0), axis=0)
     
@@ -98,6 +98,7 @@ if __name__=="__main__":
     plt.grid(True)
     plt.xlabel('Mhz')
     plt.legend("1u")
+    plt.figure(3)
     plt.show()
     
     plt.plot(data[:, [0]], data[:, [2]] * calibration(location, Systemtemperature9u), 'ro')
@@ -248,9 +249,10 @@ if __name__=="__main__":
     #plt.plot(np.append(xarray[0:a],xarray[b:dataPoints]), c1(np.append(xarray[0:a],xarray[b:dataPoints])), 'y', label='Chebyshev_2')
     #plt.plot(x, y1, 'ko', label='Data Points')
     plt.grid(True)
-    plt.xlabel('velocity')
+    plt.xlabel('Velocity (km sec$^{-1}$)')
+    plt.ylabel('Flux density (Jy)')
     plt.legend(loc=2)
-    plt.title("1u Polarization for source " + scan["sourceName"] + " scan " + str(scanNumber))   
+    plt.title("1u Polarization for source " + scan["sourceName"] + " scan " + str(scanNumber))  
     plt.show()
     
     #9u
@@ -262,7 +264,8 @@ if __name__=="__main__":
     #plt.plot(np.append(xarray[0:a],xarray[b:dataPoints]), c2(np.append(xarray[0:a],xarray[b:dataPoints])), 'y', label='Chebyshev_2')
     #plt.plot(x, y2, 'ko', label='Data Points')
     plt.grid(True)
-    plt.xlabel('velocity')
+    plt.xlabel('Velocity (km sec$^{-1}$)')
+    plt.ylabel('Flux density (Jy)')
     plt.legend(loc=2)
     plt.title("9u Polarization for source " + scan["sourceName"] + " scan  " + str(scanNumber))
     plt.show()
@@ -303,9 +306,10 @@ if __name__=="__main__":
     #pplot(xarray, y1array, indexes_for_ceb)
     
     plt.grid(True)
-    plt.xlabel('velocity')
+    plt.xlabel('Velocity (km sec$^{-1}$)')
+    plt.ylabel('Flux density (Jy)')
     plt.legend(loc=2)
-    plt.title("1u Polarization for source " + scan["sourceName"] + " scan " + str(scanNumber))   
+    plt.title("1u Polarization for source " + scan["sourceName"] + " scan " + str(scanNumber))  
     plt.show()
     
     #indexes_for_ploy_fitt2 = peakutils.indexes(y1array - p2(xarray), thres=0.02/max(y1array - p2(xarray)), min_dist=3)
@@ -326,7 +330,8 @@ if __name__=="__main__":
     pplot(xarray, y1array, indexes_for_ceb2)
     
     plt.grid(True)
-    plt.xlabel('velocity')
+    plt.xlabel('Velocity (km sec$^{-1}$)')
+    plt.ylabel('Flux density (Jy)')
     plt.legend(loc=2)
     plt.title("9u Polarization for source " + scan["sourceName"] + " scan  " + str(scanNumber))
     plt.show()
