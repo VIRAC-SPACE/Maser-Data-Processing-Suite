@@ -834,6 +834,7 @@ zz=np.array(z)
 vv=np.array(velocity)
 #smart thres fiding!!!
 smartthres=0.9*sigma_1u/asmax
+print "smartthres ", smartthres
 print("% smaler as max vill be serched",smartthres)
 indexes = peakutils.indexes(zz, thres=smartthres, min_dist=3)
 print(indexes)

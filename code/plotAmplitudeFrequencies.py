@@ -4,11 +4,14 @@ from __future__ import division
 import os
 import sys
 import numpy as np
+from numpy.polynomial.chebyshev import chebfit
 from matplotlib import pyplot as plt
 from time import strptime
 import scipy.constants
 from astropy.modeling import models, fitting
-from scipy.signal import find_peaks_cwt
+from astropy.modeling.polynomial import Chebyshev1D
+import peakutils
+from peakutils.plot import plot as pplot
 
 from experimentsLogReader import ExperimentLogReader
 
@@ -19,7 +22,7 @@ def file_len(fname):
     return i + 1
 
 def usage():
-    print ('Usage: '+sys.argv[0]+' log file' + 'data file')
+    print ('Usage: '+sys.argv[0]+' log file' + 'data file' +  " point counts")
 
 def calibration(station, Tsys):
     scale = 1
@@ -78,7 +81,7 @@ if __name__=="__main__":
     data = np.fromfile(sys.argv[2], dtype="float64", count=-1, sep=" ") .reshape((file_len(sys.argv[2]),5))
     data = np.delete(data, (0), axis=0)
     
-    #slito punktu izdzesana
+    #slikto punktu izdzesana
     outliersMask = is_outlier(data[:, [0]])
     data = data[outliersMask]
     dataPoints = data.shape[0]
@@ -178,37 +181,72 @@ if __name__=="__main__":
     for k in range(0,dataPoints):
         y2array[k] = y2[k]
     
-    z = np.polyfit(xarray, y1array, 29)
+    middle = int(dataPoints/2)
+    
+    a = int(middle*0.88)
+    b = int(middle*1.075)
+    
+    ### u1
+    
+    # polyfit
+    z = np.polyfit(np.append(xarray[0:a],xarray[b:dataPoints]), np.append(y1array[0:a],y1array[b:dataPoints]), 9)
     p = np.poly1d(z)
     
-    z2 = np.polyfit(xarray, y2array, 29)
+    # Fit the data using a box model
+    t_init = models.Trapezoid1D(amplitude=1., x_0=0., width=1., slope=0.5)
+    fit_t = fitting.LevMarLSQFitter()
+    t1 = fit_t(t_init, np.append(xarray[0:a],xarray[b:dataPoints]),  np.append(y1[0:a],y1[b:dataPoints]) )
+    
+    # Fit the data using a Gaussian
+    g_init = models.Gaussian1D(amplitude=1., mean=0, stddev=1.)
+    fit_g = fitting.LevMarLSQFitter()
+    g1 = fit_g(g_init, np.append(xarray[0:a],xarray[b:dataPoints]),  np.append(y1[0:a],y1[b:dataPoints]))
+    
+    # Fit the data using a Chebyshev astro py
+    ceb = Chebyshev1D(9, domain=None, window=[-1, 1], n_models=None, model_set_axis=None, name=None, meta=None)
+    fit_ceb = fitting.LevMarLSQFitter()
+    ceb_1 = fit_ceb(ceb, np.append(xarray[0:a],xarray[b:dataPoints]),  np.append(y1[0:a],y1[b:dataPoints]))
+    #cb1 = y2array -  ceb_1(y2array)
+    
+    # Fit the data using a Chebyshev numpy
+    #ceb1 = chebfit(np.append(xarray[0:a],xarray[b:dataPoints]), np.append(y1[0:a],y1[b:dataPoints]), 9, rcond=None, full=False, w=None)
+    #c1 = np.poly1d(ceb1)
+   
+    ### u9
+    
+    # polyfit
+    z2 = np.polyfit(np.append(xarray[0:a],xarray[b:dataPoints]), np.append(y2array[0:a],y2array[b:dataPoints]), 9)
     p2 = np.poly1d(z2)
     
     # Fit the data using a box model
     t_init = models.Trapezoid1D(amplitude=1., x_0=0., width=1., slope=0.5)
     fit_t = fitting.LevMarLSQFitter()
-    t1 = fit_t(t_init, x, y1)
+    t2 = fit_t(t_init, np.append(xarray[0:a],xarray[b:dataPoints]),  np.append(y2[0:a],y2[b:dataPoints]))
     
     # Fit the data using a Gaussian
     g_init = models.Gaussian1D(amplitude=1., mean=0, stddev=1.)
     fit_g = fitting.LevMarLSQFitter()
-    g1 = fit_g(g_init, x, y1)
+    g2 = fit_g(g_init, np.append(xarray[0:a],xarray[b:dataPoints]), np.append(y2[0:a],y2[b:dataPoints]))
     
-    t_init = models.Trapezoid1D(amplitude=1., x_0=0., width=1., slope=0.5)
-    fit_t = fitting.LevMarLSQFitter()
-    t2 = fit_t(t_init, x, y2)
-    
-    # Fit the data using a Gaussian
-    g_init = models.Gaussian1D(amplitude=1., mean=0, stddev=1.)
-    fit_g = fitting.LevMarLSQFitter()
-    g2 = fit_g(g_init, x, y2)
+    # Fit the data using a Chebyshev astro py
+    ceb = Chebyshev1D(9, domain=None, window=[-1, 1], n_models=None, model_set_axis=None, name=None, meta=None)
+    fit_ceb = fitting.LevMarLSQFitter()
+    ceb_2 = fit_ceb(ceb, np.append(xarray[0:a],xarray[b:dataPoints]),  np.append(y2[0:a],y2[b:dataPoints]))
      
+    # Fit the data using a Chebyshev numpy
+    #ceb2 = chebfit(np.append(xarray[0:a],xarray[b:dataPoints]), np.append(y2[0:a],y2[b:dataPoints]), 9, rcond=None, full=False, w=None)
+    #c2 = np.poly1d(ceb2)
+    
+    #Polinom ploting 
+      
     #1u
     plt.figure()
-    plt.plot(x , p(x), 'r', label='Poly Fit')
-    plt.plot(x, t1(x), 'b', label='Trapezoid')
-    plt.plot(x, g1(x), 'g', label='Gaussian')
-    plt.plot(x, y1, 'ko', label='Data Points')
+    #plt.plot(xarray, p(xarray), 'r', label='Poly Fit')
+    #plt.plot(xarray, t1(xarray), 'b', label='Trapezoid')
+    #plt.plot(xarray, g1(xarray), 'g', label='Gaussian')
+    plt.plot(xarray, ceb_1(xarray), 'y', label='Chebyshev_1')
+    #plt.plot(np.append(xarray[0:a],xarray[b:dataPoints]), c1(np.append(xarray[0:a],xarray[b:dataPoints])), 'y', label='Chebyshev_2')
+    #plt.plot(x, y1, 'ko', label='Data Points')
     plt.grid(True)
     plt.xlabel('velocity')
     plt.legend(loc=2)
@@ -217,19 +255,81 @@ if __name__=="__main__":
     
     #9u
     plt.figure()
-    plt.plot(x , p2(x), 'r', label='Poly Fit')
-    plt.plot(x, t2(x), 'b', label='Trapezoid')
-    plt.plot(x, g2(x), 'g', label='Gaussian')
-    plt.plot(x, y2, 'ko', label='Data Points')
+    #plt.plot(xarray, p2(xarray), 'r', label='Poly Fit')
+    #plt.plot(xarray, t2(xarray), 'b', label='Trapezoid')
+    #plt.plot(xarray, g2(xarray), 'g', label='Gaussian')
+    plt.plot(xarray, ceb_2(xarray), 'y', label='Chebyshev_1')
+    #plt.plot(np.append(xarray[0:a],xarray[b:dataPoints]), c2(np.append(xarray[0:a],xarray[b:dataPoints])), 'y', label='Chebyshev_2')
+    #plt.plot(x, y2, 'ko', label='Data Points')
     plt.grid(True)
     plt.xlabel('velocity')
     plt.legend(loc=2)
     plt.title("9u Polarization for source " + scan["sourceName"] + " scan  " + str(scanNumber))
     plt.show()
     
-    #indexes_u1 = find_peaks_cwt(xarray, g2(xarray))
-    #indexes_u9 = find_peaks_cwt(x, y2)
+    #Local maximum ploting
     
-    #print indexes_u1
+    #indexes_for_ploy_fitt = peakutils.indexes(y1array - p(xarray), thres=0.02/max(y1array - p(xarray)), min_dist=100)
+    #indexes_for_trap = peakutils.indexes(y1array - t1(xarray), thres=0.02/max(y1array - t1(xarray)), min_dist=3)
+    #indexes_for_gauss = peakutils.indexes(y1array - g1(xarray), thres=0.02/max(y1array - g1(xarray)), min_dist=3)
+    indexes_for_ceb = peakutils.indexes(y1array - ceb_1(xarray), thres=0.02/max(y1array - ceb_1(xarray)), min_dist=50)
+    
+    #peaks_x = peakutils.interpolate(xarray, y1array, ind=indexes_for_ploy_fitt)
+    
+    #1u
+    fig = plt.figure()
+    #plt.plot(xarray, y1array - p(xarray), 'r', label='Poly Fit')
+    #plt.plot(xarray, y1array - t1(xarray), 'b', label='Trapezoid')
+    #plt.plot(xarray, y1array - g1(xarray), 'g', label='Gaussian')
+    plt.plot(xarray, y1array - ceb_1(xarray), 'y', label='Chebyshev_1')
+    
+    #plt.plot(xarray[indexes_for_ploy_fitt], y1array[indexes_for_ploy_fitt], 'ro', label="Local Maximums for poly fit")
+    
+    '''
+    ax = fig.add_subplot(111)
+    for xy in zip(xarray[indexes_for_ploy_fitt], y1array[indexes_for_ploy_fitt]):                        # <--
+        ax.annotate('(%.2f, %.1f)' % xy, xy=xy, textcoords='data')
+    '''
+       
+    plt.plot(xarray[indexes_for_ceb], y1array[indexes_for_ceb], 'yo', label="Local Maximums for Chebyshev")
+    
+    ax = fig.add_subplot(111)
+    for xy in zip(xarray[indexes_for_ceb], y1array[indexes_for_ceb]):                        
+        ax.annotate('(%.2f, %.1f)' % xy, xy=xy, textcoords='data')
+    
+    #pplot(xarray, y1array, indexes_for_ploy_fitt)
+    #pplot(xarray, y1array, indexes_for_trap)
+    #pplot(xarray, y1array, indexes_for_gauss)
+    #pplot(xarray, y1array, indexes_for_ceb)
+    
+    plt.grid(True)
+    plt.xlabel('velocity')
+    plt.legend(loc=2)
+    plt.title("1u Polarization for source " + scan["sourceName"] + " scan " + str(scanNumber))   
+    plt.show()
+    
+    #indexes_for_ploy_fitt2 = peakutils.indexes(y1array - p2(xarray), thres=0.02/max(y1array - p2(xarray)), min_dist=3)
+    #indexes_for_trap2 = peakutils.indexes(y1array - t2(xarray), thres=0.02/max(y1array - t2(xarray)), min_dist=3)
+    #indexes_for_gauss2 = peakutils.indexes(y1array - g2(xarray), thres=0.02/max(y1array - g2(xarray)), min_dist=3)
+    indexes_for_ceb2 = peakutils.indexes(y1array - ceb_2(xarray), thres=0.02/max(y1array - ceb_2(xarray)), min_dist=50)
+    
+    #9u
+    plt.figure()
+    #plt.plot(xarray, y2array - p2(xarray), 'r', label='Poly Fit')
+    #plt.plot(xarray, y2array - t2(xarray), 'b', label='Trapezoid')
+    #plt.plot(xarray, y2array - g2(xarray), 'g', label='Gaussian')
+    plt.plot(xarray, y2array - ceb_2(xarray), 'y', label='Chebyshev_1')
+    
+    #pplot(xarray, y1array, indexes_for_ploy_fitt2)
+    #pplot(xarray, y1array, indexes_for_trap2)
+    #pplot(xarray, y1array, indexes_for_gauss2)
+    pplot(xarray, y1array, indexes_for_ceb2)
+    
+    plt.grid(True)
+    plt.xlabel('velocity')
+    plt.legend(loc=2)
+    plt.title("9u Polarization for source " + scan["sourceName"] + " scan  " + str(scanNumber))
+    plt.show()
+    
     
     sys.exit(0)
