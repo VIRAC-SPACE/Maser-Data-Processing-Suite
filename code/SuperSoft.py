@@ -1,6 +1,5 @@
 import os
 import sys
-from subprocess import call
 
 from experimentsLogReader import ExperimentLogReader
 
@@ -8,7 +7,8 @@ def usage():
     print ('Usage: ' + sys.argv[0] + ' Source name')
 
 if __name__=="__main__":
-    if len(sys.argv) < 2:
+    
+    if len(sys.argv) < 1:
         usage()
         sys.exit(1)
     
@@ -33,7 +33,6 @@ if __name__=="__main__":
                 datafile = dataFileDir + filename.split(".")[0][:-2] + "_n" + scanNumbers[i] + ".dat"
                 print logFileDir + filename, datafile
                 os.system("python2  " +  "code/plotAmplitudeFrequencies.py " + logFileDir + filename + " " + datafile)
-                #call(["python2 ", "code/plotAmplitudeFrequencies.py" ,logFileDir + filename, datafile])
         
         
         #sourceFromLogFile = logs[]
