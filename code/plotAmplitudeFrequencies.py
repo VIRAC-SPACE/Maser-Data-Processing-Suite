@@ -4,7 +4,7 @@ from __future__ import division
 import os
 import sys
 import numpy as np
-from matplotlib import pyplot as plt, axis
+from matplotlib import pyplot as plt
 from matplotlib.widgets import *
 from time import strptime
 import scipy.constants
@@ -78,6 +78,25 @@ if __name__=="__main__":
         usage()
         sys.exit(1)
     
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.set_title('click on points')
+
+    line, = ax.plot(np.random.rand(100), 'o', picker=5)  # 5 points tolerance
+    
+    def onpick(event):
+        thisline = event.artist
+        xdata = thisline.get_xdata()
+        ydata = thisline.get_ydata()
+        ind = event.ind
+        points = tuple(zip(xdata[ind], ydata[ind]))
+        print('onpick points:', points)
+    
+    fig.canvas.mpl_connect('pick_event', onpick)
+    
+    plt.show()
+    
+    
     experimentName = sys.argv[2].split("_")[0].split("/")[1]
     
     data = np.fromfile(sys.argv[2], dtype="float64", count=-1, sep=" ") .reshape((file_len(sys.argv[2]),5))
@@ -132,7 +151,7 @@ if __name__=="__main__":
     plt.suptitle("source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber), fontsize=16)
     plt.subplot(121)
     plt.subplots_adjust(bottom=0.3, wspace = 0.35)
-    plt.plot(xdata, z1, 'ko', label='Data Points')
+    plt.plot(xdata, z1, 'ko', label='Data Points')  
     plt.grid(True)
     plt.xlabel('Frequency Mhz')
     plt.ylabel ('Flux density (Jy)')
@@ -176,9 +195,18 @@ if __name__=="__main__":
     mSlider.on_changed(update)
     nSlider.on_changed(update)
     
-    plt.show()
+    def onpick(event):
+        print ("jolo")
+        thisline = event.artist
+        xdata = thisline.get_xdata()
+        ydata = thisline.get_ydata()
+        ind = event.ind
+        points = tuple(zip(xdata[ind], ydata[ind]))
+        print('onpick points:', points)
     
-    print m,n
+    fig.canvas.mpl_connect('pick_event', onpick)
+    
+    plt.show()
     
     timeStr = scan['startTime'].replace(":", " ")
     dateStrList = scan['dates'].split()
@@ -254,32 +282,33 @@ if __name__=="__main__":
    
     ### u9
     ceb_2 = fit_ceb(ceb, np.append(xarray[m:a], xarray[b:n]),  np.append(z2[m:a],z2[b:n]))
-     
   
     #Polinom ploting 
       
     #1u
     fig = pylab.gcf()
-    fig.canvas.set_window_title("Polynomial")
+    fig.canvas.set_window_title("Polynomial for experiment " +  experimentName)
+    fig.set_size_inches(10.5, 10.5)
+    plt.suptitle("source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber), fontsize=16)
+    plt.subplot(121)
+    plt.subplots_adjust(wspace = 0.35)
     plt.plot(xarray[m:n], ceb_1(xarray[m:n]), 'r', label='Chebyshev polynomial')
     plt.plot(np.append(xarray[m:a], xarray[b:n]), np.append(z1[m:a], z1[b:n]), 'ko', label='Data Points')
     plt.grid(True)
     plt.xlabel('Velocity (km sec$^{-1}$)')
     plt.ylabel('Flux density (Jy)')
     plt.legend(loc=2)
-    plt.title("1u Polarization for source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber))  
-    plt.show()
+    plt.title("1u Polarization")  
     
     #9u
-    fig = pylab.gcf()
-    fig.canvas.set_window_title("Polynomial")
+    plt.subplot(122)
     plt.plot(xarray[m:n], ceb_2(xarray[m:n]), 'r', label='Chebyshev polynomial')
     plt.plot(np.append(xarray[m:a], xarray[b:n]), np.append(z2[m:a], z2[b:n]), 'ko', label='Data Points')
     plt.grid(True)
     plt.xlabel('Velocity (km sec$^{-1}$)')
     plt.ylabel('Flux density (Jy)')
     plt.legend(loc=2)
-    plt.title("9u Polarization for source " + scan["sourceName"].split(",")[0] + " scan  " + str(scanNumber))
+    plt.title("9u Polarization")
     plt.show()
      
     #Local maximum ploting
@@ -295,12 +324,16 @@ if __name__=="__main__":
     
     #1u
     fig = pylab.gcf()
-    fig.canvas.set_window_title("Local Maximums")
+    fig.canvas.set_window_title("Local Maximums for experiment " +  experimentName)
+    fig.set_size_inches(10.5, 10.5)
+    plt.suptitle("source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber), fontsize=16)
+    plt.subplot(121)
+    plt.subplots_adjust(wspace = 0.35)
 
     plt.plot(xarray[m:n], y1values, 'b', label='Signal - polynomial')  
     plt.plot(xarray[m:n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', label="Local Maximums for signal")
     
-    ax = fig.add_subplot(111)
+    ax = fig.add_subplot(121)
     for xy in zip(xarray[m:n][indexes_for_ceb], y1values[indexes_for_ceb]):                        
         ax.annotate('(%.2f, %.1f)' % xy, xy=xy, textcoords='data')
     
@@ -308,17 +341,14 @@ if __name__=="__main__":
     plt.xlabel('Velocity (km sec$^{-1}$)')
     plt.ylabel('Flux density (Jy)')
     plt.legend(loc=2)
-    plt.title("1u Polarization for source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber))  
-    plt.show()
+    plt.title("1u Polarization")
     
     #9u
-    fig = pylab.gcf()
-    fig.canvas.set_window_title("Local Maximums")
-    
+    plt.subplot(122)
     plt.plot(xarray[m:n], y2values, 'b', label='Signal - polynomial')
     plt.plot(xarray[m:n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', label="Local Maximums for signal")
     
-    xa = fig.add_subplot(111)
+    xa = fig.add_subplot(122)
     for yx in zip(xarray[m:n][indexes_for_ceb2], y2values[indexes_for_ceb2]):                        
         xa.annotate('(%.2f, %.1f)' % yx, xy=yx, textcoords='data')
     
@@ -326,7 +356,7 @@ if __name__=="__main__":
     plt.xlabel('Velocity (km sec$^{-1}$)')
     plt.ylabel('Flux density (Jy)')
     plt.legend(loc=2)
-    plt.title("9u Polarization for source " + scan["sourceName"].split(",")[0] + " scan  " + str(scanNumber))
+    plt.title("9u Polarization")
     plt.show()
     
     sys.exit(0)
