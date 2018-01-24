@@ -4,7 +4,8 @@ from __future__ import division
 import os
 import sys
 import numpy as np
-from matplotlib import pyplot as plt
+from matplotlib import pyplot as plt, axis
+from matplotlib.widgets import *
 from time import strptime
 import scipy.constants
 from astropy.modeling import models, fitting
@@ -77,6 +78,8 @@ if __name__=="__main__":
         usage()
         sys.exit(1)
     
+    experimentName = sys.argv[2].split("_")[0].split("/")[1]
+    
     data = np.fromfile(sys.argv[2], dtype="float64", count=-1, sep=" ") .reshape((file_len(sys.argv[2]),5))
     data = np.delete(data, (0), axis=0) #izdzes masiva primo elementu
     
@@ -96,7 +99,7 @@ if __name__=="__main__":
     
     xdata = data[:, [0]]
     y1data = data[:, [1]] * calibration(location, Systemtemperature1u)
-    y2data = data[:, [2]] * calibration(location, Systemtemperature1u)
+    y2data = data[:, [2]] * calibration(location, Systemtemperature9u)
     
     y1array = np.zeros(dataPoints)
     y2array = np.zeros(dataPoints)
@@ -113,27 +116,69 @@ if __name__=="__main__":
     z1 = convolve(y1array, g1, boundary='extend')
     z2 = convolve(y2array, g2, boundary='extend')
     
+    #avota izgriesana
+    middle = int(dataPoints/2) #vidusunks
+    a = int(middle*0.88)
+    b = int(middle*1.075)
+    
+    #galu nogriesana
+    m = 0
+    n = dataPoints
+    
     #1u
     fig = pylab.gcf()
-    fig.canvas.set_window_title("Data filtering")
+    fig.canvas.set_window_title("Data filtering for experiment " +  experimentName)
+    fig.set_size_inches(10.5, 10.5)
+    plt.suptitle("source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber), fontsize=16)
+    plt.subplot(121)
+    plt.subplots_adjust(bottom=0.3, wspace = 0.35)
     plt.plot(xdata, z1, 'ko', label='Data Points')
     plt.grid(True)
     plt.xlabel('Frequency Mhz')
     plt.ylabel ('Flux density (Jy)')
     plt.legend(loc=2)
-    plt.title("1u Polarization for source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber)) 
-    plt.show()
+    
+    #pievieno papildus asi data punktiem
+    plt.twiny()
+    plt.xlabel("Data points")
+    plt.tick_params(axis="x")
+    plt.xticks(range(0, dataPoints + 512, 512))
+    
+    plt.title("1u Polarization",  y=1.08) 
     
     #9u
-    fig = pylab.gcf()
-    fig.canvas.set_window_title("Data filtering")
+    plt.subplot(122)
     plt.plot(xdata, z2, 'ko', label='Data Points')
     plt.grid(True)
     plt.xlabel('Frequency Mhz')
     plt.ylabel ('Flux density (Jy)')
     plt.legend(loc=2)
-    plt.title("9u Polarization for source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber)) 
+    
+    #pievieno papildus asi data punktiem
+    plt.twiny()
+    plt.xlabel("Data points")
+    plt.tick_params(axis="x")
+    plt.xticks(range(0, dataPoints + 512, 512))
+    plt.title("9u Polarization",  y=1.08) 
+    
+    #sliders
+    mAxes = plt.axes([0.10, 0.15, 0.65, 0.03])
+    nAxes  = plt.axes([0.10, 0.10, 0.65, 0.03])
+
+    mSlider=Slider(mAxes, 'M', m, a-1, valinit=m)
+    nSlider=Slider(nAxes , 'N', b-1, n, valinit=b-1)
+
+    def update(val):
+        global m,n
+        m=int(mSlider.val)
+        n=int(nSlider.val)
+    
+    mSlider.on_changed(update)
+    nSlider.on_changed(update)
+    
     plt.show()
+    
+    print m,n
     
     timeStr = scan['startTime'].replace(":", " ")
     dateStrList = scan['dates'].split()
@@ -192,23 +237,23 @@ if __name__=="__main__":
     for i in range(0,dataPoints):
         xarray[i] = x[i]
     
-    middle = int(dataPoints/2) #vidusunks
-    
-    #avota izgriesana
-    a = int(middle*0.88)
-    b = int(middle*1.075)
-    
     #polinomu apreikinasana
     
     # Fit the data using a Chebyshev astro py
     ceb = Chebyshev1D(9, domain=None, window=[-1, 1], n_models=None, model_set_axis=None, name=None, meta=None)
     fit_ceb = fitting.LevMarLSQFitter()
     
+    print m,a, 
+    print b,n
+    
+    #m = 900
+    #n = 3200
+    
     ### u1
-    ceb_1 = fit_ceb(ceb, np.append(xarray[0:a],xarray[b:dataPoints]),  np.append(z1[0:a],z1[b:dataPoints]))
+    ceb_1 = fit_ceb(ceb, np.append(xarray[m:a], xarray[b:n]),  np.append(z1[m:a],z1[b:n]))
    
     ### u9
-    ceb_2 = fit_ceb(ceb, np.append(xarray[0:a],xarray[b:dataPoints]),  np.append(z2[0:a],z2[b:dataPoints]))
+    ceb_2 = fit_ceb(ceb, np.append(xarray[m:a], xarray[b:n]),  np.append(z2[m:a],z2[b:n]))
      
   
     #Polinom ploting 
@@ -216,8 +261,8 @@ if __name__=="__main__":
     #1u
     fig = pylab.gcf()
     fig.canvas.set_window_title("Polynomial")
-    plt.plot(xarray, ceb_1(xarray), 'r', label='Chebyshev polynomial')
-    plt.plot(np.append(xarray[0:a], xarray[b:dataPoints]), np.append(z1[0:a], z1[b:dataPoints]), 'ko', label='Data Points')
+    plt.plot(xarray[m:n], ceb_1(xarray[m:n]), 'r', label='Chebyshev polynomial')
+    plt.plot(np.append(xarray[m:a], xarray[b:n]), np.append(z1[m:a], z1[b:n]), 'ko', label='Data Points')
     plt.grid(True)
     plt.xlabel('Velocity (km sec$^{-1}$)')
     plt.ylabel('Flux density (Jy)')
@@ -228,8 +273,8 @@ if __name__=="__main__":
     #9u
     fig = pylab.gcf()
     fig.canvas.set_window_title("Polynomial")
-    plt.plot(xarray, ceb_2(xarray), 'r', label='Chebyshev polynomial')
-    plt.plot(np.append(xarray[0:a], xarray[b:dataPoints]), np.append(z2[0:a], z2[b:dataPoints]), 'ko', label='Data Points')
+    plt.plot(xarray[m:n], ceb_2(xarray[m:n]), 'r', label='Chebyshev polynomial')
+    plt.plot(np.append(xarray[m:a], xarray[b:n]), np.append(z2[m:a], z2[b:n]), 'ko', label='Data Points')
     plt.grid(True)
     plt.xlabel('Velocity (km sec$^{-1}$)')
     plt.ylabel('Flux density (Jy)')
@@ -241,8 +286,8 @@ if __name__=="__main__":
     
     thres=0.1
     
-    y1values = z1 - ceb_1(xarray)
-    y2values = z2 - ceb_2(xarray)
+    y1values = z1[m:n] - ceb_1(xarray[m:n])
+    y2values = z2[m:n] - ceb_2(xarray[m:n])
     
     #indexsu apreikinasana
     indexes_for_ceb = peakutils.indexes(y1values, thres=thres, min_dist=10)
@@ -252,11 +297,11 @@ if __name__=="__main__":
     fig = pylab.gcf()
     fig.canvas.set_window_title("Local Maximums")
 
-    plt.plot(xarray, y1values, 'b', label='Signal - polynomial')  
-    plt.plot(xarray[indexes_for_ceb], y1values[indexes_for_ceb], 'dr', label="Local Maximums for signal")
+    plt.plot(xarray[m:n], y1values, 'b', label='Signal - polynomial')  
+    plt.plot(xarray[m:n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', label="Local Maximums for signal")
     
     ax = fig.add_subplot(111)
-    for xy in zip(xarray[indexes_for_ceb], y1values[indexes_for_ceb]):                        
+    for xy in zip(xarray[m:n][indexes_for_ceb], y1values[indexes_for_ceb]):                        
         ax.annotate('(%.2f, %.1f)' % xy, xy=xy, textcoords='data')
     
     plt.grid(True)
@@ -270,11 +315,11 @@ if __name__=="__main__":
     fig = pylab.gcf()
     fig.canvas.set_window_title("Local Maximums")
     
-    plt.plot(xarray, y2values, 'b', label='Signal - polynomial')
-    plt.plot(xarray[indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', label="Local Maximums for signal")
+    plt.plot(xarray[m:n], y2values, 'b', label='Signal - polynomial')
+    plt.plot(xarray[m:n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', label="Local Maximums for signal")
     
     xa = fig.add_subplot(111)
-    for yx in zip(xarray[indexes_for_ceb2], y2values[indexes_for_ceb2]):                        
+    for yx in zip(xarray[m:n][indexes_for_ceb2], y2values[indexes_for_ceb2]):                        
         xa.annotate('(%.2f, %.1f)' % yx, xy=yx, textcoords='data')
     
     plt.grid(True)

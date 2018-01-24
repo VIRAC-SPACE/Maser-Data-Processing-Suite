@@ -6,6 +6,9 @@ import re
 import time
 import datetime
 
+
+#nolasit /gps-fmout/
+
 os.environ['TZ'] = 'UTC'
 time.tzset()
 
