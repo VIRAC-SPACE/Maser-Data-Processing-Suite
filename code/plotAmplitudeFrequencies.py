@@ -72,31 +72,24 @@ def is_outlier(points, thresh=4.5):
     modified_z_score = 0.6745 * diff / med_abs_deviation
 
     return modified_z_score < thresh
+
+def onclick(event):
+    thisline = event.artist
+    xdata = thisline.get_xdata()
+    ydata = thisline.get_ydata()
+    ind = event.ind
+    p = tuple(zip(xdata[ind], ydata[ind]))
+    
+    points1._facecolors[event.ind,:] = (1, 0, 0, 1)
+    points1._edgecolors[event.ind,:] = (1, 0, 0, 1)
+    fig.canvas.draw()
+    print('onpick points:',  " x ", p[0], " y ", p[1])
     
 if __name__=="__main__":
     if len(sys.argv) < 3:
         usage()
         sys.exit(1)
-    
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.set_title('click on points')
 
-    line, = ax.plot(np.random.rand(100), 'o', picker=5)  # 5 points tolerance
-    
-    def onpick(event):
-        thisline = event.artist
-        xdata = thisline.get_xdata()
-        ydata = thisline.get_ydata()
-        ind = event.ind
-        points = tuple(zip(xdata[ind], ydata[ind]))
-        print('onpick points:', points)
-    
-    fig.canvas.mpl_connect('pick_event', onpick)
-    
-    plt.show()
-    
-    
     experimentName = sys.argv[2].split("_")[0].split("/")[1]
     
     data = np.fromfile(sys.argv[2], dtype="float64", count=-1, sep=" ") .reshape((file_len(sys.argv[2]),5))
@@ -151,7 +144,7 @@ if __name__=="__main__":
     plt.suptitle("source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber), fontsize=16)
     plt.subplot(121)
     plt.subplots_adjust(bottom=0.3, wspace = 0.35)
-    plt.plot(xdata, z1, 'ko', label='Data Points')  
+    points1 = plt.plot(xdata, z1, 'ko', label='Data Points',  picker=5)  
     plt.grid(True)
     plt.xlabel('Frequency Mhz')
     plt.ylabel ('Flux density (Jy)')
@@ -167,7 +160,7 @@ if __name__=="__main__":
     
     #9u
     plt.subplot(122)
-    plt.plot(xdata, z2, 'ko', label='Data Points')
+    points2 = plt.plot(xdata, z2, 'ko', label='Data Points', picker=5)
     plt.grid(True)
     plt.xlabel('Frequency Mhz')
     plt.ylabel ('Flux density (Jy)')
@@ -195,16 +188,7 @@ if __name__=="__main__":
     mSlider.on_changed(update)
     nSlider.on_changed(update)
     
-    def onpick(event):
-        print ("jolo")
-        thisline = event.artist
-        xdata = thisline.get_xdata()
-        ydata = thisline.get_ydata()
-        ind = event.ind
-        points = tuple(zip(xdata[ind], ydata[ind]))
-        print('onpick points:', points)
-    
-    fig.canvas.mpl_connect('pick_event', onpick)
+    cid = fig.canvas.mpl_connect('pick_event', onclick)
     
     plt.show()
     
