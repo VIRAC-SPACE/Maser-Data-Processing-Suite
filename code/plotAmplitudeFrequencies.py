@@ -41,27 +41,7 @@ def dopler(ObservedFrequency, velocityReceiver):
     return velocitySoure
 
 def is_outlier(points, thresh=4.5):
-    """
-    Returns a boolean array with True if points are outliers and False 
-    otherwise.
 
-    Parameters:
-    -----------
-        points : An numobservations by numdimensions array of observations
-        thresh : The modified z-score to use as a threshold. Observations with
-            a modified z-score (based on the median absolute deviation) greater
-            than this value will be classified as outliers.
-
-    Returns:
-    --------
-        mask : A numobservations-length boolean array.
-
-    References:
-    ----------
-        Boris Iglewicz and David Hoaglin (1993), "Volume 16: How to Detect and
-        Handle Outliers", The ASQC Basic References in Quality Control:
-        Statistical Techniques, Edward F. Mykytka, Ph.D., Editor. 
-    """
     if len(points.shape) == 1:
         points = points[:,None]
     median = np.median(points, axis=0)
@@ -73,18 +53,26 @@ def is_outlier(points, thresh=4.5):
 
     return modified_z_score < thresh
 
+def onclick1(event):
+    thisline = event.artist
+    xdata = thisline.get_xdata()
+    ydata = thisline.get_ydata()
+    ind = event.ind
+    p1 = tuple(zip(xdata[ind], ydata[ind]))
+    graph2.plot(p1[0][0], p1[0][1], 'ro', picker=5)
+    #points.append(p[0])
+    plt.show()
+
 def onclick(event):
     thisline = event.artist
     xdata = thisline.get_xdata()
     ydata = thisline.get_ydata()
     ind = event.ind
     p = tuple(zip(xdata[ind], ydata[ind]))
-    
-    points1._facecolors[event.ind,:] = (1, 0, 0, 1)
-    points1._edgecolors[event.ind,:] = (1, 0, 0, 1)
-    fig.canvas.draw()
-    print('onpick points:',  " x ", p[0], " y ", p[1])
-    
+    graph1.plot(p[0][0], p[0][1], 'ro', picker=5)
+    points.append(p[0])
+    plt.show()
+
 if __name__=="__main__":
     if len(sys.argv) < 3:
         usage()
@@ -122,8 +110,8 @@ if __name__=="__main__":
     for k in range(0,dataPoints):
         y2array[k] = y2data[k]
     
-    g1 = Gaussian1DKernel(stddev=np.std(y1array), x_size=19, mode='center', factor=100)
-    g2 = Gaussian1DKernel(stddev=np.std(y2array), x_size=19, mode='center', factor=100)
+    g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
+    g2 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
     
     z1 = convolve(y1array, g1, boundary='extend')
     z2 = convolve(y2array, g2, boundary='extend')
@@ -137,14 +125,16 @@ if __name__=="__main__":
     m = 0
     n = dataPoints
     
+    points = list()
     #1u
     fig = pylab.gcf()
     fig.canvas.set_window_title("Data filtering for experiment " +  experimentName)
     fig.set_size_inches(10.5, 10.5)
     plt.suptitle("source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber), fontsize=16)
-    plt.subplot(121)
+    
+    graph1 = plt.subplot(121)
     plt.subplots_adjust(bottom=0.3, wspace = 0.35)
-    points1 = plt.plot(xdata, z1, 'ko', label='Data Points',  picker=5)  
+    graph1.plot(xdata, z1, 'ko', label='Data Points',  picker=5)  
     plt.grid(True)
     plt.xlabel('Frequency Mhz')
     plt.ylabel ('Flux density (Jy)')
@@ -156,11 +146,11 @@ if __name__=="__main__":
     plt.tick_params(axis="x")
     plt.xticks(range(0, dataPoints + 512, 512))
     
-    plt.title("1u Polarization",  y=1.08) 
+    graph1.set_title("1u Polarization",  y=1.08) 
     
     #9u
-    plt.subplot(122)
-    points2 = plt.plot(xdata, z2, 'ko', label='Data Points', picker=5)
+    graph2 = plt.subplot(122)
+    graph2.plot(xdata, z2, 'ko', label='Data Points', picker=5)
     plt.grid(True)
     plt.xlabel('Frequency Mhz')
     plt.ylabel ('Flux density (Jy)')
@@ -171,7 +161,7 @@ if __name__=="__main__":
     plt.xlabel("Data points")
     plt.tick_params(axis="x")
     plt.xticks(range(0, dataPoints + 512, 512))
-    plt.title("9u Polarization",  y=1.08) 
+    graph2.set_title("9u Polarization",  y=1.08) 
     
     #sliders
     mAxes = plt.axes([0.10, 0.15, 0.65, 0.03])
@@ -188,10 +178,11 @@ if __name__=="__main__":
     mSlider.on_changed(update)
     nSlider.on_changed(update)
     
-    cid = fig.canvas.mpl_connect('pick_event', onclick)
+    fig.canvas.mpl_connect('pick_event', onclick)
+    fig.canvas.mpl_connect('pick_event', onclick1)
     
     plt.show()
-    
+  
     timeStr = scan['startTime'].replace(":", " ")
     dateStrList = scan['dates'].split()
     dateStrList[1] = strptime(dateStrList[1],'%b').tm_mon
