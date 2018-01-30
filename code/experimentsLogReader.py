@@ -128,21 +128,20 @@ class ExperimentLogReader():
                 self.RA = self.source.split(",")[1]
                 self.DEC = self.source.split(",")[2]
                 self.Epoch = logLineSplit[-1]
-                
                 self.Epochs.append(self.Epoch)
                 
-                if self.RA[0] == "-":
-                    self.ra.append(self.RA[0:3])
-                    self.ra.append(self.RA[3:5])
-                    self.ra.append(self.RA[5:len(self.RA)])
+                self.ra.append(self.RA[0:2])
+                self.ra.append(self.RA[2:4])
+                self.ra.append(self.RA[4:len(self.RA)])
+                    
+                if self.DEC[0] == "-":
+                    self.dec.append(self.DEC[0:3])
+                    self.dec.append(self.DEC[3:5])
+                    self.dec.append(self.DEC[5:len(self.DEC)])
                 else:    
-                    self.ra.append(self.RA[0:2])
-                    self.ra.append(self.RA[2:4])
-                    self.ra.append(self.RA[4:len(self.RA)])
-                
-                self.dec.append(self.DEC[0:2])
-                self.dec.append(self.DEC[2:4])
-                self.dec.append(self.DEC[4:len(self.RA)])
+                    self.dec.append(self.DEC[0:2])
+                    self.dec.append(self.DEC[2:4])
+                    self.dec.append(self.DEC[4:len(self.DEC)])   
                 
                 self.RAs.append(self.ra)
                 self.DECs.append(self.dec)

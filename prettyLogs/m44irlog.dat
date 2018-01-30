@@ -2,13 +2,13 @@ Start;Header;
 Station;IRBENE
 End;Header;----------------------;
 Scan;01;
-Source;s269,-061437.05,133936.2;
+Source;s269,061437.34,-051339.2;
 Date;27 Jun 2017;
 TimeStart;15:50:00;UT;
 TimeStop;15:57:00;UT;
 Duration;420;sec;7;min
-RA;-06 14 37.05;
-DEC;13 39 36.2;
+RA;06 14 37.34;
+DEC;-05 13 39.2;
 Epoch;2000.0;
 Systemtemperature1;1u;34.3;
 Systemtemperature2;9u;34.9;
@@ -568,7 +568,7 @@ TimeStart;20:41:50;UT;
 TimeStop;20:48:50;UT;
 Duration;420;sec;7;min
 RA;18 51 21.87;
-DEC;-0 01 205.3;
+DEC;-00 12 05.3;
 Epoch;2000.0;
 Systemtemperature1;1u;34.1;
 Systemtemperature2;9u;34.0;
