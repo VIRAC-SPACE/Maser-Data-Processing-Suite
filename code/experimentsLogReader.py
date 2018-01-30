@@ -2,10 +2,11 @@
 
 import os
 import sys
-import re
 import time
 import datetime
+import argparse
 
+import yaml
 
 #nolasit /gps-fmout/
 
@@ -20,12 +21,31 @@ def file_size(fname):
         statinfo = os.stat(fname)
         return statinfo.st_size
     
+def parseArguments():
+    # Create argument parser
+    parser = argparse.ArgumentParser()
+
+    # Positional mandatory arguments
+    parser.add_argument("logFile", help="Experiment log fail name", type=str)
+
+    # Optional arguments
+    parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/logConfig.yaml")
+
+    # Print version
+    parser.add_argument("--version", action="version", version='%(prog)s - Version 1.0')
+
+    # Parse arguments
+    args = parser.parse_args()
+
+    return args
+    
 def usage():
-    print ('Usage: '+sys.argv[0]+' log file')
+    print ('Usage:   log file')
     
 class ExperimentLogReader():
-    def __init__(self, logs):
+    def __init__(self, logs, prettyLogs):
         self.logs = logs
+        self.prettyLogs = prettyLogs
         self.scan_names = list()
         self.sources = list()
         self.dates = list()
@@ -55,9 +75,7 @@ class ExperimentLogReader():
         self.datecount = 0
         
         self.logfile = open(self.logs, "r")
-        self.datafile = open("prettyLogs/" + self.logs.split(".")[0].split("/")[1] + "sch.dat", "w")
-        
-        #print self.datafile
+        self.datafile = open(self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat", "w")
         
         for x in range(0, file_size(self.logs)):
             logLine = self.logfile.readline()
@@ -81,6 +99,8 @@ class ExperimentLogReader():
             elif "source="  in logLine:
                 self.sourcecount =  self.sourcecount + 1
                 
+                #s269,061437.05,133936.2,2000.0,
+                
                 if self.scan_count != self.sourcecount:
                     self.RAs.append(['0','0','0'])
                     self.DECs.append(['0','0','0'])
@@ -92,9 +112,10 @@ class ExperimentLogReader():
                     logLineSplit = logLine[:-2].split(",")
                 else:
                     logLineSplit = logLine[:-1].split(",")
+                
                 self.source = logLineSplit[0].split("=")[1]+","+logLineSplit[-3]+","+logLineSplit[-2]
                 self.sources.append(self.source)
-                #print logLine
+               
                 #print self.source
                 
                 self.ra = list()
@@ -103,15 +124,21 @@ class ExperimentLogReader():
                 #self.RA = logLine.split("=")[1].split(",")[1]
                 #self.DEC = logLine.split("=")[1].split(",")[2]
                 #self.Epoch = logLine.split("=")[1].split(",")[3]
+                
                 self.RA = self.source.split(",")[1]
                 self.DEC = self.source.split(",")[2]
                 self.Epoch = logLineSplit[-1]
                 
                 self.Epochs.append(self.Epoch)
                 
-                self.ra.append(self.RA[0:2])
-                self.ra.append(self.RA[2:4])
-                self.ra.append(self.RA[4:len(self.RA)])
+                if self.RA[0] == "-":
+                    self.ra.append(self.RA[0:3])
+                    self.ra.append(self.RA[3:5])
+                    self.ra.append(self.RA[5:len(self.RA)])
+                else:    
+                    self.ra.append(self.RA[0:2])
+                    self.ra.append(self.RA[2:4])
+                    self.ra.append(self.RA[4:len(self.RA)])
                 
                 self.dec.append(self.DEC[0:2])
                 self.dec.append(self.DEC[2:4])
@@ -296,6 +323,8 @@ class ExperimentLogReader():
             
             self.datafile.write("End;" + self.scan_names[scan].zfill(2) + ";----------------------;")
             self.datafile.write("\n")
+            
+        print "Created file " + "prettyLogs/" + self.logs.split(".")[0].split("/")[1] + "log.dat"
 
     def getLgs(self):
         self.writeOutput()
@@ -319,8 +348,24 @@ if __name__=="__main__":
     if len(sys.argv) < 2:
         usage()
         sys.exit(1)
-        
-    experimentLogReader = ExperimentLogReader("logs/" + sys.argv[1])
+    
+    # Parse the arguments
+    args = parseArguments()
+    
+    logFileName = str(args.__dict__["logFile"])
+    configFilePath = str(args.__dict__["config"])
+    
+    #Creating config parametrs
+    logPath =  ""
+    prettyLogsPath = ""
+    config = dict()
+    for key, value in yaml.load(open(configFilePath)).iteritems():
+        config[key] = value
+
+    logPath =  config["logPath"]
+    prettyLogsPath = config["prettyLogsPath"]
+       
+    experimentLogReader = ExperimentLogReader(logPath + logFileName, prettyLogsPath)
     experimentLogReader.writeOutput()
     experimentLogReader.__del__()
     sys.exit(0)
