@@ -4,8 +4,13 @@ from __future__ import division
 import os
 import sys
 import numpy as np
+import matplotlib
+matplotlib.use('TkAgg')
 from matplotlib import pyplot as plt
 from matplotlib.widgets import *
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+from Tkinter import *
 from time import strptime
 import scipy.constants
 from astropy.modeling import models, fitting
@@ -15,7 +20,7 @@ import peakutils
 import pylab
 
 from experimentsLogReader import ExperimentLogReader
-
+#https://stackoverflow.com/questions/31440167/placing-plot-on-tkinter-main-window-in-python
 def file_len(fname):
     with open(fname) as f:
         for i, l in enumerate(f):
@@ -89,7 +94,7 @@ if __name__=="__main__":
     
     dataPoints = data.shape[0]
     
-    logs  = ExperimentLogReader(sys.argv[1]).getLgs()
+    logs  = ExperimentLogReader("logs/" + sys.argv[1], "prettyLogs/").getLgs()
     scanNumber = sys.argv[2].split(".")[0].split("_")[1][1:len(sys.argv[2])]
     scan = logs[scanNumber]
     Systemtemperature1u = float(scan["Systemtemperature"][0])

@@ -23,16 +23,17 @@ def file_size(fname):
     
 def parseArguments():
     # Create argument parser
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='''Reads log file and create pretty logs. ''',
+    epilog="""LOGGREADER.""")
 
     # Positional mandatory arguments
-    parser.add_argument("logFile", help="Experiment log fail name", type=str)
+    parser.add_argument("logFile", help="Experiment log file name", type=str)
 
     # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/logConfig.yaml")
 
     # Print version
-    parser.add_argument("--version", action="version", version='%(prog)s - Version 1.0')
+    parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
 
     # Parse arguments
     args = parser.parse_args()

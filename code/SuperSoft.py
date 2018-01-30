@@ -22,8 +22,8 @@ if __name__=="__main__":
     dataFileList = list()
     
     for filename in os.listdir(logFileDir):
-        logs  = ExperimentLogReader(logFileDir + filename).getLgs() 
-        scanNumbers = ExperimentLogReader(logFileDir + filename).getAllScansNumbers()
+        logs  = ExperimentLogReader(logFileDir + filename, prettyLogDir).getLgs() 
+        scanNumbers = ExperimentLogReader(logFileDir + filename, prettyLogDir).getAllScansNumbers()
         
         for i in range(0, len(scanNumbers)):
             scan = logs[scanNumbers[i]]
@@ -31,9 +31,7 @@ if __name__=="__main__":
             
             if sourceNameInLogs ==  source_name:
                 datafile = dataFileDir + filename.split(".")[0][:-2] + "_n" + scanNumbers[i] + ".dat"
-                print logFileDir + filename, datafile
-                os.system("python2  " +  "code/plotAmplitudeFrequencies.py " + logFileDir + filename + " " + datafile)
+                print "Log file is", logFileDir + filename, "Data file is", datafile
+                os.system("python2  " +  "code/plotAmplitudeFrequencies.py " + filename + " " + datafile)
         
-        
-        #sourceFromLogFile = logs[]
     sys.exit(0)
