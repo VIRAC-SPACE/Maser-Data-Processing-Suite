@@ -129,26 +129,26 @@ class MaserPlot(Frame):
         
         plt.suptitle("source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber), fontsize=16)
         
-        fig1 = Figure(figsize=(6,6), dpi=100)
-        self.graph1 = fig1.add_subplot(121)
-        self.canvas = FigureCanvasTkAgg(fig1, master=self.Frame)
+        self.fig1 = Figure(figsize=(6,6), dpi=100)
+        self.graph1 = self.fig1.add_subplot(121)
+        self.canvas = FigureCanvasTkAgg(self.fig1, master=self.Frame)
         self.canvas.show()
         self.canvas.get_tk_widget().pack()
         self.canvas.mpl_connect('pick_event', self.onpickU1)
         
-        plt.subplots_adjust(bottom=0.3, wspace = 0.35)
         self.graph1.plot(self.xdata, self.ydataU1, 'ko', label='Data Points',  picker=5)  
-        plt.grid(True)
-        plt.xlabel('Frequency Mhz')
-        plt.ylabel ('Flux density (Jy)')
-        plt.legend(loc=2)
+        self.graph1.grid(True)
+        self.graph1.set_xlabel('Frequency Mhz')
+        self.graph1.set_ylabel ('Flux density (Jy)')
+        self.graph1.legend(loc=2)
         
         #pievieno papildus asi data punktiem
-        plt.twiny()
-        plt.xlabel("Data points")
-        plt.tick_params(axis="x")
-        plt.xticks(range(0, self.dataPoints + 512, 512))
-        
+        self.second_x_ass = self.graph1.twiny()
+        self.second_x_ass.set_xlabel("Data points")
+        self.graph1.tick_params(axis="x")
+        self.second_x_ass.set_axisbelow(True)
+        self.second_x_ass.set_xticks(range(0, self.dataPoints + 512, 1024))
+    
         self.graph1.set_title("1u Polarization",  y=1.08) 
         
         '''
@@ -169,38 +169,15 @@ class MaserPlot(Frame):
         graph2.set_title("9u Polarization",  y=1.08) 
         '''
         #sliders
-        mAxes = plt.axes([0.10, 0.15, 0.65, 0.03])
-        nAxes  = plt.axes([0.10, 0.10, 0.65, 0.03])
+        
+        mSlider = Scale(self.Frame, from_= self.m, to = self.a-1, orient=HORIZONTAL, label="M", length=500, variable=self.m)
+        mSlider.pack()
+        self.m = mSlider.get() 
+        
+        nSlider = Scale(self.Frame, from_ = self.b-1 , to = self.n, orient=HORIZONTAL, label="N", length=500, variable=self.n)
+        nSlider.pack()
+        self.n = nSlider.get() 
     
-        mSlider=Slider(mAxes, 'M', self.m, self.a-1, valinit=self.m)
-        nSlider=Slider(nAxes , 'N', self.b-1, self.n, valinit=self.b-1)
-    
-        def update(val):
-            #global m,n
-            self.m=int(mSlider.val)
-            self.n=int(nSlider.val)
-        
-        mSlider.on_changed(update)
-        nSlider.on_changed(update)
-        
-        plt.show()
-        
-        #canvasU1 = FigureCanvasTkAgg(fig1, master=self.Frame)
-        #fig1.set_canvas(canvasU1)
-        #fig1.canvas.mpl_connect('pick_event', self.onpickU1)
-        '''
-        canvasU9 = FigureCanvasTkAgg(fig2, master=self.Frame)
-        fig2.set_canvas(canvasU9)
-        fig2.canvas.mpl_connect('pick_event', self.onpickU1)
-        
-        plt.show()
-    
-        canvasU1.get_tk_widget().grid(row=0,column=0)
-        canvasU9.get_tk_widget().grid(row=1,column=1)
-        
-        canvasU1.draw()
-        canvasU9.draw()
-        '''
     def onpickU1(self, event):
         thisline = event.artist
         xdata = thisline.get_xdata()
