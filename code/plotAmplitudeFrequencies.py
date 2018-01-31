@@ -102,7 +102,7 @@ def frame(parent, sides,**options):
     Height=sides[1]
     f=Frame(width=Width,height=Height,**options)
     #f.grid(row=0,column=0)
-    f.pack()
+    f.grid(row=0, column=0)
     return (f)
     
 class MaserPlot(Frame):
@@ -112,7 +112,7 @@ class MaserPlot(Frame):
         self.Frame = frame(window,[1000,1000,1000,1000],background="gray")
         self.button = Button (self.Frame, text="Plot data points", command=self.plotDataPoints)
         #self.button.grid(row=1,column=1)
-        self.button.pack()
+        self.button.grid(row=0, column=0)
         
         self.xdata = xdata
         self.ydataU1= ydataU1
@@ -129,12 +129,14 @@ class MaserPlot(Frame):
         
         plt.suptitle("source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber), fontsize=16)
         
-        self.fig1 = Figure(figsize=(6,6), dpi=100)
-        self.graph1 = self.fig1.add_subplot(121)
-        self.canvas = FigureCanvasTkAgg(self.fig1, master=self.Frame)
-        self.canvas.show()
-        self.canvas.get_tk_widget().pack()
-        self.canvas.mpl_connect('pick_event', self.onpickU1)
+        #u1
+        self.fig1 = Figure(figsize=(5,5))
+        self.graph1 = self.fig1.add_subplot(111)
+        self.canvas1 = FigureCanvasTkAgg(self.fig1, master=self.Frame)
+        self.canvas1.show()
+        self.fig1.set_canvas(self.canvas1)
+        self.canvas1.get_tk_widget().grid(row=1, column=0)
+        self.canvas1.mpl_connect('pick_event', self.onpickU1)
         
         self.graph1.plot(self.xdata, self.ydataU1, 'ko', label='Data Points',  picker=5)  
         self.graph1.grid(True)
@@ -146,36 +148,41 @@ class MaserPlot(Frame):
         self.second_x_ass = self.graph1.twiny()
         self.second_x_ass.set_xlabel("Data points")
         self.graph1.tick_params(axis="x")
-        self.second_x_ass.set_axisbelow(True)
         self.second_x_ass.set_xticks(range(0, self.dataPoints + 512, 1024))
     
         self.graph1.set_title("1u Polarization",  y=1.08) 
         
-        '''
-        #9u
-        fig2 = Figure(figsize=(6,6))
-        graph2 = plt.subplot(122)
-        graph2.plot(self.xdata, self.ydataU9, 'ko', label='Data Points', picker=5)
-        plt.grid(True)
-        plt.xlabel('Frequency Mhz')
-        plt.ylabel ('Flux density (Jy)')
-        plt.legend(loc=2)
+        #u9
+        self.fig2 = Figure(figsize=(5,5))
+        self.graph2 = self.fig2.add_subplot(111)
+        self.canvas2 = FigureCanvasTkAgg(self.fig2, master=self.Frame)
+        self.canvas2.show()
+        self.fig2.set_canvas(self.canvas2)
+        #self.canvas2.get_tk_widget().pack()
+        self.canvas2.get_tk_widget().grid(row=1, column=1)
+        self.canvas2.mpl_connect('pick_event', self.onpickU9)
+        
+        self.graph2.plot(self.xdata, self.ydataU9, 'ko', label='Data Points',  picker=5)  
+        self.graph2.grid(True)
+        self.graph2.set_xlabel('Frequency Mhz')
+        self.graph2.set_ylabel ('Flux density (Jy)')
+        self.graph2.legend(loc=2)
         
         #pievieno papildus asi data punktiem
-        plt.twiny()
-        plt.xlabel("Data points")
-        plt.tick_params(axis="x")
-        plt.xticks(range(0, self.dataPoints + 512, 512))
-        graph2.set_title("9u Polarization",  y=1.08) 
-        '''
-        #sliders
+        self.second_x_ass_2 = self.graph2.twiny()
+        self.second_x_ass_2.set_xlabel("Data points")
+        self.graph2.tick_params(axis="x")
+        self.second_x_ass_2.set_xticks(range(0, self.dataPoints + 512, 1024))
+    
+        self.graph2.set_title("9u Polarization",  y=1.08) 
         
+        #sliders
         mSlider = Scale(self.Frame, from_= self.m, to = self.a-1, orient=HORIZONTAL, label="M", length=500, variable=self.m)
-        mSlider.pack()
+        mSlider.grid(row=2, column=0)
         self.m = mSlider.get() 
         
         nSlider = Scale(self.Frame, from_ = self.b-1 , to = self.n, orient=HORIZONTAL, label="N", length=500, variable=self.n)
-        nSlider.pack()
+        nSlider.grid(row=2, column=1)
         self.n = nSlider.get() 
     
     def onpickU1(self, event):
@@ -186,8 +193,17 @@ class MaserPlot(Frame):
         p = tuple(zip(xdata[ind], ydata[ind]))
         self.graph1.plot(p[0][0], p[0][1], 'ro', picker=5)
         #points.append(p[0])
-        #plt.show()
-        self.canvas.draw()
+        self.canvas1.draw()
+        
+    def onpickU9(self, event):
+        thisline = event.artist
+        xdata = thisline.get_xdata()
+        ydata = thisline.get_ydata()
+        ind = event.ind
+        p = tuple(zip(xdata[ind], ydata[ind]))
+        self.graph2.plot(p[0][0], p[0][1], 'ro', picker=5)
+        #points.append(p[0])
+        self.canvas2.draw()
 
 if __name__=="__main__":
     if len(sys.argv) < 3:
@@ -216,7 +232,7 @@ if __name__=="__main__":
     window = tk.Tk() 
     ploting = MaserPlot(window, xdata, y1data, y2data, dataPoints)
     ploting.mainloop()
-    
+    ploting.colse()
     
     '''
     experimentName = sys.argv[2].split("_")[0].split("/")[1]
