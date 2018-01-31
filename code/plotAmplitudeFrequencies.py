@@ -11,6 +11,7 @@ from matplotlib.widgets import *
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 from Tkinter import *
+import Tkinter as tk
 from time import strptime
 import scipy.constants
 from astropy.modeling import models, fitting
@@ -58,31 +59,189 @@ def is_outlier(points, thresh=4.5):
 
     return modified_z_score < thresh
 
-def onclick1(event):
-    thisline = event.artist
-    xdata = thisline.get_xdata()
-    ydata = thisline.get_ydata()
-    ind = event.ind
-    p1 = tuple(zip(xdata[ind], ydata[ind]))
-    graph2.plot(p1[0][0], p1[0][1], 'ro', picker=5)
-    #points.append(p[0])
-    plt.show()
-
-def onclick(event):
-    thisline = event.artist
-    xdata = thisline.get_xdata()
-    ydata = thisline.get_ydata()
-    ind = event.ind
-    p = tuple(zip(xdata[ind], ydata[ind]))
-    graph1.plot(p[0][0], p[0][1], 'ro', picker=5)
-    points.append(p[0])
-    plt.show()
+def onpick(event):
+    print "A"
+    '''
+    if event.artist == graph1:
+        thisline = event.artist
+        thisline._facecolor = "fff"
+        print type(thisline)
+        #xdata = thisline.get_xdata()
+        #ydata = thisline.get_ydata()
+        #ind = event.ind
+        #p = tuple(zip(xdata[ind], ydata[ind]))
+        #graph1.plot(p[0][0], p[0][1], 'ro', picker=5)
+        #points.append(p[0])
+        #plt.show()
+        
+    elif event.artist == graph2:
+        print "graph 2"
+    '''
+    
+def onpick1(event):
+    print "B"
+    '''
+    if event.artist == graph1:
+        thisline = event.artist
+        thisline._facecolor = "fff"
+        print type(thisline)
+        #xdata = thisline.get_xdata()
+        #ydata = thisline.get_ydata()
+        #ind = event.ind
+        #p = tuple(zip(xdata[ind], ydata[ind]))
+        #graph1.plot(p[0][0], p[0][1], 'ro', picker=5)
+        #points.append(p[0])
+        #plt.show()
+        
+    elif event.artist == graph2:
+        print "graph 2"
+    '''
+    
+def frame(parent, sides,**options):
+    Width=sides[0]
+    Height=sides[1]
+    f=Frame(width=Width,height=Height,**options)
+    #f.grid(row=0,column=0)
+    f.pack()
+    return (f)
+    
+class MaserPlot(Frame):
+    def __init__(self,  window, xdata, ydataU1, ydataU9, dataPoints):
+        Frame.__init__(self)
+        self.window = window
+        self.Frame = frame(window,[1000,1000,1000,1000],background="gray")
+        self.button = Button (self.Frame, text="Plot data points", command=self.plotDataPoints)
+        #self.button.grid(row=1,column=1)
+        self.button.pack()
+        
+        self.xdata = xdata
+        self.ydataU1= ydataU1
+        self.ydataU9 = ydataU9
+        
+        self.dataPoints = dataPoints
+        middle = int(self.dataPoints/2) #vidusunks
+        self.a = int(middle*0.88)
+        self.b = int(middle*1.075)
+        self.m = 0
+        self.n = self.dataPoints
+        
+    def plotDataPoints (self):
+        
+        plt.suptitle("source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber), fontsize=16)
+        
+        fig1 = Figure(figsize=(6,6), dpi=100)
+        self.graph1 = fig1.add_subplot(121)
+        self.canvas = FigureCanvasTkAgg(fig1, master=self.Frame)
+        self.canvas.show()
+        self.canvas.get_tk_widget().pack()
+        self.canvas.mpl_connect('pick_event', self.onpickU1)
+        
+        plt.subplots_adjust(bottom=0.3, wspace = 0.35)
+        self.graph1.plot(self.xdata, self.ydataU1, 'ko', label='Data Points',  picker=5)  
+        plt.grid(True)
+        plt.xlabel('Frequency Mhz')
+        plt.ylabel ('Flux density (Jy)')
+        plt.legend(loc=2)
+        
+        #pievieno papildus asi data punktiem
+        plt.twiny()
+        plt.xlabel("Data points")
+        plt.tick_params(axis="x")
+        plt.xticks(range(0, self.dataPoints + 512, 512))
+        
+        self.graph1.set_title("1u Polarization",  y=1.08) 
+        
+        '''
+        #9u
+        fig2 = Figure(figsize=(6,6))
+        graph2 = plt.subplot(122)
+        graph2.plot(self.xdata, self.ydataU9, 'ko', label='Data Points', picker=5)
+        plt.grid(True)
+        plt.xlabel('Frequency Mhz')
+        plt.ylabel ('Flux density (Jy)')
+        plt.legend(loc=2)
+        
+        #pievieno papildus asi data punktiem
+        plt.twiny()
+        plt.xlabel("Data points")
+        plt.tick_params(axis="x")
+        plt.xticks(range(0, self.dataPoints + 512, 512))
+        graph2.set_title("9u Polarization",  y=1.08) 
+        '''
+        #sliders
+        mAxes = plt.axes([0.10, 0.15, 0.65, 0.03])
+        nAxes  = plt.axes([0.10, 0.10, 0.65, 0.03])
+    
+        mSlider=Slider(mAxes, 'M', self.m, self.a-1, valinit=self.m)
+        nSlider=Slider(nAxes , 'N', self.b-1, self.n, valinit=self.b-1)
+    
+        def update(val):
+            #global m,n
+            self.m=int(mSlider.val)
+            self.n=int(nSlider.val)
+        
+        mSlider.on_changed(update)
+        nSlider.on_changed(update)
+        
+        plt.show()
+        
+        #canvasU1 = FigureCanvasTkAgg(fig1, master=self.Frame)
+        #fig1.set_canvas(canvasU1)
+        #fig1.canvas.mpl_connect('pick_event', self.onpickU1)
+        '''
+        canvasU9 = FigureCanvasTkAgg(fig2, master=self.Frame)
+        fig2.set_canvas(canvasU9)
+        fig2.canvas.mpl_connect('pick_event', self.onpickU1)
+        
+        plt.show()
+    
+        canvasU1.get_tk_widget().grid(row=0,column=0)
+        canvasU9.get_tk_widget().grid(row=1,column=1)
+        
+        canvasU1.draw()
+        canvasU9.draw()
+        '''
+    def onpickU1(self, event):
+        thisline = event.artist
+        xdata = thisline.get_xdata()
+        ydata = thisline.get_ydata()
+        ind = event.ind
+        p = tuple(zip(xdata[ind], ydata[ind]))
+        self.graph1.plot(p[0][0], p[0][1], 'ro', picker=5)
+        #points.append(p[0])
+        #plt.show()
+        self.canvas.draw()
 
 if __name__=="__main__":
     if len(sys.argv) < 3:
         usage()
         sys.exit(1)
-
+    
+   
+    data = np.fromfile(sys.argv[2], dtype="float64", count=-1, sep=" ") .reshape((file_len(sys.argv[2]),5))
+    data = np.delete(data, (0), axis=0) #izdzes masiva primo elementu
+    
+    dataPoints = data.shape[0]
+    
+    logs  = ExperimentLogReader("logs/" + sys.argv[1], "prettyLogs/").getLgs()
+    scanNumber = sys.argv[2].split(".")[0].split("_")[1][1:len(sys.argv[2])]
+    scan = logs[scanNumber]
+    
+    Systemtemperature1u = float(scan["Systemtemperature"][0])
+    Systemtemperature9u = float(scan["Systemtemperature"][1])
+    
+    location = logs["location"]
+    
+    xdata = data[:, [0]]
+    y1data = data[:, [1]] * calibration(location, Systemtemperature1u)
+    y2data = data[:, [2]] * calibration(location, Systemtemperature9u)
+        
+    window = tk.Tk() 
+    ploting = MaserPlot(window, xdata, y1data, y2data, dataPoints)
+    ploting.mainloop()
+    
+    
+    '''
     experimentName = sys.argv[2].split("_")[0].split("/")[1]
     
     data = np.fromfile(sys.argv[2], dtype="float64", count=-1, sep=" ") .reshape((file_len(sys.argv[2]),5))
@@ -183,8 +342,10 @@ if __name__=="__main__":
     mSlider.on_changed(update)
     nSlider.on_changed(update)
     
-    fig.canvas.mpl_connect('pick_event', onclick)
-    fig.canvas.mpl_connect('pick_event', onclick1)
+    graph1.set_picker(True)
+    graph2.set_picker(True)
+    fig.canvas.mpl_connect('pick_event', onpick)
+    #fig.canvas.mpl_connect('pick_event', onclick1)
     
     plt.show()
   
@@ -253,9 +414,6 @@ if __name__=="__main__":
     
     print m,a, 
     print b,n
-    
-    #m = 900
-    #n = 3200
     
     ### u1
     ceb_1 = fit_ceb(ceb, np.append(xarray[m:a], xarray[b:n]),  np.append(z1[m:a],z1[b:n]))
@@ -338,5 +496,6 @@ if __name__=="__main__":
     plt.legend(loc=2)
     plt.title("9u Polarization")
     plt.show()
-    
+    '''
     sys.exit(0)
+    
