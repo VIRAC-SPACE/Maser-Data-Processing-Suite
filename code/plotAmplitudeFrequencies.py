@@ -101,7 +101,6 @@ def frame(parent, sides,**options):
     Width=sides[0]
     Height=sides[1]
     f=Frame(width=Width,height=Height,**options)
-    #f.grid(row=0,column=0)
     f.grid(row=0, column=0)
     return (f)
     
@@ -110,9 +109,8 @@ class MaserPlot(Frame):
         Frame.__init__(self)
         self.window = window
         self.Frame = frame(window,[1000,1000,1000,1000],background="gray")
-        self.button = Button (self.Frame, text="Plot data points", command=self.plotDataPoints)
-        #self.button.grid(row=1,column=1)
-        self.button.grid(row=0, column=0)
+        self.startDataPlotButton = Button (self.Frame, text="Plot data points", command=self.plotDataPoints)
+        self.startDataPlotButton.grid(row=0, column=0)
         
         self.xdata = xdata
         self.ydataU1= ydataU1
@@ -125,7 +123,28 @@ class MaserPlot(Frame):
         self.m = 0
         self.n = self.dataPoints
         
+        y1array = np.zeros(dataPoints)
+        y2array = np.zeros(dataPoints)
+        
+        for j in range(0,dataPoints):
+            y1array[j] = self.ydataU1[j]
+        
+        for k in range(0,dataPoints):
+            y2array[k] = self.ydataU9[k]
+            
+        g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
+        g2 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
+    
+        self.z1 = convolve(y1array, g1, boundary='extend')
+        self.z2 = convolve(y2array, g2, boundary='extend')
+        
     def plotDataPoints (self):
+        self.startDataPlotButton.destroy()
+        self.createPolynomialButton = Button (self.Frame, text="Create Polynomial", command=self.plotPolynomial)
+        self.createPolynomialButton.grid(row=0, column=2)
+        
+        self.points_1u = list()
+        self.points_9u = list()
         
         plt.suptitle("source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber), fontsize=16)
         
@@ -138,7 +157,7 @@ class MaserPlot(Frame):
         self.canvas1.get_tk_widget().grid(row=1, column=0)
         self.canvas1.mpl_connect('pick_event', self.onpickU1)
         
-        self.graph1.plot(self.xdata, self.ydataU1, 'ko', label='Data Points',  picker=5)  
+        self.graph1.plot(self.xdata, self.z1, 'ko', label='Data Points', markersize=1,  picker=5)  
         self.graph1.grid(True)
         self.graph1.set_xlabel('Frequency Mhz')
         self.graph1.set_ylabel ('Flux density (Jy)')
@@ -158,11 +177,10 @@ class MaserPlot(Frame):
         self.canvas2 = FigureCanvasTkAgg(self.fig2, master=self.Frame)
         self.canvas2.show()
         self.fig2.set_canvas(self.canvas2)
-        #self.canvas2.get_tk_widget().pack()
         self.canvas2.get_tk_widget().grid(row=1, column=1)
         self.canvas2.mpl_connect('pick_event', self.onpickU9)
         
-        self.graph2.plot(self.xdata, self.ydataU9, 'ko', label='Data Points',  picker=5)  
+        self.graph2.plot(self.xdata, self.z2, 'ko', label='Data Points', markersize=1, picker=5)  
         self.graph2.grid(True)
         self.graph2.set_xlabel('Frequency Mhz')
         self.graph2.set_ylabel ('Flux density (Jy)')
@@ -191,8 +209,8 @@ class MaserPlot(Frame):
         ydata = thisline.get_ydata()
         ind = event.ind
         p = tuple(zip(xdata[ind], ydata[ind]))
-        self.graph1.plot(p[0][0], p[0][1], 'ro', picker=5)
-        #points.append(p[0])
+        self.graph1.plot(p[0][0], p[0][1], 'ro', markersize=1, picker=5)
+        self.points_1u.append(p[0])
         self.canvas1.draw()
         
     def onpickU9(self, event):
@@ -201,9 +219,16 @@ class MaserPlot(Frame):
         ydata = thisline.get_ydata()
         ind = event.ind
         p = tuple(zip(xdata[ind], ydata[ind]))
-        self.graph2.plot(p[0][0], p[0][1], 'ro', picker=5)
-        #points.append(p[0])
+        self.graph2.plot(p[0][0], p[0][1], 'ro', markersize=1, picker=5)
+        self.points_9u.append(p[0])
         self.canvas2.draw()
+    
+    def plotPolynomial(self):
+        print  self.points_1u, "\n", self.points_9u
+        
+    def quit(self):
+        self.Frame.destroy()
+        self.window.destroy()
 
 if __name__=="__main__":
     if len(sys.argv) < 3:
@@ -232,7 +257,6 @@ if __name__=="__main__":
     window = tk.Tk() 
     ploting = MaserPlot(window, xdata, y1data, y2data, dataPoints)
     ploting.mainloop()
-    ploting.colse()
     
     '''
     experimentName = sys.argv[2].split("_")[0].split("/")[1]
