@@ -235,7 +235,7 @@ if __name__=="__main__":
         usage()
         sys.exit(1)
     
-   
+    '''
     data = np.fromfile(sys.argv[2], dtype="float64", count=-1, sep=" ") .reshape((file_len(sys.argv[2]),5))
     data = np.delete(data, (0), axis=0) #izdzes masiva primo elementu
     
@@ -513,6 +513,6 @@ if __name__=="__main__":
     plt.legend(loc=2)
     plt.title("9u Polarization")
     plt.show()
-    '''
+
     sys.exit(0)
     
