@@ -68,7 +68,9 @@ def frame(parent, sides,**options):
     return (f)
     
 class MaserPlot(Frame):
-    def __init__(self,  window, xdata, ydataU1, ydataU9, dataPoints):
+    def __init__(self,  window, xdata, ydataU1, ydataU9, dataPoints, scan, Systemtemperature1u, Systemtemperature9u):
+        
+        #Window
         Frame.__init__(self)
         self.window = window
         self.Frame = frame(window,[1000,1000,1000,1000],background="gray")
@@ -106,6 +108,10 @@ class MaserPlot(Frame):
         self.z1 = convolve(y1array, g1, boundary='extend')
         self.z2 = convolve(y2array, g2, boundary='extend')
         
+        self.scan = scan
+        self.Systemtemperature1u = Systemtemperature1u
+        self.Systemtemperature9u = Systemtemperature9u
+        
     def plotDataPoints (self):
         self.startDataPlotButton.destroy()
         self.createPolynomialButton = Button (self.Frame, text="Create Polynomial", command=self.plotPolynomial)
@@ -114,7 +120,7 @@ class MaserPlot(Frame):
         self.points_1u = list()
         self.points_9u = list()
         
-        plt.suptitle("source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber), fontsize=16)
+        #plt.suptitle("source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber), fontsize=16)
         
         #u1
         self.fig1 = Figure(figsize=(5,5))
@@ -163,13 +169,15 @@ class MaserPlot(Frame):
         self.graph2.set_title("9u Polarization",  y=1.08) 
         
         #sliders
-        mSlider = Scale(self.Frame, from_= self.m, to = self.a-1, orient=HORIZONTAL, label="M", length=500, variable=self.m)
-        mSlider.grid(row=2, column=0)
-        self.m = mSlider.get() 
         
-        nSlider = Scale(self.Frame, from_ = self.b-1 , to = self.n, orient=HORIZONTAL, label="N", length=500, variable=self.n)
-        nSlider.grid(row=2, column=1)
-        self.n = nSlider.get() 
+        self.mSlider = Scale(self.Frame, from_= self.m, to = self.a-1, orient=HORIZONTAL, label="M", length=500, variable=self.m)
+        self.mSlider.grid(row=2, column=0)
+        self.m = self.mSlider.get()
+        
+        self.nSlider = Scale(self.Frame, from_ = self.b-1 , to = self.n, orient=HORIZONTAL, label="N", length=500, variable=self.n)
+        self.nSlider.grid(row=2, column=1)
+        self.nSlider.set(self.n)
+        self.n = self.nSlider.get() 
     
     def onpickU1(self, event):
         thisline = event.artist
@@ -192,29 +200,48 @@ class MaserPlot(Frame):
         self.canvas2.draw()
     
     def plotPolynomial(self):
-        self.canvas1.destroy()
-        self.canvas2.destroy()
+        self.fig1.clf()
+        self.fig2.clf()
         
         self.xarray_u1 = self.xarray
         self.xarray_u9 = self.xarray
         
+        print "pirms dzesanas ", self.xarray_u9.shape[0]
+        
         for p_u1 in self.points_1u:
-            self.xarray_u1.delete(p_u1[0])
-            self.z1.delete(p_u1[1])
+            self.xarray_u1 = np.delete(self.xarray_u1, self.xarray_u1[self.xarray_u1 == p_u1[0]])
+            self.z1 = np.delete(self.z1, self.z1[self.z1 == p_u1[1]])
             
         for p_u9 in self.points_9u:
-            self.xarray_u9.delete(p_u9[0])
-            self.z2.delete(p_u9[1])
+            self.xarray_u9 = np.delete(self.xarray_u9, self.xarray_u9[self.xarray_u9 == p_u9[0]])
+            self.z2 = np.delete(self.z2, self.z2[self.z2 == p_u9[1]])
         
-        timeStr = scan['startTime'].replace(":", " ")
-        dateStrList = scan['dates'].split()
+        self.m = self.mSlider.get()
+        self.n = self.nSlider.get()
+            
+        self.dataPoints_u1 = self.xarray_u1.shape[0]
+        self.dataPoints_u9 = self.xarray_u9.shape[0]
+        
+        middle_u1 = int(self.dataPoints_u1 / 2) #vidusunks
+        middle_u9 = int(self.dataPoints_u9 / 2) #vidusunks
+        
+        self.a_u1 = int(middle_u1 * 0.88)
+        self.a_u9 = int(middle_u9 * 0.88)
+        
+        self.b_u1 = int(middle_u1 * 1.075)
+        self.b_u9 = int(middle_u9 * 1.075)
+        
+        print "pec dzesanas ", self.xarray_u9.shape[0]
+        
+        timeStr = self.scan['startTime'].replace(":", " ")
+        dateStrList = self.scan['dates'].split()
         dateStrList[1] = strptime(dateStrList[1],'%b').tm_mon
         dateStr = str(dateStrList[2]) + " " + str(dateStrList[1]) + " " + str(dateStrList[0])
-        RaStr = " ".join(scan["Ra"])
-        DecStr = " ".join(scan["Dec"])
+        RaStr = " ".join(self.scan["Ra"])
+        DecStr = " ".join(self.scan["Dec"])
         dopsetPar= dateStr + " " + timeStr + " " + RaStr + " " + DecStr
         
-        os.system("code/dopsetpy_v1.5 "+dopsetPar)
+        os.system("code/dopsetpy_v1.5 " + dopsetPar)
     
         # dopsetpy parametru nolasisana
         with open('lsrShift.dat') as openfileobject:
@@ -253,7 +280,49 @@ class MaserPlot(Frame):
         Vobs = float(Vobs)
         lsrCorr = float(lsrShift)*1.e6 # for MHz
           
-        FreqStart = scan["FreqStart"] 
+        FreqStart = self.scan["FreqStart"] 
+        
+        #Parveido frekvenci par atrumu
+        x_u1 = dopler((self.xarray_u1 + FreqStart) * (10 ** 6), VelTotal)
+        x_u2 = dopler((self.xarray_u9 + FreqStart) * (10 ** 6), VelTotal)
+        
+        # Fit the data using a Chebyshev astro py
+        ceb = Chebyshev1D(9, domain=None, window=[-1, 1], n_models=None, model_set_axis=None, name=None, meta=None)
+        fit_ceb = fitting.LevMarLSQFitter()
+        
+        ### u1
+        ceb_1 = fit_ceb(ceb, np.append(x_u1[self.m:self.a_u1], x_u1[self.b_u1:self.n]),  np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]))
+       
+        ### u9
+        ceb_2 = fit_ceb(ceb, np.append(x_u2[self.m:self.a_u9], x_u2[self.b_u9:self.n]),  np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]))
+        
+        #u1 plot
+        self.fig3 = Figure(figsize=(5,5))
+        self.graph3 = self.fig3.add_subplot(111)
+        self.canvas1 = FigureCanvasTkAgg(self.fig3, master=self.Frame)
+        self.canvas1.show()
+        self.fig3.set_canvas(self.canvas1)
+        self.canvas1.get_tk_widget().grid(row=1, column=0)
+        self.graph3.plot(np.append(x_u1[self.m:self.a_u1], x_u1[self.b_u1:self.n]), np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]), 'ko', label='Data Points', markersize=1)
+        self.graph3.plot(x_u1[self.m:self.n], ceb_1(x_u1[self.m:self.n]), 'r', label='Chebyshev polynomial')  
+        self.graph3.grid(True)
+        self.graph3.set_xlabel('Frequency Mhz')
+        self.graph3.set_ylabel ('Flux density (Jy)')
+        self.graph3.legend(loc=2)
+        
+        #u9 plot
+        self.fig4 = Figure(figsize=(5,5))
+        self.graph4 = self.fig4.add_subplot(111)
+        self.canvas2 = FigureCanvasTkAgg(self.fig4, master=self.Frame)
+        self.canvas2.show()
+        self.fig4.set_canvas(self.canvas2)
+        self.canvas2.get_tk_widget().grid(row=1, column=1)
+        self.graph4.plot(np.append(x_u2[self.m:self.a_u9], x_u2[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), 'ko', label='Data Points', markersize=1)
+        self.graph4.plot(x_u2[self.m:self.n], ceb_2(x_u2[self.m:self.n]), 'r', label='Chebyshev polynomial')
+        self.graph4.grid(True)
+        self.graph4.set_xlabel('Frequency Mhz')
+        self.graph4.set_ylabel ('Flux density (Jy)')
+        self.graph4.legend(loc=2)
         
     def _quit(self):
         self.Frame.destroy()
@@ -281,17 +350,17 @@ def getLogs(logfileName, dataFileName):
     
     location = logs["location"]
     
-    return (Systemtemperature1u, Systemtemperature9u, location)
+    return (Systemtemperature1u, Systemtemperature9u, location, scan)
 
 def main(logFileName, corData):
     
     #get Data and Logs
-    Systemtemperature1u, Systemtemperature9u, location = getLogs(logFileName, corData)
+    Systemtemperature1u, Systemtemperature9u, location, scan = getLogs(logFileName, corData)
     xdata, y1data, y2data, dataPoints = getData(corData, location, Systemtemperature1u, Systemtemperature9u)
     
     #Create App
     window = tk.Tk() 
-    ploting = MaserPlot(window, xdata, y1data, y2data, dataPoints)
+    ploting = MaserPlot(window, xdata, y1data, y2data, dataPoints, scan, Systemtemperature1u, Systemtemperature9u)
     ploting.mainloop()
     sys.exit(0)
 
@@ -306,56 +375,7 @@ if __name__=="__main__":
     main(logFileName, corData)
     
     '''
-  
-    timeStr = scan['startTime'].replace(":", " ")
-    dateStrList = scan['dates'].split()
-    dateStrList[1] = strptime(dateStrList[1],'%b').tm_mon
-    dateStr = str(dateStrList[2]) + " " + str(dateStrList[1]) + " " + str(dateStrList[0])
-    RaStr = " ".join(scan["Ra"])
-    DecStr = " ".join(scan["Dec"])
-    dopsetPar= dateStr + " " + timeStr + " " + RaStr + " " + DecStr
-    
-    os.system("code/dopsetpy_v1.5 "+dopsetPar)
-    
-    # dopsetpy parametru nolasisana
-    with open('lsrShift.dat') as openfileobject:
-        for line in openfileobject:
-            Header = line.split(';')
-            vards = Header[0]
-            if vards == "Date":
-                dateStr = Header[1]
-            elif vards == "Time":
-                laiks = Header[1]
-            elif vards == "RA":
-                RaStr = Header[1]
-            elif vards == "DEC":
-                DecStr = Header[1]
-            elif vards == "Source":
-                Source = Header[1]
-            elif vards == "LSRshift":
-                lsrShift = Header[1]
-            elif vards == "MJD":
-                mjd = Header[1]
-                print "MJD: \t",mjd
-            elif vards == "Vobs":
-                Vobs = Header[1]
-                print "Vobs: \t",Vobs
-            elif vards == "AtFreq":
-                AtFreq = Header[1]
-                print "At Freq: \t",AtFreq
-            elif vards == "FreqShift":
-                FreqShift = Header[1]
-                print "FreqShift: \t",FreqShift
-            elif vards == "VelTotal":
-                VelTotal = float(Header[1])
-                print "VelTotal: \t",VelTotal
-            #Header +=1
-
-    Vobs = float(Vobs)
-    lsrCorr = float(lsrShift)*1.e6 # for MHz
-      
-    FreqStart = scan["FreqStart"] 
-    
+   
     #Parveido frekvenci par atrumu
     x = dopler((xdata + FreqStart) * (10 ** 6), VelTotal)
     
