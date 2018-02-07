@@ -200,6 +200,11 @@ class MaserPlot(Frame):
         self.canvas2.draw()
     
     def plotPolynomial(self):
+        self.createPolynomialButton.destroy()
+        self.plotLocalMaximumButton = Button (self.Frame, text="Create local maximum", command=self.plotLocalMaximum)
+        self.plotLocalMaximumButton.grid(row=0, column=2)
+        
+        #nodzes ieprieksejos grafikus
         self.fig1.clf()
         self.fig2.clf()
         
@@ -222,8 +227,8 @@ class MaserPlot(Frame):
         self.dataPoints_u1 = self.xarray_u1.shape[0]
         self.dataPoints_u9 = self.xarray_u9.shape[0]
         
-        middle_u1 = int(self.dataPoints_u1 / 2) #vidusunks
-        middle_u9 = int(self.dataPoints_u9 / 2) #vidusunks
+        middle_u1 = int(self.dataPoints_u1 / 2) #vidusunks u1
+        middle_u9 = int(self.dataPoints_u9 / 2) #vidusunks u9
         
         self.a_u1 = int(middle_u1 * 0.88)
         self.a_u9 = int(middle_u9 * 0.88)
@@ -283,18 +288,18 @@ class MaserPlot(Frame):
         FreqStart = self.scan["FreqStart"] 
         
         #Parveido frekvenci par atrumu
-        x_u1 = dopler((self.xarray_u1 + FreqStart) * (10 ** 6), VelTotal)
-        x_u2 = dopler((self.xarray_u9 + FreqStart) * (10 ** 6), VelTotal)
+        self.x_u1 = dopler((self.xarray_u1 + FreqStart) * (10 ** 6), VelTotal)
+        self.x_u9 = dopler((self.xarray_u9 + FreqStart) * (10 ** 6), VelTotal)
         
         # Fit the data using a Chebyshev astro py
         ceb = Chebyshev1D(9, domain=None, window=[-1, 1], n_models=None, model_set_axis=None, name=None, meta=None)
         fit_ceb = fitting.LevMarLSQFitter()
         
         ### u1
-        ceb_1 = fit_ceb(ceb, np.append(x_u1[self.m:self.a_u1], x_u1[self.b_u1:self.n]),  np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]))
+        self.ceb_1 = fit_ceb(ceb, np.append(self.x_u1[self.m:self.a_u1], self.x_u1[self.b_u1:self.n]),  np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]))
        
         ### u9
-        ceb_2 = fit_ceb(ceb, np.append(x_u2[self.m:self.a_u9], x_u2[self.b_u9:self.n]),  np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]))
+        self.ceb_2 = fit_ceb(ceb, np.append(self.x_u9[self.m:self.a_u9], self.x_u9[self.b_u9:self.n]),  np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]))
         
         #u1 plot
         self.fig3 = Figure(figsize=(5,5))
@@ -303,10 +308,10 @@ class MaserPlot(Frame):
         self.canvas1.show()
         self.fig3.set_canvas(self.canvas1)
         self.canvas1.get_tk_widget().grid(row=1, column=0)
-        self.graph3.plot(np.append(x_u1[self.m:self.a_u1], x_u1[self.b_u1:self.n]), np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]), 'ko', label='Data Points', markersize=1)
-        self.graph3.plot(x_u1[self.m:self.n], ceb_1(x_u1[self.m:self.n]), 'r', label='Chebyshev polynomial')  
+        self.graph3.plot(np.append(self.x_u1[self.m:self.a_u1], self.x_u1[self.b_u1:self.n]), np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]), 'ko', label='Data Points', markersize=1)
+        self.graph3.plot(self.x_u1[self.m:self.n], self.ceb_1(self.x_u1[self.m:self.n]), 'r', label='Chebyshev polynomial')  
         self.graph3.grid(True)
-        self.graph3.set_xlabel('Frequency Mhz')
+        self.graph3.set_xlabel('Velocity (km sec$^{-1}$)')
         self.graph3.set_ylabel ('Flux density (Jy)')
         self.graph3.legend(loc=2)
         
@@ -317,12 +322,57 @@ class MaserPlot(Frame):
         self.canvas2.show()
         self.fig4.set_canvas(self.canvas2)
         self.canvas2.get_tk_widget().grid(row=1, column=1)
-        self.graph4.plot(np.append(x_u2[self.m:self.a_u9], x_u2[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), 'ko', label='Data Points', markersize=1)
-        self.graph4.plot(x_u2[self.m:self.n], ceb_2(x_u2[self.m:self.n]), 'r', label='Chebyshev polynomial')
+        self.graph4.plot(np.append(self.x_u9[self.m:self.a_u9], self.x_u9[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), 'ko', label='Data Points', markersize=1)
+        self.graph4.plot(self.x_u9[self.m:self.n], self.ceb_2(self.x_u9[self.m:self.n]), 'r', label='Chebyshev polynomial')
         self.graph4.grid(True)
-        self.graph4.set_xlabel('Frequency Mhz')
+        self.graph4.set_xlabel('Velocity (km sec$^{-1}$)')
         self.graph4.set_ylabel ('Flux density (Jy)')
         self.graph4.legend(loc=2)
+        
+        
+        
+    def plotLocalMaximum(self):
+        #nodzes ieprieksejos grafikus
+        self.fig3.clf()
+        self.fig4.clf()
+        
+        thres=0.1
+    
+        y1values = self.z1[self.m:self.n] - self.ceb_1(self.x_u1[self.m:self.n])
+        y2values = self.z2[self.m:self.n] - self.ceb_2(self.x_u9[self.m:self.n])
+        
+        #indexsu apreikinasana
+        indexes_for_ceb = peakutils.indexes(y1values, thres=thres, min_dist=10)
+        indexes_for_ceb2 = peakutils.indexes(y2values, thres=thres, min_dist=10)
+        
+        #u1 plot
+        self.fig5 = Figure(figsize=(5,5))
+        self.graph5 = self.fig5.add_subplot(111)
+        self.canvas1 = FigureCanvasTkAgg(self.fig5, master=self.Frame)
+        self.canvas1.show()
+        self.fig5.set_canvas(self.canvas1)
+        self.canvas1.get_tk_widget().grid(row=1, column=0)
+        self.graph5.plot(self.x_u1[self.m:self.n], y1values, 'b', label='Signal - polynomial')  
+        self.graph5.plot(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', label="Local Maximums for signal")
+        self.graph5.grid(True)
+        self.graph5.set_xlabel('Velocity (km sec$^{-1}$)')
+        self.graph5.set_ylabel ('Flux density (Jy)')
+        self.graph5.legend(loc=2)
+        
+        #u9 plot
+        self.fig6 = Figure(figsize=(5,5))
+        self.graph6 = self.fig6.add_subplot(111)
+        self.canvas2 = FigureCanvasTkAgg(self.fig6, master=self.Frame)
+        self.canvas2.show()
+        self.fig5.set_canvas(self.canvas2)
+        self.canvas2.get_tk_widget().grid(row=1, column=1)
+        self.graph6.plot([1,2,3], [1,2,3], 'ko', label='Data Points', markersize=1)
+        self.graph6.plot(self.x_u9[self.m:self.n], y2values, 'b', label='Signal - polynomial')  
+        self.graph6.plot(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', label="Local Maximums for signal")
+        self.graph6.grid(True)
+        self.graph6.set_xlabel('Velocity (km sec$^{-1}$)')
+        self.graph6.set_ylabel ('Flux density (Jy)')
+        self.graph6.legend(loc=2)
         
     def _quit(self):
         self.Frame.destroy()
@@ -375,69 +425,6 @@ if __name__=="__main__":
     main(logFileName, corData)
     
     '''
-   
-    #Parveido frekvenci par atrumu
-    x = dopler((xdata + FreqStart) * (10 ** 6), VelTotal)
-    
-    xarray = np.zeros(dataPoints)
-    
-    for i in range(0,dataPoints):
-        xarray[i] = x[i]
-    
-    #polinomu apreikinasana
-    
-    # Fit the data using a Chebyshev astro py
-    ceb = Chebyshev1D(9, domain=None, window=[-1, 1], n_models=None, model_set_axis=None, name=None, meta=None)
-    fit_ceb = fitting.LevMarLSQFitter()
-    
-    print m,a, 
-    print b,n
-    
-    ### u1
-    ceb_1 = fit_ceb(ceb, np.append(xarray[m:a], xarray[b:n]),  np.append(z1[m:a],z1[b:n]))
-   
-    ### u9
-    ceb_2 = fit_ceb(ceb, np.append(xarray[m:a], xarray[b:n]),  np.append(z2[m:a],z2[b:n]))
-  
-    #Polinom ploting 
-      
-    #1u
-    fig = pylab.gcf()
-    fig.canvas.set_window_title("Polynomial for experiment " +  experimentName)
-    fig.set_size_inches(10.5, 10.5)
-    plt.suptitle("source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber), fontsize=16)
-    plt.subplot(121)
-    plt.subplots_adjust(wspace = 0.35)
-    plt.plot(xarray[m:n], ceb_1(xarray[m:n]), 'r', label='Chebyshev polynomial')
-    plt.plot(np.append(xarray[m:a], xarray[b:n]), np.append(z1[m:a], z1[b:n]), 'ko', label='Data Points')
-    plt.grid(True)
-    plt.xlabel('Velocity (km sec$^{-1}$)')
-    plt.ylabel('Flux density (Jy)')
-    plt.legend(loc=2)
-    plt.title("1u Polarization")  
-    
-    #9u
-    plt.subplot(122)
-    plt.plot(xarray[m:n], ceb_2(xarray[m:n]), 'r', label='Chebyshev polynomial')
-    plt.plot(np.append(xarray[m:a], xarray[b:n]), np.append(z2[m:a], z2[b:n]), 'ko', label='Data Points')
-    plt.grid(True)
-    plt.xlabel('Velocity (km sec$^{-1}$)')
-    plt.ylabel('Flux density (Jy)')
-    plt.legend(loc=2)
-    plt.title("9u Polarization")
-    plt.show()
-     
-    #Local maximum ploting
-    
-    thres=0.1
-    
-    y1values = z1[m:n] - ceb_1(xarray[m:n])
-    y2values = z2[m:n] - ceb_2(xarray[m:n])
-    
-    #indexsu apreikinasana
-    indexes_for_ceb = peakutils.indexes(y1values, thres=thres, min_dist=10)
-    indexes_for_ceb2 = peakutils.indexes(y2values, thres=thres, min_dist=10)
-    
     #1u
     fig = pylab.gcf()
     fig.canvas.set_window_title("Local Maximums for experiment " +  experimentName)
