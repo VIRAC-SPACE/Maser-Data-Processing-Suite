@@ -352,8 +352,13 @@ class MaserPlot(Frame):
         self.canvas1.show()
         self.fig5.set_canvas(self.canvas1)
         self.canvas1.get_tk_widget().grid(row=1, column=0)
-        self.graph5.plot(self.x_u1[self.m:self.n], y1values, 'b', label='Signal - polynomial')  
-        self.graph5.plot(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', label="Local Maximums for signal")
+        self.graph5.plot(self.x_u1[self.m:self.n], y1values, 'b', label='Signal - polynomial', markersize=1)  
+        self.graph5.plot(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2)
+        
+        ax = self.fig5.add_subplot(111)
+        for xy in zip(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb]):                        
+            ax.annotate('(%.2f, %.1f)' % xy, xy=xy, textcoords='data')
+        
         self.graph5.grid(True)
         self.graph5.set_xlabel('Velocity (km sec$^{-1}$)')
         self.graph5.set_ylabel ('Flux density (Jy)')
@@ -366,9 +371,13 @@ class MaserPlot(Frame):
         self.canvas2.show()
         self.fig5.set_canvas(self.canvas2)
         self.canvas2.get_tk_widget().grid(row=1, column=1)
-        self.graph6.plot([1,2,3], [1,2,3], 'ko', label='Data Points', markersize=1)
-        self.graph6.plot(self.x_u9[self.m:self.n], y2values, 'b', label='Signal - polynomial')  
-        self.graph6.plot(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', label="Local Maximums for signal")
+        self.graph6.plot(self.x_u9[self.m:self.n], y2values, 'b', label='Signal - polynomial', markersize=1)  
+        self.graph6.plot(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2)
+        
+        ax = self.fig6.add_subplot(111)
+        for xy in zip(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2]):                        
+            ax.annotate('(%.2f, %.1f)' % xy, xy=xy, textcoords='data')
+        
         self.graph6.grid(True)
         self.graph6.set_xlabel('Velocity (km sec$^{-1}$)')
         self.graph6.set_ylabel ('Flux density (Jy)')
@@ -423,43 +432,3 @@ if __name__=="__main__":
     corData = sys.argv[2]
     
     main(logFileName, corData)
-    
-    '''
-    #1u
-    fig = pylab.gcf()
-    fig.canvas.set_window_title("Local Maximums for experiment " +  experimentName)
-    fig.set_size_inches(10.5, 10.5)
-    plt.suptitle("source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber), fontsize=16)
-    plt.subplot(121)
-    plt.subplots_adjust(wspace = 0.35)
-
-    plt.plot(xarray[m:n], y1values, 'b', label='Signal - polynomial')  
-    plt.plot(xarray[m:n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', label="Local Maximums for signal")
-    
-    ax = fig.add_subplot(121)
-    for xy in zip(xarray[m:n][indexes_for_ceb], y1values[indexes_for_ceb]):                        
-        ax.annotate('(%.2f, %.1f)' % xy, xy=xy, textcoords='data')
-    
-    plt.grid(True)
-    plt.xlabel('Velocity (km sec$^{-1}$)')
-    plt.ylabel('Flux density (Jy)')
-    plt.legend(loc=2)
-    plt.title("1u Polarization")
-    
-    #9u
-    plt.subplot(122)
-    plt.plot(xarray[m:n], y2values, 'b', label='Signal - polynomial')
-    plt.plot(xarray[m:n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', label="Local Maximums for signal")
-    
-    xa = fig.add_subplot(122)
-    for yx in zip(xarray[m:n][indexes_for_ceb2], y2values[indexes_for_ceb2]):                        
-        xa.annotate('(%.2f, %.1f)' % yx, xy=yx, textcoords='data')
-    
-    plt.grid(True)
-    plt.xlabel('Velocity (km sec$^{-1}$)')
-    plt.ylabel('Flux density (Jy)')
-    plt.legend(loc=2)
-    plt.title("9u Polarization")
-    plt.show()
-    '''
-    
