@@ -9,6 +9,7 @@ matplotlib.use('TkAgg')
 from matplotlib import pyplot as plt
 from matplotlib.widgets import *
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.collections as collections
 from matplotlib.figure import Figure
 from Tkinter import *
 import Tkinter as tk
@@ -60,42 +61,62 @@ def is_outlier(points, thresh=4.5):
     return modified_z_score < thresh
 
 def onpick(event):
-    print "A"
-    '''
-    if event.artist == graph1:
-        thisline = event.artist
-        thisline._facecolor = "fff"
-        print type(thisline)
-        #xdata = thisline.get_xdata()
-        #ydata = thisline.get_ydata()
-        #ind = event.ind
-        #p = tuple(zip(xdata[ind], ydata[ind]))
-        #graph1.plot(p[0][0], p[0][1], 'ro', picker=5)
-        #points.append(p[0])
-        #plt.show()
+    thisline = event.artist
+    thisline._facecolor = "fff"
+    #xdata = thisline.get_xdata()
+    #ydata = thisline.get_ydata()
+    ind = event.ind
+    ind = event.ind[0]
+    #p = tuple(zip(xdata[ind], ydata[ind]))
+    #graph1.plot(p[0][0], p[0][1], 'ro', picker=5)
+    #points.append(p[0])
+    #plt.show()
         
-    elif event.artist == graph2:
-        print "graph 2"
-    '''
+def testpick1(event):
+
+    # Check we have clicked on one of the collections created by candlestick2_ohlc
+    if isinstance(event.artist, (collections.LineCollection, collections.PolyCollection)):
+
+        thiscollection = event.artist
+        # Find which box or line we have clicked on
+        ind = event.ind[0]
+
+        # Find the vertices of the object
+        verts = thiscollection.get_paths()[ind].vertices
+
+        if isinstance(event.artist, collections.LineCollection):
+            print "Errorbar line dimensions"
+        elif isinstance(event.artist, collections.PolyCollection):
+            print "Box dimensions"
+
+        # Print the minimum and maximum extent of the object in x and y
+        print( "X = {}, {}".format(verts[:, 0].min(), verts[:, 0].max()) )
+        print( "Y = {}, {}".format(verts[:, 1].min(), verts[:, 1].max()) )
     
 def onpick1(event):
-    print "B"
-    '''
+    thisline = event.artist
+    
+    if isinstance(event.artist, collections.LineCollection):
+        print "yessss"
+    
+    #ind = event.ind
+    #ind = event.ind[0]
+    xdata = thisline.get_xdata()
+    ydata = thisline.get_ydata()
+    
+    print xdata, ydata
+    
     if event.artist == graph1:
-        thisline = event.artist
-        thisline._facecolor = "fff"
-        print type(thisline)
-        #xdata = thisline.get_xdata()
-        #ydata = thisline.get_ydata()
-        #ind = event.ind
-        #p = tuple(zip(xdata[ind], ydata[ind]))
-        #graph1.plot(p[0][0], p[0][1], 'ro', picker=5)
-        #points.append(p[0])
-        #plt.show()
+        
+        xdata = thisline.get_xdata()
+        ydata = thisline.get_ydata()
+    
+        print xdata, ydata
+        
+        print "B"
         
     elif event.artist == graph2:
-        print "graph 2"
-    '''
+        print "A"
     
 def frame(parent, sides,**options):
     Width=sides[0]
@@ -235,6 +256,7 @@ if __name__=="__main__":
         usage()
         sys.exit(1)
     
+    print dir(collections)
     '''
     data = np.fromfile(sys.argv[2], dtype="float64", count=-1, sep=" ") .reshape((file_len(sys.argv[2]),5))
     data = np.delete(data, (0), axis=0) #izdzes masiva primo elementu
@@ -350,7 +372,7 @@ if __name__=="__main__":
 
     mSlider=Slider(mAxes, 'M', m, a-1, valinit=m)
     nSlider=Slider(nAxes , 'N', b-1, n, valinit=b-1)
-
+    
     def update(val):
         global m,n
         m=int(mSlider.val)
@@ -361,8 +383,9 @@ if __name__=="__main__":
     
     graph1.set_picker(True)
     graph2.set_picker(True)
-    fig.canvas.mpl_connect('pick_event', onpick)
-    #fig.canvas.mpl_connect('pick_event', onclick1)
+    
+    #fig.canvas.mpl_connect('pick_event', onpick)
+    fig.canvas.mpl_connect('pick_event', onpick1)
     
     plt.show()
   
