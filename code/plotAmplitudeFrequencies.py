@@ -9,7 +9,6 @@ matplotlib.use('TkAgg')
 from matplotlib import pyplot as plt
 from matplotlib.widgets import *
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import matplotlib.collections as collections
 from matplotlib.figure import Figure
 from Tkinter import *
 import Tkinter as tk
@@ -22,7 +21,7 @@ import peakutils
 import pylab
 
 from experimentsLogReader import ExperimentLogReader
-#https://stackoverflow.com/questions/31440167/placing-plot-on-tkinter-main-window-in-python
+
 def file_len(fname):
     with open(fname) as f:
         for i, l in enumerate(f):
@@ -60,63 +59,6 @@ def is_outlier(points, thresh=4.5):
 
     return modified_z_score < thresh
 
-def onpick(event):
-    thisline = event.artist
-    thisline._facecolor = "fff"
-    #xdata = thisline.get_xdata()
-    #ydata = thisline.get_ydata()
-    ind = event.ind
-    ind = event.ind[0]
-    #p = tuple(zip(xdata[ind], ydata[ind]))
-    #graph1.plot(p[0][0], p[0][1], 'ro', picker=5)
-    #points.append(p[0])
-    #plt.show()
-        
-def testpick1(event):
-
-    # Check we have clicked on one of the collections created by candlestick2_ohlc
-    if isinstance(event.artist, (collections.LineCollection, collections.PolyCollection)):
-
-        thiscollection = event.artist
-        # Find which box or line we have clicked on
-        ind = event.ind[0]
-
-        # Find the vertices of the object
-        verts = thiscollection.get_paths()[ind].vertices
-
-        if isinstance(event.artist, collections.LineCollection):
-            print "Errorbar line dimensions"
-        elif isinstance(event.artist, collections.PolyCollection):
-            print "Box dimensions"
-
-        # Print the minimum and maximum extent of the object in x and y
-        print( "X = {}, {}".format(verts[:, 0].min(), verts[:, 0].max()) )
-        print( "Y = {}, {}".format(verts[:, 1].min(), verts[:, 1].max()) )
-    
-def onpick1(event):
-    thisline = event.artist
-    
-    if isinstance(event.artist, collections.LineCollection):
-        print "yessss"
-    
-    #ind = event.ind
-    #ind = event.ind[0]
-    xdata = thisline.get_xdata()
-    ydata = thisline.get_ydata()
-    
-    print xdata, ydata
-    
-    if event.artist == graph1:
-        
-        xdata = thisline.get_xdata()
-        ydata = thisline.get_ydata()
-    
-        print xdata, ydata
-        
-        print "B"
-        
-    elif event.artist == graph2:
-        print "A"
     
 def frame(parent, sides,**options):
     Width=sides[0]
@@ -146,6 +88,11 @@ class MaserPlot(Frame):
         
         y1array = np.zeros(dataPoints)
         y2array = np.zeros(dataPoints)
+        
+        self.xarray = np.zeros(dataPoints)
+    
+        for i in range(0,dataPoints):
+            self.xarray[i] = self.xdata[i]
         
         for j in range(0,dataPoints):
             y1array[j] = self.ydataU1[j]
@@ -178,7 +125,7 @@ class MaserPlot(Frame):
         self.canvas1.get_tk_widget().grid(row=1, column=0)
         self.canvas1.mpl_connect('pick_event', self.onpickU1)
         
-        self.graph1.plot(self.xdata, self.z1, 'ko', label='Data Points', markersize=1,  picker=5)  
+        self.graph1.plot(self.xarray, self.z1, 'ko', label='Data Points', markersize=1,  picker=5)  
         self.graph1.grid(True)
         self.graph1.set_xlabel('Frequency Mhz')
         self.graph1.set_ylabel ('Flux density (Jy)')
@@ -201,7 +148,7 @@ class MaserPlot(Frame):
         self.canvas2.get_tk_widget().grid(row=1, column=1)
         self.canvas2.mpl_connect('pick_event', self.onpickU9)
         
-        self.graph2.plot(self.xdata, self.z2, 'ko', label='Data Points', markersize=1, picker=5)  
+        self.graph2.plot(self.xarray, self.z2, 'ko', label='Data Points', markersize=1, picker=5)  
         self.graph2.grid(True)
         self.graph2.set_xlabel('Frequency Mhz')
         self.graph2.set_ylabel ('Flux density (Jy)')
@@ -245,149 +192,120 @@ class MaserPlot(Frame):
         self.canvas2.draw()
     
     def plotPolynomial(self):
-        print  self.points_1u, "\n", self.points_9u
+        self.canvas1.destroy()
+        self.canvas2.destroy()
         
-    def quit(self):
+        self.xarray_u1 = self.xarray
+        self.xarray_u9 = self.xarray
+        
+        for p_u1 in self.points_1u:
+            self.xarray_u1.delete(p_u1[0])
+            self.z1.delete(p_u1[1])
+            
+        for p_u9 in self.points_9u:
+            self.xarray_u9.delete(p_u9[0])
+            self.z2.delete(p_u9[1])
+        
+        timeStr = scan['startTime'].replace(":", " ")
+        dateStrList = scan['dates'].split()
+        dateStrList[1] = strptime(dateStrList[1],'%b').tm_mon
+        dateStr = str(dateStrList[2]) + " " + str(dateStrList[1]) + " " + str(dateStrList[0])
+        RaStr = " ".join(scan["Ra"])
+        DecStr = " ".join(scan["Dec"])
+        dopsetPar= dateStr + " " + timeStr + " " + RaStr + " " + DecStr
+        
+        os.system("code/dopsetpy_v1.5 "+dopsetPar)
+    
+        # dopsetpy parametru nolasisana
+        with open('lsrShift.dat') as openfileobject:
+            for line in openfileobject:
+                Header = line.split(';')
+                vards = Header[0]
+                if vards == "Date":
+                    dateStr = Header[1]
+                elif vards == "Time":
+                    laiks = Header[1]
+                elif vards == "RA":
+                    RaStr = Header[1]
+                elif vards == "DEC":
+                    DecStr = Header[1]
+                elif vards == "Source":
+                    Source = Header[1]
+                elif vards == "LSRshift":
+                    lsrShift = Header[1]
+                elif vards == "MJD":
+                    mjd = Header[1]
+                    print "MJD: \t",mjd
+                elif vards == "Vobs":
+                    Vobs = Header[1]
+                    print "Vobs: \t",Vobs
+                elif vards == "AtFreq":
+                    AtFreq = Header[1]
+                    print "At Freq: \t",AtFreq
+                elif vards == "FreqShift":
+                    FreqShift = Header[1]
+                    print "FreqShift: \t",FreqShift
+                elif vards == "VelTotal":
+                    VelTotal = float(Header[1])
+                    print "VelTotal: \t",VelTotal
+                #Header +=1
+    
+        Vobs = float(Vobs)
+        lsrCorr = float(lsrShift)*1.e6 # for MHz
+          
+        FreqStart = scan["FreqStart"] 
+        
+    def _quit(self):
         self.Frame.destroy()
         self.window.destroy()
+        
+def getData(dataFileName, location, Systemtemperature1u, Systemtemperature9u):
+    data = np.fromfile(dataFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(dataFileName),5))
+    data = np.delete(data, (0), axis=0) #izdzes masiva primo elementu
+    
+    dataPoints = data.shape[0]    
+    
+    xdata = data[:, [0]]
+    y1data = data[:, [1]] * calibration(location, Systemtemperature1u)
+    y2data = data[:, [2]] * calibration(location, Systemtemperature9u)  
+    
+    return (xdata, y1data, y2data, dataPoints)
+
+def getLogs(logfileName, dataFileName): 
+    logs  = ExperimentLogReader("logs/" + logfileName, "prettyLogs/").getLgs()
+    scanNumber = dataFileName.split(".")[0].split("_")[1][1:len(dataFileName)]
+    scan = logs[scanNumber]
+    
+    Systemtemperature1u = float(scan["Systemtemperature"][0])
+    Systemtemperature9u = float(scan["Systemtemperature"][1])
+    
+    location = logs["location"]
+    
+    return (Systemtemperature1u, Systemtemperature9u, location)
+
+def main(logFileName, corData):
+    
+    #get Data and Logs
+    Systemtemperature1u, Systemtemperature9u, location = getLogs(logFileName, corData)
+    xdata, y1data, y2data, dataPoints = getData(corData, location, Systemtemperature1u, Systemtemperature9u)
+    
+    #Create App
+    window = tk.Tk() 
+    ploting = MaserPlot(window, xdata, y1data, y2data, dataPoints)
+    ploting.mainloop()
+    sys.exit(0)
 
 if __name__=="__main__":
     if len(sys.argv) < 3:
         usage()
         sys.exit(1)
     
-    print dir(collections)
-    '''
-    data = np.fromfile(sys.argv[2], dtype="float64", count=-1, sep=" ") .reshape((file_len(sys.argv[2]),5))
-    data = np.delete(data, (0), axis=0) #izdzes masiva primo elementu
+    logFileName = sys.argv[1]
+    corData = sys.argv[2]
     
-    dataPoints = data.shape[0]
-    
-    logs  = ExperimentLogReader("logs/" + sys.argv[1], "prettyLogs/").getLgs()
-    scanNumber = sys.argv[2].split(".")[0].split("_")[1][1:len(sys.argv[2])]
-    scan = logs[scanNumber]
-    
-    Systemtemperature1u = float(scan["Systemtemperature"][0])
-    Systemtemperature9u = float(scan["Systemtemperature"][1])
-    
-    location = logs["location"]
-    
-    xdata = data[:, [0]]
-    y1data = data[:, [1]] * calibration(location, Systemtemperature1u)
-    y2data = data[:, [2]] * calibration(location, Systemtemperature9u)
-        
-    window = tk.Tk() 
-    ploting = MaserPlot(window, xdata, y1data, y2data, dataPoints)
-    ploting.mainloop()
+    main(logFileName, corData)
     
     '''
-    experimentName = sys.argv[2].split("_")[0].split("/")[1]
-    
-    data = np.fromfile(sys.argv[2], dtype="float64", count=-1, sep=" ") .reshape((file_len(sys.argv[2]),5))
-    data = np.delete(data, (0), axis=0) #izdzes masiva primo elementu
-    
-    #slikto punktu izdzesana
-    outliersMask = is_outlier(data[:, [0]])
-    data = data[outliersMask]
-    
-    dataPoints = data.shape[0]
-    
-    logs  = ExperimentLogReader("logs/" + sys.argv[1], "prettyLogs/").getLgs()
-    scanNumber = sys.argv[2].split(".")[0].split("_")[1][1:len(sys.argv[2])]
-    scan = logs[scanNumber]
-    Systemtemperature1u = float(scan["Systemtemperature"][0])
-    Systemtemperature9u = float(scan["Systemtemperature"][1])
-    
-    location = logs["location"]
-    
-    xdata = data[:, [0]]
-    y1data = data[:, [1]] * calibration(location, Systemtemperature1u)
-    y2data = data[:, [2]] * calibration(location, Systemtemperature9u)
-    
-    y1array = np.zeros(dataPoints)
-    y2array = np.zeros(dataPoints)
-    
-    for j in range(0,dataPoints):
-        y1array[j] = y1data[j]
-    
-    for k in range(0,dataPoints):
-        y2array[k] = y2data[k]
-    
-    g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
-    g2 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
-    
-    z1 = convolve(y1array, g1, boundary='extend')
-    z2 = convolve(y2array, g2, boundary='extend')
-    
-    #avota izgriesana
-    middle = int(dataPoints/2) #vidusunks
-    a = int(middle*0.88)
-    b = int(middle*1.075)
-    
-    #galu nogriesana
-    m = 0
-    n = dataPoints
-    
-    points = list()
-    #1u
-    fig = pylab.gcf()
-    fig.canvas.set_window_title("Data filtering for experiment " +  experimentName)
-    fig.set_size_inches(10.5, 10.5)
-    plt.suptitle("source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber), fontsize=16)
-    
-    graph1 = plt.subplot(121)
-    plt.subplots_adjust(bottom=0.3, wspace = 0.35)
-    graph1.plot(xdata, z1, 'ko', label='Data Points',  picker=5)  
-    plt.grid(True)
-    plt.xlabel('Frequency Mhz')
-    plt.ylabel ('Flux density (Jy)')
-    plt.legend(loc=2)
-    
-    #pievieno papildus asi data punktiem
-    plt.twiny()
-    plt.xlabel("Data points")
-    plt.tick_params(axis="x")
-    plt.xticks(range(0, dataPoints + 512, 512))
-    
-    graph1.set_title("1u Polarization",  y=1.08) 
-    
-    #9u
-    graph2 = plt.subplot(122)
-    graph2.plot(xdata, z2, 'ko', label='Data Points', picker=5)
-    plt.grid(True)
-    plt.xlabel('Frequency Mhz')
-    plt.ylabel ('Flux density (Jy)')
-    plt.legend(loc=2)
-    
-    #pievieno papildus asi data punktiem
-    plt.twiny()
-    plt.xlabel("Data points")
-    plt.tick_params(axis="x")
-    plt.xticks(range(0, dataPoints + 512, 512))
-    graph2.set_title("9u Polarization",  y=1.08) 
-    
-    #sliders
-    mAxes = plt.axes([0.10, 0.15, 0.65, 0.03])
-    nAxes  = plt.axes([0.10, 0.10, 0.65, 0.03])
-
-    mSlider=Slider(mAxes, 'M', m, a-1, valinit=m)
-    nSlider=Slider(nAxes , 'N', b-1, n, valinit=b-1)
-    
-    def update(val):
-        global m,n
-        m=int(mSlider.val)
-        n=int(nSlider.val)
-    
-    mSlider.on_changed(update)
-    nSlider.on_changed(update)
-    
-    graph1.set_picker(True)
-    graph2.set_picker(True)
-    
-    #fig.canvas.mpl_connect('pick_event', onpick)
-    fig.canvas.mpl_connect('pick_event', onpick1)
-    
-    plt.show()
   
     timeStr = scan['startTime'].replace(":", " ")
     dateStrList = scan['dates'].split()
@@ -536,6 +454,5 @@ if __name__=="__main__":
     plt.legend(loc=2)
     plt.title("9u Polarization")
     plt.show()
-
-    sys.exit(0)
+    '''
     
