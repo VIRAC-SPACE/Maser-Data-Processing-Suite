@@ -73,7 +73,7 @@ class MaserPlot(Frame):
         #Window
         Frame.__init__(self)
         self.window = window
-        self.Frame = frame(window,[1000,1000,1000,1000],background="gray")
+        self.Frame = frame(window,(1000,1000),background="gray")
         self.startDataPlotButton = Button (self.Frame, text="Plot data points", command=self.plotDataPoints)
         self.startDataPlotButton.grid(row=0, column=0)
         
@@ -123,10 +123,12 @@ class MaserPlot(Frame):
         #plt.suptitle("source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber), fontsize=16)
         
         #u1
-        self.fig1 = Figure(figsize=(5,5))
+        self.fig1 = Figure(figsize=(6.5,6.5))
         self.graph1 = self.fig1.add_subplot(111)
         self.canvas1 = FigureCanvasTkAgg(self.fig1, master=self.Frame)
-        self.canvas1.show()
+        self.canvas1.show()#nodzes ieprieksejos grafikus
+        #self.fig3.clf()
+        #self.fig4.clf()
         self.fig1.set_canvas(self.canvas1)
         self.canvas1.get_tk_widget().grid(row=1, column=0)
         self.canvas1.mpl_connect('pick_event', self.onpickU1)
@@ -146,7 +148,7 @@ class MaserPlot(Frame):
         self.graph1.set_title("1u Polarization",  y=1.08) 
         
         #u9
-        self.fig2 = Figure(figsize=(5,5))
+        self.fig2 = Figure(figsize=(6.5,6.5))
         self.graph2 = self.fig2.add_subplot(111)
         self.canvas2 = FigureCanvasTkAgg(self.fig2, master=self.Frame)
         self.canvas2.show()
@@ -169,7 +171,6 @@ class MaserPlot(Frame):
         self.graph2.set_title("9u Polarization",  y=1.08) 
         
         #sliders
-        
         self.mSlider = Scale(self.Frame, from_= self.m, to = self.a-1, orient=HORIZONTAL, label="M", length=500, variable=self.m)
         self.mSlider.grid(row=2, column=0)
         self.m = self.mSlider.get()
@@ -200,13 +201,22 @@ class MaserPlot(Frame):
         self.canvas2.draw()
     
     def plotPolynomial(self):
-        self.createPolynomialButton.destroy()
-        self.plotLocalMaximumButton = Button (self.Frame, text="Create local maximum", command=self.plotLocalMaximum)
-        self.plotLocalMaximumButton.grid(row=0, column=2)
         
         #nodzes ieprieksejos grafikus
         self.fig1.clf()
         self.fig2.clf()
+        self.canvas1.get_tk_widget().delete("all")
+        self.canvas2.get_tk_widget().delete("all")
+        
+        self.createPolynomialButton.destroy()
+        self.plotLocalMaximumButton = Button (self.Frame, text="Create local maximum", command=self.plotLocalMaximum)
+        self.plotLocalMaximumButton.grid(row=0, column=2)
+        
+        self.m = self.mSlider.get()
+        self.n = self.nSlider.get()
+        
+        self.mSlider.destroy()
+        self.nSlider.destroy()
         
         self.xarray_u1 = self.xarray
         self.xarray_u9 = self.xarray
@@ -221,8 +231,6 @@ class MaserPlot(Frame):
             self.xarray_u9 = np.delete(self.xarray_u9, self.xarray_u9[self.xarray_u9 == p_u9[0]])
             self.z2 = np.delete(self.z2, self.z2[self.z2 == p_u9[1]])
         
-        self.m = self.mSlider.get()
-        self.n = self.nSlider.get()
             
         self.dataPoints_u1 = self.xarray_u1.shape[0]
         self.dataPoints_u9 = self.xarray_u9.shape[0]
@@ -302,7 +310,7 @@ class MaserPlot(Frame):
         self.ceb_2 = fit_ceb(ceb, np.append(self.x_u9[self.m:self.a_u9], self.x_u9[self.b_u9:self.n]),  np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]))
         
         #u1 plot
-        self.fig3 = Figure(figsize=(5,5))
+        self.fig3 = Figure(figsize=(6.5,6.5))
         self.graph3 = self.fig3.add_subplot(111)
         self.canvas1 = FigureCanvasTkAgg(self.fig3, master=self.Frame)
         self.canvas1.show()
@@ -316,7 +324,7 @@ class MaserPlot(Frame):
         self.graph3.legend(loc=2)
         
         #u9 plot
-        self.fig4 = Figure(figsize=(5,5))
+        self.fig4 = Figure(figsize=(6.5,6.5))
         self.graph4 = self.fig4.add_subplot(111)
         self.canvas2 = FigureCanvasTkAgg(self.fig4, master=self.Frame)
         self.canvas2.show()
@@ -330,11 +338,16 @@ class MaserPlot(Frame):
         self.graph4.legend(loc=2)
         
         
-        
     def plotLocalMaximum(self):
         #nodzes ieprieksejos grafikus
-        self.fig3.clf()
-        self.fig4.clf()
+        #self.fig3.clf()
+        #self.fig4.clf()
+        self.canvas1.get_tk_widget().delete("all")
+        self.canvas2.get_tk_widget().delete("all")
+        
+        self.plotLocalMaximumButton.destroy()
+        self.monitoringButton = Button (self.Frame, text="Add point to monitoring", command=self.createResult)
+        self.monitoringButton.grid(row=0, column=2)
         
         thres=0.1
     
@@ -346,12 +359,12 @@ class MaserPlot(Frame):
         indexes_for_ceb2 = peakutils.indexes(y2values, thres=thres, min_dist=10)
         
         #u1 plot
-        self.fig5 = Figure(figsize=(5,5))
+        self.fig5 = Figure(figsize=(6,6))
         self.graph5 = self.fig5.add_subplot(111)
-        self.canvas1 = FigureCanvasTkAgg(self.fig5, master=self.Frame)
-        self.canvas1.show()
-        self.fig5.set_canvas(self.canvas1)
-        self.canvas1.get_tk_widget().grid(row=1, column=0)
+        self.canvas3 = FigureCanvasTkAgg(self.fig5, master=self.Frame)
+        self.canvas3.show()
+        self.fig5.set_canvas(self.canvas3)
+        self.canvas3.get_tk_widget().grid(row=1, column=0)
         self.graph5.plot(self.x_u1[self.m:self.n], y1values, 'b', label='Signal - polynomial', markersize=1)  
         self.graph5.plot(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2)
         
@@ -365,12 +378,12 @@ class MaserPlot(Frame):
         self.graph5.legend(loc=2)
         
         #u9 plot
-        self.fig6 = Figure(figsize=(5,5))
+        self.fig6 = Figure(figsize=(6,6))
         self.graph6 = self.fig6.add_subplot(111)
-        self.canvas2 = FigureCanvasTkAgg(self.fig6, master=self.Frame)
-        self.canvas2.show()
-        self.fig5.set_canvas(self.canvas2)
-        self.canvas2.get_tk_widget().grid(row=1, column=1)
+        self.canvas4 = FigureCanvasTkAgg(self.fig6, master=self.Frame)
+        self.canvas4.show()
+        self.fig6.set_canvas(self.canvas4)
+        self.canvas4.get_tk_widget().grid(row=1, column=1)
         self.graph6.plot(self.x_u9[self.m:self.n], y2values, 'b', label='Signal - polynomial', markersize=1)  
         self.graph6.plot(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2)
         
@@ -383,6 +396,32 @@ class MaserPlot(Frame):
         self.graph6.set_ylabel ('Flux density (Jy)')
         self.graph6.legend(loc=2)
         
+        #mid plot
+        avg_x = (self.x_u1[self.m:self.n] + self.x_u9[self.m:self.n]) / 2
+        avg_y = (y1values + y2values) / 2
+        indexes_for_avg = peakutils.indexes(avg_y, thres=thres, min_dist=10)
+        
+        self.fig7 = Figure(figsize=(6,6))
+        self.graph7 = self.fig7.add_subplot(111)
+        self.canvas5 = FigureCanvasTkAgg(self.fig7, master=self.Frame)
+        self.canvas5.show()
+        self.fig7.set_canvas(self.canvas5)
+        self.canvas5.get_tk_widget().grid(row=1, column=2)
+        self.graph7.plot(avg_x, avg_y, 'b', label='Signal - polynomial', markersize=1)
+        self.graph7.plot(avg_x[indexes_for_avg], avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2)
+        
+        ax = self.fig7.add_subplot(111)
+        for xy in zip(avg_x[indexes_for_avg],  avg_y[indexes_for_avg]):                        
+            ax.annotate('(%.2f, %.1f)' % xy, xy=xy, textcoords='data')
+        
+        self.graph7.grid(True)
+        self.graph7.set_xlabel('Velocity (km sec$^{-1}$)')
+        self.graph7.set_ylabel ('Flux density (Jy)')
+        self.graph7.legend(loc=2)
+        
+    def createResult(self):
+        pass
+    
     def _quit(self):
         self.Frame.destroy()
         self.window.destroy()
