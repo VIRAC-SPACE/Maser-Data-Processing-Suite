@@ -123,7 +123,7 @@ class MaserPlot(Frame):
         #plt.suptitle("source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber), fontsize=16)
         
         #u1
-        self.fig1 = Figure(figsize=(6.5,6.5))
+        self.fig1 = Figure(figsize=(6,6))
         self.graph1 = self.fig1.add_subplot(111)
         self.canvas1 = FigureCanvasTkAgg(self.fig1, master=self.Frame)
         self.canvas1.show()#nodzes ieprieksejos grafikus
@@ -148,7 +148,7 @@ class MaserPlot(Frame):
         self.graph1.set_title("1u Polarization",  y=1.08) 
         
         #u9
-        self.fig2 = Figure(figsize=(6.5,6.5))
+        self.fig2 = Figure(figsize=(6,6))
         self.graph2 = self.fig2.add_subplot(111)
         self.canvas2 = FigureCanvasTkAgg(self.fig2, master=self.Frame)
         self.canvas2.show()
@@ -310,7 +310,7 @@ class MaserPlot(Frame):
         self.ceb_2 = fit_ceb(ceb, np.append(self.x_u9[self.m:self.a_u9], self.x_u9[self.b_u9:self.n]),  np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]))
         
         #u1 plot
-        self.fig3 = Figure(figsize=(6.5,6.5))
+        self.fig3 = Figure(figsize=(6,6))
         self.graph3 = self.fig3.add_subplot(111)
         self.canvas1 = FigureCanvasTkAgg(self.fig3, master=self.Frame)
         self.canvas1.show()
@@ -324,7 +324,7 @@ class MaserPlot(Frame):
         self.graph3.legend(loc=2)
         
         #u9 plot
-        self.fig4 = Figure(figsize=(6.5,6.5))
+        self.fig4 = Figure(figsize=(6,6))
         self.graph4 = self.fig4.add_subplot(111)
         self.canvas2 = FigureCanvasTkAgg(self.fig4, master=self.Frame)
         self.canvas2.show()

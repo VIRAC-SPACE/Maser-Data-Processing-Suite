@@ -74,6 +74,7 @@ class ExperimentLogReader():
         self.loccount = 0
         self.sourcecount = 0
         self.datecount = 0
+        self.sourceName = list()
         
         self.logfile = open(self.logs, "r")
         self.datafile = open(self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat", "w")
@@ -106,6 +107,7 @@ class ExperimentLogReader():
                     self.RAs.append(['0','0','0'])
                     self.DECs.append(['0','0','0'])
                     self.sources.append("None")
+                    self.sourceName.append("None")
                     self.Epochs.append('0')
                     self.sourcecount =  self.sourcecount + 1
                 #self.source = logLine.split(":")[3].split(",")[0].split("=")[1] + "," + logLine.split(":")[3].split(",")[1]  + "," + logLine.split(":")[3].split(",")[2]
@@ -116,6 +118,7 @@ class ExperimentLogReader():
                 
                 self.source = logLineSplit[0].split("=")[1]+","+logLineSplit[-3]+","+logLineSplit[-2]
                 self.sources.append(self.source)
+                self.sourceName.append(logLineSplit[0].split("=")[1])
                
                 #print self.source
                 
@@ -333,12 +336,21 @@ class ExperimentLogReader():
         logs["location"] = self.Location
         
         for i in range(0, len(self.scan_names)):
-            logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates[0], "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sources[i]}
+            logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates[0], "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sources[i], "source":self.sourceName[i]}
 
         return logs
     
     def getAllScansNumbers(self):
         return  self.scan_names
+    
+    def getScansForSource(self, sourceName):
+        indices_source = [i for i, x in enumerate(self.sourceName) if x == sourceName]
+        scanNamesForSource = list()
+        
+        for j in range(0,len(indices_source)):
+            scanNamesForSource.append(self.scan_names[indices_source[j]])
+        
+        return scanNamesForSource
         
     def __del__(self):
         self.logfile.close()
