@@ -20,6 +20,12 @@ from astropy.convolution import Gaussian1DKernel, convolve
 import peakutils
 import pylab
 
+try:
+    import json
+except:
+    import simplejson as json
+    pass
+
 from experimentsLogReader import ExperimentLogReader
 
 def file_len(fname):
@@ -68,7 +74,7 @@ def frame(parent, sides,**options):
     return (f)
     
 class MaserPlot(Frame):
-    def __init__(self,  window, xdata, ydataU1, ydataU9, dataPoints, scan, Systemtemperature1u, Systemtemperature9u):
+    def __init__(self,  window, xdata, ydataU1, ydataU9, dataPoints, Systemtemperature1u, Systemtemperature9u, expername, source, location, scan, scanNumber):
         
         #Window
         Frame.__init__(self)
@@ -108,9 +114,15 @@ class MaserPlot(Frame):
         self.z1 = convolve(y1array, g1, boundary='extend')
         self.z2 = convolve(y2array, g2, boundary='extend')
         
-        self.scan = scan
         self.Systemtemperature1u = Systemtemperature1u
         self.Systemtemperature9u = Systemtemperature9u
+        self.source = source
+        self.expername = expername
+        self.location = location
+        self.scan = scan
+        self.scanNumber = scanNumber
+        
+        print self.expername, self.source
         
     def plotDataPoints (self):
         self.startDataPlotButton.destroy()
@@ -465,6 +477,64 @@ class MaserPlot(Frame):
         self.fig5.canvas.mpl_disconnect(self.cid3)
         self.fig6.canvas.mpl_disconnect(self.cid4)
         self.fig7.canvas.mpl_disconnect(self.cid5)
+        
+        max_x_U1 = list()
+        max_x_U9 = list()
+        max_x_avg = list()
+        max_y_U1 = list()
+        max_y_U9 = list()
+        max_y_avg = list()
+        
+        for i in range(0, len(self.maxU1)):
+            max_x_U1.append(self.maxU1[i][0])
+            max_y_U1.append(self.maxU1[i][1])
+            
+        for i in range(0, len(self.maxU9)):
+            max_x_U9.append(self.maxU9[i][0])
+            max_y_U9.append(self.maxU9[i][1])
+        
+        for i in range(0, len(self.avgMax)):
+            max_x_avg.append(self.avgMax[i][0])
+            max_y_avg.append(self.avgMax[i][1])
+            
+        resultDir = "results/"
+        resultFileName = self.source + ".json"
+    
+        if os.path.isfile(resultDir + resultFileName):
+            pass
+        else:
+            os.system("touch " + resultDir +  resultFileName)
+            
+            resultFile = open (resultDir +  resultFileName, "w")
+            resultFile.write("{ \n" + "\n}")
+            resultFile.close()
+        
+        with open(resultDir + resultFileName) as result_data:    
+            result = json.load(result_data)
+        
+        if self.expername not in result:
+            result[self.expername] = dict()
+            if self.scanNumber not in result[self.expername]:
+                result[self.expername][self.scanNumber] = dict()
+                
+        if self.scanNumber not in result[self.expername]:
+                result[self.expername][self.scanNumber] = dict()
+                   
+        result[self.expername][self.scanNumber]["startTime"] = self.scan["startTime"]
+        result[self.expername][self.scanNumber]["stopTime"] = self.scan["stopTime"]
+        result[self.expername][self.scanNumber]["location"] = self.location
+                
+        result[self.expername][self.scanNumber]["velocity_for_polarizationU1"] = max_x_U1
+        result[self.expername][self.scanNumber]["velocity_for_polarizationU9"] = max_x_U9
+        result[self.expername][self.scanNumber]["velocity_for_polarizationAVG"] = max_x_avg 
+                
+        result[self.expername][self.scanNumber]["amplitude_for_polarizationU1"] = max_y_U1
+        result[self.expername][self.scanNumber]["amplitude_for_polarizationU9"] = max_y_U9
+        result[self.expername][self.scanNumber]["amplitude_for_polarizationAVG"] =  max_y_avg
+        
+        resultFile = open (resultDir +  resultFileName, "w")
+        resultFile.write(json.dumps(result, indent=4))
+        resultFile.close() 
     
     def _quit(self):
         self.Frame.destroy()
@@ -491,19 +561,22 @@ def getLogs(logfileName, dataFileName):
     Systemtemperature9u = float(scan["Systemtemperature"][1])
     
     location = logs["location"]
+    source = scan["source"]
     
-    return (Systemtemperature1u, Systemtemperature9u, location, scan)
+    return (Systemtemperature1u, Systemtemperature9u, location, source, scan, scanNumber)
 
 def main(logFileName, corData):
     
     #get Data and Logs
-    Systemtemperature1u, Systemtemperature9u, location, scan = getLogs(logFileName, corData)
+    Systemtemperature1u, Systemtemperature9u, location, source, scan, scanNumber = getLogs(logFileName, corData)
     xdata, y1data, y2data, dataPoints = getData(corData, location, Systemtemperature1u, Systemtemperature9u)
+    expername = logFileName.split(".")[0][:-2]
     
     #Create App
     window = tk.Tk() 
-    ploting = MaserPlot(window, xdata, y1data, y2data, dataPoints, scan, Systemtemperature1u, Systemtemperature9u)
+    ploting = MaserPlot(window, xdata, y1data, y2data, dataPoints, Systemtemperature1u, Systemtemperature9u, expername, source, location, scan, scanNumber)
     ploting.mainloop()
+    
     sys.exit(0)
 
 if __name__=="__main__":

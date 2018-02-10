@@ -336,7 +336,7 @@ class ExperimentLogReader():
         logs["location"] = self.Location
         
         for i in range(0, len(self.scan_names)):
-            logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates[0], "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sources[i], "source":self.sourceName[i]}
+            logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates[0], "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sources[i], "source":self.sourceName[i], "stopTime": self.timeStops[i]}
 
         return logs
     
