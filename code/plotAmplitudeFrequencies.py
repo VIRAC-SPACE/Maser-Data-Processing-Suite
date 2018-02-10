@@ -126,12 +126,11 @@ class MaserPlot(Frame):
         self.fig1 = Figure(figsize=(6,6))
         self.graph1 = self.fig1.add_subplot(111)
         self.canvas1 = FigureCanvasTkAgg(self.fig1, master=self.Frame)
-        self.canvas1.show()#nodzes ieprieksejos grafikus
-        #self.fig3.clf()
-        #self.fig4.clf()
+        self.canvas1.show()
+       
         self.fig1.set_canvas(self.canvas1)
         self.canvas1.get_tk_widget().grid(row=1, column=0)
-        self.canvas1.mpl_connect('pick_event', self.onpickU1)
+        self.cid1 = self.canvas1.mpl_connect('pick_event', self.onpickU1)
         
         self.graph1.plot(self.xarray, self.z1, 'ko', label='Data Points', markersize=1,  picker=5)  
         self.graph1.grid(True)
@@ -154,7 +153,7 @@ class MaserPlot(Frame):
         self.canvas2.show()
         self.fig2.set_canvas(self.canvas2)
         self.canvas2.get_tk_widget().grid(row=1, column=1)
-        self.canvas2.mpl_connect('pick_event', self.onpickU9)
+        self.cid2 = self.canvas2.mpl_connect('pick_event', self.onpickU9)
         
         self.graph2.plot(self.xarray, self.z2, 'ko', label='Data Points', markersize=1, picker=5)  
         self.graph2.grid(True)
@@ -199,6 +198,39 @@ class MaserPlot(Frame):
         self.graph2.plot(p[0][0], p[0][1], 'ro', markersize=1, picker=5)
         self.points_9u.append(p[0])
         self.canvas2.draw()
+        
+    def onpick_maxU1(self, event):
+        thisline = event.artist
+        xdata = thisline.get_xdata()
+        ydata = thisline.get_ydata()
+        ind = event.ind
+        p = tuple(zip(xdata[ind], ydata[ind]))
+        self.graph5.plot(p[0][0], p[0][1], 'gd', markersize=2, picker=5)
+        if  self.maxU1.count(p[0]) == 0:
+            self.maxU1.append(p[0])
+        self.canvas1.draw()
+        
+    def onpick_maxU9(self, event):
+        thisline = event.artist
+        xdata = thisline.get_xdata()
+        ydata = thisline.get_ydata()
+        ind = event.ind
+        p = tuple(zip(xdata[ind], ydata[ind]))
+        self.graph6.plot(p[0][0], p[0][1], 'gd', markersize=2, picker=5)
+        if  self.maxU9.count(p[0]) == 0:
+            self.maxU9.append(p[0])
+        self.canvas2.draw()
+        
+    def onpick_maxAVG(self, event):
+        thisline = event.artist
+        xdata = thisline.get_xdata()
+        ydata = thisline.get_ydata()
+        ind = event.ind
+        p = tuple(zip(xdata[ind], ydata[ind]))
+        self.graph7.plot(p[0][0], p[0][1], 'gd', markersize=2, picker=5)
+        if  self.avgMax.count(p[0]) == 0:
+            self.avgMax.append(p[0])
+        self.canvas3.draw()
     
     def plotPolynomial(self):
         
@@ -207,6 +239,9 @@ class MaserPlot(Frame):
         self.fig2.clf()
         self.canvas1.get_tk_widget().delete("all")
         self.canvas2.get_tk_widget().delete("all")
+        
+        self.fig1.canvas.mpl_disconnect(self.cid1)
+        self.fig2.canvas.mpl_disconnect(self.cid2)
         
         self.createPolynomialButton.destroy()
         self.plotLocalMaximumButton = Button (self.Frame, text="Create local maximum", command=self.plotLocalMaximum)
@@ -361,12 +396,13 @@ class MaserPlot(Frame):
         #u1 plot
         self.fig5 = Figure(figsize=(6,6))
         self.graph5 = self.fig5.add_subplot(111)
-        self.canvas3 = FigureCanvasTkAgg(self.fig5, master=self.Frame)
-        self.canvas3.show()
-        self.fig5.set_canvas(self.canvas3)
-        self.canvas3.get_tk_widget().grid(row=1, column=0)
+        self.canvas1 = FigureCanvasTkAgg(self.fig5, master=self.Frame)
+        self.canvas1.show()
+        self.fig5.set_canvas(self.canvas1)
+        self.canvas1.get_tk_widget().grid(row=1, column=0)
+        self.cid3 = self.canvas1.mpl_connect('pick_event', self.onpick_maxU1)
         self.graph5.plot(self.x_u1[self.m:self.n], y1values, 'b', label='Signal - polynomial', markersize=1)  
-        self.graph5.plot(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2)
+        self.graph5.plot(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
         
         ax = self.fig5.add_subplot(111)
         for xy in zip(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb]):                        
@@ -380,12 +416,13 @@ class MaserPlot(Frame):
         #u9 plot
         self.fig6 = Figure(figsize=(6,6))
         self.graph6 = self.fig6.add_subplot(111)
-        self.canvas4 = FigureCanvasTkAgg(self.fig6, master=self.Frame)
-        self.canvas4.show()
-        self.fig6.set_canvas(self.canvas4)
-        self.canvas4.get_tk_widget().grid(row=1, column=1)
+        self.canvas2 = FigureCanvasTkAgg(self.fig6, master=self.Frame)
+        self.canvas2.show()
+        self.fig6.set_canvas(self.canvas2)
+        self.canvas2.get_tk_widget().grid(row=1, column=1)
+        self.cid4 = self.canvas2.mpl_connect('pick_event', self.onpick_maxU9)
         self.graph6.plot(self.x_u9[self.m:self.n], y2values, 'b', label='Signal - polynomial', markersize=1)  
-        self.graph6.plot(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2)
+        self.graph6.plot(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
         
         ax = self.fig6.add_subplot(111)
         for xy in zip(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2]):                        
@@ -403,12 +440,13 @@ class MaserPlot(Frame):
         
         self.fig7 = Figure(figsize=(6,6))
         self.graph7 = self.fig7.add_subplot(111)
-        self.canvas5 = FigureCanvasTkAgg(self.fig7, master=self.Frame)
-        self.canvas5.show()
-        self.fig7.set_canvas(self.canvas5)
-        self.canvas5.get_tk_widget().grid(row=1, column=2)
+        self.canvas3 = FigureCanvasTkAgg(self.fig7, master=self.Frame)
+        self.canvas3.show()
+        self.fig7.set_canvas(self.canvas3)
+        self.canvas3.get_tk_widget().grid(row=1, column=2)
+        self.cid5 = self.canvas3.mpl_connect('pick_event', self.onpick_maxAVG)
         self.graph7.plot(avg_x, avg_y, 'b', label='Signal - polynomial', markersize=1)
-        self.graph7.plot(avg_x[indexes_for_avg], avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2)
+        self.graph7.plot(avg_x[indexes_for_avg], avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
         
         ax = self.fig7.add_subplot(111)
         for xy in zip(avg_x[indexes_for_avg],  avg_y[indexes_for_avg]):                        
@@ -419,8 +457,14 @@ class MaserPlot(Frame):
         self.graph7.set_ylabel ('Flux density (Jy)')
         self.graph7.legend(loc=2)
         
+        self.maxU1 = list()
+        self.maxU9 = list()
+        self.avgMax = list()
+        
     def createResult(self):
-        pass
+        self.fig5.canvas.mpl_disconnect(self.cid3)
+        self.fig6.canvas.mpl_disconnect(self.cid4)
+        self.fig7.canvas.mpl_disconnect(self.cid5)
     
     def _quit(self):
         self.Frame.destroy()
