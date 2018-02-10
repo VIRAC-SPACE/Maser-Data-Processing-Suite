@@ -49,7 +49,7 @@ class ExperimentLogReader():
         self.prettyLogs = prettyLogs
         self.scan_names = list()
         self.sources = list()
-        self.dates = list()
+        self.dates = ""
         self.timeStarts = list()
         self.timeStops = list()
         self.DurationsMin = list()
@@ -91,7 +91,7 @@ class ExperimentLogReader():
                 monthNr = date.month
                 month = datetime.date(1900, int(monthNr) , 1).strftime('%B')[0:3]
                 
-                self.dates.append(str(day).zfill(2) + " " + month + " " + str(year))
+                self.dates = str(day).zfill(2) + " " + month + " " + str(year)
             
             elif "scan_name=no" in logLine:
                 self.scan_count = self.scan_count + 1
@@ -284,7 +284,7 @@ class ExperimentLogReader():
             self.datafile.write("Source;" + self.sources[scan] + ";")
             self.datafile.write("\n")
             
-            self.datafile.write("Date;" + self.dates[0] + ";")
+            self.datafile.write("Date;" + self.dates + ";")
             self.datafile.write("\n")
             
             self.datafile.write("TimeStart;" + self.timeStarts[scan] + ";" + "UT;")
@@ -336,7 +336,8 @@ class ExperimentLogReader():
         logs["location"] = self.Location
         
         for i in range(0, len(self.scan_names)):
-            logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates[0], "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sources[i], "source":self.sourceName[i], "stopTime": self.timeStops[i]}
+
+            logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates, "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sources[i], "source":self.sourceName[i], "stopTime": self.timeStops[i]}
 
         return logs
     

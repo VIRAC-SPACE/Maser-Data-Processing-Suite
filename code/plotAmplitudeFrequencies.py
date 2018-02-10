@@ -387,8 +387,8 @@ class MaserPlot(Frame):
         
     def plotLocalMaximum(self):
         #nodzes ieprieksejos grafikus
-        #self.fig3.clf()
-        #self.fig4.clf()
+        self.fig3.clf()
+        self.fig4.clf()
         self.canvas1.get_tk_widget().delete("all")
         self.canvas2.get_tk_widget().delete("all")
         
@@ -474,9 +474,22 @@ class MaserPlot(Frame):
         self.avgMax = list()
         
     def createResult(self):
+        #remove graph
         self.fig5.canvas.mpl_disconnect(self.cid3)
         self.fig6.canvas.mpl_disconnect(self.cid4)
         self.fig7.canvas.mpl_disconnect(self.cid5)
+        
+        self.monitoringButton.destroy()
+        self.canvas1.get_tk_widget().delete("all")
+        self.canvas2.get_tk_widget().delete("all")
+        self.canvas3.get_tk_widget().delete("all")
+        
+        self.canvas1.get_tk_widget().destroy()
+        self.canvas2.get_tk_widget().destroy()
+        self.canvas3.get_tk_widget().destroy()
+        
+        endLabel = Label(master=self.Frame, text="Result file creating in progress!")
+        endLabel.grid(row=0, column=0)
         
         max_x_U1 = list()
         max_x_U9 = list()
@@ -523,6 +536,7 @@ class MaserPlot(Frame):
         result[self.expername][self.scanNumber]["startTime"] = self.scan["startTime"]
         result[self.expername][self.scanNumber]["stopTime"] = self.scan["stopTime"]
         result[self.expername][self.scanNumber]["location"] = self.location
+        result[self.expername][self.scanNumber]["Date"] = self.scan["dates"]
                 
         result[self.expername][self.scanNumber]["velocity_for_polarizationU1"] = max_x_U1
         result[self.expername][self.scanNumber]["velocity_for_polarizationU9"] = max_x_U9
@@ -535,7 +549,9 @@ class MaserPlot(Frame):
         resultFile = open (resultDir +  resultFileName, "w")
         resultFile.write(json.dumps(result, indent=4))
         resultFile.close() 
-    
+        
+        self. _quit()
+        
     def _quit(self):
         self.Frame.destroy()
         self.window.destroy()
