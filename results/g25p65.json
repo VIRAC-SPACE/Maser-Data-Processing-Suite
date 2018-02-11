@@ -1,27 +1,16 @@
 {
     "m82": {
         "40": {
-            "velocity_for_polarizationU9": [
-                299737.2331685781
-            ], 
-            "amplitude_for_polarizationAVG": [
-                151.4471323906507
-            ], 
-            "velocity_for_polarizationAVG": [
-                299737.2331685781
-            ], 
-            "velocity_for_polarizationU1": [
-                299737.18924619857
-            ], 
+            "velocity_for_polarizationU9": [], 
+            "amplitude_for_polarizationAVG": [], 
+            "velocity_for_polarizationAVG": [], 
+            "velocity_for_polarizationU1": [], 
             "stopTime": "14:04:50", 
-            "amplitude_for_polarizationU9": [
-                162.46408574081022
-            ], 
+            "amplitude_for_polarizationU9": [], 
             "location": "IRBENE", 
             "startTime": "13:57:50", 
-            "amplitude_for_polarizationU1": [
-                145.6414324258132
-            ]
+            "Date": "24 Oct 2017", 
+            "amplitude_for_polarizationU1": []
         }
     }
 }

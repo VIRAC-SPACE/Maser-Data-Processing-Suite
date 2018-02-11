@@ -6,9 +6,10 @@ import sys
 import numpy as np
 import matplotlib
 matplotlib.use('TkAgg')
-from matplotlib import pyplot as plt
-from matplotlib.widgets import *
+
+
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.backends.backend_tkagg as tkagg
 from matplotlib.figure import Figure
 from Tkinter import *
 import Tkinter as tk
@@ -26,6 +27,7 @@ except:
     import simplejson as json
     pass
 
+from ploting import Plot
 from experimentsLogReader import ExperimentLogReader
 
 def file_len(fname):
@@ -70,7 +72,7 @@ def frame(parent, sides,**options):
     Width=sides[0]
     Height=sides[1]
     f=Frame(width=Width,height=Height,**options)
-    f.grid(row=0, column=0)
+    f.pack()
     return (f)
     
 class MaserPlot(Frame):
@@ -81,7 +83,7 @@ class MaserPlot(Frame):
         self.window = window
         self.Frame = frame(window,(1000,1000),background="gray")
         self.startDataPlotButton = Button (self.Frame, text="Plot data points", command=self.plotDataPoints)
-        self.startDataPlotButton.grid(row=0, column=0)
+        self.startDataPlotButton.pack()
         
         self.xdata = xdata
         self.ydataU1= ydataU1
@@ -125,9 +127,10 @@ class MaserPlot(Frame):
         print self.expername, self.source
         
     def plotDataPoints (self):
+        
         self.startDataPlotButton.destroy()
         self.createPolynomialButton = Button (self.Frame, text="Create Polynomial", command=self.plotPolynomial)
-        self.createPolynomialButton.grid(row=0, column=2)
+        self.createPolynomialButton.pack()
         
         self.points_1u = list()
         self.points_9u = list()
@@ -135,59 +138,26 @@ class MaserPlot(Frame):
         #plt.suptitle("source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber), fontsize=16)
         
         #u1
-        self.fig1 = Figure(figsize=(6,6))
-        self.graph1 = self.fig1.add_subplot(111)
-        self.canvas1 = FigureCanvasTkAgg(self.fig1, master=self.Frame)
-        self.canvas1.show()
-       
-        self.fig1.set_canvas(self.canvas1)
-        self.canvas1.get_tk_widget().grid(row=1, column=0)
-        self.cid1 = self.canvas1.mpl_connect('pick_event', self.onpickU1)
-        
-        self.graph1.plot(self.xarray, self.z1, 'ko', label='Data Points', markersize=1,  picker=5)  
-        self.graph1.grid(True)
-        self.graph1.set_xlabel('Frequency Mhz')
-        self.graph1.set_ylabel ('Flux density (Jy)')
-        self.graph1.legend(loc=2)
-        
-        #pievieno papildus asi data punktiem
-        self.second_x_ass = self.graph1.twiny()
-        self.second_x_ass.set_xlabel("Data points")
-        self.graph1.tick_params(axis="x")
-        self.second_x_ass.set_xticks(range(0, self.dataPoints + 512, 1024))
-    
-        self.graph1.set_title("1u Polarization",  y=1.08) 
+        self.plot_1 = Plot(6,6, self.window, self.Frame)
+        self.plot_1.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization")
+        self.plot_1.plot(self.xarray, self.z1, 'ko', 'Data Points', 1, 5)
+        self.plot_1.addPickEvent(self.onpickU1)
+        self.plot_1.addSecondAss("x", "Data points", 0, self.dataPoints + 512, 1024)
         
         #u9
-        self.fig2 = Figure(figsize=(6,6))
-        self.graph2 = self.fig2.add_subplot(111)
-        self.canvas2 = FigureCanvasTkAgg(self.fig2, master=self.Frame)
-        self.canvas2.show()
-        self.fig2.set_canvas(self.canvas2)
-        self.canvas2.get_tk_widget().grid(row=1, column=1)
-        self.cid2 = self.canvas2.mpl_connect('pick_event', self.onpickU9)
-        
-        self.graph2.plot(self.xarray, self.z2, 'ko', label='Data Points', markersize=1, picker=5)  
-        self.graph2.grid(True)
-        self.graph2.set_xlabel('Frequency Mhz')
-        self.graph2.set_ylabel ('Flux density (Jy)')
-        self.graph2.legend(loc=2)
-        
-        #pievieno papildus asi data punktiem
-        self.second_x_ass_2 = self.graph2.twiny()
-        self.second_x_ass_2.set_xlabel("Data points")
-        self.graph2.tick_params(axis="x")
-        self.second_x_ass_2.set_xticks(range(0, self.dataPoints + 512, 1024))
-    
-        self.graph2.set_title("9u Polarization",  y=1.08) 
+        self.plot_2 = Plot(6,6, self.window, self.Frame)
+        self.plot_2.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization")
+        self.plot_2.plot(self.xarray, self.z2, 'ko', 'Data Points', 1, 5)
+        self.plot_2.addPickEvent(self.onpickU9)
+        self.plot_2.addSecondAss("x", "Data points", 0, self.dataPoints + 512, 1024)
         
         #sliders
         self.mSlider = Scale(self.Frame, from_= self.m, to = self.a-1, orient=HORIZONTAL, label="M", length=500, variable=self.m)
-        self.mSlider.grid(row=2, column=0)
+        self.mSlider.pack(side=BOTTOM)
         self.m = self.mSlider.get()
         
         self.nSlider = Scale(self.Frame, from_ = self.b-1 , to = self.n, orient=HORIZONTAL, label="N", length=500, variable=self.n)
-        self.nSlider.grid(row=2, column=1)
+        self.nSlider.pack(side=BOTTOM)
         self.nSlider.set(self.n)
         self.n = self.nSlider.get() 
     
@@ -197,9 +167,9 @@ class MaserPlot(Frame):
         ydata = thisline.get_ydata()
         ind = event.ind
         p = tuple(zip(xdata[ind], ydata[ind]))
-        self.graph1.plot(p[0][0], p[0][1], 'ro', markersize=1, picker=5)
+        self.plot_1.plot(p[0][0], p[0][1], 'ro', None, 1, 5)
         self.points_1u.append(p[0])
-        self.canvas1.draw()
+        self.plot_1.canvasShow()
         
     def onpickU9(self, event):
         thisline = event.artist
@@ -207,9 +177,9 @@ class MaserPlot(Frame):
         ydata = thisline.get_ydata()
         ind = event.ind
         p = tuple(zip(xdata[ind], ydata[ind]))
-        self.graph2.plot(p[0][0], p[0][1], 'ro', markersize=1, picker=5)
+        self.plot_2.plot(p[0][0], p[0][1], 'ro', None, 1, 5)
         self.points_9u.append(p[0])
-        self.canvas2.draw()
+        self.plot_2.canvasShow()
         
     def onpick_maxU1(self, event):
         thisline = event.artist
@@ -599,7 +569,7 @@ if __name__=="__main__":
     if len(sys.argv) < 3:
         usage()
         sys.exit(1)
-    
+        
     logFileName = sys.argv[1]
     corData = sys.argv[2]
     
