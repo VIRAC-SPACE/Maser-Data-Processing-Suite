@@ -1,43 +1,29 @@
 #! /usr/bin/python
-from __future__ import division
 
-import os
-import sys
+import os, sys
 import numpy as np
-import matplotlib
-matplotlib.use('TkAgg')
-
-
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import matplotlib.backends.backend_tkagg as tkagg
-from matplotlib.figure import Figure
 from Tkinter import *
 import Tkinter as tk
 from time import strptime
 import scipy.constants
-from astropy.modeling import models, fitting
+from astropy.modeling import fitting
 from astropy.modeling.polynomial import Chebyshev1D
 from astropy.convolution import Gaussian1DKernel, convolve
 import peakutils
-import pylab
-
-try:
-    import json
-except:
-    import simplejson as json
-    pass
+import json
 
 from ploting import Plot
 from experimentsLogReader import ExperimentLogReader
+from pandas.io.formats.printing import justify
+
+def usage():
+    print ('Usage: ' + sys.argv[0] + ' log file' + 'data file')
 
 def file_len(fname):
     with open(fname) as f:
         for i, l in enumerate(f):
             pass
     return i + 1
-
-def usage():
-    print ('Usage: ' + sys.argv[0] + ' log file' + 'data file')
 
 def calibration(station, Tsys):
     scale = 1
@@ -68,11 +54,11 @@ def is_outlier(points, thresh=4.5):
     return modified_z_score < thresh
 
     
-def frame(parent, sides,**options):
-    Width=sides[0]
-    Height=sides[1]
-    f=Frame(width=Width,height=Height,**options)
-    f.pack()
+def frame(parent, size, sides, **options):
+    Width=size[0]
+    Height=size[1]
+    f=Frame(parent, width=Width,height=Height,**options)
+    f.pack(side = sides)
     return (f)
     
 class MaserPlot(Frame):
@@ -81,9 +67,12 @@ class MaserPlot(Frame):
         #Window
         Frame.__init__(self)
         self.window = window
-        self.Frame = frame(window,(1000,1000),background="gray")
-        self.startDataPlotButton = Button (self.Frame, text="Plot data points", command=self.plotDataPoints)
-        self.startDataPlotButton.pack()
+        self.plotFrame = frame(self.window,(1000,1000), None, background = "gray")
+        self.infoFrame = frame(self.window,(1000,1000), None, background = "gray")
+        self.startDataPlotButton = Button (self.plotFrame, text="Plot data points", command=self.plotDataPoints)
+        self.startChangeData = Button (self.plotFrame, text="Change Data", command=self.changeData)
+        self.startDataPlotButton.pack(fill=BOTH)
+        self.startChangeData.pack(side=BOTTOM, fill=BOTH)
         
         self.xdata = xdata
         self.ydataU1= ydataU1
@@ -123,40 +112,68 @@ class MaserPlot(Frame):
         self.location = location
         self.scan = scan
         self.scanNumber = scanNumber
+        self.FreqStart = self.scan["FreqStart"] 
         
         print self.expername, self.source
         
-    def plotDataPoints (self):
+        self.window.title("Info")
+        #infoFrame
+        infoPanelLabelsText = ["Experiment name: " + self.expername, "Scan number: " + self.scanNumber, "Source: " + self.source, "Station: " + self.location, "Date: " + scan["dates"], "Start time: " + scan["startTime"], "Stop time: " + self.scan["stopTime"], "System temperature 1u: " + str(self.Systemtemperature1u), "System temperature 9u: " + str(self.Systemtemperature9u), "Frequency Start: " + str(self.scan["FreqStart"])]
+        infoPanelEntryText = [{"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"defaultValue":self.Systemtemperature1u,"addEntry":True}, {"defaultValue":self.Systemtemperature9u,"addEntry":True}, {"defaultValue":scan["FreqStart"],"addEntry":True}]
         
+        for i in range(0, len( infoPanelLabelsText)): 
+            self.infoLabel = Label(self.infoFrame, text=infoPanelLabelsText[i], anchor=W, justify=LEFT)
+            self.infoLabel.pack(side=TOP, fill=BOTH)
+            
+            if  infoPanelEntryText[i]["addEntry"]:
+                self.infoInputField = Entry(self.infoFrame)
+                self.infoInputField.insert(0, str(infoPanelEntryText[i]["defaultValue"]))
+                self.infoInputField.pack(fill=BOTH)
+    
+    def changeData(self):
+        childs = self.infoFrame.winfo_children()
+        newValues = list()
+        
+        for child in childs:
+            if child.winfo_class() == "Entry":
+                newValues.append(child.get())
+                
+        self.Systemtemperature1u = float(newValues[0])
+        self.Systemtemperature9u = float(newValues[1])
+        self.FreqStart = float(newValues[2])
+           
+    def plotDataPoints (self):
+        self.masterFrame = frame(self.window,(1000,1000), LEFT, background = "gray")
+        self.window.title("Data points for " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
+        self.startChangeData.destroy()
         self.startDataPlotButton.destroy()
-        self.createPolynomialButton = Button (self.Frame, text="Create Polynomial", command=self.plotPolynomial)
-        self.createPolynomialButton.pack()
+        self.infoFrame.destroy()
+        self.createPolynomialButton = Button (self.plotFrame, text="Create Polynomial", command=self.plotPolynomial)
+        self.createPolynomialButton.pack(side=TOP)
         
         self.points_1u = list()
         self.points_9u = list()
         
-        #plt.suptitle("source " + scan["sourceName"].split(",")[0] + " scan " + str(scanNumber), fontsize=16)
-        
         #u1
-        self.plot_1 = Plot(6,6, self.window, self.Frame)
-        self.plot_1.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization")
+        self.plot_1 = Plot(6,6, self.masterFrame, self.plotFrame)
+        self.plot_1.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization")
         self.plot_1.plot(self.xarray, self.z1, 'ko', 'Data Points', 1, 5)
         self.plot_1.addPickEvent(self.onpickU1)
         self.plot_1.addSecondAss("x", "Data points", 0, self.dataPoints + 512, 1024)
         
         #u9
-        self.plot_2 = Plot(6,6, self.window, self.Frame)
+        self.plot_2 = Plot(6,6, self.masterFrame, self.plotFrame)
         self.plot_2.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization")
         self.plot_2.plot(self.xarray, self.z2, 'ko', 'Data Points', 1, 5)
         self.plot_2.addPickEvent(self.onpickU9)
         self.plot_2.addSecondAss("x", "Data points", 0, self.dataPoints + 512, 1024)
         
         #sliders
-        self.mSlider = Scale(self.Frame, from_= self.m, to = self.a-1, orient=HORIZONTAL, label="M", length=500, variable=self.m)
+        self.mSlider = Scale(self.plotFrame, from_= self.m, to = self.a-1, orient=HORIZONTAL, label="M", length=500, variable=self.m)
         self.mSlider.pack(side=BOTTOM)
         self.m = self.mSlider.get()
         
-        self.nSlider = Scale(self.Frame, from_ = self.b-1 , to = self.n, orient=HORIZONTAL, label="N", length=500, variable=self.n)
+        self.nSlider = Scale(self.plotFrame, from_ = self.b-1 , to = self.n, orient=HORIZONTAL, label="N", length=500, variable=self.n)
         self.nSlider.pack(side=BOTTOM)
         self.nSlider.set(self.n)
         self.n = self.nSlider.get() 
@@ -215,7 +232,7 @@ class MaserPlot(Frame):
         self.plot_7.canvasShow()
     
     def plotPolynomial(self):
-        
+        self.window.title("Polynomial " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
         #nodzes ieprieksejos grafikus
         self.plot_1.removePolt()
         self.plot_2.removePolt()
@@ -224,7 +241,7 @@ class MaserPlot(Frame):
         self.plot_2.removePickEvent()
         
         self.createPolynomialButton.destroy()
-        self.plotLocalMaximumButton = Button (self.Frame, text="Create local maximum", command=self.plotLocalMaximum)
+        self.plotLocalMaximumButton = Button (self.plotFrame, text="Create local maximum", command=self.plotLocalMaximum)
         self.plotLocalMaximumButton.pack()
         
         self.m = self.mSlider.get()
@@ -308,11 +325,9 @@ class MaserPlot(Frame):
         Vobs = float(Vobs)
         lsrCorr = float(lsrShift)*1.e6 # for MHz
           
-        FreqStart = self.scan["FreqStart"] 
-        
         #Parveido frekvenci par atrumu
-        self.x_u1 = dopler((self.xarray_u1 + FreqStart) * (10 ** 6), VelTotal)
-        self.x_u9 = dopler((self.xarray_u9 + FreqStart) * (10 ** 6), VelTotal)
+        self.x_u1 = dopler((self.xarray_u1 + self.FreqStart) * (10 ** 6), VelTotal)
+        self.x_u9 = dopler((self.xarray_u9 + self.FreqStart) * (10 ** 6), VelTotal)
         
         # Fit the data using a Chebyshev astro py
         ceb = Chebyshev1D(9, domain=None, window=[-1, 1], n_models=None, model_set_axis=None, name=None, meta=None)
@@ -325,24 +340,25 @@ class MaserPlot(Frame):
         self.ceb_2 = fit_ceb(ceb, np.append(self.x_u9[self.m:self.a_u9], self.x_u9[self.b_u9:self.n]),  np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]))
         
         #u1 plot
-        self.plot_3 = Plot(6,6, self.window, self.Frame)
+        self.plot_3 = Plot(6,6, self.window, self.plotFrame)
         self.plot_3.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization")
         self.plot_3.plot(np.append(self.x_u1[self.m:self.a_u1], self.x_u1[self.b_u1:self.n]), np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]), 'ko', 'Data Points', 1, None)
         self.plot_3.plot(self.x_u1[self.m:self.n], self.ceb_1(self.x_u1[self.m:self.n]), 'r', 'Chebyshev polynomial',  1, None)
         
         #u9 plot
-        self.plot_4 = Plot(6,6, self.window, self.Frame)
+        self.plot_4 = Plot(6,6, self.window, self.plotFrame)
         self.plot_4.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization")
         self.plot_4.plot(np.append(self.x_u9[self.m:self.a_u9], self.x_u9[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), 'ko', 'Data Points', 1, None)
         self.plot_4.plot(self.x_u9[self.m:self.n], self.ceb_2(self.x_u9[self.m:self.n]), 'r', 'Chebyshev polynomial', 1, None)
         
     def plotLocalMaximum(self):
+        self.window.title("Local maximums " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
         #nodzes ieprieksejos grafikus
         self.plot_3.removePolt()
         self.plot_4.removePolt()
         
         self.plotLocalMaximumButton.destroy()
-        self.monitoringButton = Button (self.Frame, text="Add point to monitoring", command=self.createResult)
+        self.monitoringButton = Button (self.plotFrame, text="Add points to monitoring", command=self.createResult)
         self.monitoringButton.pack()
         
         thres=0.1
@@ -355,7 +371,7 @@ class MaserPlot(Frame):
         indexes_for_ceb2 = peakutils.indexes(y2values, thres=thres, min_dist=10)
         
         #u1
-        self.plot_5 = Plot(6,6, self.window, self.Frame)
+        self.plot_5 = Plot(6,6, self.window, self.plotFrame)
         self.plot_5.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization")
         self.plot_5.plot(self.x_u1[self.m:self.n], y1values, 'b', 'Signal - polynomial', 1, None)
         self.plot_5.plot(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', "Local Maximums for signal", 2, 5)
@@ -363,7 +379,7 @@ class MaserPlot(Frame):
         self.plot_5.annotation(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb])
         
         #u9
-        self.plot_6 = Plot(6,6, self.window, self.Frame)
+        self.plot_6 = Plot(6,6, self.window, self.plotFrame)
         self.plot_6.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization")
         self.plot_6.plot(self.x_u9[self.m:self.n], y1values, 'b', 'Signal - polynomial', 1, None)
         self.plot_6.plot(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', "Local Maximums for signal", 2, 5)
@@ -375,7 +391,7 @@ class MaserPlot(Frame):
         avg_y = (y1values + y2values) / 2
         indexes_for_avg = peakutils.indexes(avg_y, thres=thres, min_dist=10)
         
-        self.plot_7 = Plot(6,6, self.window, self.Frame)
+        self.plot_7 = Plot(6,6, self.window, self.plotFrame)
         self.plot_7.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Average Polarization")
         self.plot_7.plot(avg_x, avg_y, 'b', 'Signal - polynomial', 1, None)
         self.plot_7.plot(avg_x[indexes_for_avg], avg_y[indexes_for_avg], 'dr', "Local Maximums for signal", 2, 5)
@@ -394,7 +410,7 @@ class MaserPlot(Frame):
         
         self.monitoringButton.destroy()
     
-        endLabel = Label(master=self.Frame, text="Result file creating in progress!")
+        endLabel = Label(master=self.plotFrame, text="Result file creating in progress!")
         endLabel.pack()
         
         max_x_U1 = list()
@@ -459,7 +475,7 @@ class MaserPlot(Frame):
         self. _quit()
         
     def _quit(self):
-        self.Frame.destroy()
+        self.plotFrame.destroy()
         self.window.destroy()
         
 def getData(dataFileName, location, Systemtemperature1u, Systemtemperature9u):
