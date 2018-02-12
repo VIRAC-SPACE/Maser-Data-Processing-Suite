@@ -26,24 +26,38 @@ class Plot():
         
         self.toolbar = tkagg.NavigationToolbar2TkAgg(self.canvas, self.window)
         self.toolbar.update()
-        self.canvas._tkcanvas.pack(side=LEFT, fill=BOTH, expand=1)
+        self.canvas._tkcanvas.pack(side=LEFT, expand=1)
         self.graph.grid(True)
         self.graph.set_xlabel(x_label)
         self.graph.set_ylabel (y_label)
-        self.graph.legend(loc=2)
         
     def plot(self, x,y, line, labels, markersizes, pickers):
         self.graph.plot(x, y, line, label=labels, markersize=markersizes, picker=pickers)
-    
+        self.graph.legend(loc=2)
+        
+    def annotation(self, xvalues, yvalues):
+        ax = self.figure.add_subplot(111)
+        for xy in zip(xvalues, yvalues):                        
+            ax.annotate('(%.2f, %.1f)' % xy, xy=xy, textcoords='data')
+            
     def canvasShow(self):
         self.canvas.show()
     
     def addPickEvent(self, callback):
         self.cid = self.canvas.mpl_connect('pick_event', callback)
+    
+    def removePickEvent(self):
+        self.figure.canvas.mpl_disconnect(self.cid)
         
     def addSecondAss(self, ass, label, start, stop, step):
         self.second_x_ass = self.graph.twiny()
         self.second_x_ass.set_xlabel(label)
         self.graph.tick_params(axis=ass)
         self.second_x_ass.set_xticks(range(start, stop, step))
+        
+    def removePolt(self):
+        self.figure.clf()
+        self.canvas.get_tk_widget().delete("all")
+        self.canvas.get_tk_widget().destroy()
+        self.toolbar.destroy()
         

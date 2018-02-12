@@ -139,7 +139,7 @@ class MaserPlot(Frame):
         
         #u1
         self.plot_1 = Plot(6,6, self.window, self.Frame)
-        self.plot_1.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization")
+        self.plot_1.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization")
         self.plot_1.plot(self.xarray, self.z1, 'ko', 'Data Points', 1, 5)
         self.plot_1.addPickEvent(self.onpickU1)
         self.plot_1.addSecondAss("x", "Data points", 0, self.dataPoints + 512, 1024)
@@ -187,10 +187,10 @@ class MaserPlot(Frame):
         ydata = thisline.get_ydata()
         ind = event.ind
         p = tuple(zip(xdata[ind], ydata[ind]))
-        self.graph5.plot(p[0][0], p[0][1], 'gd', markersize=2, picker=5)
+        self.plot_5.plot(p[0][0], p[0][1], 'gd', None, 2, 5)
         if  self.maxU1.count(p[0]) == 0:
             self.maxU1.append(p[0])
-        self.canvas1.draw()
+        self.plot_5.canvasShow()
         
     def onpick_maxU9(self, event):
         thisline = event.artist
@@ -198,10 +198,10 @@ class MaserPlot(Frame):
         ydata = thisline.get_ydata()
         ind = event.ind
         p = tuple(zip(xdata[ind], ydata[ind]))
-        self.graph6.plot(p[0][0], p[0][1], 'gd', markersize=2, picker=5)
+        self.plot_6.plot(p[0][0], p[0][1], 'gd', None, 2, 5)
         if  self.maxU9.count(p[0]) == 0:
             self.maxU9.append(p[0])
-        self.canvas2.draw()
+        self.plot_6.canvasShow()
         
     def onpick_maxAVG(self, event):
         thisline = event.artist
@@ -209,25 +209,23 @@ class MaserPlot(Frame):
         ydata = thisline.get_ydata()
         ind = event.ind
         p = tuple(zip(xdata[ind], ydata[ind]))
-        self.graph7.plot(p[0][0], p[0][1], 'gd', markersize=2, picker=5)
+        self.plot_7.plot(p[0][0], p[0][1], 'gd', None, 2, 5)
         if  self.avgMax.count(p[0]) == 0:
             self.avgMax.append(p[0])
-        self.canvas3.draw()
+        self.plot_7.canvasShow()
     
     def plotPolynomial(self):
         
         #nodzes ieprieksejos grafikus
-        self.fig1.clf()
-        self.fig2.clf()
-        self.canvas1.get_tk_widget().delete("all")
-        self.canvas2.get_tk_widget().delete("all")
+        self.plot_1.removePolt()
+        self.plot_2.removePolt()
         
-        self.fig1.canvas.mpl_disconnect(self.cid1)
-        self.fig2.canvas.mpl_disconnect(self.cid2)
+        self.plot_1.removePickEvent()
+        self.plot_2.removePickEvent()
         
         self.createPolynomialButton.destroy()
         self.plotLocalMaximumButton = Button (self.Frame, text="Create local maximum", command=self.plotLocalMaximum)
-        self.plotLocalMaximumButton.grid(row=0, column=2)
+        self.plotLocalMaximumButton.pack()
         
         self.m = self.mSlider.get()
         self.n = self.nSlider.get()
@@ -327,44 +325,25 @@ class MaserPlot(Frame):
         self.ceb_2 = fit_ceb(ceb, np.append(self.x_u9[self.m:self.a_u9], self.x_u9[self.b_u9:self.n]),  np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]))
         
         #u1 plot
-        self.fig3 = Figure(figsize=(6,6))
-        self.graph3 = self.fig3.add_subplot(111)
-        self.canvas1 = FigureCanvasTkAgg(self.fig3, master=self.Frame)
-        self.canvas1.show()
-        self.fig3.set_canvas(self.canvas1)
-        self.canvas1.get_tk_widget().grid(row=1, column=0)
-        self.graph3.plot(np.append(self.x_u1[self.m:self.a_u1], self.x_u1[self.b_u1:self.n]), np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]), 'ko', label='Data Points', markersize=1)
-        self.graph3.plot(self.x_u1[self.m:self.n], self.ceb_1(self.x_u1[self.m:self.n]), 'r', label='Chebyshev polynomial')  
-        self.graph3.grid(True)
-        self.graph3.set_xlabel('Velocity (km sec$^{-1}$)')
-        self.graph3.set_ylabel ('Flux density (Jy)')
-        self.graph3.legend(loc=2)
+        self.plot_3 = Plot(6,6, self.window, self.Frame)
+        self.plot_3.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization")
+        self.plot_3.plot(np.append(self.x_u1[self.m:self.a_u1], self.x_u1[self.b_u1:self.n]), np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]), 'ko', 'Data Points', 1, None)
+        self.plot_3.plot(self.x_u1[self.m:self.n], self.ceb_1(self.x_u1[self.m:self.n]), 'r', 'Chebyshev polynomial',  1, None)
         
         #u9 plot
-        self.fig4 = Figure(figsize=(6,6))
-        self.graph4 = self.fig4.add_subplot(111)
-        self.canvas2 = FigureCanvasTkAgg(self.fig4, master=self.Frame)
-        self.canvas2.show()
-        self.fig4.set_canvas(self.canvas2)
-        self.canvas2.get_tk_widget().grid(row=1, column=1)
-        self.graph4.plot(np.append(self.x_u9[self.m:self.a_u9], self.x_u9[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), 'ko', label='Data Points', markersize=1)
-        self.graph4.plot(self.x_u9[self.m:self.n], self.ceb_2(self.x_u9[self.m:self.n]), 'r', label='Chebyshev polynomial')
-        self.graph4.grid(True)
-        self.graph4.set_xlabel('Velocity (km sec$^{-1}$)')
-        self.graph4.set_ylabel ('Flux density (Jy)')
-        self.graph4.legend(loc=2)
-        
+        self.plot_4 = Plot(6,6, self.window, self.Frame)
+        self.plot_4.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization")
+        self.plot_4.plot(np.append(self.x_u9[self.m:self.a_u9], self.x_u9[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), 'ko', 'Data Points', 1, None)
+        self.plot_4.plot(self.x_u9[self.m:self.n], self.ceb_2(self.x_u9[self.m:self.n]), 'r', 'Chebyshev polynomial', 1, None)
         
     def plotLocalMaximum(self):
         #nodzes ieprieksejos grafikus
-        self.fig3.clf()
-        self.fig4.clf()
-        self.canvas1.get_tk_widget().delete("all")
-        self.canvas2.get_tk_widget().delete("all")
+        self.plot_3.removePolt()
+        self.plot_4.removePolt()
         
         self.plotLocalMaximumButton.destroy()
         self.monitoringButton = Button (self.Frame, text="Add point to monitoring", command=self.createResult)
-        self.monitoringButton.grid(row=0, column=2)
+        self.monitoringButton.pack()
         
         thres=0.1
     
@@ -375,69 +354,33 @@ class MaserPlot(Frame):
         indexes_for_ceb = peakutils.indexes(y1values, thres=thres, min_dist=10)
         indexes_for_ceb2 = peakutils.indexes(y2values, thres=thres, min_dist=10)
         
-        #u1 plot
-        self.fig5 = Figure(figsize=(6,6))
-        self.graph5 = self.fig5.add_subplot(111)
-        self.canvas1 = FigureCanvasTkAgg(self.fig5, master=self.Frame)
-        self.canvas1.show()
-        self.fig5.set_canvas(self.canvas1)
-        self.canvas1.get_tk_widget().grid(row=1, column=0)
-        self.cid3 = self.canvas1.mpl_connect('pick_event', self.onpick_maxU1)
-        self.graph5.plot(self.x_u1[self.m:self.n], y1values, 'b', label='Signal - polynomial', markersize=1)  
-        self.graph5.plot(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
+        #u1
+        self.plot_5 = Plot(6,6, self.window, self.Frame)
+        self.plot_5.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization")
+        self.plot_5.plot(self.x_u1[self.m:self.n], y1values, 'b', 'Signal - polynomial', 1, None)
+        self.plot_5.plot(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', "Local Maximums for signal", 2, 5)
+        self.plot_5.addPickEvent(self.onpick_maxU1)
+        self.plot_5.annotation(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb])
         
-        ax = self.fig5.add_subplot(111)
-        for xy in zip(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb]):                        
-            ax.annotate('(%.2f, %.1f)' % xy, xy=xy, textcoords='data')
-        
-        self.graph5.grid(True)
-        self.graph5.set_xlabel('Velocity (km sec$^{-1}$)')
-        self.graph5.set_ylabel ('Flux density (Jy)')
-        self.graph5.legend(loc=2)
-        
-        #u9 plot
-        self.fig6 = Figure(figsize=(6,6))
-        self.graph6 = self.fig6.add_subplot(111)
-        self.canvas2 = FigureCanvasTkAgg(self.fig6, master=self.Frame)
-        self.canvas2.show()
-        self.fig6.set_canvas(self.canvas2)
-        self.canvas2.get_tk_widget().grid(row=1, column=1)
-        self.cid4 = self.canvas2.mpl_connect('pick_event', self.onpick_maxU9)
-        self.graph6.plot(self.x_u9[self.m:self.n], y2values, 'b', label='Signal - polynomial', markersize=1)  
-        self.graph6.plot(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
-        
-        ax = self.fig6.add_subplot(111)
-        for xy in zip(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2]):                        
-            ax.annotate('(%.2f, %.1f)' % xy, xy=xy, textcoords='data')
-        
-        self.graph6.grid(True)
-        self.graph6.set_xlabel('Velocity (km sec$^{-1}$)')
-        self.graph6.set_ylabel ('Flux density (Jy)')
-        self.graph6.legend(loc=2)
+        #u9
+        self.plot_6 = Plot(6,6, self.window, self.Frame)
+        self.plot_6.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization")
+        self.plot_6.plot(self.x_u9[self.m:self.n], y1values, 'b', 'Signal - polynomial', 1, None)
+        self.plot_6.plot(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', "Local Maximums for signal", 2, 5)
+        self.plot_6.addPickEvent(self.onpick_maxU9)
+        self.plot_6.annotation(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2])
         
         #mid plot
         avg_x = (self.x_u1[self.m:self.n] + self.x_u9[self.m:self.n]) / 2
         avg_y = (y1values + y2values) / 2
         indexes_for_avg = peakutils.indexes(avg_y, thres=thres, min_dist=10)
         
-        self.fig7 = Figure(figsize=(6,6))
-        self.graph7 = self.fig7.add_subplot(111)
-        self.canvas3 = FigureCanvasTkAgg(self.fig7, master=self.Frame)
-        self.canvas3.show()
-        self.fig7.set_canvas(self.canvas3)
-        self.canvas3.get_tk_widget().grid(row=1, column=2)
-        self.cid5 = self.canvas3.mpl_connect('pick_event', self.onpick_maxAVG)
-        self.graph7.plot(avg_x, avg_y, 'b', label='Signal - polynomial', markersize=1)
-        self.graph7.plot(avg_x[indexes_for_avg], avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
-        
-        ax = self.fig7.add_subplot(111)
-        for xy in zip(avg_x[indexes_for_avg],  avg_y[indexes_for_avg]):                        
-            ax.annotate('(%.2f, %.1f)' % xy, xy=xy, textcoords='data')
-        
-        self.graph7.grid(True)
-        self.graph7.set_xlabel('Velocity (km sec$^{-1}$)')
-        self.graph7.set_ylabel ('Flux density (Jy)')
-        self.graph7.legend(loc=2)
+        self.plot_7 = Plot(6,6, self.window, self.Frame)
+        self.plot_7.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Average Polarization")
+        self.plot_7.plot(avg_x, avg_y, 'b', 'Signal - polynomial', 1, None)
+        self.plot_7.plot(avg_x[indexes_for_avg], avg_y[indexes_for_avg], 'dr', "Local Maximums for signal", 2, 5)
+        self.plot_7.addPickEvent(self.onpick_maxAVG)
+        self.plot_7.annotation(avg_x[indexes_for_avg],  avg_y[indexes_for_avg])
         
         self.maxU1 = list()
         self.maxU9 = list()
@@ -445,21 +388,14 @@ class MaserPlot(Frame):
         
     def createResult(self):
         #remove graph
-        self.fig5.canvas.mpl_disconnect(self.cid3)
-        self.fig6.canvas.mpl_disconnect(self.cid4)
-        self.fig7.canvas.mpl_disconnect(self.cid5)
+        self.plot_5.removePolt()
+        self.plot_6.removePolt()
+        self.plot_7.removePolt()
         
         self.monitoringButton.destroy()
-        self.canvas1.get_tk_widget().delete("all")
-        self.canvas2.get_tk_widget().delete("all")
-        self.canvas3.get_tk_widget().delete("all")
-        
-        self.canvas1.get_tk_widget().destroy()
-        self.canvas2.get_tk_widget().destroy()
-        self.canvas3.get_tk_widget().destroy()
-        
+    
         endLabel = Label(master=self.Frame, text="Result file creating in progress!")
-        endLabel.grid(row=0, column=0)
+        endLabel.pack()
         
         max_x_U1 = list()
         max_x_U9 = list()
