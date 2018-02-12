@@ -9,6 +9,7 @@ import scipy.constants
 from astropy.modeling import fitting
 from astropy.modeling.polynomial import Chebyshev1D
 from astropy.convolution import Gaussian1DKernel, convolve
+from scipy.interpolate import splrep, sproot
 import peakutils
 import json
 
@@ -35,17 +36,32 @@ def dopler(ObservedFrequency, velocityReceiver, f0):
     velocitySoure = (-((ObservedFrequency/f0)-1)*c + (velocityReceiver * 1000))/1000
     return velocitySoure
 
-def FWHM(X,Y):
-    half_max = np.max(Y) / 2.
-    #find when function crosses line half_max (when sign of diff flips)
-    #take the 'derivative' of signum(half_max - Y[])
-    d = np.sign(half_max - np.array(Y[0:-1])) - np.sign(half_max - np.array(Y[1:]))
-    #plot(X,d) #if you are interested
-    #find the left and right most indexes
-    #left_idx = np.find(d > 0)[0]
-    #right_idx = find(d < 0)[-1]
-    #return X[right_idx] - X[left_idx] #return the difference (full width)
-    pass
+def FWHM(x, y, k=100):
+    """
+    Determine full-with-half-maximum of a peaked set of points, x and y.
+
+    Assumes that there is only one peak present in the datasset.  The function
+    uses a spline interpolation of order k.
+    """
+
+    class MultiplePeaks(Exception): pass
+    class NoPeaksFound(Exception): pass
+
+    half_max = max(y)/2.0
+    print half_max
+    nknots = k
+    knots = np.arange(x[1],x[len(x)-1],(x[len(x)-1]-x[1])/np.double(nknots))
+    s = splrep(x, y - half_max, t=knots)
+    roots = sproot(s)
+
+    if len(roots) > 2:
+        raise MultiplePeaks("The dataset appears to have multiple peaks, and "
+                "thus the FWHM can't be determined.")
+    if len(roots) < 2:
+        raise NoPeaksFound("No proper peaks were found in the data set; likely "
+                "the dataset is flat (e.g. all zeros).")
+    else:
+        return (roots[1], roots[0])
     
 def is_outlier(points, thresh=4.5):
 
@@ -156,6 +172,8 @@ class MaserPlot(Frame):
     
         self.z1 = convolve(self.y1array, g1, boundary='extend')
         self.z2 = convolve(self.y2array, g2, boundary='extend')
+        
+        print "FWHM ", FWHM(self.xarray, self.z1)
            
     def plotDataPoints (self):
         self.calibration()
