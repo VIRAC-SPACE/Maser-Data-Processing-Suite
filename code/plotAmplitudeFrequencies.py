@@ -14,7 +14,8 @@ import json
 
 from ploting import Plot
 from experimentsLogReader import ExperimentLogReader
-from pandas.io.formats.printing import justify
+
+calibrationScales = {"IRBENE":12, "IRBENE16":26}
 
 def usage():
     print ('Usage: ' + sys.argv[0] + ' log file' + 'data file')
@@ -25,21 +26,27 @@ def file_len(fname):
             pass
     return i + 1
 
-def calibration(station, Tsys):
-    scale = 1
-    if station == "IRBENE":
-        scale = 12 
-        
-    elif station == "IRBENE16":
-        scale = 26
-    return scale*Tsys
+def calibration(calibrationScale, Tsys):
+    return calibrationScale*Tsys
     
-def dopler(ObservedFrequency, velocityReceiver):
+def dopler(ObservedFrequency, velocityReceiver, f0):
     c = scipy.constants.speed_of_light
-    f0 = 6668519200 # Hz 
+    #f0 = 6668519200 # Hz 
     velocitySoure = (-((ObservedFrequency/f0)-1)*c + (velocityReceiver * 1000))/1000
     return velocitySoure
 
+def FWHM(X,Y):
+    half_max = np.max(Y) / 2.
+    #find when function crosses line half_max (when sign of diff flips)
+    #take the 'derivative' of signum(half_max - Y[])
+    d = np.sign(half_max - np.array(Y[0:-1])) - np.sign(half_max - np.array(Y[1:]))
+    #plot(X,d) #if you are interested
+    #find the left and right most indexes
+    #left_idx = np.find(d > 0)[0]
+    #right_idx = find(d < 0)[-1]
+    #return X[right_idx] - X[left_idx] #return the difference (full width)
+    pass
+    
 def is_outlier(points, thresh=4.5):
 
     if len(points.shape) == 1:
@@ -52,7 +59,6 @@ def is_outlier(points, thresh=4.5):
     modified_z_score = 0.6745 * diff / med_abs_deviation
 
     return modified_z_score < thresh
-
     
 def frame(parent, size, sides, **options):
     Width=size[0]
@@ -85,41 +91,38 @@ class MaserPlot(Frame):
         self.m = 0
         self.n = self.dataPoints
         
-        y1array = np.zeros(dataPoints)
-        y2array = np.zeros(dataPoints)
+        self.f0 = 6668519200 
+        
+        self.y1array = np.zeros(dataPoints)
+        self.y2array = np.zeros(dataPoints)
         
         self.xarray = np.zeros(dataPoints)
-    
+        
         for i in range(0,dataPoints):
             self.xarray[i] = self.xdata[i]
         
         for j in range(0,dataPoints):
-            y1array[j] = self.ydataU1[j]
+            self.y1array[j] = self.ydataU1[j]
         
         for k in range(0,dataPoints):
-            y2array[k] = self.ydataU9[k]
-            
-        g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
-        g2 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
-    
-        self.z1 = convolve(y1array, g1, boundary='extend')
-        self.z2 = convolve(y2array, g2, boundary='extend')
-        
+            self.y2array[k] = self.ydataU9[k]
+         
+        self.location = location
         self.Systemtemperature1u = Systemtemperature1u
         self.Systemtemperature9u = Systemtemperature9u
+        self.calibrationScale = calibrationScales[self.location]
         self.source = source
         self.expername = expername
-        self.location = location
         self.scan = scan
         self.scanNumber = scanNumber
-        self.FreqStart = self.scan["FreqStart"] 
+        self.FreqStart = self.scan["FreqStart"]
         
         print self.expername, self.source
         
         self.window.title("Info")
         #infoFrame
-        infoPanelLabelsText = ["Experiment name: " + self.expername, "Scan number: " + self.scanNumber, "Source: " + self.source, "Station: " + self.location, "Date: " + scan["dates"], "Start time: " + scan["startTime"], "Stop time: " + self.scan["stopTime"], "System temperature 1u: " + str(self.Systemtemperature1u), "System temperature 9u: " + str(self.Systemtemperature9u), "Frequency Start: " + str(self.scan["FreqStart"])]
-        infoPanelEntryText = [{"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"defaultValue":self.Systemtemperature1u,"addEntry":True}, {"defaultValue":self.Systemtemperature9u,"addEntry":True}, {"defaultValue":scan["FreqStart"],"addEntry":True}]
+        infoPanelLabelsText = ["Experiment name: " + self.expername, "Scan number: " + self.scanNumber, "Source: " + self.source, "Station: " + self.location, "Date: " + scan["dates"], "Start time: " + scan["startTime"], "Stop time: " + self.scan["stopTime"], "System temperature 1u: " + str(self.Systemtemperature1u), "System temperature 9u: " + str(self.Systemtemperature9u), "Frequency Start: " + str(self.scan["FreqStart"]), "f0", "Calibration scale"]
+        infoPanelEntryText = [{"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"defaultValue":self.Systemtemperature1u,"addEntry":True}, {"defaultValue":self.Systemtemperature9u,"addEntry":True}, {"defaultValue":scan["FreqStart"],"addEntry":True}, {"defaultValue":self.f0, "addEntry":True}, {"defaultValue":str(self.calibrationScale), "addEntry":True}]
         
         for i in range(0, len( infoPanelLabelsText)): 
             self.infoLabel = Label(self.infoFrame, text=infoPanelLabelsText[i], anchor=W, justify=LEFT)
@@ -129,7 +132,7 @@ class MaserPlot(Frame):
                 self.infoInputField = Entry(self.infoFrame)
                 self.infoInputField.insert(0, str(infoPanelEntryText[i]["defaultValue"]))
                 self.infoInputField.pack(fill=BOTH)
-    
+                
     def changeData(self):
         childs = self.infoFrame.winfo_children()
         newValues = list()
@@ -141,8 +144,21 @@ class MaserPlot(Frame):
         self.Systemtemperature1u = float(newValues[0])
         self.Systemtemperature9u = float(newValues[1])
         self.FreqStart = float(newValues[2])
+        self.f0 = float(newValues[3])
+        self.calibrationScale = float(newValues[4])
+    
+    def calibration(self):
+        self.y1array = self.y1array * calibration(self.calibrationScale, self.Systemtemperature1u)
+        self.y2array = self.y2array * calibration(self.calibrationScale, self.Systemtemperature9u)
+            
+        g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
+        g2 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
+    
+        self.z1 = convolve(self.y1array, g1, boundary='extend')
+        self.z2 = convolve(self.y2array, g2, boundary='extend')
            
     def plotDataPoints (self):
+        self.calibration()
         self.masterFrame = frame(self.window,(1000,1000), LEFT, background = "gray")
         self.window.title("Data points for " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
         self.startChangeData.destroy()
@@ -326,8 +342,8 @@ class MaserPlot(Frame):
         lsrCorr = float(lsrShift)*1.e6 # for MHz
           
         #Parveido frekvenci par atrumu
-        self.x_u1 = dopler((self.xarray_u1 + self.FreqStart) * (10 ** 6), VelTotal)
-        self.x_u9 = dopler((self.xarray_u9 + self.FreqStart) * (10 ** 6), VelTotal)
+        self.x_u1 = dopler((self.xarray_u1 + self.FreqStart) * (10 ** 6), VelTotal, self.f0)
+        self.x_u9 = dopler((self.xarray_u9 + self.FreqStart) * (10 ** 6), VelTotal, self.f0)
         
         # Fit the data using a Chebyshev astro py
         ceb = Chebyshev1D(9, domain=None, window=[-1, 1], n_models=None, model_set_axis=None, name=None, meta=None)
@@ -478,15 +494,15 @@ class MaserPlot(Frame):
         self.plotFrame.destroy()
         self.window.destroy()
         
-def getData(dataFileName, location, Systemtemperature1u, Systemtemperature9u):
+def getData(dataFileName):
     data = np.fromfile(dataFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(dataFileName),5))
     data = np.delete(data, (0), axis=0) #izdzes masiva primo elementu
     
     dataPoints = data.shape[0]    
     
     xdata = data[:, [0]]
-    y1data = data[:, [1]] * calibration(location, Systemtemperature1u)
-    y2data = data[:, [2]] * calibration(location, Systemtemperature9u)  
+    y1data = data[:, [1]] 
+    y2data = data[:, [2]]
     
     return (xdata, y1data, y2data, dataPoints)
 
@@ -507,7 +523,7 @@ def main(logFileName, corData):
     
     #get Data and Logs
     Systemtemperature1u, Systemtemperature9u, location, source, scan, scanNumber = getLogs(logFileName, corData)
-    xdata, y1data, y2data, dataPoints = getData(corData, location, Systemtemperature1u, Systemtemperature9u)
+    xdata, y1data, y2data, dataPoints = getData(corData)
     expername = logFileName.split(".")[0][:-2]
     
     #Create App
