@@ -27,6 +27,15 @@ def file_len(fname):
             pass
     return i + 1
 
+def sortArrayByIndexies(orginalArray, sortIndexies):
+    if len(orginalArray) != len(sortIndexies):
+        raise "Arrays must be same size"
+    else:
+        sortedArray = [0]*len(orginalArray)
+        for i in sortIndexies:
+            sortedArray[i] = orginalArray[i]      
+    return sortedArray
+
 def calibration(calibrationScale, Tsys):
     return calibrationScale*Tsys
     
@@ -157,7 +166,17 @@ class MaserPlot(Frame):
         self.a, self.b = FWHM(self.xarray, (self.z1 + self.z2)/2, self.FWHMconstant)
         self.m = 0
         self.n = self.dataPoints
-           
+    
+    def back(self):
+        self.plot_1.removePolt()
+        self.plot_2.removePolt()
+        self.masterFrame.destroy()
+        self.createPolynomialButton.destroy()
+        self.backButton.destroy()
+        self.mSlider.destroy()
+        self.nSlider.destroy()
+        self.startWindow()
+          
     def plotDataPoints (self):
         self.calibration()
         self.masterFrame = frame(self.window,(1000,1000), LEFT, background = "gray")
@@ -167,6 +186,8 @@ class MaserPlot(Frame):
         self.infoFrame.destroy()
         self.createPolynomialButton = Button (self.plotFrame, text="Create Polynomial", command=self.plotPolynomial)
         self.createPolynomialButton.pack(side=TOP)
+        self.backButton = Button (self.plotFrame, text="back", command=self.back)
+        self.backButton.pack(side=TOP)
         
         self.points_1u = list()
         self.points_9u = list()
@@ -220,6 +241,7 @@ class MaserPlot(Frame):
         xdata = thisline.get_xdata()
         ydata = thisline.get_ydata()
         ind = event.ind
+        self.maxu1_index.append(ind[0])
         p = tuple(zip(xdata[ind], ydata[ind]))
         self.plot_5.plot(p[0][0], p[0][1], 'gd', None, 2, 5)
         if  self.maxU1.count(p[0]) == 0:
@@ -231,6 +253,7 @@ class MaserPlot(Frame):
         xdata = thisline.get_xdata()
         ydata = thisline.get_ydata()
         ind = event.ind
+        self.maxu9_index.append(ind[0])
         p = tuple(zip(xdata[ind], ydata[ind]))
         self.plot_6.plot(p[0][0], p[0][1], 'gd', None, 2, 5)
         if  self.maxU9.count(p[0]) == 0:
@@ -242,6 +265,7 @@ class MaserPlot(Frame):
         xdata = thisline.get_xdata()
         ydata = thisline.get_ydata()
         ind = event.ind
+        self.maxavg_index.append(ind[0])
         p = tuple(zip(xdata[ind], ydata[ind]))
         self.plot_7.plot(p[0][0], p[0][1], 'gd', None, 2, 5)
         if  self.avgMax.count(p[0]) == 0:
@@ -412,6 +436,9 @@ class MaserPlot(Frame):
         self.maxU1 = list()
         self.maxU9 = list()
         self.avgMax = list()
+        self.maxu1_index = list()
+        self.maxu9_index = list()
+        self.maxavg_index = list()
         
     def createResult(self):
         #remove graph
@@ -442,6 +469,14 @@ class MaserPlot(Frame):
         for i in range(0, len(self.avgMax)):
             max_x_avg.append(self.avgMax[i][0])
             max_y_avg.append(self.avgMax[i][1])
+        
+        #sorting array to match index    
+        max_x_U1 = sortArrayByIndexies(max_x_U1, self.maxu1_index)
+        max_y_U1 = sortArrayByIndexies(max_y_U1, self.maxu1_index)
+        max_x_U9 = sortArrayByIndexies(max_x_U9, self.maxu9_index)
+        max_y_U9 = sortArrayByIndexies(max_y_U9, self.maxu9_index)
+        max_x_avg = sortArrayByIndexies(max_x_avg, self.maxavg_index)
+        max_y_avg = sortArrayByIndexies(max_y_avg, self.maxavg_index)
             
         resultDir = "results/"
         resultFileName = self.source + ".json"
@@ -478,6 +513,10 @@ class MaserPlot(Frame):
         result[self.expername][self.scanNumber]["amplitude_for_polarizationU1"] = max_y_U1
         result[self.expername][self.scanNumber]["amplitude_for_polarizationU9"] = max_y_U9
         result[self.expername][self.scanNumber]["amplitude_for_polarizationAVG"] =  max_y_avg
+        
+        #result[self.expername][self.scanNumber]["index_for_polarizationU1"] =  self.maxu1_index
+        #result[self.expername][self.scanNumber]["index_for_polarizationU9"] =  self.maxu9_index
+        #result[self.expername][self.scanNumber]["index_for_polarizationAVG"] =  self.maxavg_index
         
         resultFile = open (resultDir +  resultFileName, "w")
         resultFile.write(json.dumps(result, indent=4))

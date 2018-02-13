@@ -1,3 +1,4 @@
+import numpy as np
 import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.figure import Figure
@@ -31,7 +32,7 @@ class Plot():
         self.graph.set_xlabel(x_label)
         self.graph.set_ylabel (y_label)
         
-    def plot(self, x,y, line, labels, markersizes, pickers):
+    def plot(self, x, y, line, labels, markersizes, pickers):
         self.graph.plot(x, y, line, label=labels, markersize=markersizes, picker=pickers)
         self.graph.legend(loc=2)
         
@@ -54,6 +55,7 @@ class Plot():
         self.second_x_ass.set_xlabel(label)
         self.graph.tick_params(axis=ass)
         self.second_x_ass.set_xticks(range(start, stop, step))
+        #self.second_x_ass.xticks(self.x, np.arange(start, stop))
         
     def removePolt(self):
         self.figure.clf()
