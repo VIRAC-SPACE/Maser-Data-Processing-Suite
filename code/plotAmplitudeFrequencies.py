@@ -9,7 +9,7 @@ import scipy.constants
 from astropy.modeling import fitting
 from astropy.modeling.polynomial import Chebyshev1D
 from astropy.convolution import Gaussian1DKernel, convolve
-from scipy.interpolate import splrep, sproot
+from scipy.interpolate import UnivariateSpline
 import peakutils
 import json
 
@@ -36,35 +36,16 @@ def dopler(ObservedFrequency, velocityReceiver, f0):
     velocitySoure = (-((ObservedFrequency/f0)-1)*c + (velocityReceiver * 1000))/1000
     return velocitySoure
 
-def FWHM(x, y, k=100):
-    """
-    Determine full-with-half-maximum of a peaked set of points, x and y.
-
-    Assumes that there is only one peak present in the datasset.  The function
-    uses a spline interpolation of order k.
-    """
-
-    class MultiplePeaks(Exception): pass
-    class NoPeaksFound(Exception): pass
-
-    half_max = max(y)/2.0
-    print half_max
-    nknots = k
-    knots = np.arange(x[1],x[len(x)-1],(x[len(x)-1]-x[1])/np.double(nknots))
-    s = splrep(x, y - half_max, t=knots)
-    roots = sproot(s)
-
-    if len(roots) > 2:
-        raise MultiplePeaks("The dataset appears to have multiple peaks, and "
-                "thus the FWHM can't be determined.")
-    if len(roots) < 2:
-        raise NoPeaksFound("No proper peaks were found in the data set; likely "
-                "the dataset is flat (e.g. all zeros).")
-    else:
-        return (roots[1], roots[0])
+def FWHM(x, y, constant):
+    spline = UnivariateSpline(x, y-np.max(y)/2, k=3, s=20)
+    spline.set_smoothing_factor(0.5)
+    root1 = spline.roots()[0] - constant
+    root2 = spline.roots()[-1] + constant
+    index_1 =  (np.abs(x-root1)).argmin()
+    index_2 =  (np.abs(x-root2)).argmin()
+    return (index_1, index_2)
     
 def is_outlier(points, thresh=4.5):
-
     if len(points.shape) == 1:
         points = points[:,None]
     median = np.median(points, axis=0)
@@ -106,7 +87,8 @@ class MaserPlot(Frame):
         self.b = int(middle*1.075)
         self.m = 0
         self.n = self.dataPoints
-        
+        self.FWHMconstant = 0.3
+        self.polynomialOrder = 9
         self.f0 = 6668519200 
         
         self.y1array = np.zeros(dataPoints)
@@ -137,8 +119,8 @@ class MaserPlot(Frame):
         
         self.window.title("Info")
         #infoFrame
-        infoPanelLabelsText = ["Experiment name: " + self.expername, "Scan number: " + self.scanNumber, "Source: " + self.source, "Station: " + self.location, "Date: " + scan["dates"], "Start time: " + scan["startTime"], "Stop time: " + self.scan["stopTime"], "System temperature 1u: " + str(self.Systemtemperature1u), "System temperature 9u: " + str(self.Systemtemperature9u), "Frequency Start: " + str(self.scan["FreqStart"]), "f0", "Calibration scale"]
-        infoPanelEntryText = [{"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"defaultValue":self.Systemtemperature1u,"addEntry":True}, {"defaultValue":self.Systemtemperature9u,"addEntry":True}, {"defaultValue":scan["FreqStart"],"addEntry":True}, {"defaultValue":self.f0, "addEntry":True}, {"defaultValue":str(self.calibrationScale), "addEntry":True}]
+        infoPanelLabelsText = ["Experiment name: " + self.expername, "Scan number: " + self.scanNumber, "Source: " + self.source, "Station: " + self.location, "Date: " + scan["dates"], "Start time: " + scan["startTime"], "Stop time: " + self.scan["stopTime"], "System temperature 1u: " + str(self.Systemtemperature1u), "System temperature 9u: " + str(self.Systemtemperature9u), "Frequency Start: " + str(self.scan["FreqStart"]), "f0", "Calibration scale", "FWHM constant", "Polynomial order"]
+        infoPanelEntryText = [{"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"defaultValue":self.Systemtemperature1u,"addEntry":True}, {"defaultValue":self.Systemtemperature9u,"addEntry":True}, {"defaultValue":scan["FreqStart"],"addEntry":True}, {"defaultValue":self.f0, "addEntry":True}, {"defaultValue":str(self.calibrationScale), "addEntry":True}, {"defaultValue":str(self.FWHMconstant), "addEntry":True}, {"defaultValue":str(self.polynomialOrder), "addEntry":True}]
         
         for i in range(0, len( infoPanelLabelsText)): 
             self.infoLabel = Label(self.infoFrame, text=infoPanelLabelsText[i], anchor=W, justify=LEFT)
@@ -162,6 +144,8 @@ class MaserPlot(Frame):
         self.FreqStart = float(newValues[2])
         self.f0 = float(newValues[3])
         self.calibrationScale = float(newValues[4])
+        self.FWHMconstant = float(newValues[5])
+        self.polynomialOrder = int(newValues[6])
     
     def calibration(self):
         self.y1array = self.y1array * calibration(self.calibrationScale, self.Systemtemperature1u)
@@ -173,7 +157,7 @@ class MaserPlot(Frame):
         self.z1 = convolve(self.y1array, g1, boundary='extend')
         self.z2 = convolve(self.y2array, g2, boundary='extend')
         
-        print "FWHM ", FWHM(self.xarray, self.z1)
+        self.a, self.b = FWHM(self.xarray, (self.z1 + self.z2)/2, self.FWHMconstant)
            
     def plotDataPoints (self):
         self.calibration()
@@ -301,15 +285,9 @@ class MaserPlot(Frame):
         self.dataPoints_u1 = self.xarray_u1.shape[0]
         self.dataPoints_u9 = self.xarray_u9.shape[0]
         
-        middle_u1 = int(self.dataPoints_u1 / 2) #vidusunks u1
-        middle_u9 = int(self.dataPoints_u9 / 2) #vidusunks u9
-        
-        self.a_u1 = int(middle_u1 * 0.88)
-        self.a_u9 = int(middle_u9 * 0.88)
-        
-        self.b_u1 = int(middle_u1 * 1.075)
-        self.b_u9 = int(middle_u9 * 1.075)
-        
+        self.a_u1, self.b_u1 = FWHM(self.xarray_u1, self.z1, self.FWHMconstant)
+        self.a_u9, self.b_u9 = FWHM(self.xarray_u9, self.z2, self.FWHMconstant)
+         
         print "pec dzesanas ", self.xarray_u9.shape[0]
         
         timeStr = self.scan['startTime'].replace(":", " ")
@@ -364,7 +342,7 @@ class MaserPlot(Frame):
         self.x_u9 = dopler((self.xarray_u9 + self.FreqStart) * (10 ** 6), VelTotal, self.f0)
         
         # Fit the data using a Chebyshev astro py
-        ceb = Chebyshev1D(9, domain=None, window=[-1, 1], n_models=None, model_set_axis=None, name=None, meta=None)
+        ceb = Chebyshev1D(self.polynomialOrder, domain=None, window=[-1, 1], n_models=None, model_set_axis=None, name=None, meta=None)
         fit_ceb = fitting.LevMarLSQFitter()
         
         ### u1
