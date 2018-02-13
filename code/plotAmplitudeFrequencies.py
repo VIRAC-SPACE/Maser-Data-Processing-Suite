@@ -67,34 +67,25 @@ def frame(parent, size, sides, **options):
 class MaserPlot(Frame):
     def __init__(self,  window, xdata, ydataU1, ydataU9, dataPoints, Systemtemperature1u, Systemtemperature9u, expername, source, location, scan, scanNumber):
         
-        #Window
+        #Data init
         Frame.__init__(self)
         self.window = window
-        self.plotFrame = frame(self.window,(1000,1000), None, background = "gray")
-        self.infoFrame = frame(self.window,(1000,1000), None, background = "gray")
-        self.startDataPlotButton = Button (self.plotFrame, text="Plot data points", command=self.plotDataPoints)
-        self.startChangeData = Button (self.plotFrame, text="Change Data", command=self.changeData)
-        self.startDataPlotButton.pack(fill=BOTH)
-        self.startChangeData.pack(side=BOTTOM, fill=BOTH)
-        
         self.xdata = xdata
         self.ydataU1= ydataU1
         self.ydataU9 = ydataU9
-        
+        self.location = location
+        self.Systemtemperature1u = Systemtemperature1u
+        self.Systemtemperature9u = Systemtemperature9u
+        self.source = source
+        self.expername = expername
+        self.scan = scan
+        self.scanNumber = scanNumber
         self.dataPoints = dataPoints
-        middle = int(self.dataPoints/2) #vidusunks
-        self.a = int(middle*0.88)
-        self.b = int(middle*1.075)
-        self.m = 0
-        self.n = self.dataPoints
-        self.FWHMconstant = 0.3
-        self.polynomialOrder = 9
-        self.f0 = 6668519200 
         
-        self.y1array = np.zeros(dataPoints)
-        self.y2array = np.zeros(dataPoints)
-        
-        self.xarray = np.zeros(dataPoints)
+        #Making sure that data is numpy array
+        self.xarray = np.zeros(self.dataPoints)
+        self.y1array = np.zeros(self.dataPoints)
+        self.y2array = np.zeros(self.dataPoints)
         
         for i in range(0,dataPoints):
             self.xarray[i] = self.xdata[i]
@@ -104,23 +95,29 @@ class MaserPlot(Frame):
         
         for k in range(0,dataPoints):
             self.y2array[k] = self.ydataU9[k]
-         
-        self.location = location
-        self.Systemtemperature1u = Systemtemperature1u
-        self.Systemtemperature9u = Systemtemperature9u
+            
+        self.startWindow()
+    
+    def startWindow(self):
+        #default constants
+        self.FWHMconstant = 0.3
+        self.polynomialOrder = 9
+        self.f0 = 6668519200 
         self.calibrationScale = calibrationScales[self.location]
-        self.source = source
-        self.expername = expername
-        self.scan = scan
-        self.scanNumber = scanNumber
         self.FreqStart = self.scan["FreqStart"]
         
-        print self.expername, self.source
-        
-        self.window.title("Info")
+        #start window frame
+        self.plotFrame = frame(self.window,(1000,1000), None, background = "gray")
+        self.infoFrame = frame(self.window,(1000,1000), None, background = "gray")
+        self.startDataPlotButton = Button (self.plotFrame, text="Plot data points", command=self.plotDataPoints)
+        self.startChangeData = Button (self.plotFrame, text="Change Data", command=self.changeData)
+        self.startDataPlotButton.pack(fill=BOTH)
+        self.startChangeData.pack(side=BOTTOM, fill=BOTH)
+            
         #infoFrame
-        infoPanelLabelsText = ["Experiment name: " + self.expername, "Scan number: " + self.scanNumber, "Source: " + self.source, "Station: " + self.location, "Date: " + scan["dates"], "Start time: " + scan["startTime"], "Stop time: " + self.scan["stopTime"], "System temperature 1u: " + str(self.Systemtemperature1u), "System temperature 9u: " + str(self.Systemtemperature9u), "Frequency Start: " + str(self.scan["FreqStart"]), "f0", "Calibration scale", "FWHM constant", "Polynomial order"]
-        infoPanelEntryText = [{"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"defaultValue":self.Systemtemperature1u,"addEntry":True}, {"defaultValue":self.Systemtemperature9u,"addEntry":True}, {"defaultValue":scan["FreqStart"],"addEntry":True}, {"defaultValue":self.f0, "addEntry":True}, {"defaultValue":str(self.calibrationScale), "addEntry":True}, {"defaultValue":str(self.FWHMconstant), "addEntry":True}, {"defaultValue":str(self.polynomialOrder), "addEntry":True}]
+        self.window.title("Info")
+        infoPanelLabelsText = ["Experiment name: " + self.expername, "Scan number: " + self.scanNumber, "Source: " + self.source, "Station: " + self.location, "Date: " + self.scan["dates"], "Start time: " + self.scan["startTime"], "Stop time: " + self.scan["stopTime"], "System temperature 1u: " + str(self.Systemtemperature1u), "System temperature 9u: " + str(self.Systemtemperature9u), "Frequency Start: " + str(self.scan["FreqStart"]), "f0", "Calibration scale", "FWHM constant", "Polynomial order"]
+        infoPanelEntryText = [{"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"defaultValue":self.Systemtemperature1u,"addEntry":True}, {"defaultValue":self.Systemtemperature9u,"addEntry":True}, {"defaultValue":self.scan["FreqStart"],"addEntry":True}, {"defaultValue":self.f0, "addEntry":True}, {"defaultValue":str(self.calibrationScale), "addEntry":True}, {"defaultValue":str(self.FWHMconstant), "addEntry":True}, {"defaultValue":str(self.polynomialOrder), "addEntry":True}]
         
         for i in range(0, len( infoPanelLabelsText)): 
             self.infoLabel = Label(self.infoFrame, text=infoPanelLabelsText[i], anchor=W, justify=LEFT)
@@ -158,6 +155,8 @@ class MaserPlot(Frame):
         self.z2 = convolve(self.y2array, g2, boundary='extend')
         
         self.a, self.b = FWHM(self.xarray, (self.z1 + self.z2)/2, self.FWHMconstant)
+        self.m = 0
+        self.n = self.dataPoints
            
     def plotDataPoints (self):
         self.calibration()
