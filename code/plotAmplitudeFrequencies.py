@@ -29,11 +29,11 @@ def file_len(fname):
 
 def sortArrayByIndexies(orginalArray, sortIndexies):
     if len(orginalArray) != len(sortIndexies):
-        raise "Arrays must be same size"
+        raise Exception("Arrays must be same size")
     else:
         sortedArray = [0]*len(orginalArray)
-        for i in sortIndexies:
-            sortedArray[i] = orginalArray[i]      
+        for i in range(0,  len(sortIndexies)):
+            sortedArray[int(sortIndexies[i])] = orginalArray[i]      
     return sortedArray
 
 def calibration(calibrationScale, Tsys):
@@ -519,7 +519,7 @@ class MaserPlot(Frame):
         #result[self.expername][self.scanNumber]["index_for_polarizationAVG"] =  self.maxavg_index
         
         resultFile = open (resultDir +  resultFileName, "w")
-        resultFile.write(json.dumps(result, indent=4))
+        resultFile.write(json.dumps(result, indent=2))
         resultFile.close() 
         
         self. _quit()
