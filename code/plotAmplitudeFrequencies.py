@@ -27,15 +27,6 @@ def file_len(fname):
             pass
     return i + 1
 
-def sortArrayByIndexies(orginalArray, sortIndexies):
-    if len(orginalArray) != len(sortIndexies):
-        raise Exception("Arrays must be same size")
-    else:
-        sortedArray = [0]*len(orginalArray)
-        for i in range(0,  len(sortIndexies)):
-            sortedArray[int(sortIndexies[i])] = orginalArray[i]      
-    return sortedArray
-
 def calibration(calibrationScale, Tsys):
     return calibrationScale*Tsys
     
@@ -451,33 +442,6 @@ class MaserPlot(Frame):
         endLabel = Label(master=self.plotFrame, text="Result file creating in progress!")
         endLabel.pack()
         
-        max_x_U1 = list()
-        max_x_U9 = list()
-        max_x_avg = list()
-        max_y_U1 = list()
-        max_y_U9 = list()
-        max_y_avg = list()
-        
-        for i in range(0, len(self.maxU1)):
-            max_x_U1.append(self.maxU1[i][0])
-            max_y_U1.append(self.maxU1[i][1])
-            
-        for i in range(0, len(self.maxU9)):
-            max_x_U9.append(self.maxU9[i][0])
-            max_y_U9.append(self.maxU9[i][1])
-        
-        for i in range(0, len(self.avgMax)):
-            max_x_avg.append(self.avgMax[i][0])
-            max_y_avg.append(self.avgMax[i][1])
-        
-        #sorting array to match index    
-        max_x_U1 = sortArrayByIndexies(max_x_U1, self.maxu1_index)
-        max_y_U1 = sortArrayByIndexies(max_y_U1, self.maxu1_index)
-        max_x_U9 = sortArrayByIndexies(max_x_U9, self.maxu9_index)
-        max_y_U9 = sortArrayByIndexies(max_y_U9, self.maxu9_index)
-        max_x_avg = sortArrayByIndexies(max_x_avg, self.maxavg_index)
-        max_y_avg = sortArrayByIndexies(max_y_avg, self.maxavg_index)
-            
         resultDir = "results/"
         resultFileName = self.source + ".json"
     
@@ -500,20 +464,20 @@ class MaserPlot(Frame):
                 
         if self.scanNumber not in result[self.expername]:
                 result[self.expername][self.scanNumber] = dict()
-                   
+        
+        self.maxU1.sort(key=lambda tup: tup[0], reverse=True)
+        self.maxU9.sort(key=lambda tup: tup[0], reverse=True)
+        self.avgMax.sort(key=lambda tup: tup[0], reverse=True)
+              
         result[self.expername][self.scanNumber]["startTime"] = self.scan["startTime"]
         result[self.expername][self.scanNumber]["stopTime"] = self.scan["stopTime"]
         result[self.expername][self.scanNumber]["location"] = self.location
         result[self.expername][self.scanNumber]["Date"] = self.scan["dates"]
                 
-        result[self.expername][self.scanNumber]["velocity_for_polarizationU1"] = max_x_U1
-        result[self.expername][self.scanNumber]["velocity_for_polarizationU9"] = max_x_U9
-        result[self.expername][self.scanNumber]["velocity_for_polarizationAVG"] = max_x_avg 
+        result[self.expername][self.scanNumber]["polarizationU1"] = self.maxU1
+        result[self.expername][self.scanNumber]["polarizationU9"] = self.maxU9
+        result[self.expername][self.scanNumber]["polarizationAVG"] = self.avgMax
                 
-        result[self.expername][self.scanNumber]["amplitude_for_polarizationU1"] = max_y_U1
-        result[self.expername][self.scanNumber]["amplitude_for_polarizationU9"] = max_y_U9
-        result[self.expername][self.scanNumber]["amplitude_for_polarizationAVG"] =  max_y_avg
-        
         #result[self.expername][self.scanNumber]["index_for_polarizationU1"] =  self.maxu1_index
         #result[self.expername][self.scanNumber]["index_for_polarizationU9"] =  self.maxu9_index
         #result[self.expername][self.scanNumber]["index_for_polarizationAVG"] =  self.maxavg_index

@@ -27,6 +27,15 @@ if __name__=="__main__":
     resultDir = "results/"
     resultFileName = source_name + ".json"
     
+    if os.path.isfile(resultDir + resultFileName):
+            pass
+    else:
+        os.system("touch " + resultDir +  resultFileName)
+            
+        resultFile = open (resultDir +  resultFileName, "w")
+        resultFile.write("{ \n" + "\n}")
+        resultFile.close()
+    
     #open result file    
     with open(resultDir + resultFileName) as result_data:    
         result = json.load(result_data)
@@ -35,7 +44,7 @@ if __name__=="__main__":
     for logFileName in os.listdir(logFileDir):
         experName = logFileName.split(".")[0][:-2]
         if experName in result:
-            pass
+            print "Experiment " + experName + " already is processed"
         
         else:
             scan_numbers = ExperimentLogReader(logFileDir + logFileName, prettyLogDir).getScansForSource(source_name) # find all scans
