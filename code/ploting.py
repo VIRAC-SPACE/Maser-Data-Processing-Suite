@@ -4,6 +4,7 @@ matplotlib.use('TkAgg')
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.backends.backend_tkagg as tkagg
+from matplotlib.widgets import Slider
 from Tkinter import *
 import Tkinter as tk
 
@@ -36,11 +37,15 @@ class Plot():
         self.graph.plot(x, y, line, label=labels, markersize=markersizes, picker=pickers)
         self.graph.legend(loc=2)
         
-    def annotation(self, xvalues, yvalues):
+    def annotations(self, xvalues, yvalues):
         ax = self.figure.add_subplot(111)
         for xy in zip(xvalues, yvalues):                        
             ax.annotate('(%.2f, %.1f)' % xy, xy=xy, textcoords='data')
             
+    def annotation(self, xvalue, yvalue, text):
+        ax = self.figure.add_subplot(111)
+        ax.annotate(text, xy=(xvalue, yvalue),  textcoords='data')
+        
     def canvasShow(self):
         self.canvas.show()
     
@@ -55,7 +60,13 @@ class Plot():
         self.second_x_ass.set_xlabel(label)
         self.graph.tick_params(axis=ass)
         self.second_x_ass.set_xticks(range(start, stop, step))
-        #self.second_x_ass.xticks(self.x, np.arange(start, stop))
+        
+    def addSlider(self, cords, label, start, stop, init, callback):
+        self.figure.subplots_adjust(bottom=0.25)
+        axcolor = 'lightgoldenrodyellow'
+        Axes = self.figure.add_axes(cords, axisbg=axcolor)
+        slider=Slider(Axes, label,  start, stop, valinit=init)
+        slider.on_changed(callback)
         
     def removePolt(self):
         self.figure.clf()

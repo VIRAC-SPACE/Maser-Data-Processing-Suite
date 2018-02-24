@@ -167,7 +167,38 @@ class MaserPlot(Frame):
         self.mSlider.destroy()
         self.nSlider.destroy()
         self.startWindow()
-          
+    
+    def updateEnd(self, event):
+        self.plot_1.plot(self.xarray[self.previousM], self.z1[self.previousM], 'ko', None, 1, None)
+        self.plot_2.plot(self.xarray[self.previousM], self.z2[self.previousM], 'ko', None, 1, None)
+        
+        self.plot_1.plot(self.xarray[self.previousN-1], self.z1[self.previousN-1], 'ko', None, 1, None)
+        self.plot_2.plot(self.xarray[self.previousN-1], self.z2[self.previousN-1], 'ko', None, 1, None)
+        
+        self.plot_1.annotation(self.xarray[self.previousM], self.z1[self.previousM], "")
+        self.plot_2.annotation(self.xarray[self.previousM], self.z2[self.previousM], "")
+        
+        self.plot_1.annotation(self.xarray[self.previousN-1], self.z1[self.previousN-1], "")
+        self.plot_2.annotation(self.xarray[self.previousN-1], self.z2[self.previousN-1], "")
+        
+        self.plot_1.plot(self.xarray[self.mSlider.get()], self.z1[self.mSlider.get()], 'ro', None, 1, None)
+        self.plot_2.plot(self.xarray[self.mSlider.get()], self.z2[self.mSlider.get()], 'ro', None, 1, None)
+        
+        self.plot_1.plot(self.xarray[self.nSlider.get()-1], self.z1[self.nSlider.get()-1], 'ro', None, 1, None)
+        self.plot_2.plot(self.xarray[self.nSlider.get()-1], self.z2[self.nSlider.get()-1], 'ro', None, 1, None)
+        
+        self.plot_1.annotation(self.xarray[self.mSlider.get()], self.z1[self.mSlider.get()], "M")
+        self.plot_2.annotation(self.xarray[self.mSlider.get()], self.z2[self.mSlider.get()], "M")
+        
+        self.plot_1.annotation(self.xarray[self.nSlider.get()-1], self.z1[self.nSlider.get()-1], "N")
+        self.plot_2.annotation(self.xarray[self.nSlider.get()-1], self.z2[self.nSlider.get()-1], "N")
+        
+        self.plot_1.canvasShow()
+        self.plot_2.canvasShow()
+        
+        self.previousM = self.mSlider.get()
+        self.previousN = self.nSlider.get()
+           
     def plotDataPoints (self):
         self.calibration()
         self.masterFrame = frame(self.window,(1000,1000), LEFT, background = "gray")
@@ -189,6 +220,7 @@ class MaserPlot(Frame):
         self.plot_1.plot(self.xarray, self.z1, 'ko', 'Data Points', 1, 5)
         self.plot_1.addPickEvent(self.onpickU1)
         self.plot_1.addSecondAss("x", "Data points", 0, self.dataPoints + 512, 1024)
+        #self.plot_1.addSlider([0.10, 0.15, 0.65, 0.03], "m", 10, 0, 5, None)
         
         #u9
         self.plot_2 = Plot(6,6, self.masterFrame, self.plotFrame)
@@ -196,16 +228,20 @@ class MaserPlot(Frame):
         self.plot_2.plot(self.xarray, self.z2, 'ko', 'Data Points', 1, 5)
         self.plot_2.addPickEvent(self.onpickU9)
         self.plot_2.addSecondAss("x", "Data points", 0, self.dataPoints + 512, 1024)
+        #self.plot_2.addSlider([0.10, 0.25, 0.65, 0.03], "n", 10, 0, 5, None)
         
         #sliders
-        self.mSlider = Scale(self.plotFrame, from_= self.m, to = self.a-1, orient=HORIZONTAL, label="M", length=500, variable=self.m)
+        self.previousM = self.m
+        self.previousN = self.n -1
+        
+        self.mSlider = Scale(self.plotFrame, from_= self.m, to = self.a-1, orient=HORIZONTAL, label="M", length=500, variable=self.m, command=self.updateEnd)
         self.mSlider.pack(side=BOTTOM)
         self.m = self.mSlider.get()
         
-        self.nSlider = Scale(self.plotFrame, from_ = self.b-1 , to = self.n, orient=HORIZONTAL, label="N", length=500, variable=self.n)
+        self.nSlider = Scale(self.plotFrame, from_ = self.b-1 , to = self.n, orient=HORIZONTAL, label="N", length=500, variable=self.n, command=self.updateEnd)
         self.nSlider.pack(side=BOTTOM)
         self.nSlider.set(self.n)
-        self.n = self.nSlider.get() 
+        self.n = self.nSlider.get()
     
     def onpickU1(self, event):
         thisline = event.artist
@@ -402,7 +438,7 @@ class MaserPlot(Frame):
         self.plot_5.plot(self.x_u1[self.m:self.n], y1values, 'b', 'Signal - polynomial', 1, None)
         self.plot_5.plot(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', "Local Maximums for signal", 2, 5)
         self.plot_5.addPickEvent(self.onpick_maxU1)
-        self.plot_5.annotation(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb])
+        self.plot_5.annotations(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb])
         
         #u9
         self.plot_6 = Plot(6,6, self.window, self.plotFrame)
@@ -410,7 +446,7 @@ class MaserPlot(Frame):
         self.plot_6.plot(self.x_u9[self.m:self.n], y1values, 'b', 'Signal - polynomial', 1, None)
         self.plot_6.plot(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', "Local Maximums for signal", 2, 5)
         self.plot_6.addPickEvent(self.onpick_maxU9)
-        self.plot_6.annotation(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2])
+        self.plot_6.annotations(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2])
         
         #mid plot
         avg_x = (self.x_u1[self.m:self.n] + self.x_u9[self.m:self.n]) / 2
@@ -422,7 +458,7 @@ class MaserPlot(Frame):
         self.plot_7.plot(avg_x, avg_y, 'b', 'Signal - polynomial', 1, None)
         self.plot_7.plot(avg_x[indexes_for_avg], avg_y[indexes_for_avg], 'dr', "Local Maximums for signal", 2, 5)
         self.plot_7.addPickEvent(self.onpick_maxAVG)
-        self.plot_7.annotation(avg_x[indexes_for_avg],  avg_y[indexes_for_avg])
+        self.plot_7.annotations(avg_x[indexes_for_avg],  avg_y[indexes_for_avg])
         
         self.maxU1 = list()
         self.maxU9 = list()
