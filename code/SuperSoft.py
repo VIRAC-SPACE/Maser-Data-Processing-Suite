@@ -43,12 +43,13 @@ if __name__=="__main__":
     #check if experiment has result
     for logFileName in os.listdir(logFileDir):
         experName = logFileName.split(".")[0][:-2]
+        
         if experName in result:
             print "Experiment " + experName + " already is processed"
         
         else:
             scan_numbers = ExperimentLogReader(logFileDir + logFileName, prettyLogDir).getScansForSource(source_name) # find all scans
-            
+            print scan_numbers
             for scan in scan_numbers:
                 dataFile = experName + "_n" + scan + ".dat"
                 

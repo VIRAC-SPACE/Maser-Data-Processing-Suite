@@ -55,16 +55,10 @@ if __name__=="__main__":
     y = values
 
     fig = plt.figure()
-
     graph = fig.add_subplot(111)
-
-    # Plot the data as a red line with round markers
     graph.plot(x,y,'ro')
-
-    # Set the xtick locations to correspond to just the dates you entered.
     graph.set_xticks(x)
-
-    # Set the xtick labels to correspond to just the dates you entered.
-    #graph.set_xticklabels([date.strftime("%Y-%m-%d") for (date, value) in amplitude_for_u1_monitoring])
-
+    graph.set_xticklabels([date.strftime("%d %m %Y %H:%M:%S") for date in  dataStrings])
     plt.show()
+    
+    
