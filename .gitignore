@@ -29,3 +29,16 @@ local.properties
 
 # CDT-specific
 .cproject
+build/
+dist/
+libpython2.7.so.1.0
+plotAmplitudeFrequencies.spec
+results/
+prettyLogs/
+dataFiles/
+logs/
+prettyLogs/m44irlog.dat
+prettyLogs/m80irlog.dat
+prettyLogs/m82irlog.dat
+results/w3oh.json
+
