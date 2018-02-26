@@ -327,7 +327,7 @@ class ExperimentLogReader():
             self.datafile.write("End;" + self.scan_names[scan].zfill(2) + ";----------------------;")
             self.datafile.write("\n")
             
-        print "Created file " + "prettyLogs/" + self.logs.split(".")[0].split("/")[1] + "log.dat"
+        print ("Created file " + "prettyLogs/" + self.logs.split(".")[0].split("/")[1] + "log.dat")
 
     def getLgs(self):
         self.writeOutput()

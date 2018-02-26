@@ -3,8 +3,8 @@
 import os, sys
 import numpy as np
 from Tkinter import *
-import Tkinter as tk
-from time import strptime
+import 	Tkinter as tk
+from time import strptime 
 import scipy.constants
 from astropy.modeling import fitting
 from astropy.modeling.polynomial import Chebyshev1D
@@ -60,7 +60,7 @@ def is_outlier(points, thresh=4.5):
 def frame(parent, size, sides, **options):
     Width=size[0]
     Height=size[1]
-    f=Frame(parent, width=Width,height=Height,**options)
+    f=tk.Frame(parent, width=Width,height=Height,**options)
     f.pack(side = sides)
     return (f)
     
@@ -107,13 +107,12 @@ class MaserPlot(Frame):
         self.FreqStart = self.scan["FreqStart"]
         
         #start window frame
-        self.plotFrame = frame(self.window,(1000,1000), None, background = "gray")
-        self.infoFrame = frame(self.window,(1000,1000), None, background = "gray")
+        self.plotFrame = frame(self.window,(1000,1000), None)
+        self.infoFrame = frame(self.window,(1000,1000), None)
         self.startDataPlotButton = Button (self.plotFrame, text="Plot data points", command=self.plotDataPoints)
         self.startChangeData = Button (self.plotFrame, text="Change Data", command=self.changeData)
         self.startDataPlotButton.pack(fill=BOTH)
-        self.startChangeData.pack(side=BOTTOM, fill=BOTH)
-            
+        self.startChangeData.pack(side=BOTTOM, fill=BOTH)  
         #infoFrame
         self.window.title("Info")
         infoPanelLabelsText = ["Experiment name: " + self.expername, "Scan number: " + self.scanNumber, "Source: " + self.source, "Station: " + self.location, "Date: " + self.scan["dates"], "Start time: " + self.scan["startTime"], "Stop time: " + self.scan["stopTime"], "System temperature 1u: " + str(self.Systemtemperature1u), "System temperature 9u: " + str(self.Systemtemperature9u), "Frequency Start: " + str(self.scan["FreqStart"]), "f0", "Calibration scale", "FWHM constant", "Polynomial order"]
@@ -169,39 +168,42 @@ class MaserPlot(Frame):
         self.startWindow()
     
     def updateEnd(self, event):
-        self.plot_1.plot(self.xarray[self.previousM], self.z1[self.previousM], 'ko', None, 1, None)
-        self.plot_2.plot(self.xarray[self.previousM], self.z2[self.previousM], 'ko', None, 1, None)
+        self.plot_1.plot(self.xarray[int(self.previousM)], self.z1[int(self.previousM)], 'ko', None, 1, None)
+        self.plot_2.plot(self.xarray[int(self.previousM)], self.z2[int(self.previousM)], 'ko', None, 1, None)
         
-        self.plot_1.plot(self.xarray[self.previousN-1], self.z1[self.previousN-1], 'ko', None, 1, None)
-        self.plot_2.plot(self.xarray[self.previousN-1], self.z2[self.previousN-1], 'ko', None, 1, None)
+        self.plot_1.plot(self.xarray[int(self.previousN-1)], self.z1[int(self.previousN-1)], 'ko', None, 1, None)
+        self.plot_2.plot(self.xarray[int(self.previousN-1)], self.z2[int(self.previousN-1)], 'ko', None, 1, None)
         
-        self.plot_1.annotation(self.xarray[self.previousM], self.z1[self.previousM], "")
-        self.plot_2.annotation(self.xarray[self.previousM], self.z2[self.previousM], "")
+        self.plot_1.annotation(self.xarray[int(self.previousM)], self.z1[int(self.previousM)], " ")
+        self.plot_2.annotation(self.xarray[int(self.previousM)], self.z2[int(self.previousM)], " ")
+   
+        self.plot_1.annotation(self.xarray[int(self.previousN-1)], self.z1[int(self.previousN-1)], " ")
+        self.plot_2.annotation(self.xarray[int(self.previousN-1)], self.z2[int(self.previousN-1)], " ")
+
+        self.plot_1.remannotation()
+        self.plot_2.remannotation()
+
+        self.plot_1.annotation(self.xarray[int(self.mSlider.get())], self.z1[int(self.mSlider.get())], "M")
+        self.plot_2.annotation(self.xarray[int(self.mSlider.get())], self.z2[int(self.mSlider.get())], "M")
         
-        self.plot_1.annotation(self.xarray[self.previousN-1], self.z1[self.previousN-1], "")
-        self.plot_2.annotation(self.xarray[self.previousN-1], self.z2[self.previousN-1], "")
+        self.plot_1.annotation(self.xarray[int(self.nSlider.get()-1)], self.z1[int(self.nSlider.get()-1)], "N")
+        self.plot_2.annotation(self.xarray[int(self.nSlider.get()-1)], self.z2[int(self.nSlider.get()-1)], "N")
         
-        self.plot_1.plot(self.xarray[self.mSlider.get()], self.z1[self.mSlider.get()], 'ro', None, 1, None)
-        self.plot_2.plot(self.xarray[self.mSlider.get()], self.z2[self.mSlider.get()], 'ro', None, 1, None)
+        self.plot_1.plot(self.xarray[int(self.mSlider.get())], self.z1[int(self.mSlider.get())], 'ro', None, 1, None)
+        self.plot_2.plot(self.xarray[int(self.mSlider.get())], self.z2[int(self.mSlider.get())], 'ro', None, 1, None)
         
-        self.plot_1.plot(self.xarray[self.nSlider.get()-1], self.z1[self.nSlider.get()-1], 'ro', None, 1, None)
-        self.plot_2.plot(self.xarray[self.nSlider.get()-1], self.z2[self.nSlider.get()-1], 'ro', None, 1, None)
-        
-        self.plot_1.annotation(self.xarray[self.mSlider.get()], self.z1[self.mSlider.get()], "M")
-        self.plot_2.annotation(self.xarray[self.mSlider.get()], self.z2[self.mSlider.get()], "M")
-        
-        self.plot_1.annotation(self.xarray[self.nSlider.get()-1], self.z1[self.nSlider.get()-1], "N")
-        self.plot_2.annotation(self.xarray[self.nSlider.get()-1], self.z2[self.nSlider.get()-1], "N")
+        self.plot_1.plot(self.xarray[int(self.nSlider.get()-1)], self.z1[int(self.nSlider.get()-1)], 'ro', None, 1, None)
+        self.plot_2.plot(self.xarray[int(self.nSlider.get()-1)], self.z2[int(self.nSlider.get()-1)], 'ro', None, 1, None)
         
         self.plot_1.canvasShow()
         self.plot_2.canvasShow()
-        
+ 
         self.previousM = self.mSlider.get()
         self.previousN = self.nSlider.get()
            
     def plotDataPoints (self):
         self.calibration()
-        self.masterFrame = frame(self.window,(1000,1000), LEFT, background = "gray")
+        self.masterFrame = frame(self.window,(1000,1000), LEFT)
         self.window.title("Data points for " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
         self.startChangeData.destroy()
         self.startDataPlotButton.destroy()
@@ -221,7 +223,7 @@ class MaserPlot(Frame):
         self.plot_1.addPickEvent(self.onpickU1)
         self.plot_1.addSecondAss("x", "Data points", 0, self.dataPoints + 512, 1024)
         #self.plot_1.addSlider([0.10, 0.15, 0.65, 0.03], "m", 10, 0, 5, None)
-        
+
         #u9
         self.plot_2 = Plot(6,6, self.masterFrame, self.plotFrame)
         self.plot_2.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization")
@@ -234,11 +236,11 @@ class MaserPlot(Frame):
         self.previousM = self.m
         self.previousN = self.n -1
         
-        self.mSlider = Scale(self.plotFrame, from_= self.m, to = self.a-1, orient=HORIZONTAL, label="M", length=500, variable=self.m, command=self.updateEnd)
+        self.mSlider = tk.Scale(self.plotFrame, from_= self.m, to = self.a-1, orient=HORIZONTAL, label="M", length=500, variable=self.m, command=self.updateEnd)
         self.mSlider.pack(side=BOTTOM)
         self.m = self.mSlider.get()
         
-        self.nSlider = Scale(self.plotFrame, from_ = self.b-1 , to = self.n, orient=HORIZONTAL, label="N", length=500, variable=self.n, command=self.updateEnd)
+        self.nSlider = tk.Scale(self.plotFrame, from_ = self.b-1 , to = self.n, orient=HORIZONTAL, label="N", length=500, variable=self.n, command=self.updateEnd)
         self.nSlider.pack(side=BOTTOM)
         self.nSlider.set(self.n)
         self.n = self.nSlider.get()
@@ -321,7 +323,7 @@ class MaserPlot(Frame):
         self.xarray_u1 = self.xarray
         self.xarray_u9 = self.xarray
         
-        print "pirms dzesanas ", self.xarray_u9.shape[0]
+        print ("pirms dzesanas ", self.xarray_u9.shape[0])
         
         for p_u1 in self.points_1u:
             self.xarray_u1 = np.delete(self.xarray_u1, self.xarray_u1[self.xarray_u1 == p_u1[0]])
@@ -338,7 +340,7 @@ class MaserPlot(Frame):
         self.a_u1, self.b_u1 = FWHM(self.xarray_u1, self.z1, self.FWHMconstant)
         self.a_u9, self.b_u9 = FWHM(self.xarray_u9, self.z2, self.FWHMconstant)
          
-        print "pec dzesanas ", self.xarray_u9.shape[0]
+        print ("pec dzesanas ", self.xarray_u9.shape[0])
         
         timeStr = self.scan['startTime'].replace(":", " ")
         dateStrList = self.scan['dates'].split()
@@ -369,19 +371,19 @@ class MaserPlot(Frame):
                     lsrShift = Header[1]
                 elif vards == "MJD":
                     mjd = Header[1]
-                    print "MJD: \t",mjd
+                    print "MJD: \t", mjd
                 elif vards == "Vobs":
                     Vobs = Header[1]
-                    print "Vobs: \t",Vobs
+                    print "Vobs: \t", Vobs
                 elif vards == "AtFreq":
                     AtFreq = Header[1]
-                    print "At Freq: \t",AtFreq
+                    print "At Freq: \t", AtFreq
                 elif vards == "FreqShift":
                     FreqShift = Header[1]
-                    print "FreqShift: \t",FreqShift
+                    print "FreqShift: \t", FreqShift
                 elif vards == "VelTotal":
                     VelTotal = float(Header[1])
-                    print "VelTotal: \t",VelTotal
+                    print "VelTotal: \t", VelTotal
                 #Header +=1
     
         Vobs = float(Vobs)

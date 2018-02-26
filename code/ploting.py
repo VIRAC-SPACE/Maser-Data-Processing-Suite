@@ -5,8 +5,13 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.backends.backend_tkagg as tkagg
 from matplotlib.widgets import Slider
-from Tkinter import *
-import Tkinter as tk
+
+try:
+    from tkinter import *
+    import tkinter as tk
+except:
+    from Tkinter import *
+    import Tkinter as tk
 
 class Plot():
     
@@ -43,8 +48,11 @@ class Plot():
             ax.annotate('(%.2f, %.1f)' % xy, xy=xy, textcoords='data')
             
     def annotation(self, xvalue, yvalue, text):
-        ax = self.figure.add_subplot(111)
-        ax.annotate(text, xy=(xvalue, yvalue),  textcoords='data')
+        self.ax = self.figure.add_subplot(111)
+        self.annotate = self.ax.annotate(text, xy=(xvalue, yvalue),  textcoords='data')
+
+    def remannotation(self):
+        self.annotate.remove()
         
     def canvasShow(self):
         self.canvas.show()
