@@ -5,6 +5,7 @@ import sys
 import time
 import datetime
 import argparse
+from decimal import Decimal
 
 import yaml
 
@@ -65,6 +66,8 @@ class ExperimentLogReader():
         self.FreqStop = list()
         self.loas = list()
         self.locs = list()
+        self.sourceName = list()
+        self.clocks = list()
         self.tcount = 0
         self.Location = ""
         self.bbc1count = 0
@@ -74,7 +77,7 @@ class ExperimentLogReader():
         self.loccount = 0
         self.sourcecount = 0
         self.datecount = 0
-        self.sourceName = list()
+        self.clockcount = 0
         
         self.logfile = open(self.logs, "r")
         self.datafile = open(self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat", "w")
@@ -101,8 +104,6 @@ class ExperimentLogReader():
             elif "source="  in logLine:
                 self.sourcecount =  self.sourcecount + 1
                 
-                #s269,061437.05,133936.2,2000.0,
-                
                 if self.scan_count != self.sourcecount:
                     self.RAs.append(['0','0','0'])
                     self.DECs.append(['0','0','0'])
@@ -110,7 +111,7 @@ class ExperimentLogReader():
                     self.sourceName.append("None")
                     self.Epochs.append('0')
                     self.sourcecount =  self.sourcecount + 1
-                #self.source = logLine.split(":")[3].split(",")[0].split("=")[1] + "," + logLine.split(":")[3].split(",")[1]  + "," + logLine.split(":")[3].split(",")[2]
+
                 if logLine.endswith(",\n"):
                     logLineSplit = logLine[:-2].split(",")
                 else:
@@ -120,14 +121,8 @@ class ExperimentLogReader():
                 self.sources.append(self.source)
                 self.sourceName.append(logLineSplit[0].split("=")[1])
                
-                #print self.source
-                
                 self.ra = list()
                 self.dec = list()
-                
-                #self.RA = logLine.split("=")[1].split(",")[1]
-                #self.DEC = logLine.split("=")[1].split(",")[2]
-                #self.Epoch = logLine.split("=")[1].split(",")[3]
                 
                 self.RA = self.source.split(",")[1]
                 self.DEC = self.source.split(",")[2]
@@ -210,6 +205,15 @@ class ExperimentLogReader():
                 
                 loc =  logLine.split("=")[1].split(",")[1]
                 self.locs.append(loc)
+            
+            elif "/gps-fmout/" in logLine:
+                self.clockcount = self.clockcount + 1
+                
+                if self.scan_count != self.clockcount:
+                    self.clocks.append(0)
+                    self.clockcount = self.clockcount + 1
+                
+                self.clocks.append(Decimal(logLine.split("/")[2]))
                 
             #elif  "/bbc01/" in logLine:
                 #self.bbc1count =  self.bbc1count + 1
@@ -252,8 +256,6 @@ class ExperimentLogReader():
                         
         for y in range(0, len(self.scan_names)):
             try:
-                #print(len(self.scan_names), " ", len(self.timeStops), " ", len(self.timeStarts))
-                #print self.scan_names
                 DurMin =datetime.datetime.strptime(self.timeStops[y], "%H:%M:%S") -  datetime.datetime.strptime(self.timeStarts[y], "%H:%M:%S")
                 self.DurationsMin.append(DurMin.seconds)
                 self.DurationsSec.append(DurMin.seconds/60)
@@ -324,6 +326,9 @@ class ExperimentLogReader():
             self.datafile.write("FreqStop;" + str(self.FreqStop[scan]) + ";MHz")
             self.datafile.write("\n")
             
+            self.datafile.write("ClockOffset;" + str(self.clocks[scan]))
+            self.datafile.write("\n")
+            
             self.datafile.write("End;" + self.scan_names[scan].zfill(2) + ";----------------------;")
             self.datafile.write("\n")
             
@@ -337,7 +342,7 @@ class ExperimentLogReader():
         
         for i in range(0, len(self.scan_names)):
 
-            logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates, "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sources[i], "source":self.sourceName[i], "stopTime": self.timeStops[i]}
+            logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates, "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sources[i], "source":self.sourceName[i], "stopTime": self.timeStops[i], "clockOffset": self.clocks[i]}
 
         return logs
     
