@@ -113,14 +113,16 @@ class ExperimentLogReader():
                 self.scanLines[key].append(logLine)
                     
         for key in self.scanLines:
-            self.sourcecount = self.sourcecount -1  
+            if  self.sourcecount != 0:
+                self.sourcecount = self.sourcecount -1  
             for line in self.scanLines[key]:
                 if "source="  in line:
                     self.sourcecount =  self.sourcecount + 1
                     print "key", key, "self.sourcecount", self.sourcecount 
                     
                     #print self.scan_count
-                    if self.scan_count != self.sourcecount:
+                    if self.sourcecount != key:
+                        print True
                         self.RAs.append(['0','0','0'])
                         self.DECs.append(['0','0','0'])
                         self.sources.append("None")
