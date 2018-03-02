@@ -6,6 +6,7 @@ import time
 import datetime
 import argparse
 from decimal import Decimal
+import collections
 
 import yaml
 
@@ -66,8 +67,10 @@ class ExperimentLogReader():
         self.FreqStop = list()
         self.loas = list()
         self.locs = list()
+        self.scanNameString = list()
         self.sourceName = list()
         self.clocks = list()
+        self.scanLines = dict()
         self.tcount = 0
         self.Location = ""
         self.bbc1count = 0
@@ -82,9 +85,11 @@ class ExperimentLogReader():
         self.logfile = open(self.logs, "r")
         self.datafile = open(self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat", "w")
         
+        append = False
+        key = 0
         for x in range(0, file_size(self.logs)):
             logLine = self.logfile.readline()
-        
+            
             if "location" in logLine:
                 self.Location = logLine.split(";")[1].split(",")[1].strip()
                 year = logLine.split(".")[0]
@@ -97,58 +102,71 @@ class ExperimentLogReader():
                 self.dates = str(day).zfill(2) + " " + month + " " + str(year)
             
             elif "scan_name=no" in logLine:
+                append = True 
                 self.scan_count = self.scan_count + 1
                 self.scan_name = logLine.split(":")[3].split(",")[0].split("=")[1][2:].lstrip("0")
+                key = int(self.scan_name)
                 self.scan_names.append(self.scan_name)
+                self.scanLines[key] = list()
                 
-            elif "source="  in logLine:
-                self.sourcecount =  self.sourcecount + 1
-                
-                if self.scan_count != self.sourcecount:
-                    self.RAs.append(['0','0','0'])
-                    self.DECs.append(['0','0','0'])
-                    self.sources.append("None")
-                    self.sourceName.append("None")
-                    self.Epochs.append('0')
-                    self.sourcecount =  self.sourcecount + 1
-
-                if logLine.endswith(",\n"):
-                    logLineSplit = logLine[:-2].split(",")
-                else:
-                    logLineSplit = logLine[:-1].split(",")
-                
-                self.source = logLineSplit[0].split("=")[1]+","+logLineSplit[-3]+","+logLineSplit[-2]
-                self.sources.append(self.source)
-                self.sourceName.append(logLineSplit[0].split("=")[1])
-               
-                self.ra = list()
-                self.dec = list()
-                
-                self.RA = self.source.split(",")[1]
-                self.DEC = self.source.split(",")[2]
-                self.Epoch = logLineSplit[-1]
-                self.Epochs.append(self.Epoch)
-                
-                self.ra.append(self.RA[0:2])
-                self.ra.append(self.RA[2:4])
-                self.ra.append(self.RA[4:len(self.RA)])
+            if len(logLine) != 0 and append:
+                self.scanLines[key].append(logLine)
                     
-                if self.DEC[0] == "-":
-                    self.dec.append(self.DEC[0:3])
-                    self.dec.append(self.DEC[3:5])
-                    self.dec.append(self.DEC[5:len(self.DEC)])
-                else:    
-                    self.dec.append(self.DEC[0:2])
-                    self.dec.append(self.DEC[2:4])
-                    self.dec.append(self.DEC[4:len(self.DEC)])   
+        for key in self.scanLines:
+            self.sourcecount = self.sourcecount -1  
+            for line in self.scanLines[key]:
+                if "source="  in line:
+                    self.sourcecount =  self.sourcecount + 1
+                    print "key", key, "self.sourcecount", self.sourcecount 
+                    
+                    #print self.scan_count
+                    if self.scan_count != self.sourcecount:
+                        self.RAs.append(['0','0','0'])
+                        self.DECs.append(['0','0','0'])
+                        self.sources.append("None")
+                        self.sourceName.append("None")
+                        self.Epochs.append('0')
+                        self.sourcecount =  self.sourcecount + 1
+
+                    if line.endswith(",\n"):
+                        logLineSplit = line[:-2].split(",")
+                    else:
+                        logLineSplit = line[:-1].split(",")
                 
-                self.RAs.append(self.ra)
-                self.DECs.append(self.dec)
-                
-                self.ra = list()
-                self.dec = list()
-            
-                
+                    self.source = logLineSplit[0].split("=")[1]+","+logLineSplit[-3]+","+logLineSplit[-2]
+                    
+                    self.sources.append(self.source)
+                    self.sourceName.append(logLineSplit[0].split("=")[1])
+               
+                    self.ra = list()
+                    self.dec = list()
+                    
+                    self.RA = self.source.split(",")[1]
+                    self.DEC = self.source.split(",")[2]
+                    self.Epoch = logLineSplit[-1]
+                    self.Epochs.append(self.Epoch)
+                    
+                    self.ra.append(self.RA[0:2])
+                    self.ra.append(self.RA[2:4])
+                    self.ra.append(self.RA[4:len(self.RA)])
+                    
+                    if self.DEC[0] == "-":
+                        self.dec.append(self.DEC[0:3])
+                        self.dec.append(self.DEC[3:5])
+                        self.dec.append(self.DEC[5:len(self.DEC)])
+                    else:    
+                        self.dec.append(self.DEC[0:2])
+                        self.dec.append(self.DEC[2:4])
+                        self.dec.append(self.DEC[4:len(self.DEC)])   
+                    
+                    self.RAs.append(self.ra)
+                    self.DECs.append(self.dec)
+                    
+                    self.ra = list()
+                    self.dec = list()
+                    
+        print self.sources
+        '''    
             elif "disk_record=on" in logLine:
                 timeStart =  logLine.split(".")[2]
                 self.timeStarts.append(timeStart)  
@@ -213,7 +231,7 @@ class ExperimentLogReader():
                     self.clocks.append(0)
                     self.clockcount = self.clockcount + 1
                 
-                self.clocks.append(Decimal(logLine.split("/")[2]))
+                self.clocks.append(Decimal(logLine.split("/")[2]) * 10000)
                 
             #elif  "/bbc01/" in logLine:
                 #self.bbc1count =  self.bbc1count + 1
@@ -269,7 +287,8 @@ class ExperimentLogReader():
             self.FreqStop.append(float(self.FreqBBC2s[f])  + float(self.locs[f]))
         
         #print(len(self.FreqStart), " ", len(self.scan_names), " ", len(self.FreqBBC1s), " ", len(self.FreqBBC2s))
-            
+        '''
+                  
     def writeOutput(self):
         self.datafile.write("Start;Header;")
         self.datafile.write("\n")
@@ -384,7 +403,7 @@ if __name__=="__main__":
     prettyLogsPath = config["prettyLogsPath"]
        
     experimentLogReader = ExperimentLogReader(logPath + logFileName, prettyLogsPath)
-    experimentLogReader.writeOutput()
+    #experimentLogReader.writeOutput()
     experimentLogReader.__del__()
     sys.exit(0)
         
