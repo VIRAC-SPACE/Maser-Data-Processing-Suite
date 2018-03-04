@@ -16,6 +16,7 @@ FreqBBC1;567.37;MHz
 FreqBBC2;569.37;MHz
 FreqStart;6667.37;MHz
 FreqStop;6669.37;MHz
+ClockOffset;-0.000012682
 End;01;----------------------;
 Scan;02;
 Source;s255,061254.02,175923.3;
@@ -32,6 +33,7 @@ FreqBBC1;567.63;MHz
 FreqBBC2;569.63;MHz
 FreqStart;6667.63;MHz
 FreqStop;6669.63;MHz
+ClockOffset;-0.000012687
 End;02;----------------------;
 Scan;03;
 Source;s252,060853.34,213829.2;
@@ -48,6 +50,7 @@ FreqBBC1;567.50;MHz
 FreqBBC2;569.50;MHz
 FreqStart;6667.5;MHz
 FreqStop;6669.5;MHz
+ClockOffset;-0.000012681
 End;03;----------------------;
 Scan;04;
 Source;s252a,060832.40,203925.3;
@@ -64,6 +67,7 @@ FreqBBC1;567.61;MHz
 FreqBBC2;569.61;MHz
 FreqStart;6667.61;MHz
 FreqStop;6669.61;MHz
+ClockOffset;-0.000012678
 End;04;----------------------;
 Scan;05;
 Source;afgl6366,060840.67,213106.9;
@@ -80,6 +84,7 @@ FreqBBC1;567.54;MHz
 FreqBBC2;569.54;MHz
 FreqStart;6667.54;MHz
 FreqStop;6669.54;MHz
+ClockOffset;-0.000012689
 End;05;----------------------;
 Scan;06;
 Source;s231,053913.06,354551.3;
@@ -96,6 +101,7 @@ FreqBBC1;568.06;MHz
 FreqBBC2;570.06;MHz
 FreqStart;6668.06;MHz
 FreqStop;6670.06;MHz
+ClockOffset;-0.000012680
 End;06;----------------------;
 Scan;07;
 Source;afgl5142,053048.01,334754.6;
@@ -112,6 +118,7 @@ FreqBBC1;567.72;MHz
 FreqBBC2;569.72;MHz
 FreqStart;6667.72;MHz
 FreqStop;6669.72;MHz
+ClockOffset;-0.000012681
 End;07;----------------------;
 Scan;08;
 Source;g183p35,055111.10,254616.5;
@@ -128,6 +135,7 @@ FreqBBC1;567.84;MHz
 FreqBBC2;569.84;MHz
 FreqStart;6667.84;MHz
 FreqStop;6669.84;MHz
+ClockOffset;-0.000012693
 End;08;----------------------;
 Scan;09;
 Source;g188p79,060906.90,215041.7;
@@ -144,6 +152,7 @@ FreqBBC1;567.87;MHz
 FreqBBC2;569.87;MHz
 FreqStart;6667.87;MHz
 FreqStop;6669.87;MHz
+ClockOffset;-0.000012688
 End;09;----------------------;
 Scan;10;
 Source;l1206,222851.41,641341.3;
@@ -160,6 +169,7 @@ FreqBBC1;567.94;MHz
 FreqBBC2;569.94;MHz
 FreqStart;6667.94;MHz
 FreqStop;6669.94;MHz
+ClockOffset;-0.000012685
 End;10;----------------------;
 Scan;11;
 Source;l1287,003647.35,632902.2;
@@ -176,6 +186,7 @@ FreqBBC1;568.23;MHz
 FreqBBC2;570.23;MHz
 FreqStart;6668.23;MHz
 FreqStop;6670.23;MHz
+ClockOffset;-0.000012686
 End;11;----------------------;
 Scan;12;
 Source;ngc281,005224.20,563343.2;
@@ -192,6 +203,7 @@ FreqBBC1;568.28;MHz
 FreqBBC2;570.28;MHz
 FreqStart;6668.28;MHz
 FreqStop;6670.28;MHz
+ClockOffset;-0.000012689
 End;12;----------------------;
 Scan;13;
 Source;w75n,203836.45,423736.1;
@@ -208,6 +220,7 @@ FreqBBC1;567.42;MHz
 FreqBBC2;569.42;MHz
 FreqStart;6667.42;MHz
 FreqStop;6669.42;MHz
+ClockOffset;-0.000012687
 End;13;----------------------;
 Scan;14;
 Source;w75s,203902.50,422459.0;
@@ -224,6 +237,7 @@ FreqBBC1;567.74;MHz
 FreqBBC2;569.74;MHz
 FreqStart;6667.74;MHz
 FreqStop;6669.74;MHz
+ClockOffset;-0.000012691
 End;14;----------------------;
 Scan;15;
 Source;dr20,203700.10,413455.7;
@@ -240,6 +254,7 @@ FreqBBC1;567.64;MHz
 FreqBBC2;569.64;MHz
 FreqStart;6667.64;MHz
 FreqStop;6669.64;MHz
+ClockOffset;-0.000012690
 End;15;----------------------;
 Scan;16;
 Source;dr21,203901.05,422249.2;
@@ -256,6 +271,7 @@ FreqBBC1;567.61;MHz
 FreqBBC2;569.61;MHz
 FreqStart;6667.61;MHz
 FreqStop;6669.61;MHz
+ClockOffset;-0.000012691
 End;16;----------------------;
 Scan;17;
 Source;ngc7538,231345.36,612810.6;
@@ -272,6 +288,7 @@ FreqBBC1;568.91;MHz
 FreqBBC2;570.91;MHz
 FreqStart;6668.91;MHz
 FreqStop;6670.91;MHz
+ClockOffset;-0.000012694
 End;17;----------------------;
 Scan;18;
 Source;cepa,225617.90,620149.7;
@@ -288,6 +305,7 @@ FreqBBC1;567.76;MHz
 FreqBBC2;569.76;MHz
 FreqStart;6667.76;MHz
 FreqStop;6669.76;MHz
+ClockOffset;-0.000012701
 End;18;----------------------;
 Scan;19;
 Source;w3oh,022703.82,615225.4;
@@ -304,6 +322,7 @@ FreqBBC1;568.72;MHz
 FreqBBC2;570.72;MHz
 FreqStart;6668.72;MHz
 FreqStop;6670.72;MHz
+ClockOffset;-0.000012681
 End;19;----------------------;
 Scan;20;
 Source;g136p84,024929.80,604729.5;
@@ -320,6 +339,7 @@ FreqBBC1;568.73;MHz
 FreqBBC2;570.73;MHz
 FreqStart;6668.73;MHz
 FreqStop;6670.73;MHz
+ClockOffset;-0.000012690
 End;20;----------------------;
 Scan;21;
 Source;v645,213958.26,501420.9;
@@ -336,6 +356,7 @@ FreqBBC1;568.51;MHz
 FreqBBC2;570.51;MHz
 FreqStart;6668.51;MHz
 FreqStop;6670.51;MHz
+ClockOffset;-0.000012693
 End;21;----------------------;
 Scan;22;
 Source;g111p26,231610.00,595531.3;
@@ -352,6 +373,7 @@ FreqBBC1;568.49;MHz
 FreqBBC2;570.49;MHz
 FreqStart;6668.49;MHz
 FreqStop;6670.49;MHz
+ClockOffset;-0.000012685
 End;22;----------------------;
 Scan;23;
 Source;g90p92,210912.60,500102.9;
@@ -368,6 +390,7 @@ FreqBBC1;569.16;MHz
 FreqBBC2;571.16;MHz
 FreqStart;6669.16;MHz
 FreqStop;6671.16;MHz
+ClockOffset;-0.000012692
 End;23;----------------------;
 Scan;24;
 Source;g85p41,205413.70,445406.8;
@@ -384,6 +407,7 @@ FreqBBC1;568.19;MHz
 FreqBBC2;570.19;MHz
 FreqStart;6668.19;MHz
 FreqStop;6670.19;MHz
+ClockOffset;-0.000012693
 End;24;----------------------;
 Scan;25;
 Source;g78p122,201426.04,411333.4;
@@ -396,10 +420,11 @@ DEC;41 13 33.4;
 Epoch;2000.0;
 Systemtemperature1;1u;24.3;
 Systemtemperature2;9u;23.6;
-FreqBBC1;0;MHz
-FreqBBC2;0;MHz
-FreqStart;0.0;MHz
-FreqStop;0.0;MHz
+FreqBBC1; 567.740000;MHz
+FreqBBC2; 569.740000;MHz
+FreqStart;567.74;MHz
+FreqStop;569.74;MHz
+ClockOffset;-0.000012694
 End;25;----------------------;
 Scan;26;
 Source;g75p78,202144.20,372636.7;
@@ -416,6 +441,7 @@ FreqBBC1;567.58;MHz
 FreqBBC2;569.58;MHz
 FreqStart;6667.58;MHz
 FreqStop;6669.58;MHz
+ClockOffset;-0.000012701
 End;26;----------------------;
 Scan;27;
 Source;g73p06,200810.20,355923.7;
@@ -432,6 +458,7 @@ FreqBBC1;567.62;MHz
 FreqBBC2;569.62;MHz
 FreqStart;6667.62;MHz
 FreqStop;6669.62;MHz
+ClockOffset;-0.000012702
 End;27;----------------------;
 Scan;28;
 Source;g60p57,194552.30,241742.6;
@@ -448,6 +475,7 @@ FreqBBC1;567.37;MHz
 FreqBBC2;569.37;MHz
 FreqStart;6667.37;MHz
 FreqStop;6669.37;MHz
+ClockOffset;-0.000012698
 End;28;----------------------;
 Scan;29;
 Source;g59p783,194311.25,234403.3;
@@ -464,6 +492,7 @@ FreqBBC1;566.89;MHz
 FreqBBC2;568.89;MHz
 FreqStart;6666.89;MHz
 FreqStop;6668.89;MHz
+ClockOffset;-0.000012698
 End;29;----------------------;
 Scan;30;
 Source;g50p03,192115.10,152649.5;
@@ -476,10 +505,11 @@ DEC;15 26 49.5;
 Epoch;2000.0;
 Systemtemperature1;1u;25.1;
 Systemtemperature2;9u;24.3;
-FreqBBC1;0;MHz
-FreqBBC2;0;MHz
-FreqStart;0.0;MHz
-FreqStop;0.0;MHz
+FreqBBC1; 567.540000;MHz
+FreqBBC2; 569.540000;MHz
+FreqStart;567.54;MHz
+FreqStop;569.54;MHz
+ClockOffset;-0.000012698
 End;30;----------------------;
 Scan;31;
 Source;w51,192343.96,143035.0;
@@ -496,6 +526,7 @@ FreqBBC1;566.15;MHz
 FreqBBC2;568.15;MHz
 FreqStart;6666.15;MHz
 FreqStop;6668.15;MHz
+ClockOffset;-0.000012695
 End;31;----------------------;
 Scan;32;
 Source;w49n,191011.05,090520.4;
@@ -512,6 +543,7 @@ FreqBBC1;567.10;MHz
 FreqBBC2;569.10;MHz
 FreqStart;6667.1;MHz
 FreqStop;6669.1;MHz
+ClockOffset;-0.000012705
 End;32;----------------------;
 Scan;33;
 Source;g49p04,192522.30,134720.1;
@@ -528,6 +560,7 @@ FreqBBC1;566.59;MHz
 FreqBBC2;568.59;MHz
 FreqStart;6666.59;MHz
 FreqStop;6668.59;MHz
+ClockOffset;-0.000012699
 End;33;----------------------;
 Scan;34;
 Source;g49p57,192353.60,143454.0;
@@ -544,6 +577,7 @@ FreqBBC1;566.09;MHz
 FreqBBC2;568.09;MHz
 FreqStart;6666.09;MHz
 FreqStop;6668.09;MHz
+ClockOffset;-0.000012699
 End;34;----------------------;
 Scan;35;
 Source;g37p479,190007.14,035953.3;
@@ -560,6 +594,7 @@ FreqBBC1;566.16;MHz
 FreqBBC2;568.16;MHz
 FreqStart;6666.16;MHz
 FreqStop;6668.16;MHz
+ClockOffset;-0.000012709
 End;35;----------------------;
 Scan;36;
 Source;g35p20,190146.90,011307.5;
@@ -576,6 +611,7 @@ FreqBBC1;566.40;MHz
 FreqBBC2;568.40;MHz
 FreqStart;6666.4;MHz
 FreqStop;6668.4;MHz
+ClockOffset;-0.000012702
 End;36;----------------------;
 Scan;37;
 Source;g33p64,185332.56,003139.2;
@@ -592,6 +628,7 @@ FreqBBC1;566.03;MHz
 FreqBBC2;568.03;MHz
 FreqStart;6666.03;MHz
 FreqStop;6668.03;MHz
+ClockOffset;-0.000012710
 End;37;----------------------;
 Scan;38;
 Source;g32p745,185121.87,-001205.3;
@@ -608,6 +645,7 @@ FreqBBC1;566.55;MHz
 FreqBBC2;568.55;MHz
 FreqStart;6666.55;MHz
 FreqStop;6668.55;MHz
+ClockOffset;-0.000012694
 End;38;----------------------;
 Scan;39;
 Source;g30p99,184810.80,-014539.3;
@@ -624,22 +662,22 @@ FreqBBC1;565.69;MHz
 FreqBBC2;567.69;MHz
 FreqStart;6665.69;MHz
 FreqStop;6667.69;MHz
+ClockOffset;-0.000012702
 End;39;----------------------;
 Scan;40;
 Source;g25p65,183421.99,-055938.6;
 Date;05 Nov 2017;
-TimeStart;10:49:50;UT;
-TimeStop;10:50:50;UT;
-Duration;60;sec;1;min
+TimeStart;None;UT;
+TimeStop;None;UT;
+Duration;0;sec;0;min
 RA;18 34 21.99;
 DEC;-05 59 38.6;
 Epoch;2000.0;
-Systemtemperature1;1u;34.0;
-Systemtemperature2;9u;32.8;
 FreqBBC1;566.42;MHz
 FreqBBC2;568.42;MHz
 FreqStart;6666.42;MHz
 FreqStop;6668.42;MHz
+ClockOffset;0
 End;40;----------------------;
 Scan;41;
 Source;w3oh,022703.82,615225.4;
@@ -656,4 +694,5 @@ FreqBBC1;568.72;MHz
 FreqBBC2;570.72;MHz
 FreqStart;6668.72;MHz
 FreqStop;6670.72;MHz
+ClockOffset;-0.000012695
 End;41;----------------------;
