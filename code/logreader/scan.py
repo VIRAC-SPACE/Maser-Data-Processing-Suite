@@ -107,97 +107,17 @@ class Scan():
                     
             elif "/bbc01=" in line:
                 self.freqBBC1 =  line.split("=")[1].split(",")[0]
-                
-                try:
-                    float(self.freqBBC1)
-                except:
-                    root = Tkinter.Tk()
-                    root.withdraw()
-                    newfreqBBC1 = tkSimpleDialog.askfloat("BBC error", "Got " + self.freqBBC1 + " Expected number", minvalue = 0)
-                    self.freqBBC1 = newfreqBBC1
-                    root.destroy()
-                    if self.freqBBC1 == "" or self.freqBBC1 == None:
-                        self.freqBBC1 = 0
-                            
-                if float(self.freqBBC1) < 0:
-                    root = Tkinter.Tk()
-                    root.withdraw()
-                    newfreqBBC1 = tkSimpleDialog.askfloat("BBC error", "Got " + self.freqBBC1 + "Expected number", minvalue = 0)
-                    self.freqBBC1 = newfreqBBC1
-                    root.destroy()
-                    if self.freqBBC1 == "" or self.freqBBC1 == None:
-                        self.freqBBC1 = 0
-                
+            
             elif "/bbc02=" in line:     
                 self.freqBBC2 =  line.split("=")[1].split(",")[0]
-                
-                try:
-                    float(self.freqBBC2)
-                except:
-                    root = Tkinter.Tk()
-                    root.withdraw()
-                    newfreqBBC2 = tkSimpleDialog.askfloat("BBC error", "Got " + self.freqBBC2 + " Expected number", minvalue = 0)
-                    self.freqBBC2 = newfreqBBC2
-                    root.destroy()
-                    if self.freqBBC2 == "" or self.freqBBC2 == None:
-                        self.freqBBC2 = 0
-                            
-                if float(self.freqBBC2) < 0:
-                    root = Tkinter.Tk()
-                    root.withdraw()
-                    newfreqBBC2 = tkSimpleDialog.askfloat("BBC error", "Got " + self.freqBBC2 + "Expected number", minvalue = 0)
-                    self.freqBBC2 = newfreqBBC2
-                    root.destroy()
-                    if self.freqBBC2 == "" or self.freqBBC2 == None:
-                        self.freqBBC2 = 0
             
             elif "/bbc01/ " in line:
                 if self.freqBBC1 == 0:
                     self.freqBBC1 = line.split("/")[2].split(",")[0]
-                    
-                    try:
-                        float(self.freqBBC1)
-                    except:
-                        root = Tkinter.Tk()
-                        root.withdraw()
-                        newfreqBBC1 = tkSimpleDialog.askfloat("System temperature error", "Got " + self.freqBBC1 + " Expected number", minvalue = 0)
-                        self.freqBBC1 = newfreqBBC1
-                        root.destroy()
-                        if self.freqBBC1 == "" or self.freqBBC1 == None:
-                            self.freqBBC1 = 0
-                                
-                    if float(self.freqBBC1) < 0:
-                        root = Tkinter.Tk()
-                        root.withdraw()
-                        newfreqBBC1 = tkSimpleDialog.askfloat("System temperature error", "Got " + self.freqBBC1 + "Expected number", minvalue = 0)
-                        self.freqBBC1 = newfreqBBC1
-                        root.destroy()
-                        if self.freqBBC1 == "" or self.freqBBC1 == None:
-                            self.freqBBC1 = 0
                 
             elif "/bbc02/ " in line:
                 if self.freqBBC2 == 0:
                     self.freqBBC2 = line.split("/")[2].split(",")[0]
-                    
-                    try:
-                        float(self.freqBBC2)
-                    except:
-                        root = Tkinter.Tk()
-                        root.withdraw()
-                        newfreqBBC2 = tkSimpleDialog.askfloat("System temperature error", "Got " + self.freqBBC2 + " Expected number", minvalue = 0)
-                        self.freqBBC2 = newfreqBBC2
-                        root.destroy()
-                        if self.freqBBC2 == "" or self.freqBBC2 == None:
-                            self.freqBBC2 = 0
-                                
-                    if float(self.freqBBC2) < 0:
-                        root = Tkinter.Tk()
-                        root.withdraw()
-                        newfreqBBC2 = tkSimpleDialog.askfloat("System temperature error", "Got " + self.freqBBC2 + "Expected number", minvalue = 0)
-                        self.freqBBC2 = newfreqBBC2
-                        root.destroy()
-                        if self.freqBBC2 == "" or self.freqBBC2 == None:
-                            self.freqBBC2 = 0
                           
             elif "lo=loa" in line:
                 self.loa =  line.split("=")[1].split(",")[1]
