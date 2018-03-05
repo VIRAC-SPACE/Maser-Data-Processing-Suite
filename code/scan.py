@@ -1,5 +1,5 @@
 import Tkinter
-import tkMessageBox, tkSimpleDialog
+import tkSimpleDialog
 from decimal import Decimal
 
 class Scan():

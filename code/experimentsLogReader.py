@@ -5,16 +5,10 @@ import sys
 import time
 import datetime
 import argparse
+import platform
 
 import yaml
 from scan import Scan
-
-os.environ['TZ'] = 'UTC'
-time.tzset()
-
-timeFormat = "%Yy%jd%Hh%Mm%Ss"
-
-logFile = dict()
 
 def file_size(fname):
         statinfo = os.stat(fname)
@@ -222,12 +216,20 @@ class ExperimentLogReader():
     def __del__(self):
         self.logfile.close()
         self.datafile.close()
-     
-if __name__=="__main__":
+        
+def main():
     if len(sys.argv) < 2:
         usage()
         sys.exit(1)
+        
+    if platform.system() == "Linux":
+        os.environ['TZ'] = 'UTC'
+        time.tzset()
     
+    elif platform.system() == "Windows":
+        os.environ['TZ'] = 'UTC'
+        pass
+     
     # Parse the arguments
     args = parseArguments()
     
@@ -235,8 +237,6 @@ if __name__=="__main__":
     configFilePath = str(args.__dict__["config"])
     
     #Creating config parametrs
-    logPath =  ""
-    prettyLogsPath = ""
     config = dict()
     for key, value in yaml.load(open(configFilePath)).iteritems():
         config[key] = value
@@ -248,4 +248,7 @@ if __name__=="__main__":
     experimentLogReader.writeOutput()
     experimentLogReader.__del__()
     sys.exit(0)
-        
+    
+if __name__=="__main__":
+    main()
+    

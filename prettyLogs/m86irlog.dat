@@ -317,7 +317,7 @@ RA;02 27 03.82;
 DEC;61 52 25.4;
 Epoch;2000.0;
 Systemtemperature1;1u;34.0;
-Systemtemperature2;9u;100.0;
+Systemtemperature2;9u;32.8;
 FreqBBC1;568.72;MHz
 FreqBBC2;570.72;MHz
 FreqStart;6668.72;MHz
