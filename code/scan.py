@@ -1,3 +1,5 @@
+import Tkinter
+import tkMessageBox, tkSimpleDialog
 from decimal import Decimal
 
 class Scan():
@@ -57,10 +59,50 @@ class Scan():
                 
             elif "/tsys/1u" in line:
                     t  = line.split("/")[2].split(",")[1]
+                    try:
+                        float(t)
+                    except:
+                        root = Tkinter.Tk()
+                        root.withdraw()
+                        newT = tkSimpleDialog.askfloat("System temperature error", "Got " + t + " Expected number between 0 and 300", minvalue = 0, maxvalue = 300)
+                        t = newT
+                        root.destroy()
+                        if t == "" or t == None:
+                            t = 0
+                        
+                    if float(t) < 0 or float(t) > 300:
+                        root = Tkinter.Tk()
+                        root.withdraw()
+                        newT = tkSimpleDialog.askfloat("System temperature error", "Got " + t + " Expected number between 0 and 300", minvalue = 0, maxvalue = 300)
+                        t = newT
+                        root.destroy()
+                        if t == "" or t == None:
+                            t = 0
+                            
                     self.SystemtemperaturesForScan[0] = t
                     
             elif "/tsys/9u" in line:
                     t  = line.split("/")[2].split(",")[1]
+                    try:
+                        float(t)
+                    except:
+                        root = Tkinter.Tk()
+                        root.withdraw()
+                        newT = tkSimpleDialog.askfloat("System temperature error", "Got " + t + " Expected number", minvalue = 0, maxvalue = 300)
+                        t = newT
+                        root.destroy()
+                        if t == "" or t == None:
+                            t = 0
+                            
+                    if float(t) < 0 or float(t) > 300:
+                        root = Tkinter.Tk()
+                        root.withdraw()
+                        newT = tkSimpleDialog.askfloat("System temperature error", "Got " + t + "Expected number", minvalue = 0, maxvalue = 300)
+                        t = newT
+                        root.destroy()
+                        if t == "" or t == None:
+                            t = 0
+                            
                     self.SystemtemperaturesForScan[1] = t
                     
             elif "/bbc01=" in line:
@@ -70,13 +112,13 @@ class Scan():
                 self.freqBBC2 =  line.split("=")[1].split(",")[0]
             
             elif "/bbc01/ " in line:
-                if self.freqBBC1 ==0:
-                    self.freqBBC1 = line.split("/")[2].split(",")[0];
+                if self.freqBBC1 == 0:
+                    self.freqBBC1 = line.split("/")[2].split(",")[0]
                 
             elif "/bbc02/ " in line:
-                if self.freqBBC2 ==0:
-                    self.freqBBC2 = line.split("/")[2].split(",")[0];
-                    
+                if self.freqBBC2 == 0:
+                    self.freqBBC2 = line.split("/")[2].split(",")[0]
+                          
             elif "lo=loa" in line:
                 self.loa =  line.split("=")[1].split(",")[1]
             
@@ -84,8 +126,8 @@ class Scan():
                 self.loc =  line.split("=")[1].split(",")[1]
             
             elif "/gps-fmout/" in line:  
-                self.clock= Decimal(line.split("/")[2])
-                                  
+                self.clock = Decimal(line.split("/")[2])
+                              
     def returnParametrs(self):
         return (self.source, self.sourceName, self.Epoch, self.ra, self.dec, self.timeStart, self.timeStop, self.SystemtemperaturesForScan, self.freqBBC1, self.freqBBC2, self.loa, self.loc, self.clock)
     

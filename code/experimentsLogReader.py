@@ -32,7 +32,7 @@ def parseArguments():
     parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/logConfig.yaml")
 
     # Print version
-    parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 2.0')
+    parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 2.5')
 
     # Parse arguments
     args = parser.parse_args()
@@ -170,13 +170,10 @@ class ExperimentLogReader():
             self.datafile.write("Epoch;" + self.Epochs[scan] + ";")
             self.datafile.write("\n")
             
-            try:
-                self.datafile.write("Systemtemperature1;1u;" + self.Systemtemperatures[scan][0] + ";")
-                self.datafile.write("\n")
-                self.datafile.write("Systemtemperature2;9u;" + self.Systemtemperatures[scan][1] + ";")
-                self.datafile.write("\n")
-            except:
-                pass
+            self.datafile.write("Systemtemperature1;1u;" + str(self.Systemtemperatures[scan][0]) + ";")
+            self.datafile.write("\n")
+            self.datafile.write("Systemtemperature2;9u;" + str(self.Systemtemperatures[scan][1]) + ";")
+            self.datafile.write("\n")
             
             self.datafile.write("FreqBBC1;" + str(self.FreqBBC1s[scan]) + ";MHz")
             self.datafile.write("\n")
