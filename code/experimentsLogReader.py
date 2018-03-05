@@ -9,10 +9,6 @@ import platform
 
 import yaml
 from scan import Scan
-
-def file_size(fname):
-        statinfo = os.stat(fname)
-        return statinfo.st_size
     
 def parseArguments():
     # Create argument parser
@@ -68,13 +64,13 @@ class ExperimentLogReader():
         
         append = False
         key = 0
-        for x in range(0, file_size(self.logs)):
-            logLine = self.logfile.readline()
-            
-            if "location" in logLine:
-                self.Location = logLine.split(";")[1].split(",")[1].strip()
-                year = logLine.split(".")[0]
-                dayNumber = logLine.split(".")[1]
+        for line in self.logfile.readlines():
+            #range(0, file_size(
+        
+            if "location" in line:
+                self.Location = line.split(";")[1].split(",")[1].strip()
+                year = line.split(".")[0]
+                dayNumber = line.split(".")[1]
                 date = datetime.datetime(int(year), 1, 1) + datetime.timedelta(int(dayNumber) - 1)
                 day = date.day
                 monthNr = date.month
@@ -82,16 +78,16 @@ class ExperimentLogReader():
                 
                 self.dates = str(day).zfill(2) + " " + month + " " + str(year)
             
-            elif "scan_name=no" in logLine:
+            elif "scan_name=no" in line:
                 append = True 
-                self.scan_name = logLine.split(":")[3].split(",")[0].split("=")[1][2:].lstrip("0")
+                self.scan_name = line.split(":")[3].split(",")[0].split("=")[1][2:].lstrip("0")
                 key = int(self.scan_name)
                 self.scan_names.append(self.scan_name)
                 self.scanLines[key] = list()
             
             #Testing if line is not in header and it is not empty
-            if len(logLine) != 0 and append:
-                self.scanLines[key].append(logLine)
+            if len(line) != 0 and append:
+                self.scanLines[key].append(line)
         
         for scan in self.scanLines:
             scanData = Scan(self.scanLines[scan])

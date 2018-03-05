@@ -131,3 +131,4 @@ class Scan():
     def returnParametrs(self):
         return (self.source, self.sourceName, self.Epoch, self.ra, self.dec, self.timeStart, self.timeStop, self.SystemtemperaturesForScan, self.freqBBC1, self.freqBBC2, self.loa, self.loc, self.clock)
     
+    
