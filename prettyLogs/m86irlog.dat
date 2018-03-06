@@ -1,5 +1,14 @@
 Start;Header;
 Station;IRBENE
+Manual Changes !!!
+For scan Numeber 1 Manual Changed SystemTemU1
+For scan Numeber 1 Manual Changed SystemTemU9
+For scan Numeber 2 Manual Changed SystemTemU1
+For scan Numeber 2 Manual Changed SystemTemU9
+For scan Numeber 3 Manual Changed SystemTemU1
+For scan Numeber 3 Manual Changed SystemTemU9
+For scan Numeber 4 Manual Changed SystemTemU1
+For scan Numeber 4 Manual Changed SystemTemU9
 End;Header;----------------------;
 Scan;01;
 Source;s269,061437.05,133936.2;

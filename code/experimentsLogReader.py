@@ -56,6 +56,7 @@ class ExperimentLogReader():
         self.scanNameString = list()
         self.sourceName = list()
         self.clocks = list()
+        self.scanList = list()
         self.scanLines = dict()
         self.Location = ""
         
@@ -111,6 +112,8 @@ class ExperimentLogReader():
             
             for scan in self.scanLines:
                 scanData = Scan(self.scanLines[scan])
+                self.scanList.append(scanData)
+                scanData.setScanNumber(scan)
                 scanData.getParametrs()
                 source, sourceName, epoch, ra, dec, timeStart, timeStop, SystemtemperaturesForScan, freqBBC1, freqBBC2, loa, loc, clock = scanData.returnParametrs()
                 
@@ -150,7 +153,27 @@ class ExperimentLogReader():
         self.datafile.write("\n")
         self.datafile.write("Station;" + self.Location)
         self.datafile.write("\n")
-    
+        
+        self.datafile.write("Manual Changes !!!" )
+        self.datafile.write("\n")
+        
+        for scan in self.scanList:
+            if scan.getmanualyChangedSystemTemU1():
+                self.datafile.write("For scan Numeber " + str(scan.getScanNumber()) + " Manual Changed SystemTemU1")
+                self.datafile.write("\n")
+                 
+            if scan.getmanualyChangedSystemTemU9():
+                self.datafile.write("For scan Numeber " + str(scan.getScanNumber()) + " Manual Changed SystemTemU9")
+                self.datafile.write("\n")
+                
+            if scan.getmanualyChangedBBC1():
+                self.datafile.write("For scan Numeber " + str(scan.getScanNumber()) + " Manual Changed ChangedBBC1")
+                self.datafile.write("\n")
+                
+            if scan.getmanualyChangedBBC2():
+                self.datafile.write("For scan Numeber " + str(scan.getScanNumber()) + " Manual Changed ChangedBBC2")
+                self.datafile.write("\n")
+        
         self.datafile.write("End;Header;----------------------;")
         self.datafile.write("\n")
     
