@@ -532,18 +532,28 @@ class MaserPlot(Frame):
         self.window.destroy()
         
 def getData(dataFileName):
-    data = np.fromfile(dataFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(dataFileName),5))
-    data = np.delete(data, (0), axis=0) #izdzes masiva primo elementu
+    try:
+        data = np.fromfile(dataFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(dataFileName),5))
+    except(IOError):
+            print "IO Error"
+            
+    except:
+        print("Unexpected error:", sys.exc_info()[0])
+        raise
+        sys.exit(1)
+             
+    else:
+        data = np.delete(data, (0), axis=0) #izdzes masiva primo elementu
+        
+        outliersMask = is_outlier(data[:, [0]])
+        data = data[outliersMask]
+        dataPoints = data.shape[0]
+        
+        xdata = data[:, [0]]
+        y1data = data[:, [1]] 
+        y2data = data[:, [2]]
     
-    outliersMask = is_outlier(data[:, [0]])
-    data = data[outliersMask]
-    dataPoints = data.shape[0]
-    
-    xdata = data[:, [0]]
-    y1data = data[:, [1]] 
-    y2data = data[:, [2]]
-    
-    return (xdata, y1data, y2data, dataPoints)
+        return (xdata, y1data, y2data, dataPoints)
 
 def getLogs(logfileName, dataFileName): 
     logs  = ExperimentLogReader("logs/" + logfileName, "prettyLogs/").getLogs()
@@ -561,16 +571,28 @@ def getLogs(logfileName, dataFileName):
 def main(logFileName, corData):
     
     #get Data and Logs
-    Systemtemperature1u, Systemtemperature9u, location, source, scan, scanNumber = getLogs(logFileName, corData)
-    xdata, y1data, y2data, dataPoints = getData(corData)
-    expername = logFileName.split(".")[0][:-2]
+    try:
+        Systemtemperature1u, Systemtemperature9u, location, source, scan, scanNumber = getLogs(logFileName, corData)
+        expername = logFileName.split(".")[0][:-2]
+        xdata, y1data, y2data, dataPoints = getData(corData)
     
-    #Create App
-    window = tk.Tk() 
-    ploting = MaserPlot(window, xdata, y1data, y2data, dataPoints, Systemtemperature1u, Systemtemperature9u, expername, source, location, scan, scanNumber)
-    ploting.mainloop()
-    
-    sys.exit(0)
+    except(TypeError):
+        print("TypeError error:")
+        raise
+        sys.exit(1)
+         
+    except:
+        print("Unexpected error:", sys.exc_info()[0])
+        raise
+        sys.exit(1)
+        
+    else:
+        #Create App
+        window = tk.Tk() 
+        ploting = MaserPlot(window, xdata, y1data, y2data, dataPoints, Systemtemperature1u, Systemtemperature9u, expername, source, location, scan, scanNumber)
+        ploting.mainloop()
+        
+        sys.exit(0)
 
 if __name__=="__main__":
     if len(sys.argv) < 3:
