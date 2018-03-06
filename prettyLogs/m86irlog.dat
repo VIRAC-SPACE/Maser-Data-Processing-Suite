@@ -1,14 +1,14 @@
 Start;Header;
 Station;IRBENE
 Manual Changes !!!
-For scan Numeber 1 Manual Changed SystemTemU1
-For scan Numeber 1 Manual Changed SystemTemU9
-For scan Numeber 2 Manual Changed SystemTemU1
-For scan Numeber 2 Manual Changed SystemTemU9
-For scan Numeber 3 Manual Changed SystemTemU1
-For scan Numeber 3 Manual Changed SystemTemU9
-For scan Numeber 4 Manual Changed SystemTemU1
-For scan Numeber 4 Manual Changed SystemTemU9
+For scan Number 1 Manually Changed System Temperature U1
+For scan Number 1 Manually Changed System Temperature U9
+For scan Number 2 Manually Changed System Temperature U1
+For scan Number 2 Manually Changed System Temperature U9
+For scan Number 3 Manually Changed System Temperature U1
+For scan Number 3 Manually Changed System Temperature U9
+For scan Number 4 Manually Changed System Temperature U1
+For scan Number 4 Manually Changed System Temperature U9
 End;Header;----------------------;
 Scan;01;
 Source;s269,061437.05,133936.2;
@@ -19,8 +19,8 @@ Duration;420;sec;7;min
 RA;06 14 37.05;
 DEC;13 39 36.2;
 Epoch;2000.0;
-Systemtemperature1;1u;30.0;
-Systemtemperature2;9u;30.0;
+Systemtemperature1;1u;0;
+Systemtemperature2;9u;0;
 FreqBBC1;567.37;MHz
 FreqBBC2;569.37;MHz
 FreqStart;6667.37;MHz
@@ -36,8 +36,8 @@ Duration;180;sec;3;min
 RA;06 12 54.02;
 DEC;17 59 23.3;
 Epoch;2000.0;
-Systemtemperature1;1u;30.0;
-Systemtemperature2;9u;30.0;
+Systemtemperature1;1u;0;
+Systemtemperature2;9u;0;
 FreqBBC1;567.63;MHz
 FreqBBC2;569.63;MHz
 FreqStart;6667.63;MHz
@@ -53,8 +53,8 @@ Duration;180;sec;3;min
 RA;06 08 53.34;
 DEC;21 38 29.2;
 Epoch;2000.0;
-Systemtemperature1;1u;30.0;
-Systemtemperature2;9u;30.0;
+Systemtemperature1;1u;0;
+Systemtemperature2;9u;0;
 FreqBBC1;567.50;MHz
 FreqBBC2;569.50;MHz
 FreqStart;6667.5;MHz
@@ -70,8 +70,8 @@ Duration;47;sec;0;min
 RA;06 08 32.40;
 DEC;20 39 25.3;
 Epoch;2000.0;
-Systemtemperature1;1u;30.0;
-Systemtemperature2;9u;30.0;
+Systemtemperature1;1u;0;
+Systemtemperature2;9u;0;
 FreqBBC1;567.61;MHz
 FreqBBC2;569.61;MHz
 FreqStart;6667.61;MHz

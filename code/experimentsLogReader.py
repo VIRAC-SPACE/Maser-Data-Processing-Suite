@@ -154,24 +154,25 @@ class ExperimentLogReader():
         self.datafile.write("Station;" + self.Location)
         self.datafile.write("\n")
         
-        self.datafile.write("Manual Changes !!!" )
-        self.datafile.write("\n")
+        if any(scan.getmanualyChangedSystemTemU1() or scan.getmanualyChangedSystemTemU9() or scan.getmanualyChangedBBC1() or scan.getmanualyChangedBBC2() for scan in self.scanList):
+            self.datafile.write("Manual Changes !!!" )
+            self.datafile.write("\n")
         
         for scan in self.scanList:
             if scan.getmanualyChangedSystemTemU1():
-                self.datafile.write("For scan Numeber " + str(scan.getScanNumber()) + " Manual Changed SystemTemU1")
+                self.datafile.write("For scan Number " + str(scan.getScanNumber()) + " Manually Changed System Temperature U1")
                 self.datafile.write("\n")
                  
             if scan.getmanualyChangedSystemTemU9():
-                self.datafile.write("For scan Numeber " + str(scan.getScanNumber()) + " Manual Changed SystemTemU9")
+                self.datafile.write("For scan Number " + str(scan.getScanNumber()) + " Manually Changed System Temperature U9")
                 self.datafile.write("\n")
                 
             if scan.getmanualyChangedBBC1():
-                self.datafile.write("For scan Numeber " + str(scan.getScanNumber()) + " Manual Changed ChangedBBC1")
+                self.datafile.write("For scan Number " + str(scan.getScanNumber()) + " Manually Changed BBC1")
                 self.datafile.write("\n")
                 
             if scan.getmanualyChangedBBC2():
-                self.datafile.write("For scan Numeber " + str(scan.getScanNumber()) + " Manual Changed ChangedBBC2")
+                self.datafile.write("For scan Number " + str(scan.getScanNumber()) + " Manually Changed BBC2")
                 self.datafile.write("\n")
         
         self.datafile.write("End;Header;----------------------;")
