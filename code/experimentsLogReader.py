@@ -133,7 +133,7 @@ class ExperimentLogReader():
                             
             for y in range(0, len(self.scan_names)):
                 try:
-                    DurMin =datetime.datetime.strptime(self.timeStops[y], "%H:%M:%S") -  datetime.datetime.strptime(self.timeStarts[y], "%H:%M:%S")
+                    DurMin = datetime.datetime.strptime(self.timeStops[y], "%H:%M:%S") -  datetime.datetime.strptime(self.timeStarts[y], "%H:%M:%S")
                     self.DurationsMin.append(DurMin.seconds)
                     self.DurationsSec.append(DurMin.seconds/60)
                 except:
@@ -293,4 +293,6 @@ def main():
     
 if __name__=="__main__":
     main()
+
+    
     
