@@ -64,6 +64,7 @@ class ExperimentLogReader():
         
         append = False
         key = 0
+        previousScan = 0
         for line in self.logfile.readlines():
             #range(0, file_size(
         
@@ -81,9 +82,14 @@ class ExperimentLogReader():
             elif "scan_name=no" in line:
                 append = True 
                 self.scan_name = line.split(":")[3].split(",")[0].split("=")[1][2:].lstrip("0")
+                print self.scan_name
                 key = int(self.scan_name)
                 self.scan_names.append(self.scan_name)
                 self.scanLines[key] = list()
+                
+                if  previousScan !=0 and previousScan +1 != key:
+                    raise Exception("Log file is not parsable !")
+                previousScan = key
             
             #Testing if line is not in header and it is not empty
             if len(line) != 0 and append:
@@ -185,7 +191,7 @@ class ExperimentLogReader():
             
         print ("Created file " + "prettyLogs/" + self.logs.split(".")[0].split("/")[1] + "log.dat")
 
-    def getLgs(self):
+    def getLogs(self):
         self.writeOutput()
         logs = dict()
         
@@ -239,11 +245,16 @@ def main():
 
     logPath =  config["logPath"]
     prettyLogsPath = config["prettyLogsPath"]
-       
-    experimentLogReader = ExperimentLogReader(logPath + logFileName, prettyLogsPath)
-    experimentLogReader.writeOutput()
-    experimentLogReader.__del__()
-    sys.exit(0)
+    
+    try: 
+        experimentLogReader = ExperimentLogReader(logPath + logFileName, prettyLogsPath)
+        experimentLogReader.writeOutput()
+        experimentLogReader.__del__()
+        sys.exit(0)
+        
+    except:
+        print "Got Logreader Error"
+        sys.exit(1)
     
 if __name__=="__main__":
     main()

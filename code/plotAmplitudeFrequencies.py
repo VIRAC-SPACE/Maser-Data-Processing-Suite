@@ -153,6 +153,7 @@ class MaserPlot(Frame):
         self.z1 = convolve(self.y1array, g1, boundary='extend')
         self.z2 = convolve(self.y2array, g2, boundary='extend')
         
+
         self.a, self.b = FWHM(self.xarray, (self.z1 + self.z2)/2, self.FWHMconstant)
         self.m = 0
         self.n = self.dataPoints
@@ -534,7 +535,9 @@ def getData(dataFileName):
     data = np.fromfile(dataFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(dataFileName),5))
     data = np.delete(data, (0), axis=0) #izdzes masiva primo elementu
     
-    dataPoints = data.shape[0]    
+    outliersMask = is_outlier(data[:, [0]])
+    data = data[outliersMask]
+    dataPoints = data.shape[0]
     
     xdata = data[:, [0]]
     y1data = data[:, [1]] 
@@ -543,7 +546,7 @@ def getData(dataFileName):
     return (xdata, y1data, y2data, dataPoints)
 
 def getLogs(logfileName, dataFileName): 
-    logs  = ExperimentLogReader("logs/" + logfileName, "prettyLogs/").getLgs()
+    logs  = ExperimentLogReader("logs/" + logfileName, "prettyLogs/").getLogs()
     scanNumber = dataFileName.split(".")[0].split("_")[1][1:len(dataFileName)]
     scan = logs[scanNumber]
     
