@@ -255,6 +255,29 @@ class ExperimentLogReader():
             scanNamesForSource.append(self.scan_names[indices_source[j]])
         
         return scanNamesForSource
+    
+    def __del__(self):
+        del self.scan_names
+        del self.sources
+        del self.timeStarts
+        del self.timeStops
+        del self.DurationsMin
+        del self.DurationsSec
+        del self.RAs
+        del self.DECs
+        del self.Epochs
+        del self.Systemtemperatures
+        del self.FreqBBC1s
+        del self.FreqBBC2s
+        del self.FreqStart
+        del self.FreqStop
+        del self.loas
+        del self.locs
+        del self.scanNameString
+        del self.sourceName
+        del self.clocks
+        del self.scanList
+        del self.scanLines
         
 def main():
     if len(sys.argv) < 2:

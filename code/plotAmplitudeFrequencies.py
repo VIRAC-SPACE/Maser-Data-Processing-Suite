@@ -12,6 +12,8 @@ from astropy.convolution import Gaussian1DKernel, convolve
 from scipy.interpolate import UnivariateSpline
 import peakutils
 import json
+import thread
+import threading
 
 from ploting import Plot
 from experimentsLogReader import ExperimentLogReader
@@ -65,11 +67,12 @@ def frame(parent, size, sides, **options):
     f.pack(side = sides)
     return (f)
     
-class MaserPlot(Frame):
+class MaserPlot(Frame, threading.Thread):
     def __init__(self,  window, xdata, ydataU1, ydataU9, dataPoints, Systemtemperature1u, Systemtemperature9u, expername, source, location, scan, scanNumber):
         
         #Data init
         Frame.__init__(self)
+        threading.Thread.__init__(self)
         self.window = window
         self.xdata = xdata
         self.ydataU1= ydataU1
@@ -96,10 +99,12 @@ class MaserPlot(Frame):
         
         for k in range(0,dataPoints):
             self.y2array[k] = self.ydataU9[k]
-            
+        
         self.startWindow()
-    
+            
     def startWindow(self):
+        self.state = 0
+        
         #default constants
         self.FWHMconstant = 0.3
         self.polynomialOrder = 9
@@ -111,7 +116,8 @@ class MaserPlot(Frame):
         self.plotFrame = frame(self.window,(1000,1000), RIGHT)
         self.infoFrame = frame(self.window,(1000,1000), None)
         self.masterFrame = frame(self.window,(1000,1000), BOTTOM)
-        self.startDataPlotButton = Button (self.infoFrame, text="Plot data points", command=self.plotDataPoints)
+       
+        self.startDataPlotButton = Button (self.infoFrame, text="Plot data points",  command=self.plotDataPoints)
         self.startChangeData = Button (self.infoFrame, text="Change Data", command=self.changeData)
         self.startDataPlotButton.pack(side=BOTTOM, fill=BOTH)
         self.startChangeData.pack(fill=BOTH)  
@@ -169,16 +175,31 @@ class MaserPlot(Frame):
         self.n = self.dataPoints
     
     def back(self):
-        self.plot_1.removePolt()
-        self.plot_2.removePolt()
-        self.plotFrame.destroy()
-        self.masterFrame.destroy()
-        self.createPolynomialButton.destroy()
-        self.backButton.destroy()
-        self.mSlider.destroy()
-        self.nSlider.destroy()
-        self.startWindow()
+        if self.state == 0:
+            print "A"
+            self.plot_1.removePolt()
+            self.plot_2.removePolt()
+            self.plotFrame.destroy()
+            self.masterFrame.destroy()
+            self.createPolynomialButton.destroy()
+            self.backButton.destroy()
+            self.mSlider.destroy()
+            self.nSlider.destroy()
+            self.startWindow()
+        
+        elif self.state == 1:
+            print "B"
+            self.plotDataPoints()
+            
+    def back_1(self):
+        print "back"
+        self.testBack()
+        self.plotDataPoints()
     
+    
+    def testBack(self):
+        print "testBack"
+        
     def updateEnd(self, event):
         self.plot_1.plot(self.xarray[int(self.previousM)], self.z1[int(self.previousM)], 'ko', None, 1, None)
         self.plot_2.plot(self.xarray[int(self.previousM)], self.z2[int(self.previousM)], 'ko', None, 1, None)
@@ -214,14 +235,17 @@ class MaserPlot(Frame):
         self.previousN = self.nSlider.get()
            
     def plotDataPoints (self):
+        self.state = 0
+        
         self.plot_1.removePolt()
         self.plot_2.removePolt()
         self.startChangeData.destroy()
         self.startDataPlotButton.destroy()
         self.masterFrame.destroy()
         self.infoFrame.destroy()
-    
+               
         self.calibration()
+         
         self.masterFrame = frame(self.window,(1000,1000), BOTTOM)
         self.window.title("Data points for " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
     
@@ -319,6 +343,8 @@ class MaserPlot(Frame):
         self.plot_7.canvasShow()
     
     def plotPolynomial(self):
+        self.state = 1
+        
         self.window.title("Polynomial " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
         #nodzes ieprieksejos grafikus
         self.plot_1.removePolt()
@@ -336,6 +362,10 @@ class MaserPlot(Frame):
         
         self.mSlider.destroy()
         self.nSlider.destroy()
+        
+        self.backButton.destroy()
+        self.backButton_1 = Button (self.masterFrame, text="back", command=self.back_1)
+        self.backButton_1.pack(fill=BOTH)
         
         self.xarray_u1 = self.xarray
         self.xarray_u9 = self.xarray
@@ -546,6 +576,9 @@ class MaserPlot(Frame):
     def _quit(self):
         self.plotFrame.destroy()
         self.window.destroy()
+    
+    def run(self):
+        pass
         
 def getData(dataFileName):
     try:
@@ -606,6 +639,7 @@ def main(logFileName, corData):
         #Create App
         window = tk.Tk() 
         ploting = MaserPlot(window, xdata, y1data, y2data, dataPoints, Systemtemperature1u, Systemtemperature9u, expername, source, location, scan, scanNumber)
+        #ploting.start()
         ploting.mainloop()
         
         sys.exit(0)
