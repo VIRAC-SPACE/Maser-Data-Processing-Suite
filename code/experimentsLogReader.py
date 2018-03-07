@@ -107,6 +107,7 @@ class ExperimentLogReader():
                     previousScan = key
                 
                 #Testing if line is not in header and it is not empty
+                    
                 if len(line) != 0 and append:
                     self.scanLines[key].append(line)
             
