@@ -38,8 +38,8 @@ class Plot():
         self.graph.set_xlabel(x_label)
         self.graph.set_ylabel (y_label)
         
-    def plot(self, x, y, line, labels, markersizes, pickers):
-        self.graph.plot(x, y, line, label=labels, markersize=markersizes, picker=pickers)
+    def plot(self, x, y, line, **options):
+        self.graph.plot(x, y, line, **options)
         self.graph.legend(loc=2)
         
     def annotations(self, xvalues, yvalues):
@@ -81,8 +81,15 @@ class Plot():
         self.canvas.get_tk_widget().delete("all")
         self.canvas.get_tk_widget().destroy()
         self.toolbar.destroy()
-        self.__del__()
         
     def __del__(self):
+        del self.figure
+        del self.graph
+        del self.canvas
+        del self.toolbar
+        del self.fig_size_x
+        del self.fig_size_y
+        del self.frame
+        del self.window 
         del self
         
