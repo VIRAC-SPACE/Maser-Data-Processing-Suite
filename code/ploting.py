@@ -81,4 +81,8 @@ class Plot():
         self.canvas.get_tk_widget().delete("all")
         self.canvas.get_tk_widget().destroy()
         self.toolbar.destroy()
+        self.__del__()
+        
+    def __del__(self):
+        del self
         

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 DateTime;2017-11-05 13:52:50;
 LSRshift;   0.2106118793;MHz;
 MJD;58062.5784;
@@ -5,3 +6,12 @@ Vobs;    0.0997;km/s;
 AtFreq;6668.5190429688;MHz;
 FreqShift;   0.2106118793;MHz;
 VelTotal;   9.4683471045;km/s;
+=======
+DateTime;2017-10-24 10:54:50;
+LSRshift;   0.3019263008;MHz;
+MJD;58050.4547;
+Vobs;    0.0031;km/s;
+AtFreq;6668.5190429688;MHz;
+FreqShift;   0.3019263008;MHz;
+VelTotal;  13.5735126892;km/s;
+>>>>>>> 7ec579129995db8401a776085e77eb65fe920c72

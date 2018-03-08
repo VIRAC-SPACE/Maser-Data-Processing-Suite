@@ -48,12 +48,18 @@ if __name__=="__main__":
             print "Experiment " + experName + " already is processed"
         
         else:
-            scan_numbers = ExperimentLogReader(logFileDir + logFileName, prettyLogDir).getScansForSource(source_name) # find all scans
-            print scan_numbers
-            for scan in scan_numbers:
-                dataFile = experName + "_n" + scan + ".dat"
+            scan_numbers = None
+            try:
+                scan_numbers = ExperimentLogReader(logFileDir + logFileName, prettyLogDir).getScansForSource(source_name) # find all scans
+            except:
+                print "Got Logreader Error"
                 
-                print "Log file is", logFileDir + logFileName, "Data file is", dataFile
-                os.system("python2  " +  "code/plotAmplitudeFrequencies.py " + logFileName + " " + dataFileDir + dataFile)
+            if scan_numbers != None:
+                print scan_numbers
+                for scan in scan_numbers:
+                    dataFile = experName + "_n" + scan + ".dat"
+                    
+                    print "Log file is", logFileDir + logFileName, "Data file is", dataFile
+                    os.system("python2  " +  "code/plotAmplitudeFrequencies.py " + logFileName + " " + dataFileDir + dataFile)
                   
     sys.exit(0)

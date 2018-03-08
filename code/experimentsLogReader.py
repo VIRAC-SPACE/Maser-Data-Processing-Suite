@@ -5,20 +5,10 @@ import sys
 import time
 import datetime
 import argparse
+import platform
 
 import yaml
 from scan import Scan
-
-os.environ['TZ'] = 'UTC'
-time.tzset()
-
-timeFormat = "%Yy%jd%Hh%Mm%Ss"
-
-logFile = dict()
-
-def file_size(fname):
-        statinfo = os.stat(fname)
-        return statinfo.st_size
     
 def parseArguments():
     # Create argument parser
@@ -32,7 +22,7 @@ def parseArguments():
     parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/logConfig.yaml")
 
     # Print version
-    parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 2.0')
+    parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 2.5')
 
     # Parse arguments
     args = parser.parse_args()
@@ -66,80 +56,126 @@ class ExperimentLogReader():
         self.scanNameString = list()
         self.sourceName = list()
         self.clocks = list()
+        self.scanList = list()
         self.scanLines = dict()
         self.Location = ""
         
-        self.logfile = open(self.logs, "r")
-        self.datafile = open(self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat", "w")
-        
-        append = False
-        key = 0
-        for x in range(0, file_size(self.logs)):
-            logLine = self.logfile.readline()
+        try:
+            self.logfile = open(self.logs, "r")
+            self.datafile = open(self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat", "w")
             
-            if "location" in logLine:
-                self.Location = logLine.split(";")[1].split(",")[1].strip()
-                year = logLine.split(".")[0]
-                dayNumber = logLine.split(".")[1]
-                date = datetime.datetime(int(year), 1, 1) + datetime.timedelta(int(dayNumber) - 1)
-                day = date.day
-                monthNr = date.month
-                month = datetime.date(1900, int(monthNr) , 1).strftime('%B')[0:3]
+        except(IOError):
+            print "IO Error"
+            
+        except:
+            print("Unexpected error:", sys.exc_info()[0])
+            raise
+            
+        else:
+            append = False
+            key = 0
+            previousScan = 0
+            
+            for line in self.logfile.readlines():
+                #range(0, file_size(
+            
+                if "location" in line:
+                    self.Location = line.split(";")[1].split(",")[1].strip()
+                    year = line.split(".")[0]
+                    dayNumber = line.split(".")[1]
+                    date = datetime.datetime(int(year), 1, 1) + datetime.timedelta(int(dayNumber) - 1)
+                    day = date.day
+                    monthNr = date.month
+                    month = datetime.date(1900, int(monthNr) , 1).strftime('%B')[0:3]
+                    
+                    self.dates = str(day).zfill(2) + " " + month + " " + str(year)
                 
-                self.dates = str(day).zfill(2) + " " + month + " " + str(year)
-            
-            elif "scan_name=no" in logLine:
-                append = True 
-                self.scan_name = logLine.split(":")[3].split(",")[0].split("=")[1][2:].lstrip("0")
-                key = int(self.scan_name)
-                self.scan_names.append(self.scan_name)
-                self.scanLines[key] = list()
-            
-            #Testing if line is not in header and it is not empty
-            if len(logLine) != 0 and append:
-                self.scanLines[key].append(logLine)
-        
-        for scan in self.scanLines:
-            scanData = Scan(self.scanLines[scan])
-            scanData.getParametrs()
-            source, sourceName, epoch, ra, dec, timeStart, timeStop, SystemtemperaturesForScan, freqBBC1, freqBBC2, loa, loc, clock = scanData.returnParametrs()
-            
-            self.sources.append(source)
-            self.sourceName.append(sourceName)
-            self.Epochs.append(epoch)
-            self.RAs.append(ra)
-            self.DECs.append(dec)
-            self.timeStarts.append(timeStart)
-            self.timeStops.append(timeStop)
-            self.Systemtemperatures.append(SystemtemperaturesForScan)
-            self.FreqBBC1s.append(freqBBC1)
-            self.FreqBBC2s.append(freqBBC2)
-            self.loas.append(loa)
-            self.locs.append(loc)
-            self.clocks.append(clock)
+                elif "scan_name=no" in line:
+                    append = True 
+                    self.scan_name = line.split(":")[3].split(",")[0].split("=")[1][2:].lstrip("0")
+                    key = int(self.scan_name)
+                    
+                    if self.scan_name in self.scan_names:
+                        raise Exception("Two scans with same name " + self.scan_name)
                         
-        for y in range(0, len(self.scan_names)):
-            try:
-                DurMin =datetime.datetime.strptime(self.timeStops[y], "%H:%M:%S") -  datetime.datetime.strptime(self.timeStarts[y], "%H:%M:%S")
-                self.DurationsMin.append(DurMin.seconds)
-                self.DurationsSec.append(DurMin.seconds/60)
-            except:
-                self.DurationsMin.append(0)
-                self.DurationsSec.append(0)
-                continue
+                    self.scan_names.append(self.scan_name)
+                    self.scanLines[key] = list()
+                    
+                    if  previousScan !=0 and previousScan +1 != key:
+                        print "Skipped scan ", previousScan + 1
+                        
+                    previousScan = key
+                
+                #Testing if line is not in header and it is not empty
+                    
+                if len(line) != 0 and append:
+                    self.scanLines[key].append(line)
             
-        for f in range(0, len(self.scan_names)):
-            self.FreqStart.append(float(self.FreqBBC1s[f]) + float(self.loas[f]))
-            self.FreqStop.append(float(self.FreqBBC2s[f])  + float(self.locs[f]))
-        
-        #print(len(self.FreqStart), " ", len(self.scan_names), " ", len(self.FreqBBC1s), " ", len(self.FreqBBC2s))
-                  
+            for scan in self.scanLines:
+                scanData = Scan(self.scanLines[scan])
+                self.scanList.append(scanData)
+                scanData.setScanNumber(scan)
+                scanData.getParametrs()
+                source, sourceName, epoch, ra, dec, timeStart, timeStop, SystemtemperaturesForScan, freqBBC1, freqBBC2, loa, loc, clock = scanData.returnParametrs()
+                
+                self.sources.append(source)
+                self.sourceName.append(sourceName)
+                self.Epochs.append(epoch)
+                self.RAs.append(ra)
+                self.DECs.append(dec)
+                self.timeStarts.append(timeStart)
+                self.timeStops.append(timeStop)
+                self.Systemtemperatures.append(SystemtemperaturesForScan)
+                self.FreqBBC1s.append(freqBBC1)
+                self.FreqBBC2s.append(freqBBC2)
+                self.loas.append(loa)
+                self.locs.append(loc)
+                self.clocks.append(clock)
+                            
+            for y in range(0, len(self.scan_names)):
+                try:
+                    DurMin = datetime.datetime.strptime(self.timeStops[y], "%H:%M:%S") -  datetime.datetime.strptime(self.timeStarts[y], "%H:%M:%S")
+                    self.DurationsMin.append(DurMin.seconds)
+                    self.DurationsSec.append(DurMin.seconds/60)
+                except:
+                    self.DurationsMin.append(0)
+                    self.DurationsSec.append(0)
+                    continue
+                
+            for f in range(0, len(self.scan_names)):
+                self.FreqStart.append(float(self.FreqBBC1s[f]) + float(self.loas[f]))
+                self.FreqStop.append(float(self.FreqBBC2s[f])  + float(self.locs[f]))
+            
+            #print(len(self.FreqStart), " ", len(self.scan_names), " ", len(self.FreqBBC1s), " ", len(self.FreqBBC2s))
+            self.logfile.close()
+           
     def writeOutput(self):
         self.datafile.write("Start;Header;")
         self.datafile.write("\n")
         self.datafile.write("Station;" + self.Location)
         self.datafile.write("\n")
-    
+        
+        if any(scan.getmanualyChangedSystemTemU1() or scan.getmanualyChangedSystemTemU9() or scan.getmanualyChangedBBC1() or scan.getmanualyChangedBBC2() for scan in self.scanList):
+            self.datafile.write("Manual Changes !!!" )
+            self.datafile.write("\n")
+        
+        for scan in self.scanList:
+            if scan.getmanualyChangedSystemTemU1():
+                self.datafile.write("For scan Number " + str(scan.getScanNumber()) + " Manually Changed System Temperature U1")
+                self.datafile.write("\n")
+                 
+            if scan.getmanualyChangedSystemTemU9():
+                self.datafile.write("For scan Number " + str(scan.getScanNumber()) + " Manually Changed System Temperature U9")
+                self.datafile.write("\n")
+                
+            if scan.getmanualyChangedBBC1():
+                self.datafile.write("For scan Number " + str(scan.getScanNumber()) + " Manually Changed BBC1")
+                self.datafile.write("\n")
+                
+            if scan.getmanualyChangedBBC2():
+                self.datafile.write("For scan Number " + str(scan.getScanNumber()) + " Manually Changed BBC2")
+                self.datafile.write("\n")
+        
         self.datafile.write("End;Header;----------------------;")
         self.datafile.write("\n")
     
@@ -170,13 +206,10 @@ class ExperimentLogReader():
             self.datafile.write("Epoch;" + self.Epochs[scan] + ";")
             self.datafile.write("\n")
             
-            try:
-                self.datafile.write("Systemtemperature1;1u;" + self.Systemtemperatures[scan][0] + ";")
-                self.datafile.write("\n")
-                self.datafile.write("Systemtemperature2;9u;" + self.Systemtemperatures[scan][1] + ";")
-                self.datafile.write("\n")
-            except:
-                pass
+            self.datafile.write("Systemtemperature1;1u;" + str(self.Systemtemperatures[scan][0]) + ";")
+            self.datafile.write("\n")
+            self.datafile.write("Systemtemperature2;9u;" + str(self.Systemtemperatures[scan][1]) + ";")
+            self.datafile.write("\n")
             
             self.datafile.write("FreqBBC1;" + str(self.FreqBBC1s[scan]) + ";MHz")
             self.datafile.write("\n")
@@ -196,9 +229,10 @@ class ExperimentLogReader():
             self.datafile.write("End;" + self.scan_names[scan].zfill(2) + ";----------------------;")
             self.datafile.write("\n")
             
+        self.datafile.close()  
         print ("Created file " + "prettyLogs/" + self.logs.split(".")[0].split("/")[1] + "log.dat")
 
-    def getLgs(self):
+    def getLogs(self):
         self.writeOutput()
         logs = dict()
         
@@ -221,16 +255,43 @@ class ExperimentLogReader():
             scanNamesForSource.append(self.scan_names[indices_source[j]])
         
         return scanNamesForSource
-        
+    
     def __del__(self):
-        self.logfile.close()
-        self.datafile.close()
-     
-if __name__=="__main__":
+        del self.scan_names
+        del self.sources
+        del self.timeStarts
+        del self.timeStops
+        del self.DurationsMin
+        del self.DurationsSec
+        del self.RAs
+        del self.DECs
+        del self.Epochs
+        del self.Systemtemperatures
+        del self.FreqBBC1s
+        del self.FreqBBC2s
+        del self.FreqStart
+        del self.FreqStop
+        del self.loas
+        del self.locs
+        del self.scanNameString
+        del self.sourceName
+        del self.clocks
+        del self.scanList
+        del self.scanLines
+        
+def main():
     if len(sys.argv) < 2:
         usage()
         sys.exit(1)
+        
+    if platform.system() == "Linux":
+        os.environ['TZ'] = 'UTC'
+        time.tzset()
     
+    elif platform.system() == "Windows":
+        os.environ['TZ'] = 'UTC'
+        pass
+     
     # Parse the arguments
     args = parseArguments()
     
@@ -238,17 +299,24 @@ if __name__=="__main__":
     configFilePath = str(args.__dict__["config"])
     
     #Creating config parametrs
-    logPath =  ""
-    prettyLogsPath = ""
     config = dict()
     for key, value in yaml.load(open(configFilePath)).iteritems():
         config[key] = value
 
     logPath =  config["logPath"]
     prettyLogsPath = config["prettyLogsPath"]
-       
+    
+    #try: 
     experimentLogReader = ExperimentLogReader(logPath + logFileName, prettyLogsPath)
     experimentLogReader.writeOutput()
-    experimentLogReader.__del__()
     sys.exit(0)
         
+    #except:
+        #print "Got Logreader Error"
+        #sys.exit(1)
+    
+if __name__=="__main__":
+    main()
+
+    
+    

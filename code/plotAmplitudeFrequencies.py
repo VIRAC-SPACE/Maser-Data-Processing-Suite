@@ -12,9 +12,12 @@ from astropy.convolution import Gaussian1DKernel, convolve
 from scipy.interpolate import UnivariateSpline
 import peakutils
 import json
+import thread
+import threading
 
 from ploting import Plot
 from experimentsLogReader import ExperimentLogReader
+from sympy.printing.pretty.pretty_symbology import TOP
 
 calibrationScales = {"IRBENE":12, "IRBENE16":26}
 
@@ -64,11 +67,12 @@ def frame(parent, size, sides, **options):
     f.pack(side = sides)
     return (f)
     
-class MaserPlot(Frame):
+class MaserPlot(Frame, threading.Thread):
     def __init__(self,  window, xdata, ydataU1, ydataU9, dataPoints, Systemtemperature1u, Systemtemperature9u, expername, source, location, scan, scanNumber):
         
         #Data init
         Frame.__init__(self)
+        threading.Thread.__init__(self)
         self.window = window
         self.xdata = xdata
         self.ydataU1= ydataU1
@@ -95,10 +99,12 @@ class MaserPlot(Frame):
         
         for k in range(0,dataPoints):
             self.y2array[k] = self.ydataU9[k]
-            
+        
         self.startWindow()
-    
+            
     def startWindow(self):
+        self.state = 0
+        
         #default constants
         self.FWHMconstant = 0.3
         self.polynomialOrder = 9
@@ -107,25 +113,36 @@ class MaserPlot(Frame):
         self.FreqStart = self.scan["FreqStart"]
         
         #start window frame
-        self.plotFrame = frame(self.window,(1000,1000), None)
+        self.plotFrame = frame(self.window,(1000,1000), RIGHT)
         self.infoFrame = frame(self.window,(1000,1000), None)
-        self.startDataPlotButton = Button (self.plotFrame, text="Plot data points", command=self.plotDataPoints)
-        self.startChangeData = Button (self.plotFrame, text="Change Data", command=self.changeData)
-        self.startDataPlotButton.pack(fill=BOTH)
-        self.startChangeData.pack(side=BOTTOM, fill=BOTH)  
+        self.masterFrame = frame(self.window,(1000,1000), BOTTOM)
+       
+        self.startDataPlotButton = Button (self.infoFrame, text="Plot data points",  command=self.plotDataPoints)
+        self.startChangeData = Button (self.infoFrame, text="Change Data", command=self.changeData)
+        self.startDataPlotButton.pack(side=BOTTOM, fill=BOTH)
+        self.startChangeData.pack(fill=BOTH)  
+        
         #infoFrame
         self.window.title("Info")
         infoPanelLabelsText = ["Experiment name: " + self.expername, "Scan number: " + self.scanNumber, "Source: " + self.source, "Station: " + self.location, "Date: " + self.scan["dates"], "Start time: " + self.scan["startTime"], "Stop time: " + self.scan["stopTime"], "System temperature 1u: " + str(self.Systemtemperature1u), "System temperature 9u: " + str(self.Systemtemperature9u), "Frequency Start: " + str(self.scan["FreqStart"]), "f0", "Calibration scale", "FWHM constant", "Polynomial order"]
         infoPanelEntryText = [{"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"defaultValue":self.Systemtemperature1u,"addEntry":True}, {"defaultValue":self.Systemtemperature9u,"addEntry":True}, {"defaultValue":self.scan["FreqStart"],"addEntry":True}, {"defaultValue":self.f0, "addEntry":True}, {"defaultValue":str(self.calibrationScale), "addEntry":True}, {"defaultValue":str(self.FWHMconstant), "addEntry":True}, {"defaultValue":str(self.polynomialOrder), "addEntry":True}]
         
-        for i in range(0, len( infoPanelLabelsText)): 
+        for i in range(0, len(infoPanelLabelsText)): 
             self.infoLabel = Label(self.infoFrame, text=infoPanelLabelsText[i], anchor=W, justify=LEFT)
-            self.infoLabel.pack(side=TOP, fill=BOTH)
+            self.infoLabel.pack(fill=BOTH)
             
             if  infoPanelEntryText[i]["addEntry"]:
                 self.infoInputField = Entry(self.infoFrame)
                 self.infoInputField.insert(0, str(infoPanelEntryText[i]["defaultValue"]))
                 self.infoInputField.pack(fill=BOTH)
+                
+        self.plot_1 = Plot(6,6, self.masterFrame, self.plotFrame)
+        self.plot_1.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization")
+        self.plot_1.plot(self.xarray, self.y1array, 'ko', 'Data Points', 1, 5)
+        
+        self.plot_2 = Plot(6,6, self.masterFrame, self.plotFrame)
+        self.plot_2.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization")
+        self.plot_2.plot(self.xarray, self.y2array, 'ko', 'Data Points', 1, 5)
                 
     def changeData(self):
         childs = self.infoFrame.winfo_children()
@@ -158,15 +175,31 @@ class MaserPlot(Frame):
         self.n = self.dataPoints
     
     def back(self):
-        self.plot_1.removePolt()
-        self.plot_2.removePolt()
-        self.masterFrame.destroy()
-        self.createPolynomialButton.destroy()
-        self.backButton.destroy()
-        self.mSlider.destroy()
-        self.nSlider.destroy()
-        self.startWindow()
+        if self.state == 0:
+            print "A"
+            self.plot_1.removePolt()
+            self.plot_2.removePolt()
+            self.plotFrame.destroy()
+            self.masterFrame.destroy()
+            self.createPolynomialButton.destroy()
+            self.backButton.destroy()
+            self.mSlider.destroy()
+            self.nSlider.destroy()
+            self.startWindow()
+        
+        elif self.state == 1:
+            print "B"
+            self.plotDataPoints()
+            
+    def back_1(self):
+        print "back"
+        self.testBack()
+        self.plotDataPoints()
     
+    
+    def testBack(self):
+        print "testBack"
+        
     def updateEnd(self, event):
         self.plot_1.plot(self.xarray[int(self.previousM)], self.z1[int(self.previousM)], 'ko', None, 1, None)
         self.plot_2.plot(self.xarray[int(self.previousM)], self.z2[int(self.previousM)], 'ko', None, 1, None)
@@ -202,16 +235,24 @@ class MaserPlot(Frame):
         self.previousN = self.nSlider.get()
            
     def plotDataPoints (self):
-        self.calibration()
-        self.masterFrame = frame(self.window,(1000,1000), LEFT)
-        self.window.title("Data points for " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
+        self.state = 0
+        
+        self.plot_1.removePolt()
+        self.plot_2.removePolt()
         self.startChangeData.destroy()
         self.startDataPlotButton.destroy()
+        self.masterFrame.destroy()
         self.infoFrame.destroy()
-        self.createPolynomialButton = Button (self.plotFrame, text="Create Polynomial", command=self.plotPolynomial)
-        self.createPolynomialButton.pack(side=TOP)
-        self.backButton = Button (self.plotFrame, text="back", command=self.back)
-        self.backButton.pack(side=TOP)
+               
+        self.calibration()
+         
+        self.masterFrame = frame(self.window,(1000,1000), BOTTOM)
+        self.window.title("Data points for " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
+    
+        self.createPolynomialButton = Button (self.masterFrame, text="Create Polynomial", command=self.plotPolynomial)
+        self.createPolynomialButton.pack(fill=BOTH)
+        self.backButton = Button (self.masterFrame, text="back", command=self.back)
+        self.backButton.pack(fill=BOTH)
         
         self.points_1u = list()
         self.points_9u = list()
@@ -236,15 +277,15 @@ class MaserPlot(Frame):
         self.previousM = self.m
         self.previousN = self.n -1
         
-        self.mSlider = tk.Scale(self.plotFrame, from_= self.m, to = self.a-1, orient=HORIZONTAL, label="M", length=500, variable=self.m, command=self.updateEnd)
+        self.mSlider = tk.Scale(self.plotFrame, from_= self.m, to = self.a-1, orient=HORIZONTAL, label="M", length=400, variable=self.m, command=self.updateEnd)
         self.mSlider.pack(side=BOTTOM)
         self.m = self.mSlider.get()
         
-        self.nSlider = tk.Scale(self.plotFrame, from_ = self.b-1 , to = self.n, orient=HORIZONTAL, label="N", length=500, variable=self.n, command=self.updateEnd)
+        self.nSlider = tk.Scale(self.plotFrame, from_ = self.b-1 , to = self.n, orient=HORIZONTAL, label="N", length=400, variable=self.n, command=self.updateEnd)
         self.nSlider.pack(side=BOTTOM)
         self.nSlider.set(self.n)
         self.n = self.nSlider.get()
-    
+        
     def onpickU1(self, event):
         thisline = event.artist
         xdata = thisline.get_xdata()
@@ -302,6 +343,8 @@ class MaserPlot(Frame):
         self.plot_7.canvasShow()
     
     def plotPolynomial(self):
+        self.state = 1
+        
         self.window.title("Polynomial " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
         #nodzes ieprieksejos grafikus
         self.plot_1.removePolt()
@@ -319,6 +362,10 @@ class MaserPlot(Frame):
         
         self.mSlider.destroy()
         self.nSlider.destroy()
+        
+        self.backButton.destroy()
+        self.backButton_1 = Button (self.masterFrame, text="back", command=self.back_1)
+        self.backButton_1.pack(fill=BOTH)
         
         self.xarray_u1 = self.xarray
         self.xarray_u9 = self.xarray
@@ -529,21 +576,36 @@ class MaserPlot(Frame):
     def _quit(self):
         self.plotFrame.destroy()
         self.window.destroy()
+    
+    def run(self):
+        pass
         
 def getData(dataFileName):
-    data = np.fromfile(dataFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(dataFileName),5))
-    data = np.delete(data, (0), axis=0) #izdzes masiva primo elementu
+    try:
+        data = np.fromfile(dataFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(dataFileName),5))
+    except(IOError):
+            print "IO Error"
+            
+    except:
+        print("Unexpected error:", sys.exc_info()[0])
+        raise
+        sys.exit(1)
+             
+    else:
+        data = np.delete(data, (0), axis=0) #izdzes masiva primo elementu
+        
+        outliersMask = is_outlier(data[:, [0]])
+        data = data[outliersMask]
+        dataPoints = data.shape[0]
+        
+        xdata = data[:, [0]]
+        y1data = data[:, [1]] 
+        y2data = data[:, [2]]
     
-    dataPoints = data.shape[0]    
-    
-    xdata = data[:, [0]]
-    y1data = data[:, [1]] 
-    y2data = data[:, [2]]
-    
-    return (xdata, y1data, y2data, dataPoints)
+        return (xdata, y1data, y2data, dataPoints)
 
 def getLogs(logfileName, dataFileName): 
-    logs  = ExperimentLogReader("logs/" + logfileName, "prettyLogs/").getLgs()
+    logs  = ExperimentLogReader("logs/" + logfileName, "prettyLogs/").getLogs()
     scanNumber = dataFileName.split(".")[0].split("_")[1][1:len(dataFileName)]
     scan = logs[scanNumber]
     
@@ -558,16 +620,29 @@ def getLogs(logfileName, dataFileName):
 def main(logFileName, corData):
     
     #get Data and Logs
-    Systemtemperature1u, Systemtemperature9u, location, source, scan, scanNumber = getLogs(logFileName, corData)
-    xdata, y1data, y2data, dataPoints = getData(corData)
-    expername = logFileName.split(".")[0][:-2]
+    try:
+        Systemtemperature1u, Systemtemperature9u, location, source, scan, scanNumber = getLogs(logFileName, corData)
+        expername = logFileName.split(".")[0][:-2]
+        xdata, y1data, y2data, dataPoints = getData(corData)
     
-    #Create App
-    window = tk.Tk() 
-    ploting = MaserPlot(window, xdata, y1data, y2data, dataPoints, Systemtemperature1u, Systemtemperature9u, expername, source, location, scan, scanNumber)
-    ploting.mainloop()
-    
-    sys.exit(0)
+    except(TypeError):
+        print("TypeError error:")
+        raise
+        sys.exit(1)
+         
+    except:
+        print("Unexpected error:", sys.exc_info()[0])
+        raise
+        sys.exit(1)
+        
+    else:
+        #Create App
+        window = tk.Tk() 
+        ploting = MaserPlot(window, xdata, y1data, y2data, dataPoints, Systemtemperature1u, Systemtemperature9u, expername, source, location, scan, scanNumber)
+        #ploting.start()
+        ploting.mainloop()
+        
+        sys.exit(0)
 
 if __name__=="__main__":
     if len(sys.argv) < 3:
