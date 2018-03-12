@@ -3,7 +3,8 @@
 import os, sys
 import numpy as np
 from Tkinter import *
-import 	Tkinter as tk
+import Tkinter as tk
+import tkFont
 from time import strptime 
 import scipy.constants
 from astropy.modeling import fitting
@@ -18,6 +19,7 @@ import threading
 from ploting import Plot
 from experimentsLogReader import ExperimentLogReader
 from sympy.printing.pretty.pretty_symbology import TOP
+from qtconsole.mainwindow import background
 
 calibrationScales = {"IRBENE":12, "IRBENE16":26}
 
@@ -63,7 +65,7 @@ def is_outlier(points, thresh=4.5):
 def frame(parent, size, sides, **options):
     Width=size[0]
     Height=size[1]
-    f=tk.Frame(parent, width=Width,height=Height,**options)
+    f=tk.Frame(parent, width=Width, height=Height, background="light goldenrod", **options)
     f.pack(side = sides)
     return (f)
     
@@ -73,6 +75,8 @@ class MaserPlot(Frame, threading.Thread):
         #Data init
         Frame.__init__(self)
         threading.Thread.__init__(self)
+        self.font = tkFont.Font(family="Times New Roman", size=20, weight=tkFont.BOLD)
+        self.font_2 = tkFont.Font(family="Times New Roman", size=10)
         self.window = window
         self.xdata = xdata
         self.ydataU1= ydataU1
@@ -116,10 +120,10 @@ class MaserPlot(Frame, threading.Thread):
         self.plotFrame = frame(self.window,(1000,1000), LEFT)
         self.infoFrame = frame(self.window,(1000,1000), None)
         self.masterFrame_1 = frame(self.window,(1000,1000), BOTTOM)
-        self.masterFrame = frame(self.masterFrame_1,(1000,1000), BOTTOM)
+        self.masterFrame = frame(self.masterFrame_1,(1000,1000), None)
         
-        self.startDataPlotButton = Button (self.infoFrame, text="Plot data points",  command=self.plotDataPoints)
-        self.startChangeData = Button (self.infoFrame, text="Change Data", command=self.changeData)
+        self.startDataPlotButton = Button (self.infoFrame, text="Plot data points",  command=self.plotDataPoints, activebackground="Green", background="Green", font=self.font)
+        self.startChangeData = Button (self.infoFrame, text="Change Data", command=self.changeData, activebackground="Blue", background="Blue", font=self.font)
         self.startDataPlotButton.pack(side=BOTTOM, fill=BOTH)
         self.startChangeData.pack(fill=BOTH)  
         
@@ -129,11 +133,11 @@ class MaserPlot(Frame, threading.Thread):
         infoPanelEntryText = [{"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"defaultValue":self.Systemtemperature1u,"addEntry":True}, {"defaultValue":self.Systemtemperature9u,"addEntry":True}, {"defaultValue":self.scan["FreqStart"],"addEntry":True}, {"defaultValue":self.f0, "addEntry":True}, {"defaultValue":str(self.calibrationScale), "addEntry":True}, {"defaultValue":str(self.FWHMconstant), "addEntry":True}, {"defaultValue":str(self.polynomialOrder), "addEntry":True}]
         
         for i in range(0, len(infoPanelLabelsText)): 
-            self.infoLabel = Label(self.infoFrame, text=infoPanelLabelsText[i], anchor=W, justify=LEFT)
+            self.infoLabel = Label(self.infoFrame, text=infoPanelLabelsText[i], anchor=W, justify=LEFT, font=self.font_2)
             self.infoLabel.pack(fill=BOTH)
             
             if  infoPanelEntryText[i]["addEntry"]:
-                self.infoInputField = Entry(self.infoFrame)
+                self.infoInputField = Entry(self.infoFrame, font=self.font_2)
                 self.infoInputField.insert(0, str(infoPanelEntryText[i]["defaultValue"]))
                 self.infoInputField.pack(fill=BOTH)
                 
@@ -224,10 +228,7 @@ class MaserPlot(Frame, threading.Thread):
             del self.monitoringButton
             
             self.plotPolynomial()
-        
-    def testBack(self):
-        print "testBack"
-        
+                
     def updateEnd(self, event):
         self.plot_3.plot(self.xarray[int(self.previousM)], self.z1[int(self.previousM)], 'ko', markersize=1)
         self.plot_4.plot(self.xarray[int(self.previousM)], self.z2[int(self.previousM)], 'ko', markersize=1)
@@ -288,9 +289,9 @@ class MaserPlot(Frame, threading.Thread):
         self.masterFrame = frame(self.masterFrame_1,(1000,1000), BOTTOM)
         self.window.title("Data points for " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
     
-        self.createPolynomialButton = Button (self.masterFrame, text="Create Polynomial", command=self.plotPolynomial)
+        self.createPolynomialButton = Button (self.masterFrame, text="Create Polynomial", command=self.plotPolynomial, activebackground="Green", background="Green", font=self.font)
         self.createPolynomialButton.pack(fill=BOTH)
-        self.backButton = Button (self.masterFrame, text="back", command=self.back)
+        self.backButton = Button (self.masterFrame, text="Back", command=self.back, activebackground="Blue", background="Blue", font=self.font)
         self.backButton.pack(fill=BOTH)
         
         self.points_1u = list()
@@ -316,11 +317,11 @@ class MaserPlot(Frame, threading.Thread):
         self.previousM = self.m
         self.previousN = self.n -1
         
-        self.mSlider = tk.Scale(self.plotFrame, from_= self.m, to = self.a-1, orient=HORIZONTAL, label="M", length=400, variable=self.m, command=self.updateEnd)
+        self.mSlider = tk.Scale(self.plotFrame, from_= self.m, to = self.a-1, orient=HORIZONTAL, label="M", length=400, variable=self.m, command=self.updateEnd, foreground="Red", highlightcolor="Yellow")
         self.mSlider.pack(side=BOTTOM)
         self.m = self.mSlider.get()
         
-        self.nSlider = tk.Scale(self.plotFrame, from_ = self.b-1 , to = self.n, orient=HORIZONTAL, label="N", length=400, variable=self.n, command=self.updateEnd)
+        self.nSlider = tk.Scale(self.plotFrame, from_ = self.b-1 , to = self.n, orient=HORIZONTAL, label="N", length=400, variable=self.n, command=self.updateEnd, foreground="Red", highlightcolor="Yellow")
         self.nSlider.pack(side=BOTTOM)
         self.nSlider.set(self.n)
         self.n = self.nSlider.get()
@@ -416,10 +417,10 @@ class MaserPlot(Frame, threading.Thread):
         self.masterFrame = frame(self.masterFrame_1,(1000,1000), BOTTOM)
         self.window.title("Polynomial " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
         
-        self.plotLocalMaximumButton = Button (self.masterFrame, text="Create local maximum", command=self.plotLocalMaximum)
+        self.plotLocalMaximumButton = Button (self.masterFrame, text="Create local maximum", command=self.plotLocalMaximum, activebackground="Green", background="Green", font=self.font)
         self.plotLocalMaximumButton.pack(fill=BOTH)
         
-        self.backButton_1 = Button (self.masterFrame, text="back", command=self.back)
+        self.backButton_1 = Button (self.masterFrame, text="Back", command=self.back, activebackground="Blue", background="Blue", font=self.font)
         self.backButton_1.pack(fill=BOTH)
         
         self.xarray_u1 = self.xarray
@@ -538,10 +539,10 @@ class MaserPlot(Frame, threading.Thread):
         self.masterFrame = frame(self.masterFrame_1,(1000,1000), BOTTOM)
         self.window.title("Local maximums " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
         
-        self.monitoringButton = Button (self.masterFrame, text="Add points to monitoring", command=self.createResult)
+        self.monitoringButton = Button (self.masterFrame, text="Add points to monitoring", command=self.createResult, activebackground="Green", background="Green", font=self.font)
         self.monitoringButton.pack(fill=BOTH)
         
-        self.backButton_2 = Button (self.masterFrame, text="back", command=self.back)
+        self.backButton_2 = Button (self.masterFrame, text="Back", command=self.back, activebackground="Blue", background="Blue", font=self.font)
         self.backButton_2.pack(fill=BOTH)
         
         thres=0.1
@@ -722,8 +723,11 @@ def main(logFileName, corData):
         
     else:
         #Create App
-        window = tk.Tk() 
+        window = tk.Tk()
+        window.configure(background='light goldenrod')
         ploting = MaserPlot(window, xdata, y1data, y2data, dataPoints, Systemtemperature1u, Systemtemperature9u, expername, source, location, scan, scanNumber)
+        img = tk.Image("photo", file="viraclogo.png")
+        window.call('wm','iconphoto', window._w,img) 
         #ploting.start()
         ploting.mainloop()
         
