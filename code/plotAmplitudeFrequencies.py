@@ -113,10 +113,11 @@ class MaserPlot(Frame, threading.Thread):
         self.FreqStart = self.scan["FreqStart"]
         
         #start window frame
-        self.plotFrame = frame(self.window,(1000,1000), RIGHT)
+        self.plotFrame = frame(self.window,(1000,1000), LEFT)
         self.infoFrame = frame(self.window,(1000,1000), None)
-        self.masterFrame = frame(self.window,(1000,1000), BOTTOM)
-       
+        self.masterFrame_1 = frame(self.window,(1000,1000), BOTTOM)
+        self.masterFrame = frame(self.masterFrame_1,(1000,1000), BOTTOM)
+        
         self.startDataPlotButton = Button (self.infoFrame, text="Plot data points",  command=self.plotDataPoints)
         self.startChangeData = Button (self.infoFrame, text="Change Data", command=self.changeData)
         self.startDataPlotButton.pack(side=BOTTOM, fill=BOTH)
@@ -284,7 +285,7 @@ class MaserPlot(Frame, threading.Thread):
                
         self.calibration()
          
-        self.masterFrame = frame(self.window,(1000,1000), BOTTOM)
+        self.masterFrame = frame(self.masterFrame_1,(1000,1000), BOTTOM)
         self.window.title("Data points for " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
     
         self.createPolynomialButton = Button (self.masterFrame, text="Create Polynomial", command=self.plotPolynomial)
@@ -412,7 +413,7 @@ class MaserPlot(Frame, threading.Thread):
         except:
             pass
         
-        self.masterFrame = frame(self.window,(1000,1000), BOTTOM)
+        self.masterFrame = frame(self.masterFrame_1,(1000,1000), BOTTOM)
         self.window.title("Polynomial " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
         
         self.plotLocalMaximumButton = Button (self.masterFrame, text="Create local maximum", command=self.plotLocalMaximum)
@@ -504,13 +505,13 @@ class MaserPlot(Frame, threading.Thread):
         self.ceb_2 = fit_ceb(ceb, np.append(self.x_u9[self.m:self.a_u9], self.x_u9[self.b_u9:self.n]),  np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]))
         
         #u1 plot
-        self.plot_5 = Plot(6,6, self.window, self.plotFrame)
+        self.plot_5 = Plot(6,6, self.masterFrame, self.plotFrame)
         self.plot_5.creatPlot(LEFT, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization")
         self.plot_5.plot(np.append(self.x_u1[self.m:self.a_u1], self.x_u1[self.b_u1:self.n]), np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]), 'ko', label='Data Points',  markersize=1)
         self.plot_5.plot(self.x_u1[self.m:self.n], self.ceb_1(self.x_u1[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
         
         #u9 plot
-        self.plot_6 = Plot(6,6, self.window, self.plotFrame)
+        self.plot_6 = Plot(6,6, self.masterFrame, self.plotFrame)
         self.plot_6.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization")
         self.plot_6.plot(np.append(self.x_u9[self.m:self.a_u9], self.x_u9[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), 'ko', label='Data Points',  markersize=1)
         self.plot_6.plot(self.x_u9[self.m:self.n], self.ceb_2(self.x_u9[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
@@ -534,7 +535,7 @@ class MaserPlot(Frame, threading.Thread):
         except:
             pass
         
-        self.masterFrame = frame(self.window,(1000,1000), BOTTOM)
+        self.masterFrame = frame(self.masterFrame_1,(1000,1000), BOTTOM)
         self.window.title("Local maximums " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
         
         self.monitoringButton = Button (self.masterFrame, text="Add points to monitoring", command=self.createResult)
