@@ -210,11 +210,17 @@ class MaserPlot(Frame, threading.Thread):
             self.plotDataPoints()
             
         elif self.state == 2:
-            self.plot_5.removePolt()
-            self.plot_6.removePolt()
-            self.backButton_1.destroy()
-            self.plotLocalMaximumButton.destroy()
-            self.masterFrame.destroy()
+            self.plot_7.removePolt()
+            self.plot_8.removePolt()
+            self.plot_9.removePolt()
+            self.backButton_2.destroy()
+            self.monitoringButton.destroy()
+            
+            del self.plot_7
+            del self.plot_8
+            del self.plot_9
+            del self.backButton_2
+            del self.monitoringButton
             
             self.plotPolynomial()
         
@@ -512,11 +518,21 @@ class MaserPlot(Frame, threading.Thread):
     def plotLocalMaximum(self):
         self.state = 2
         #nodzes ieprieksejos grafikus
-        self.plot_5.removePolt()
-        self.plot_6.removePolt()
-        self.backButton_1.destroy()
-        self.plotLocalMaximumButton.destroy()
-        self.masterFrame.destroy()
+        try:
+            self.plot_5.removePolt()
+            self.plot_6.removePolt()
+            self.backButton_1.destroy()
+            self.plotLocalMaximumButton.destroy()
+            self.masterFrame.destroy()
+            
+            del self.plot_5
+            del self.plot_6
+            del self.backButton_1
+            del self.plotLocalMaximumButton
+            del self.masterFrame
+            
+        except:
+            pass
         
         self.masterFrame = frame(self.window,(1000,1000), BOTTOM)
         self.window.title("Local maximums " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
