@@ -375,7 +375,7 @@ class MaserPlot(Frame, threading.Thread):
         ind = event.ind
         self.maxavg_index.append(ind[0])
         p = tuple(zip(xdata[ind], ydata[ind]))
-        self.plot_9.plot(p[0][0], p[0][1], 'gd', markersize=1, picker=5)
+        self.plot_9.plot(p[0][0], p[0][1], 'gd', markersize=2, picker=5)
         if  self.avgMax.count(p[0]) == 0:
             self.avgMax.append(p[0])
         self.plot_9.canvasShow()
@@ -588,14 +588,27 @@ class MaserPlot(Frame, threading.Thread):
         self.maxavg_index = list()
         
     def createResult(self):
-        #remove graph
-        self.plot_7.removePolt()
-        self.plot_8.removePolt()
-        self.plot_9.removePolt()
         
-        self.monitoringButton.destroy()
-    
-        endLabel = Label(master=self.plotFrame, text="Result file creating in progress!")
+        try:
+            #remove graph
+            self.plot_7.removePolt()
+            self.plot_8.removePolt()
+            self.plot_9.removePolt()
+            
+            self.monitoringButton.destroy()
+            self.masterFrame.destroy()
+            
+            del self.plot_7
+            del self.plot_8
+            del self.plot_9
+            del self.monitoringButton
+            del self.masterFrame
+            
+        except:
+            pass
+        
+        self.masterFrame = frame(self.window,(1000,1000), BOTTOM)
+        endLabel = Label(master=self.masterFrame, text="Result file creating in progress!")
         endLabel.pack()
         
         resultDir = "results/"
