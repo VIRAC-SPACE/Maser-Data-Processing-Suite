@@ -176,60 +176,69 @@ class MaserPlot(Frame, threading.Thread):
     
     def back(self):
         if self.state == 0:
-            print "A"
-            self.plot_1.removePolt()
-            self.plot_2.removePolt()
+            self.plot_3.removePolt()
+            self.plot_4.removePolt()
             self.plotFrame.destroy()
             self.masterFrame.destroy()
             self.createPolynomialButton.destroy()
             self.backButton.destroy()
             self.mSlider.destroy()
             self.nSlider.destroy()
-            self.startWindow()
-        
-        elif self.state == 1:
-            print "B"
-            self.plotDataPoints()
             
-    def back_1(self):
-        print "back"
-        self.testBack()
-        self.plotDataPoints()
-    
-    
+            del self.plot_3
+            del self.plot_4
+            del self.plotFrame
+            del self.masterFrame
+            del self.createPolynomialButton
+            del self.backButton
+            del self.mSlider
+            del self.nSlider
+            
+            self.startWindow()
+            
+        elif self.state == 1:
+            self.plot_5.removePolt()
+            self.plot_6.removePolt()
+            self.plotLocalMaximumButton.destroy()
+            self.plotDataPoints()
+            self.backButton_1.destroy()
+            
+        elif self.state == 2:
+            print "Back to poly"
+        
     def testBack(self):
         print "testBack"
         
     def updateEnd(self, event):
-        self.plot_1.plot(self.xarray[int(self.previousM)], self.z1[int(self.previousM)], 'ko', markersize=1)
-        self.plot_2.plot(self.xarray[int(self.previousM)], self.z2[int(self.previousM)], 'ko', markersize=1)
+        self.plot_3.plot(self.xarray[int(self.previousM)], self.z1[int(self.previousM)], 'ko', markersize=1)
+        self.plot_4.plot(self.xarray[int(self.previousM)], self.z2[int(self.previousM)], 'ko', markersize=1)
         
-        self.plot_1.plot(self.xarray[int(self.previousN-1)], self.z1[int(self.previousN-1)], 'ko', markersize=1)
-        self.plot_2.plot(self.xarray[int(self.previousN-1)], self.z2[int(self.previousN-1)], 'ko', markersize=1)
+        self.plot_3.plot(self.xarray[int(self.previousN-1)], self.z1[int(self.previousN-1)], 'ko', markersize=1)
+        self.plot_4.plot(self.xarray[int(self.previousN-1)], self.z2[int(self.previousN-1)], 'ko', markersize=1)
         
-        self.plot_1.annotation(self.xarray[int(self.previousM)], self.z1[int(self.previousM)], " ")
-        self.plot_2.annotation(self.xarray[int(self.previousM)], self.z2[int(self.previousM)], " ")
+        self.plot_3.annotation(self.xarray[int(self.previousM)], self.z1[int(self.previousM)], " ")
+        self.plot_4.annotation(self.xarray[int(self.previousM)], self.z2[int(self.previousM)], " ")
    
-        self.plot_1.annotation(self.xarray[int(self.previousN-1)], self.z1[int(self.previousN-1)], " ")
-        self.plot_2.annotation(self.xarray[int(self.previousN-1)], self.z2[int(self.previousN-1)], " ")
+        self.plot_3.annotation(self.xarray[int(self.previousN-1)], self.z1[int(self.previousN-1)], " ")
+        self.plot_4.annotation(self.xarray[int(self.previousN-1)], self.z2[int(self.previousN-1)], " ")
 
-        self.plot_1.remannotation()
-        self.plot_2.remannotation()
+        self.plot_3.remannotation()
+        self.plot_4.remannotation()
 
-        self.plot_1.annotation(self.xarray[int(self.mSlider.get())], self.z1[int(self.mSlider.get())], "M")
-        self.plot_2.annotation(self.xarray[int(self.mSlider.get())], self.z2[int(self.mSlider.get())], "M")
+        self.plot_3.annotation(self.xarray[int(self.mSlider.get())], self.z1[int(self.mSlider.get())], "M")
+        self.plot_4.annotation(self.xarray[int(self.mSlider.get())], self.z2[int(self.mSlider.get())], "M")
         
-        self.plot_1.annotation(self.xarray[int(self.nSlider.get()-1)], self.z1[int(self.nSlider.get()-1)], "N")
-        self.plot_2.annotation(self.xarray[int(self.nSlider.get()-1)], self.z2[int(self.nSlider.get()-1)], "N")
+        self.plot_3.annotation(self.xarray[int(self.nSlider.get()-1)], self.z1[int(self.nSlider.get()-1)], "N")
+        self.plot_4.annotation(self.xarray[int(self.nSlider.get()-1)], self.z2[int(self.nSlider.get()-1)], "N")
         
-        self.plot_1.plot(self.xarray[int(self.mSlider.get())], self.z1[int(self.mSlider.get())], 'ro', markersize=1)
-        self.plot_2.plot(self.xarray[int(self.mSlider.get())], self.z2[int(self.mSlider.get())], 'ro', markersize=1)
+        self.plot_3.plot(self.xarray[int(self.mSlider.get())], self.z1[int(self.mSlider.get())], 'ro', markersize=1)
+        self.plot_4.plot(self.xarray[int(self.mSlider.get())], self.z2[int(self.mSlider.get())], 'ro', markersize=1)
         
-        self.plot_1.plot(self.xarray[int(self.nSlider.get()-1)], self.z1[int(self.nSlider.get()-1)], 'ro', markersize=1)
-        self.plot_2.plot(self.xarray[int(self.nSlider.get()-1)], self.z2[int(self.nSlider.get()-1)], 'ro', markersize=1)
+        self.plot_3.plot(self.xarray[int(self.nSlider.get()-1)], self.z1[int(self.nSlider.get()-1)], 'ro', markersize=1)
+        self.plot_4.plot(self.xarray[int(self.nSlider.get()-1)], self.z2[int(self.nSlider.get()-1)], 'ro', markersize=1)
         
-        self.plot_1.canvasShow()
-        self.plot_2.canvasShow()
+        self.plot_3.canvasShow()
+        self.plot_4.canvasShow()
  
         self.previousM = self.mSlider.get()
         self.previousN = self.nSlider.get()
@@ -237,12 +246,23 @@ class MaserPlot(Frame, threading.Thread):
     def plotDataPoints (self):
         self.state = 0
         
-        self.plot_1.removePolt()
-        self.plot_2.removePolt()
-        self.startChangeData.destroy()
-        self.startDataPlotButton.destroy()
-        self.masterFrame.destroy()
-        self.infoFrame.destroy()
+        try:
+            self.plot_1.removePolt()
+            self.plot_2.removePolt()
+            self.startChangeData.destroy()
+            self.startDataPlotButton.destroy()
+            self.masterFrame.destroy()
+            self.infoFrame.destroy()
+            
+            del self.plot_1
+            del self.plot_2
+            del self.startChangeData
+            del self.startDataPlotButton
+            del self.masterFrame
+            del self.infoFrame
+            
+        except:
+            pass
                
         self.calibration()
          
@@ -258,19 +278,19 @@ class MaserPlot(Frame, threading.Thread):
         self.points_9u = list()
 
         #u1
-        self.plot_1 = Plot(6,6, self.masterFrame, self.plotFrame)
-        self.plot_1.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization")
-        self.plot_1.plot(self.xarray, self.z1, 'ko', label='Data Points', markersize=1, picker=5)
-        self.plot_1.addPickEvent(self.onpickU1)
-        self.plot_1.addSecondAss("x", "Data points", 0, self.dataPoints + 512, 1024)
+        self.plot_3 = Plot(6,6, self.masterFrame, self.plotFrame)
+        self.plot_3.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization")
+        self.plot_3.plot(self.xarray, self.z1, 'ko', label='Data Points', markersize=1, picker=5)
+        self.plot_3.addPickEvent(self.onpickU1)
+        self.plot_3.addSecondAss("x", "Data points", 0, self.dataPoints + 512, 1024)
         #self.plot_1.addSlider([0.10, 0.15, 0.65, 0.03], "m", 10, 0, 5, None)
 
         #u9
-        self.plot_2 = Plot(6,6, self.masterFrame, self.plotFrame)
-        self.plot_2.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization")
-        self.plot_2.plot(self.xarray, self.z2, 'ko', label='Data Points', markersize=1, picker=5)
-        self.plot_2.addPickEvent(self.onpickU9)
-        self.plot_2.addSecondAss("x", "Data points", 0, self.dataPoints + 512, 1024)
+        self.plot_4 = Plot(6,6, self.masterFrame, self.plotFrame)
+        self.plot_4.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization")
+        self.plot_4.plot(self.xarray, self.z2, 'ko', label='Data Points', markersize=1, picker=5)
+        self.plot_4.addPickEvent(self.onpickU9)
+        self.plot_4.addSecondAss("x", "Data points", 0, self.dataPoints + 512, 1024)
         #self.plot_2.addSlider([0.10, 0.25, 0.65, 0.03], "n", 10, 0, 5, None)
         
         #sliders
@@ -292,9 +312,9 @@ class MaserPlot(Frame, threading.Thread):
         ydata = thisline.get_ydata()
         ind = event.ind
         p = tuple(zip(xdata[ind], ydata[ind]))
-        self.plot_1.plot(p[0][0], p[0][1], 'ro',  markersize=1,  picker=5)
+        self.plot_3.plot(p[0][0], p[0][1], 'ro',  markersize=1,  picker=5)
         self.points_1u.append(p[0])
-        self.plot_1.canvasShow()
+        self.plot_3.canvasShow()
         
     def onpickU9(self, event):
         thisline = event.artist
@@ -302,9 +322,9 @@ class MaserPlot(Frame, threading.Thread):
         ydata = thisline.get_ydata()
         ind = event.ind
         p = tuple(zip(xdata[ind], ydata[ind]))
-        self.plot_2.plot(p[0][0], p[0][1], 'ro', markersize=1, picker=5)
+        self.plot_4.plot(p[0][0], p[0][1], 'ro', markersize=1, picker=5)
         self.points_9u.append(p[0])
-        self.plot_2.canvasShow()
+        self.plot_4.canvasShow()
         
     def onpick_maxU1(self, event):
         thisline = event.artist
@@ -313,10 +333,10 @@ class MaserPlot(Frame, threading.Thread):
         ind = event.ind
         self.maxu1_index.append(ind[0])
         p = tuple(zip(xdata[ind], ydata[ind]))
-        self.plot_5.plot(p[0][0], p[0][1], 'gd', markersize=2, picker=5)
+        self.plot_7.plot(p[0][0], p[0][1], 'gd', markersize=2, picker=5)
         if  self.maxU1.count(p[0]) == 0:
             self.maxU1.append(p[0])
-        self.plot_5.canvasShow()
+        self.plot_7.canvasShow()
         
     def onpick_maxU9(self, event):
         thisline = event.artist
@@ -325,10 +345,10 @@ class MaserPlot(Frame, threading.Thread):
         ind = event.ind
         self.maxu9_index.append(ind[0])
         p = tuple(zip(xdata[ind], ydata[ind]))
-        self.plot_6.plot(p[0][0], p[0][1], 'gd', markersize=2, picker=5)
+        self.plot_8.plot(p[0][0], p[0][1], 'gd', markersize=2, picker=5)
         if  self.maxU9.count(p[0]) == 0:
             self.maxU9.append(p[0])
-        self.plot_6.canvasShow()
+        self.plot_8.canvasShow()
         
     def onpick_maxAVG(self, event):
         thisline = event.artist
@@ -337,26 +357,23 @@ class MaserPlot(Frame, threading.Thread):
         ind = event.ind
         self.maxavg_index.append(ind[0])
         p = tuple(zip(xdata[ind], ydata[ind]))
-        self.plot_7.plot(p[0][0], p[0][1], 'gd', markersize=1, picker=5)
+        self.plot_9.plot(p[0][0], p[0][1], 'gd', markersize=1, picker=5)
         if  self.avgMax.count(p[0]) == 0:
             self.avgMax.append(p[0])
-        self.plot_7.canvasShow()
+        self.plot_9.canvasShow()
         
     def plotPolynomial(self):
         self.state = 1
         
-        self.window.title("Polynomial " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
         #nodzes ieprieksejos grafikus
-        self.plot_1.removePolt()
-        self.plot_2.removePolt()
+        self.plot_3.removePolt()
+        self.plot_4.removePolt()
         
-        self.plot_1.removePickEvent()
-        self.plot_2.removePickEvent()
+        self.plot_3.removePickEvent()
+        self.plot_4.removePickEvent()
         
         self.createPolynomialButton.destroy()
-        self.plotLocalMaximumButton = Button (self.plotFrame, text="Create local maximum", command=self.plotLocalMaximum)
-        self.plotLocalMaximumButton.pack()
-        
+    
         self.m = self.mSlider.get()
         self.n = self.nSlider.get()
         
@@ -364,7 +381,15 @@ class MaserPlot(Frame, threading.Thread):
         self.nSlider.destroy()
         
         self.backButton.destroy()
-        self.backButton_1 = Button (self.masterFrame, text="back", command=self.back_1)
+        self.masterFrame.destroy()
+        
+        self.masterFrame = frame(self.window,(1000,1000), BOTTOM)
+        self.window.title("Polynomial " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
+        
+        self.plotLocalMaximumButton = Button (self.masterFrame, text="Create local maximum", command=self.plotLocalMaximum)
+        self.plotLocalMaximumButton.pack(fill=BOTH)
+        
+        self.backButton_1 = Button (self.masterFrame, text="back", command=self.back)
         self.backButton_1.pack(fill=BOTH)
         
         self.xarray_u1 = self.xarray
@@ -450,26 +475,34 @@ class MaserPlot(Frame, threading.Thread):
         self.ceb_2 = fit_ceb(ceb, np.append(self.x_u9[self.m:self.a_u9], self.x_u9[self.b_u9:self.n]),  np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]))
         
         #u1 plot
-        self.plot_3 = Plot(6,6, self.window, self.plotFrame)
-        self.plot_3.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization")
-        self.plot_3.plot(np.append(self.x_u1[self.m:self.a_u1], self.x_u1[self.b_u1:self.n]), np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]), 'ko', label='Data Points',  markersize=1)
-        self.plot_3.plot(self.x_u1[self.m:self.n], self.ceb_1(self.x_u1[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
+        self.plot_5 = Plot(6,6, self.window, self.plotFrame)
+        self.plot_5.creatPlot(LEFT, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization")
+        self.plot_5.plot(np.append(self.x_u1[self.m:self.a_u1], self.x_u1[self.b_u1:self.n]), np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]), 'ko', label='Data Points',  markersize=1)
+        self.plot_5.plot(self.x_u1[self.m:self.n], self.ceb_1(self.x_u1[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
         
         #u9 plot
-        self.plot_4 = Plot(6,6, self.window, self.plotFrame)
-        self.plot_4.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization")
-        self.plot_4.plot(np.append(self.x_u9[self.m:self.a_u9], self.x_u9[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), 'ko', label='Data Points',  markersize=1)
-        self.plot_4.plot(self.x_u9[self.m:self.n], self.ceb_2(self.x_u9[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
+        self.plot_6 = Plot(6,6, self.window, self.plotFrame)
+        self.plot_6.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization")
+        self.plot_6.plot(np.append(self.x_u9[self.m:self.a_u9], self.x_u9[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), 'ko', label='Data Points',  markersize=1)
+        self.plot_6.plot(self.x_u9[self.m:self.n], self.ceb_2(self.x_u9[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
         
     def plotLocalMaximum(self):
-        self.window.title("Local maximums " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
+        self.state = 2
         #nodzes ieprieksejos grafikus
-        self.plot_3.removePolt()
-        self.plot_4.removePolt()
-        
+        self.plot_5.removePolt()
+        self.plot_6.removePolt()
+        self.backButton_1.destroy()
         self.plotLocalMaximumButton.destroy()
-        self.monitoringButton = Button (self.plotFrame, text="Add points to monitoring", command=self.createResult)
-        self.monitoringButton.pack()
+        self.masterFrame.destroy()
+        
+        self.masterFrame = frame(self.window,(1000,1000), BOTTOM)
+        self.window.title("Local maximums " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
+        
+        self.monitoringButton = Button (self.masterFrame, text="Add points to monitoring", command=self.createResult)
+        self.monitoringButton.pack(fill=BOTH)
+        
+        self.backButton_2 = Button (self.masterFrame, text="back", command=self.back)
+        self.backButton_2.pack(fill=BOTH)
         
         thres=0.1
     
@@ -481,32 +514,32 @@ class MaserPlot(Frame, threading.Thread):
         indexes_for_ceb2 = peakutils.indexes(y2values, thres=thres, min_dist=10)
         
         #u1
-        self.plot_5 = Plot(6,6, self.window, self.plotFrame)
-        self.plot_5.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization")
-        self.plot_5.plot(self.x_u1[self.m:self.n], y1values, 'b', label='Signal - polynomial', markersize=1)
-        self.plot_5.plot(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
-        self.plot_5.addPickEvent(self.onpick_maxU1)
-        self.plot_5.annotations(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb])
+        self.plot_7 = Plot(5,5, self.masterFrame, self.plotFrame)
+        self.plot_7.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization")
+        self.plot_7.plot(self.x_u1[self.m:self.n], y1values, 'b', label='Signal - polynomial', markersize=1)
+        self.plot_7.plot(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
+        self.plot_7.addPickEvent(self.onpick_maxU1)
+        self.plot_7.annotations(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb])
         
         #u9
-        self.plot_6 = Plot(6,6, self.window, self.plotFrame)
-        self.plot_6.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization")
-        self.plot_6.plot(self.x_u9[self.m:self.n], y1values, 'b', label='Signal - polynomial', markersize=1)
-        self.plot_6.plot(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
-        self.plot_6.addPickEvent(self.onpick_maxU9)
-        self.plot_6.annotations(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2])
+        self.plot_8 = Plot(5,5, self.masterFrame, self.plotFrame)
+        self.plot_8.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization")
+        self.plot_8.plot(self.x_u9[self.m:self.n], y1values, 'b', label='Signal - polynomial', markersize=1)
+        self.plot_8.plot(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
+        self.plot_8.addPickEvent(self.onpick_maxU9)
+        self.plot_8.annotations(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2])
         
         #mid plot
         avg_x = (self.x_u1[self.m:self.n] + self.x_u9[self.m:self.n]) / 2
         avg_y = (y1values + y2values) / 2
         indexes_for_avg = peakutils.indexes(avg_y, thres=thres, min_dist=10)
         
-        self.plot_7 = Plot(6,6, self.window, self.plotFrame)
-        self.plot_7.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Average Polarization")
-        self.plot_7.plot(avg_x, avg_y, 'b', label='Signal - polynomial', markersize=1)
-        self.plot_7.plot(avg_x[indexes_for_avg], avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
-        self.plot_7.addPickEvent(self.onpick_maxAVG)
-        self.plot_7.annotations(avg_x[indexes_for_avg], avg_y[indexes_for_avg])
+        self.plot_9 = Plot(5,5, self.masterFrame, self.plotFrame)
+        self.plot_9.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Average Polarization")
+        self.plot_9.plot(avg_x, avg_y, 'b', label='Signal - polynomial', markersize=1)
+        self.plot_9.plot(avg_x[indexes_for_avg], avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
+        self.plot_9.addPickEvent(self.onpick_maxAVG)
+        self.plot_9.annotations(avg_x[indexes_for_avg], avg_y[indexes_for_avg])
         
         self.maxU1 = list()
         self.maxU9 = list()
@@ -517,9 +550,9 @@ class MaserPlot(Frame, threading.Thread):
         
     def createResult(self):
         #remove graph
-        self.plot_5.removePolt()
-        self.plot_6.removePolt()
         self.plot_7.removePolt()
+        self.plot_8.removePolt()
+        self.plot_9.removePolt()
         
         self.monitoringButton.destroy()
     
