@@ -727,8 +727,7 @@ def main(logFileName, corData):
         window.configure(background='light goldenrod')
         ploting = MaserPlot(window, xdata, y1data, y2data, dataPoints, Systemtemperature1u, Systemtemperature9u, expername, source, location, scan, scanNumber)
         img = tk.Image("photo", file="viraclogo.png")
-        window.call('wm','iconphoto', window._w,img) 
-        #ploting.start()
+        window.call('wm','iconphoto', window._w,img)
         ploting.mainloop()
         
         sys.exit(0)
