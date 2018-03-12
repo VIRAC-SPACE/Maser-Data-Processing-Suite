@@ -200,11 +200,23 @@ class MaserPlot(Frame, threading.Thread):
             self.plot_5.removePolt()
             self.plot_6.removePolt()
             self.plotLocalMaximumButton.destroy()
-            self.plotDataPoints()
             self.backButton_1.destroy()
             
+            del self.plot_5
+            del self.plot_6
+            del self.plotLocalMaximumButton
+            del self.backButton_1
+            
+            self.plotDataPoints()
+            
         elif self.state == 2:
-            print "Back to poly"
+            self.plot_5.removePolt()
+            self.plot_6.removePolt()
+            self.backButton_1.destroy()
+            self.plotLocalMaximumButton.destroy()
+            self.masterFrame.destroy()
+            
+            self.plotPolynomial()
         
     def testBack(self):
         print "testBack"
@@ -365,23 +377,34 @@ class MaserPlot(Frame, threading.Thread):
     def plotPolynomial(self):
         self.state = 1
         
-        #nodzes ieprieksejos grafikus
-        self.plot_3.removePolt()
-        self.plot_4.removePolt()
+        try:
+            #nodzes ieprieksejos grafikus
+            self.plot_3.removePolt()
+            self.plot_4.removePolt()
+            
+            self.plot_3.removePickEvent()
+            self.plot_4.removePickEvent()
+            
+            self.createPolynomialButton.destroy()
         
-        self.plot_3.removePickEvent()
-        self.plot_4.removePickEvent()
-        
-        self.createPolynomialButton.destroy()
-    
-        self.m = self.mSlider.get()
-        self.n = self.nSlider.get()
-        
-        self.mSlider.destroy()
-        self.nSlider.destroy()
-        
-        self.backButton.destroy()
-        self.masterFrame.destroy()
+            self.m = self.mSlider.get()
+            self.n = self.nSlider.get()
+            
+            self.mSlider.destroy()
+            self.nSlider.destroy()
+            
+            self.backButton.destroy()
+            self.masterFrame.destroy()
+            
+            del self.plot_3
+            del self.plot_4
+            del self.mSlider
+            del self.nSlider
+            del self.backButton
+            del self.masterFrame
+             
+        except:
+            pass
         
         self.masterFrame = frame(self.window,(1000,1000), BOTTOM)
         self.window.title("Polynomial " + self.expername + " scan " +  self.scanNumber +  " for Source " + self.source)
