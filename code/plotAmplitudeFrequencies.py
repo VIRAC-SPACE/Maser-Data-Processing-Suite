@@ -5,6 +5,7 @@ import numpy as np
 from Tkinter import *
 import Tkinter as tk
 import tkFont
+import tkMessageBox
 from time import strptime 
 import scipy.constants
 from astropy.modeling import fitting
@@ -164,6 +165,8 @@ class MaserPlot(Frame, threading.Thread):
         self.calibrationScale = float(newValues[4])
         self.FWHMconstant = float(newValues[5])
         self.polynomialOrder = int(newValues[6])
+        
+        tkMessageBox.showinfo("", "Data was changed")
     
     def calibration(self):
         self.y1array = self.y1array * calibration(self.calibrationScale, self.Systemtemperature1u)
