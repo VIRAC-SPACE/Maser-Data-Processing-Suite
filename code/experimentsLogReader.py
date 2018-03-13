@@ -20,6 +20,8 @@ def parseArguments():
 
     # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/logConfig.yaml")
+    
+    parser.add_argument("-s", "--single", help="Single source experiment or multi source default is False, if set to True log reader assume that experiments is single source experiment", type=bool, default=False)
 
     # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 2.5')
@@ -33,9 +35,10 @@ def usage():
     print ('Usage:   log file')
     
 class ExperimentLogReader():
-    def __init__(self, logs, prettyLogs):
+    def __init__(self, logs, prettyLogs, single):
         self.logs = logs
         self.prettyLogs = prettyLogs
+        self.single = single
         self.scan_names = list()
         self.sources = list()
         self.dates = ""
@@ -59,7 +62,7 @@ class ExperimentLogReader():
         self.scanList = list()
         self.scanLines = dict()
         self.Location = ""
-        
+    
         try:
             self.logfile = open(self.logs, "r")
             self.datafile = open(self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat", "w")
@@ -77,7 +80,6 @@ class ExperimentLogReader():
             previousScan = 0
             
             for line in self.logfile.readlines():
-                #range(0, file_size(
             
                 if "location" in line:
                     self.Location = line.split(";")[1].split(",")[1].strip()
@@ -203,7 +205,7 @@ class ExperimentLogReader():
             self.datafile.write("DEC;" + " ".join(self.DECs[scan]) + ";")
             self.datafile.write("\n")
     
-            self.datafile.write("Epoch;" + self.Epochs[scan] + ";")
+            self.datafile.write("Epoch;" + str(self.Epochs[scan]) + ";")
             self.datafile.write("\n")
             
             self.datafile.write("Systemtemperature1;1u;" + str(self.Systemtemperatures[scan][0]) + ";")
@@ -297,6 +299,7 @@ def main():
     
     logFileName = str(args.__dict__["logFile"])
     configFilePath = str(args.__dict__["config"])
+    singleSourceExperiment = bool(args.__dict__["single"])
     
     #Creating config parametrs
     config = dict()
@@ -307,7 +310,7 @@ def main():
     prettyLogsPath = config["prettyLogsPath"]
     
     #try: 
-    experimentLogReader = ExperimentLogReader(logPath + logFileName, prettyLogsPath)
+    experimentLogReader = ExperimentLogReader(logPath + logFileName, prettyLogsPath, singleSourceExperiment)
     experimentLogReader.writeOutput()
     sys.exit(0)
         

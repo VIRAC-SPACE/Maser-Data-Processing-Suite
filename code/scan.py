@@ -9,7 +9,7 @@ class Scan():
         #Parametrs
         self.source = "None"
         self.sourceName = "None"
-        self.Epochs = 0
+        self.Epoch = 0
         self.timeStart = "None"
         self.timeStop = "None"
         self.freqBBC1 = 0
@@ -118,7 +118,6 @@ class Scan():
                     
             elif "/bbc01=" in line:
                 self.freqBBC1 =  line.split("=")[1].split(",")[0]
-                
                 try:
                     float(self.freqBBC1)
                 except:
@@ -141,8 +140,7 @@ class Scan():
                         self.freqBBC1 = 0
                 
             elif "/bbc02=" in line:     
-                self.freqBBC2 =  line.split("=")[1].split(",")[0]
-                
+                self.freqBBC2 =  line.split("=")[1].split(",")[0] 
                 try:
                     float(self.freqBBC2)
                 except:
