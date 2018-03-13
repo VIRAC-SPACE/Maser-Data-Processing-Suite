@@ -33,6 +33,9 @@ def createScanPairs(source, date):
     return scanPairs
 
 def PlotScanPairs(scanPairs, source, date):
+    y_u1_results = list()
+    y_u9_results = list()
+    datPairsCount = len(scanPairs)
     
     for pair in scanPairs:
         scanNUmber1 = "dataFiles/" + source + "/" + date + "/" + pair[0]
@@ -50,29 +53,81 @@ def PlotScanPairs(scanPairs, source, date):
         ydata_1_u9 = data_1[:, [2]]
         ydata_2_u9 = data_2[:, [2]]
         
-        plt.figure("polaration u1 after correlation")
+        plt.figure("polarization u1 after correlation")
         plt.plot(xdata_1_f, ydata_1_u1, label=pair[0])
         plt.plot(xdata_2_f, ydata_2_u1, label=pair[1])
         plt.legend(loc=2)
         plt.show()
         
-        plt.figure("polaration u9 after correlation")
+        plt.figure("polarization u9 after correlation")
         plt.plot(xdata_1_f, ydata_1_u9, label=pair[0])
         plt.plot(xdata_2_f, ydata_2_u9, label=pair[1])
         plt.legend(loc=2)
         plt.show()
         
+        data_y_u1 = ydata_1_u1 - ydata_2_u1
+        data_y_u9 = ydata_1_u9 - ydata_2_u9
         
-        plt.figure("polaration u1 first step")
-        plt.plot(xdata_1_f, ydata_1_u1 - ydata_2_u1, label=pair[0] + " - " + pair[1])
+        plt.figure("polarization u1 first step")
+        plt.plot(xdata_1_f, data_y_u1, label=pair[0] + " - " + pair[1])
         plt.legend(loc=2)
         plt.show()
         
-        plt.figure("polaration u9 first step")
-        plt.plot(xdata_1_f, ydata_1_u9 - ydata_2_u9, label=pair[0] + " - " + pair[1])
+        plt.figure("polarization u9 first step")
+        plt.plot(xdata_1_f, data_y_u9, label=pair[0] + " - " + pair[1])
         plt.legend(loc=2)
         plt.show()
-  
+        
+        maxFrequency = np.max(xdata_1_f)
+        frecquencyRange_1 = (maxFrequency/4.0 - 0.5, maxFrequency/4.0 + 0.5) #Negative range
+        frecquencyRange_2 = (maxFrequency*(3.0/4.0) - 0.5, maxFrequency*(3.0/4.0) + 0.5) #positive range
+        
+        #Creating index
+        index_1_1 = (np.abs(xdata_1_f-frecquencyRange_1[0])).argmin()
+        index_1_2 = (np.abs(xdata_1_f-frecquencyRange_1[1])).argmin()
+        index_2_1 = (np.abs(xdata_1_f-frecquencyRange_2[0])).argmin()
+        index_2_2 = (np.abs(xdata_1_f-frecquencyRange_2[1])).argmin()
+        
+        negativeRange_u1 = data_y_u1[index_1_1:index_1_2]
+        positiveveRange_u1 = data_y_u1[index_2_1:index_2_2]
+        
+        negativeRange_u9 = data_y_u9[index_1_1:index_1_2]
+        positiveveRange_u9 = data_y_u9[index_2_1:index_2_2]
+        
+        result_u1 = positiveveRange_u1 - negativeRange_u1
+        result_u9 = positiveveRange_u9 - negativeRange_u9
+        
+        y_u1_results.append(result_u1)
+        y_u9_results.append(result_u9) 
+        
+        plt.figure("polarization u1 second step")
+        plt.plot(result_u1)
+        plt.show()
+        
+        plt.figure("polarization u9 second step")
+        plt.plot(result_u9)
+        plt.show()
+    
+    y_u1_avg = np.zeros(y_u1_results[0].shape)
+    y_u2_avg = np.zeros(y_u9_results[0].shape)
+    
+    for result in y_u1_results:
+        y_u1_avg = y_u1_avg + result
+        
+    for result2 in y_u9_results:
+        y_u2_avg = y_u2_avg + result2
+        
+    y_u1_avg = y_u1_avg/datPairsCount
+    y_u2_avg = y_u2_avg/datPairsCount
+    
+    plt.figure("polarization u1 average for experiment")
+    plt.plot( y_u1_avg)
+    plt.show()
+        
+    plt.figure("polarization u9 average for experiment")
+    plt.plot(y_u2_avg)
+    plt.show()
+    
 def main(source, date):
     scanPairs = createScanPairs(source, date)
     PlotScanPairs(scanPairs, source, date)
