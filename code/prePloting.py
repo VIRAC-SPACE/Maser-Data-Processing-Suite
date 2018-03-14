@@ -4,8 +4,6 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-from plotAmplitudeFrequencies import main as maserPloting
-
 def usage():
     print ('Usage: source and date')
     
@@ -56,8 +54,8 @@ def PlotScanPairs(scanPairs, source, date):
         ydata_2_u9 = data_2[:, [2]]
         
         plt.figure("polarization u1 after correlation")
-        plt.plot(xdata_1_f, ydata_1_u1, label=pair[0])
-        plt.plot(xdata_2_f, ydata_2_u1, label=pair[1])
+        plt.plot(xdata_1_f, ydata_1_u1, label=pair[0] )
+        plt.plot(xdata_2_f, ydata_2_u1, label=pair[1]  )
         plt.legend(loc=2)
         plt.grid(True)
         plt.show()

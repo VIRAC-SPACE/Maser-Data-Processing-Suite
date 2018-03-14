@@ -51,7 +51,7 @@ if __name__=="__main__":
         else:
             scan_numbers = None
             try:
-                scan_numbers = ExperimentLogReader(logFileDir + logFileName, prettyLogDir).getScansForSource(source_name) # find all scans
+                scan_numbers = ExperimentLogReader(logFileDir + logFileName, prettyLogDir, False).getScansForSource(source_name) # find all scansg
             except:
                 print "Got Logreader Error"
                 

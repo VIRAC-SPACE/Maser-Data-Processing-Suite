@@ -1,6 +1,7 @@
 #! /usr/bin/python
 
-import os, sys
+import os
+import sys
 import numpy as np
 from Tkinter import *
 import Tkinter as tk
@@ -19,8 +20,6 @@ import threading
 
 from ploting import Plot
 from experimentsLogReader import ExperimentLogReader
-from sympy.printing.pretty.pretty_symbology import TOP
-from qtconsole.mainwindow import background
 
 calibrationScales = {"IRBENE":12, "IRBENE16":26}
 
