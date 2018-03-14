@@ -4,6 +4,8 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
+from plotAmplitudeFrequencies import main as maserPloting
+
 def usage():
     print ('Usage: source and date')
     
@@ -57,12 +59,14 @@ def PlotScanPairs(scanPairs, source, date):
         plt.plot(xdata_1_f, ydata_1_u1, label=pair[0])
         plt.plot(xdata_2_f, ydata_2_u1, label=pair[1])
         plt.legend(loc=2)
+        plt.grid(True)
         plt.show()
         
         plt.figure("polarization u9 after correlation")
         plt.plot(xdata_1_f, ydata_1_u9, label=pair[0])
         plt.plot(xdata_2_f, ydata_2_u9, label=pair[1])
         plt.legend(loc=2)
+        plt.grid(True)
         plt.show()
         
         data_y_u1 = ydata_1_u1 - ydata_2_u1
@@ -71,11 +75,13 @@ def PlotScanPairs(scanPairs, source, date):
         plt.figure("polarization u1 first step")
         plt.plot(xdata_1_f, data_y_u1, label=pair[0] + " - " + pair[1])
         plt.legend(loc=2)
+        plt.grid(True)
         plt.show()
         
         plt.figure("polarization u9 first step")
         plt.plot(xdata_1_f, data_y_u9, label=pair[0] + " - " + pair[1])
         plt.legend(loc=2)
+        plt.grid(True)
         plt.show()
         
         maxFrequency = np.max(xdata_1_f)
@@ -94,18 +100,21 @@ def PlotScanPairs(scanPairs, source, date):
         negativeRange_u9 = data_y_u9[index_1_1:index_1_2]
         positiveveRange_u9 = data_y_u9[index_2_1:index_2_2]
         
-        result_u1 = positiveveRange_u1 - negativeRange_u1
-        result_u9 = positiveveRange_u9 - negativeRange_u9
+        result_u1 = (positiveveRange_u1 - negativeRange_u1)/2
+        result_u9 = (positiveveRange_u9 - negativeRange_u9)/2
         
+        x = np.linspace(0,maxFrequency/2, len(result_u1), dtype="float64").reshape(len(result_u1), 1)
         y_u1_results.append(result_u1)
         y_u9_results.append(result_u9) 
         
         plt.figure("polarization u1 second step")
-        plt.plot(result_u1)
+        plt.plot(x, result_u1)
+        plt.grid(True)
         plt.show()
         
         plt.figure("polarization u9 second step")
-        plt.plot(result_u9)
+        plt.plot(x, result_u9)
+        plt.grid(True)
         plt.show()
     
     y_u1_avg = np.zeros(y_u1_results[0].shape)
@@ -117,20 +126,31 @@ def PlotScanPairs(scanPairs, source, date):
     for result2 in y_u9_results:
         y_u2_avg = y_u2_avg + result2
         
-    y_u1_avg = y_u1_avg/datPairsCount
-    y_u2_avg = y_u2_avg/datPairsCount
-    
+    y_u1_avg = np.array(y_u1_avg/datPairsCount, dtype="float64")
+    y_u2_avg = np.array(y_u2_avg/datPairsCount, dtype="float64")  
+
     plt.figure("polarization u1 average for experiment")
-    plt.plot( y_u1_avg)
+    plt.plot(x, y_u1_avg)
+    plt.grid(True)
     plt.show()
         
     plt.figure("polarization u9 average for experiment")
-    plt.plot(y_u2_avg)
+    plt.plot(x, y_u2_avg)
+    plt.grid(True)
     plt.show()
     
+    dummyData = np.zeros(len(result_u1), dtype="float64").reshape(len(result_u1), 1)
+    totalResults = np.concatenate((x, y_u1_avg, y_u2_avg, dummyData, dummyData), axis=1)
+    np.savetxt("dataFiles/" + source + date.replace(".", "_")  +"_n1.dat", totalResults)
+    
+    return totalResults
+
 def main(source, date):
     scanPairs = createScanPairs(source, date)
-    PlotScanPairs(scanPairs, source, date)
+    cordata  = PlotScanPairs(scanPairs, source, date)
+    logFile = source + ".log"
+    #maserPloting(cordata, logFile)
+    
     sys.exit(0)
     
 if __name__=="__main__":

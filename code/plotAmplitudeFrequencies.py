@@ -694,8 +694,9 @@ def getData(dataFileName):
         return (xdata, y1data, y2data, dataPoints)
 
 def getLogs(logfileName, dataFileName): 
-    logs  = ExperimentLogReader("logs/" + logfileName, "prettyLogs/").getLogs()
-    scanNumber = dataFileName.split(".")[0].split("_")[1][1:len(dataFileName)]
+    logs  = ExperimentLogReader("logs/" + logfileName, "prettyLogs/", False).getLogs()
+    print "logs/" + logfileName
+    scanNumber = dataFileName.split(".")[0].split("_")[-1][1:len(dataFileName)]
     scan = logs[scanNumber]
     
     Systemtemperature1u = float(scan["Systemtemperature"][0])
@@ -739,8 +740,9 @@ if __name__=="__main__":
     if len(sys.argv) < 3:
         usage()
         sys.exit(1)
-        
+    
     logFileName = sys.argv[1]
     corData = sys.argv[2]
-    
+    print corData
+    print corData.split(".")[0].split("_")[-1][1:len(corData)]
     main(logFileName, corData)
