@@ -88,7 +88,6 @@ if __name__=="__main__":
         y_avg.append(velo)
         dummy = dummy + 1
     
-    #dataStrings = sorted(dateList)
     x = [date2num(date) for date in  dateList]
     
     Symbols =  ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
