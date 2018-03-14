@@ -1,10 +1,8 @@
 import sys
 import matplotlib.pyplot  as plt
-from matplotlib.font_manager import FontProperties
 from matplotlib.dates import date2num
 from datetime import datetime
 import json
-from urllib import getproxies
 
 if __name__=="__main__":
     
@@ -58,11 +56,12 @@ if __name__=="__main__":
             date = " ".join(dates)
             key_u1 = date + " " + time
             dateNumber = datetime.strptime(key_u1, '%d %m %Y %H:%M:%S')
+            dateList.append(dateNumber)
     
     y_u1 = list()
     velocityCount = len(velocitys_U1[0])
     dummy = 0
-    while dummy != velocityCount-1:
+    while dummy != velocityCount -1:
         velo = list()
         for vel in velocitys_U1:
             velo.append(vel[dummy])
@@ -72,7 +71,7 @@ if __name__=="__main__":
     y_u9 = list()
     velocityCount = len(velocitys_U9[0])
     dummy = 0
-    while dummy != velocityCount-1:
+    while dummy != velocityCount -1:
         velo = list()
         for vel in velocitys_U9:
             velo.append(vel[dummy])
@@ -82,39 +81,27 @@ if __name__=="__main__":
     y_avg = list()
     velocityCount = len(velocitys_AVG[0])    
     dummy = 0
-    while dummy != velocityCount-1:
+    while dummy != velocityCount -1:
         velo = list()
         for vel in velocitys_AVG:
             velo.append(vel[dummy])
         y_avg.append(velo)
         dummy = dummy + 1
-
-    '''
-    xies = list() 
-    yies = list()      
-    for v in amplitudes_for_u1_monitoring_list:
-        dataStrings = sorted(v)
-        values = list() 
-        for data in dataStrings:
-            values.append(amplitude_for_u1_monitoring[data])
-        x = [date2num(date) for date in  dataStrings]
-        y = values
-        xies.append(x)
-        yies.append(y)
-    '''
+    
+    #dataStrings = sorted(dateList)
+    x = [date2num(date) for date in  dateList]
     
     Symbols =  ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
     Color = ["r", "g", "b"]
     fig = plt.figure()
     graph = fig.add_subplot(111)
     for i in range(0, len(y_u1)):
-        graph.plot(y_u1[i], Symbols[i]+"r", label="polarizationU1 " + "Velocity " + str(i))
-        graph.plot(y_u9[i], Symbols[i]+"g", label="polarizationU9 " + "Velocity " + str(i))
-        graph.plot(y_avg[i], Symbols[i]+"b", label="polarizationUAVG " + "Velocity " + str(i))
-    #graph.set_xticks(x)
-    #graph.set_xticklabels([date.strftime("%d %m %Y %H:%M:%S") for date in  dataStrings])
+        graph.plot(x, y_u1[i], Symbols[i]+"r", label="polarizationU1 " + "Velocity " + str(i))
+        graph.plot(x, y_u9[i], Symbols[i]+"g", label="polarizationU9 " + "Velocity " + str(i))
+        graph.plot(x, y_avg[i], Symbols[i]+"b", label="polarizationUAVG " + "Velocity " + str(i))
+    graph.set_xticks(x)
+    graph.set_xticklabels([date.strftime("%d %m %Y %H:%M:%S") for date in  dateList])
     plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", borderaxespad=0)
     plt.show()
-    
     
     
