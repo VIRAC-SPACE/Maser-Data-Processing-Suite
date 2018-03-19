@@ -137,6 +137,7 @@ class MaserPlot(Frame, threading.Thread):
         self.f0 = 6668519200 
         self.calibrationScale = calibrationScales[self.location]
         self.FreqStart = self.scan["FreqStart"]
+        print self.FreqStart
         
         #start window frame
         self.plotFrame = frame(self.window,(1000,1000), LEFT)
