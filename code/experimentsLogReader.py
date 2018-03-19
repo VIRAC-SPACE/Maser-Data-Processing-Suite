@@ -126,7 +126,7 @@ class ExperimentLogReader():
                 source, sourceName, epoch, ra, dec, timeStart, timeStop, SystemtemperaturesForScan, freqBBC1, freqBBC2, loa, loc, clock = scanData.returnParametrs()
                 
                 if self.single:
-                    source =  self.singleSourceName[0] + "," + self.singleSourceName[1] + "," + self.singleSourceName[2]
+                    source =  self.singleSourceName[0] + "," + self.singleSourceName[1] + "," + self.singleSourceName[2] 
                     ra = list()
                     dec = list()
                     Ra = self.singleSourceName[1]
@@ -267,7 +267,6 @@ class ExperimentLogReader():
         logs["location"] = self.Location
         
         for i in range(0, len(self.scan_names)):
-
             logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates, "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sources[i], "source":self.sourceName[i], "stopTime": self.timeStops[i], "clockOffset": self.clocks[i]}
 
         return logs

@@ -17,15 +17,37 @@ import peakutils
 import json
 import thread
 import threading
+import argparse
 
 from ploting import Plot
 from experimentsLogReader import ExperimentLogReader
 
 calibrationScales = {"IRBENE":12, "IRBENE16":26}
 
+
+def parseArguments():
+    # Create argument parser
+    parser = argparse.ArgumentParser(description='''Plots maser plota. ''',
+    epilog="""Maser Ploter.""")
+
+    # Positional mandatory arguments
+    parser.add_argument("logFile", help="Experiment log file name", type=str)
+    parser.add_argument("datafile", help="Experiment correlation file name", type=str)
+
+    # Optional arguments
+    parser.add_argument("-s", "--single", help="Set RA, DEC, Epoch, Source name", nargs="*", type=str, default=[])
+
+    # Print version
+    parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 2.0')
+
+    # Parse arguments
+    args = parser.parse_args()
+
+    return args
+
 def usage():
     print ('Usage: ' + sys.argv[0] + ' log file' + 'data file')
-
+    
 def file_len(fname):
     with open(fname) as f:
         for i, l in enumerate(f):
@@ -692,8 +714,8 @@ def getData(dataFileName):
     
         return (xdata, y1data, y2data, dataPoints)
 
-def getLogs(logfileName, dataFileName): 
-    logs  = ExperimentLogReader("logs/" + logfileName, "prettyLogs/", False).getLogs()
+def getLogs(logfileName, dataFileName, singleSourceExperiment): 
+    logs  = ExperimentLogReader("logs/" + logfileName, "prettyLogs/", singleSourceExperiment).getLogs()
     print "logs/" + logfileName
     scanNumber = dataFileName.split(".")[0].split("_")[-1][1:len(dataFileName)]
     scan = logs[scanNumber]
@@ -706,13 +728,20 @@ def getLogs(logfileName, dataFileName):
     
     return (Systemtemperature1u, Systemtemperature9u, location, source, scan, scanNumber)
 
-def main(logFileName, corData):
+def main():
+    
+    # Parse the arguments
+    args = parseArguments()
+    
+    logFileName = str(args.__dict__["logFile"])
+    dataFileName = str(args.__dict__["datafile"])
+    singleSourceExperiment = list(args.__dict__["single"])
     
     #get Data and Logs
     try:
-        Systemtemperature1u, Systemtemperature9u, location, source, scan, scanNumber = getLogs(logFileName, corData)
+        Systemtemperature1u, Systemtemperature9u, location, source, scan, scanNumber = getLogs(logFileName, dataFileName, singleSourceExperiment)
         expername = logFileName.split(".")[0][:-2]
-        xdata, y1data, y2data, dataPoints = getData(corData)
+        xdata, y1data, y2data, dataPoints = getData(dataFileName)
     
     except(TypeError):
         print("TypeError error:")
@@ -739,9 +768,5 @@ if __name__=="__main__":
     if len(sys.argv) < 3:
         usage()
         sys.exit(1)
-    
-    logFileName = sys.argv[1]
-    corData = sys.argv[2]
-    print corData
-    print corData.split(".")[0].split("_")[-1][1:len(corData)]
-    main(logFileName, corData)
+
+    main()
