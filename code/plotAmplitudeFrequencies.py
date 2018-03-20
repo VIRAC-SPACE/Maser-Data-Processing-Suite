@@ -1,5 +1,4 @@
 #! /usr/bin/python
-
 import os
 import sys
 import numpy as np
@@ -24,7 +23,6 @@ from experimentsLogReader import ExperimentLogReader
 
 calibrationScales = {"IRBENE":12, "IRBENE16":26}
 
-
 def parseArguments():
     # Create argument parser
     parser = argparse.ArgumentParser(description='''Plots maser plota. ''',
@@ -44,9 +42,6 @@ def parseArguments():
     args = parser.parse_args()
 
     return args
-
-def usage():
-    print ('Usage: ' + sys.argv[0] + ' log file' + 'data file')
     
 def file_len(fname):
     with open(fname) as f:
@@ -730,7 +725,6 @@ def getLogs(logfileName, dataFileName, singleSourceExperiment):
     return (Systemtemperature1u, Systemtemperature9u, location, source, scan, scanNumber)
 
 def main():
-    
     # Parse the arguments
     args = parseArguments()
     
@@ -766,8 +760,4 @@ def main():
         sys.exit(0)
 
 if __name__=="__main__":
-    if len(sys.argv) < 3:
-        usage()
-        sys.exit(1)
-
     main()

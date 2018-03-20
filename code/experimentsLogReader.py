@@ -1,5 +1,4 @@
 #! /usr/bin/python
-
 import os
 import sys
 import time
@@ -20,7 +19,6 @@ def parseArguments():
 
     # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/logConfig.yaml")
-    
     parser.add_argument("-s", "--single", help="Set RA, DEC, Epoch, Source name", nargs="*", type=str, default=[])
 
     # Print version
@@ -306,11 +304,7 @@ class ExperimentLogReader():
         del self.scanList
         del self.scanLines
         
-def main():
-    if len(sys.argv) < 2:
-        usage()
-        sys.exit(1)
-        
+def main():     
     if platform.system() == "Linux":
         os.environ['TZ'] = 'UTC'
         time.tzset()
@@ -340,6 +334,5 @@ def main():
     
 if __name__=="__main__":
     main()
-
     
     

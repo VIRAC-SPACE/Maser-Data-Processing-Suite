@@ -3,6 +3,27 @@ import sys
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import argparse
+
+def parseArguments():
+    # Create argument parser
+    parser = argparse.ArgumentParser(description='''Creates input file for plotting tool. ''',
+    epilog="""PRE PLOTTER.""")
+    
+    # Positional mandatory arguments
+    parser.add_argument("source", help="Experiment source", type=str)
+    parser.add_argument("date", help="Experiment date", type=str)
+
+    # Optional arguments
+    parser.add_argument("-i", "--interval", help="Set interval", type=float, default=0.0)
+
+    # Print version
+    parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
+
+    # Parse arguments
+    args = parser.parse_args()
+
+    return args
 
 def usage():
     print ('Usage: source and date')
@@ -32,7 +53,19 @@ def createScanPairs(source, date):
     
     return scanPairs
 
-def PlotScanPairs(scanPairs, source, date):
+def is_outlier(points, thresh=4.5):
+    if len(points.shape) == 1:
+        points = points[:,None]
+    median = np.median(points, axis=0)
+    diff = np.sum((points - median)**2, axis=-1)
+    diff = np.sqrt(diff)
+    med_abs_deviation = np.median(diff)
+
+    modified_z_score = 0.6745 * diff / med_abs_deviation
+
+    return modified_z_score < thresh
+
+def PlotScanPairs(scanPairs, source, date, interval):
     y_u1_results = list()
     y_u9_results = list()
     datPairsCount = len(scanPairs)
@@ -45,6 +78,12 @@ def PlotScanPairs(scanPairs, source, date):
         data_2 =  np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),5))
         data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
         data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
+        
+        outliersMask_1 = is_outlier(data_1[:, [0]])
+        outliersMask_2 = is_outlier(data_2[:, [0]])
+        
+        data_1 = data_1[outliersMask_1]
+        data_2 = data_2[outliersMask_2]
         
         xdata_1_f = data_1[:, [0]]
         xdata_2_f = data_2[:, [0]]
@@ -83,8 +122,8 @@ def PlotScanPairs(scanPairs, source, date):
         plt.show()
         
         maxFrequency = np.max(xdata_1_f)
-        frecquencyRange_1 = (maxFrequency/4.0 - 0.5, maxFrequency/4.0 + 0.5) #Negative range
-        frecquencyRange_2 = (maxFrequency*(3.0/4.0) - 0.5, maxFrequency*(3.0/4.0) + 0.5) #positive range
+        frecquencyRange_1 = (maxFrequency/4.0 - interval, maxFrequency/4.0 + interval) #Negative range
+        frecquencyRange_2 = (maxFrequency*(3.0/4.0) - interval, maxFrequency*(3.0/4.0) + interval) #positive range
         
         #Creating index
         index_1_1 = (np.abs(xdata_1_f-frecquencyRange_1[0])).argmin()
@@ -149,19 +188,17 @@ def PlotScanPairs(scanPairs, source, date):
     
     return totalResults
 
-def main(source, date):
-    scanPairs = createScanPairs(source, date)
-    cordata  = PlotScanPairs(scanPairs, source, date)
-    logFile = source + ".log"
-    #maserPloting(cordata, logFile)
+def main():
+    args = parseArguments()
     
+    source = str(args.__dict__["source"])
+    date = str(args.__dict__["date"])
+    interval = list(args.__dict__["interval"])
+    
+    scanPairs = createScanPairs(source, date)
+    PlotScanPairs(scanPairs, source, date, interval)
     sys.exit(0)
     
 if __name__=="__main__":
-    if len(sys.argv) < 3:
-        usage()
-        sys.exit(1)
+    main()
     
-    source = sys.argv[1]
-    date = sys.argv[2]    
-    main(source, date)
