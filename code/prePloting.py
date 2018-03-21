@@ -34,7 +34,24 @@ def file_len(fname):
         for i, l in enumerate(f):
             pass
     return i + 1
+
+def indexies(array, value):
+    indexs = list()
+    for i in range(0, len(array)-1):
+        if array[i] == value:
+            indexs.append(i)
+    return indexs
+
+def meanOfcloseValues(array, index, interval):
+    localValus = [0] * (interval * 2 -1)
     
+    j = 0
+    for i in range(index - interval, index -1):
+        localValus[j] = array[i]
+        j = j + 1
+    mean = np.mean(localValus)         
+    return mean
+       
 def createScanPairs(source, date):
     dataFileDir = "dataFiles/" + source + "/" + date
     
@@ -82,11 +99,9 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold):
         
         outliersMask_1 = is_outlier(data_1[:, [0]], threshold)
         outliersMask_2 = is_outlier(data_2[:, [0]], threshold)
-        print "pirms", len(data_1)
         data_1 = data_1[outliersMask_1]
         data_2 = data_2[outliersMask_2]
-        print "Pec", len(data_1)
-             
+        
         xdata_1_f = data_1[:, [0]]
         xdata_2_f = data_2[:, [0]]
         ydata_1_u1 = data_1[:, [1]]
@@ -134,7 +149,8 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold):
         index_2_2 = (np.abs(xdata_1_f-frecquencyRange_2[1])).argmin()
         
         #check indexies
-        if index_2_2 - index_2_1 +1 != index_1_2:
+        if index_2_2 - index_2_1!= index_1_2 - index_1_1:
+            print "befor correction", index_2_2 - index_2_1 + 1,  index_1_2 - index_1_1 + 1, [index_1_1, index_1_2], [index_2_1, index_2_2]
             if index_2_2 - index_2_1 + 1 > index_1_2:
                 index = np.abs(index_2_2 - index_2_1 + 1 - index_1_2) 
                 index_1_1 = (np.abs(xdata_1_f-frecquencyRange_1[0])).argmin()
@@ -148,7 +164,12 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold):
                 index_1_2 = (np.abs(xdata_1_f-frecquencyRange_1[1])).argmin() +1
                 index_2_1 = (np.abs(xdata_1_f-frecquencyRange_2[0])).argmin() -index
                 index_2_2 = (np.abs(xdata_1_f-frecquencyRange_2[1])).argmin()
-           
+                
+            print "after correction", index_2_2 - index_2_1,  index_1_2 - index_1_1, [index_1_1, index_1_2], [index_2_1, index_2_2]
+            
+        else:
+            print "indexies correct", index_2_2 - index_2_1,  index_1_2 - index_1_1, [index_1_1, index_1_2], [index_2_1, index_2_2]
+          
         negativeRange_u1 = data_y_u1[index_1_1:index_1_2]
         positiveveRange_u1 = data_y_u1[index_2_1:index_2_2]
         
