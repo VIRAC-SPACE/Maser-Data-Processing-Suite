@@ -97,10 +97,12 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold):
         data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
         data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
         
+        '''
         outliersMask_1 = is_outlier(data_1[:, [0]], threshold)
         outliersMask_2 = is_outlier(data_2[:, [0]], threshold)
         data_1 = data_1[outliersMask_1]
         data_2 = data_2[outliersMask_2]
+        '''
         
         xdata_1_f = data_1[:, [0]]
         xdata_2_f = data_2[:, [0]]
@@ -142,11 +144,20 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold):
         frecquencyRange_1 = (maxFrequency/4.0 - interval, maxFrequency/4.0  + interval) #Negative range
         frecquencyRange_2 = (maxFrequency*(3.0/4.0) - interval, maxFrequency*(3.0/4.0) + interval) #positive range
         
+        frecquencyRange_1_test = (int(len(xdata_1_f)/4.0 - interval), int(len(xdata_1_f)/4.0  + interval))
+        frecquencyRange_2_test = (int(len(xdata_1_f)*(3.0/4.0)- interval) , int(len(xdata_1_f)*(3.0/4.0)  + interval))
+        print "Test",  frecquencyRange_1_test, frecquencyRange_2_test
+        
         #Creating index
         index_1_1 = (np.abs(xdata_1_f-frecquencyRange_1[0])).argmin()
         index_1_2 = (np.abs(xdata_1_f-frecquencyRange_1[1])).argmin() 
         index_2_1 = (np.abs(xdata_1_f-frecquencyRange_2[0])).argmin()
         index_2_2 = (np.abs(xdata_1_f-frecquencyRange_2[1])).argmin()
+        
+        index_1_1 = 0 #frecquencyRange_1_test[0]
+        index_1_2 = len(xdata_1_f)/2 #frecquencyRange_1_test[1]
+        index_2_1 = len(xdata_1_f)/2 +1 #frecquencyRange_2_test[0]
+        index_2_2 = len(xdata_1_f)#frecquencyRange_2_test[1]
         
         #check indexies
         if index_2_2 - index_2_1!= index_1_2 - index_1_1:
@@ -177,6 +188,7 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold):
         positiveveRange_u9 = data_y_u9[index_2_1:index_2_2]
                 
         result_u1 = (positiveveRange_u1 - negativeRange_u1)/2
+        print "total point count ", len( result_u1 )
         result_u9 = (positiveveRange_u9 - negativeRange_u9)/2
         
         x = np.linspace(0,maxFrequency/2, len(result_u1), dtype="float64").reshape(len(result_u1), 1)
