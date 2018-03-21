@@ -96,13 +96,20 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold):
         data_2 =  np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),5))
         data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
         data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
-        
-        '''
+       
         outliersMask_1 = is_outlier(data_1[:, [0]], threshold)
         outliersMask_2 = is_outlier(data_2[:, [0]], threshold)
-        data_1 = data_1[outliersMask_1]
-        data_2 = data_2[outliersMask_2]
-        '''
+        
+        for remove in range (0, len(indexies(outliersMask_1, False))):
+            data_1[:, [1]][indexies(outliersMask_1, False)[remove]][0] = 0
+            print  data_1[:, [1]][indexies(outliersMask_1, False)[remove]][0]
+            
+        for remove in range (0, len(indexies(outliersMask_2, False))):
+            data_2[:, [1]][indexies(outliersMask_1, False)[remove]] = 0
+        
+        
+        #data_1 = data_1[outliersMask_1]
+        #data_2 = data_2[outliersMask_2]
         
         xdata_1_f = data_1[:, [0]]
         xdata_2_f = data_2[:, [0]]
