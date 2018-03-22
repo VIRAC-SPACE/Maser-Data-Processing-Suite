@@ -19,7 +19,7 @@ def parseArguments():
 
     # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/logConfig.yaml")
-    parser.add_argument("-s", "--single", help="Set RA, DEC, Epoch, Source name", nargs="*", type=str, default=[])
+    parser.add_argument("-s", "--source", help="Set RA, DEC, Epoch, Source name", nargs="*", type=str, default=[])
 
     # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 3.0')
@@ -318,7 +318,7 @@ def main():
     
     logFileName = str(args.__dict__["logFile"])
     configFilePath = str(args.__dict__["config"])
-    singleSourceExperiment = list(args.__dict__["single"])
+    singleSourceExperiment = list(args.__dict__["source"])
     
     #Creating config parametrs
     config = dict()
