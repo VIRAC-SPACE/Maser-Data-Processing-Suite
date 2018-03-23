@@ -3,6 +3,28 @@ import sys
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import argparse
+
+def parseArguments():
+    # Create argument parser
+    parser = argparse.ArgumentParser(description='''Creates input file for plotting tool. ''',
+    epilog="""PRE PLOTTER.""")
+    
+    # Positional mandatory arguments
+    parser.add_argument("source", help="Experiment source", type=str)
+    parser.add_argument("date", help="Experiment date", type=str)
+
+    # Optional arguments
+    parser.add_argument("-i", "--interval", help="Set interval", type=float, default=0.9)
+    parser.add_argument("-t", "--threshold", help="Set threshold for outlier filter", type=float, default=1.0)
+
+    # Print version
+    parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
+
+    # Parse arguments
+    args = parser.parse_args()
+
+    return args
 
 def usage():
     print ('Usage: source and date')
@@ -12,7 +34,24 @@ def file_len(fname):
         for i, l in enumerate(f):
             pass
     return i + 1
+
+def indexies(array, value):
+    indexs = list()
+    for i in range(0, len(array)-1):
+        if array[i] == value:
+            indexs.append(i)
+    return indexs
+
+def meanOfcloseValues(array, index, interval):
+    localValus = [0] * (interval * 2 -1)
     
+    j = 0
+    for i in range(index - interval, index -1):
+        localValus[j] = array[i]
+        j = j + 1
+    mean = np.mean(localValus)         
+    return mean
+       
 def createScanPairs(source, date):
     dataFileDir = "dataFiles/" + source + "/" + date
     
@@ -32,7 +71,19 @@ def createScanPairs(source, date):
     
     return scanPairs
 
-def PlotScanPairs(scanPairs, source, date):
+def is_outlier(points, threshold):
+    if len(points.shape) == 1:
+        points = points[:,None]
+    median = np.median(points, axis=0)
+    diff = np.sum((points - median)**2, axis=-1)
+    diff = np.sqrt(diff)
+    med_abs_deviation = np.median(diff)
+
+    modified_z_score = 0.6745 * diff / med_abs_deviation
+
+    return modified_z_score < threshold
+
+def PlotScanPairs(scanPairs, source, date, interval, threshold):
     y_u1_results = list()
     y_u9_results = list()
     datPairsCount = len(scanPairs)
@@ -45,6 +96,20 @@ def PlotScanPairs(scanPairs, source, date):
         data_2 =  np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),5))
         data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
         data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
+       
+        outliersMask_1 = is_outlier(data_1[:, [0]], threshold)
+        outliersMask_2 = is_outlier(data_2[:, [0]], threshold)
+        
+        for remove in range (0, len(indexies(outliersMask_1, False))):
+            data_1[:, [1]][indexies(outliersMask_1, False)[remove]][0] = 0
+            print  data_1[:, [1]][indexies(outliersMask_1, False)[remove]][0]
+            
+        for remove in range (0, len(indexies(outliersMask_2, False))):
+            data_2[:, [1]][indexies(outliersMask_1, False)[remove]] = 0
+        
+        
+        #data_1 = data_1[outliersMask_1]
+        #data_2 = data_2[outliersMask_2]
         
         xdata_1_f = data_1[:, [0]]
         xdata_2_f = data_2[:, [0]]
@@ -83,22 +148,58 @@ def PlotScanPairs(scanPairs, source, date):
         plt.show()
         
         maxFrequency = np.max(xdata_1_f)
-        frecquencyRange_1 = (maxFrequency/4.0 - 0.5, maxFrequency/4.0 + 0.5) #Negative range
-        frecquencyRange_2 = (maxFrequency*(3.0/4.0) - 0.5, maxFrequency*(3.0/4.0) + 0.5) #positive range
+        frecquencyRange_1 = (maxFrequency/4.0 - interval, maxFrequency/4.0  + interval) #Negative range
+        frecquencyRange_2 = (maxFrequency*(3.0/4.0) - interval, maxFrequency*(3.0/4.0) + interval) #positive range
+        
+        frecquencyRange_1_test = (int(len(xdata_1_f)/4.0 - interval), int(len(xdata_1_f)/4.0  + interval))
+        frecquencyRange_2_test = (int(len(xdata_1_f)*(3.0/4.0)- interval) , int(len(xdata_1_f)*(3.0/4.0)  + interval))
+        print "Test",  frecquencyRange_1_test, frecquencyRange_2_test
         
         #Creating index
         index_1_1 = (np.abs(xdata_1_f-frecquencyRange_1[0])).argmin()
         index_1_2 = (np.abs(xdata_1_f-frecquencyRange_1[1])).argmin() 
+
         index_2_1 = (np.abs(xdata_1_f-frecquencyRange_2[0])).argmin() 
         index_2_2 = (np.abs(xdata_1_f-frecquencyRange_2[1])).argmin() -1
 
+        index_2_1 = (np.abs(xdata_1_f-frecquencyRange_2[0])).argmin()
+        index_2_2 = (np.abs(xdata_1_f-frecquencyRange_2[1])).argmin()
+        
+        index_1_1 = 0 #frecquencyRange_1_test[0]
+        index_1_2 = len(xdata_1_f)/2 #frecquencyRange_1_test[1]
+        index_2_1 = len(xdata_1_f)/2 +1 #frecquencyRange_2_test[0]
+        index_2_2 = len(xdata_1_f)#frecquencyRange_2_test[1]
+        
+        #check indexies
+        if index_2_2 - index_2_1!= index_1_2 - index_1_1:
+            print "befor correction", index_2_2 - index_2_1 + 1,  index_1_2 - index_1_1 + 1, [index_1_1, index_1_2], [index_2_1, index_2_2]
+            if index_2_2 - index_2_1 + 1 > index_1_2:
+                index = np.abs(index_2_2 - index_2_1 + 1 - index_1_2) 
+                index_1_1 = (np.abs(xdata_1_f-frecquencyRange_1[0])).argmin()
+                index_1_2 = (np.abs(xdata_1_f-frecquencyRange_1[1])).argmin() -1
+                index_2_1 = (np.abs(xdata_1_f-frecquencyRange_2[0])).argmin()  + index
+                index_2_2 = (np.abs(xdata_1_f-frecquencyRange_2[1])).argmin() 
+                
+            elif index_2_2 - index_2_1 + 1 < index_1_2:
+                index = np.abs(index_2_2 - index_2_1 + 1 - index_1_2)
+                index_1_1 = (np.abs(xdata_1_f-frecquencyRange_1[0])).argmin()
+                index_1_2 = (np.abs(xdata_1_f-frecquencyRange_1[1])).argmin() +1
+                index_2_1 = (np.abs(xdata_1_f-frecquencyRange_2[0])).argmin() -index
+                index_2_2 = (np.abs(xdata_1_f-frecquencyRange_2[1])).argmin()
+                
+            print "after correction", index_2_2 - index_2_1,  index_1_2 - index_1_1, [index_1_1, index_1_2], [index_2_1, index_2_2]
+            
+        else:
+            print "indexies correct", index_2_2 - index_2_1,  index_1_2 - index_1_1, [index_1_1, index_1_2], [index_2_1, index_2_2]
+          
         negativeRange_u1 = data_y_u1[index_1_1:index_1_2]
         positiveveRange_u1 = data_y_u1[index_2_1:index_2_2]
         
         negativeRange_u9 = data_y_u9[index_1_1:index_1_2]
         positiveveRange_u9 = data_y_u9[index_2_1:index_2_2]
-        
+                
         result_u1 = (positiveveRange_u1 - negativeRange_u1)/2
+        print "total point count ", len( result_u1 )
         result_u9 = (positiveveRange_u9 - negativeRange_u9)/2
         
         x = np.linspace(0,maxFrequency/2, len(result_u1), dtype="float64").reshape(len(result_u1), 1)
@@ -143,19 +244,17 @@ def PlotScanPairs(scanPairs, source, date):
     
     return totalResults
 
-def main(source, date):
-    scanPairs = createScanPairs(source, date)
-    cordata  = PlotScanPairs(scanPairs, source, date)
-    logFile = source + ".log"
-    #maserPloting(cordata, logFile)
+def main():
+    args = parseArguments()
     
+    source = str(args.__dict__["source"])
+    date = str(args.__dict__["date"])
+    interval = float(args.__dict__["interval"])
+    threshold = float(args.__dict__["threshold"])
+    
+    scanPairs = createScanPairs(source, date)
+    PlotScanPairs(scanPairs, source, date, interval, threshold)
     sys.exit(0)
     
 if __name__=="__main__":
-    if len(sys.argv) < 3:
-        usage()
-        sys.exit(1)
-    
-    source = sys.argv[1]
-    date = sys.argv[2]    
-    main(source, date)
+    main()

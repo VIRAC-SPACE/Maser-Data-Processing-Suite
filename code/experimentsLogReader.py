@@ -1,5 +1,4 @@
 #! /usr/bin/python
-
 import os
 import sys
 import time
@@ -20,11 +19,10 @@ def parseArguments():
 
     # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/logConfig.yaml")
-    
-    parser.add_argument("-s", "--single", help="Single source experiment or multi source default is False, if set to True log reader assume that experiments is single source experiment", type=bool, default=False)
+    parser.add_argument("-s", "--source", help="Set RA, DEC, Epoch, Source name", nargs="*", type=str, default=[])
 
     # Print version
-    parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 2.5')
+    parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 3.0')
 
     # Parse arguments
     args = parser.parse_args()
@@ -35,10 +33,10 @@ def usage():
     print ('Usage:   log file')
     
 class ExperimentLogReader():
-    def __init__(self, logs, prettyLogs, single):
+    def __init__(self, logs, prettyLogs, singleSourceName=None):
         self.logs = logs
         self.prettyLogs = prettyLogs
-        self.single = single
+        self.singleSourceName = singleSourceName
         self.scan_names = list()
         self.sources = list()
         self.dates = ""
@@ -62,6 +60,11 @@ class ExperimentLogReader():
         self.scanList = list()
         self.scanLines = dict()
         self.Location = ""
+        
+        if len(self.singleSourceName) != 0:
+            self.single = True
+        else:
+            self.single = False
     
         try:
             self.logfile = open(self.logs, "r")
@@ -120,6 +123,27 @@ class ExperimentLogReader():
                 scanData.getParametrs()
                 source, sourceName, epoch, ra, dec, timeStart, timeStop, SystemtemperaturesForScan, freqBBC1, freqBBC2, loa, loc, clock = scanData.returnParametrs()
                 
+                if self.single:
+                    source =  self.singleSourceName[0] + "," + self.singleSourceName[1] + "," + self.singleSourceName[2] 
+                    ra = list()
+                    dec = list()
+                    Ra = self.singleSourceName[1]
+                    Dec = self.singleSourceName[2]
+                    epoch =  self.singleSourceName[3]
+                    
+                    ra.append(Ra[0:2])
+                    ra.append(Ra[2:4])
+                    ra.append(Ra[4:len(Ra)])
+                    
+                    if Dec[0] == "-":
+                        dec.append(Dec[0:3])
+                        dec.append(Dec[3:5])
+                        dec.append(Dec[5:len(self.Dec)])
+                    else:    
+                        dec.append(Dec[0:2])
+                        dec.append(Dec[2:4])
+                        dec.append(Dec[4:len(Dec)])
+                    
                 self.sources.append(source)
                 self.sourceName.append(sourceName)
                 self.Epochs.append(epoch)
@@ -241,7 +265,6 @@ class ExperimentLogReader():
         logs["location"] = self.Location
         
         for i in range(0, len(self.scan_names)):
-
             logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates, "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sources[i], "source":self.sourceName[i], "stopTime": self.timeStops[i], "clockOffset": self.clocks[i]}
 
         return logs
@@ -280,13 +303,9 @@ class ExperimentLogReader():
         del self.clocks
         del self.scanList
         del self.scanLines
+    
         
-def main():
-    print sys.argv
-    if len(sys.argv) < 2:
-        usage()
-        sys.exit(1)
-        
+def main():     
     if platform.system() == "Linux":
         os.environ['TZ'] = 'UTC'
         time.tzset()
@@ -300,7 +319,7 @@ def main():
     
     logFileName = str(args.__dict__["logFile"])
     configFilePath = str(args.__dict__["config"])
-    singleSourceExperiment = bool(args.__dict__["single"])
+    singleSourceExperiment = list(args.__dict__["source"])
     
     #Creating config parametrs
     config = dict()
@@ -310,17 +329,11 @@ def main():
     logPath =  config["logPath"]
     prettyLogsPath = config["prettyLogsPath"]
     
-    #try: 
     experimentLogReader = ExperimentLogReader(logPath + logFileName, prettyLogsPath, singleSourceExperiment)
     experimentLogReader.writeOutput()
     sys.exit(0)
-        
-    #except:
-        #print "Got Logreader Error"
-        #sys.exit(1)
     
 if __name__=="__main__":
     main()
-
     
     
