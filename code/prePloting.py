@@ -88,10 +88,10 @@ def PlotScanPairs(scanPairs, source, date):
         
         #Creating index
         index_1_1 = (np.abs(xdata_1_f-frecquencyRange_1[0])).argmin()
-        index_1_2 = (np.abs(xdata_1_f-frecquencyRange_1[1])).argmin()
-        index_2_1 = (np.abs(xdata_1_f-frecquencyRange_2[0])).argmin()
-        index_2_2 = (np.abs(xdata_1_f-frecquencyRange_2[1])).argmin()
-        
+        index_1_2 = (np.abs(xdata_1_f-frecquencyRange_1[1])).argmin() 
+        index_2_1 = (np.abs(xdata_1_f-frecquencyRange_2[0])).argmin() 
+        index_2_2 = (np.abs(xdata_1_f-frecquencyRange_2[1])).argmin() -1
+
         negativeRange_u1 = data_y_u1[index_1_1:index_1_2]
         positiveveRange_u1 = data_y_u1[index_2_1:index_2_2]
         
@@ -110,11 +110,11 @@ def PlotScanPairs(scanPairs, source, date):
         plt.grid(True)
         plt.show()
         
-        plt.figure("polarization u9 second step")
+	plt.figure("polarization u9 second step")
         plt.plot(x, result_u9)
         plt.grid(True)
         plt.show()
-    
+            
     y_u1_avg = np.zeros(y_u1_results[0].shape)
     y_u2_avg = np.zeros(y_u9_results[0].shape)
     

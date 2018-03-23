@@ -282,6 +282,7 @@ class ExperimentLogReader():
         del self.scanLines
         
 def main():
+    print sys.argv
     if len(sys.argv) < 2:
         usage()
         sys.exit(1)
