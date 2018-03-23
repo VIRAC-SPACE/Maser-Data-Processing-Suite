@@ -7,8 +7,7 @@ import argparse
 
 def parseArguments():
     # Create argument parser
-    parser = argparse.ArgumentParser(description='''Creates input file for plotting tool. ''',
-    epilog="""PRE PLOTTER.""")
+    parser = argparse.ArgumentParser(description='''Creates input file for plotting tool. ''', epilog="""PRE PLOTTER.""")
     
     # Positional mandatory arguments
     parser.add_argument("source", help="Experiment source", type=str)
@@ -49,7 +48,8 @@ def meanOfcloseValues(array, index, interval):
     for i in range(index - interval, index -1):
         localValus[j] = array[i]
         j = j + 1
-    mean = np.mean(localValus)         
+    mean = np.mean(localValus)
+    print "mean ", np.mean(array)        
     return mean
        
 def createScanPairs(source, date):
@@ -100,23 +100,43 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold):
         outliersMask_1 = is_outlier(data_1[:, [0]], threshold)
         outliersMask_2 = is_outlier(data_2[:, [0]], threshold)
         
-        for remove in range (0, len(indexies(outliersMask_1, False))):
-            data_1[:, [1]][indexies(outliersMask_1, False)[remove]][0] = 0
-            print  data_1[:, [1]][indexies(outliersMask_1, False)[remove]][0]
-            
-        for remove in range (0, len(indexies(outliersMask_2, False))):
-            data_2[:, [1]][indexies(outliersMask_1, False)[remove]] = 0
+        bad_point_index_1 = indexies(outliersMask_1, False)
+        bad_point_index_2 = indexies(outliersMask_2, False)
+         
+        xdata_1_f = data_1[:, [0]].tolist()
+        xdata_2_f = data_2[:, [0]].tolist()
+        ydata_1_u1 = data_1[:, [1]].tolist()
+        ydata_2_u1 = data_2[:, [1]].tolist()
+        ydata_1_u9 = data_1[:, [2]].tolist()
+        ydata_2_u9 = data_2[:, [2]].tolist()
         
+        a = np.mean(ydata_1_u1)
+        b = np.mean(ydata_1_u9)
+        c = np.mean(ydata_2_u1)
+        d = np.mean(ydata_2_u9)
+        
+        for badPoint in bad_point_index_1:
+            ydata_1_u1[badPoint][0] = a
+            
+        for badPoint in bad_point_index_1:
+            ydata_1_u9[badPoint][0] = b
+            
+        for badPoint in bad_point_index_2:
+            ydata_2_u1[badPoint][0] = c
+        
+        for badPoint in bad_point_index_2:
+            ydata_2_u9[badPoint][0] = d 
+            
+            
+        xdata_1_f = np.array(xdata_1_f)
+        xdata_2_f = np.array(xdata_2_f)
+        ydata_1_u1 = np.array(ydata_1_u1)
+        ydata_2_u1 = np.array(ydata_2_u1)
+        ydata_1_u9 = np.array(ydata_1_u9)
+        ydata_2_u9 = np.array(ydata_2_u9)
         
         #data_1 = data_1[outliersMask_1]
         #data_2 = data_2[outliersMask_2]
-        
-        xdata_1_f = data_1[:, [0]]
-        xdata_2_f = data_2[:, [0]]
-        ydata_1_u1 = data_1[:, [1]]
-        ydata_2_u1 = data_2[:, [1]]
-        ydata_1_u9 = data_1[:, [2]]
-        ydata_2_u9 = data_2[:, [2]]
         
         plt.figure("polarization u1 after correlation")
         plt.plot(xdata_1_f, ydata_1_u1, label=pair[0] )
@@ -148,28 +168,18 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold):
         plt.show()
         
         maxFrequency = np.max(xdata_1_f)
+        if interval > maxFrequency/4.0:
+            raise Exception("Interval cannot be larger than 0.25 of frequency range ", "max interval " + str(maxFrequency/4.0))
         frecquencyRange_1 = (maxFrequency/4.0 - interval, maxFrequency/4.0  + interval) #Negative range
         frecquencyRange_2 = (maxFrequency*(3.0/4.0) - interval, maxFrequency*(3.0/4.0) + interval) #positive range
-        
-        frecquencyRange_1_test = (int(len(xdata_1_f)/4.0 - interval), int(len(xdata_1_f)/4.0  + interval))
-        frecquencyRange_2_test = (int(len(xdata_1_f)*(3.0/4.0)- interval) , int(len(xdata_1_f)*(3.0/4.0)  + interval))
-        print "Test",  frecquencyRange_1_test, frecquencyRange_2_test
         
         #Creating index
         index_1_1 = (np.abs(xdata_1_f-frecquencyRange_1[0])).argmin()
         index_1_2 = (np.abs(xdata_1_f-frecquencyRange_1[1])).argmin() 
 
         index_2_1 = (np.abs(xdata_1_f-frecquencyRange_2[0])).argmin() 
-        index_2_2 = (np.abs(xdata_1_f-frecquencyRange_2[1])).argmin() -1
-
-        index_2_1 = (np.abs(xdata_1_f-frecquencyRange_2[0])).argmin()
         index_2_2 = (np.abs(xdata_1_f-frecquencyRange_2[1])).argmin()
-        
-        index_1_1 = 0 #frecquencyRange_1_test[0]
-        index_1_2 = len(xdata_1_f)/2 #frecquencyRange_1_test[1]
-        index_2_1 = len(xdata_1_f)/2 +1 #frecquencyRange_2_test[0]
-        index_2_2 = len(xdata_1_f)#frecquencyRange_2_test[1]
-        
+
         #check indexies
         if index_2_2 - index_2_1!= index_1_2 - index_1_1:
             print "befor correction", index_2_2 - index_2_1 + 1,  index_1_2 - index_1_1 + 1, [index_1_1, index_1_2], [index_2_1, index_2_2]
@@ -211,7 +221,7 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold):
         plt.grid(True)
         plt.show()
         
-	plt.figure("polarization u9 second step")
+        plt.figure("polarization u9 second step")
         plt.plot(x, result_u9)
         plt.grid(True)
         plt.show()
@@ -251,6 +261,12 @@ def main():
     date = str(args.__dict__["date"])
     interval = float(args.__dict__["interval"])
     threshold = float(args.__dict__["threshold"])
+    
+    if interval <= 0.0:
+        raise Exception("Interval cannot be negative or zero")
+    
+    if threshold <= 0.0:
+        raise Exception("Threshold cannot be negative or zero")
     
     scanPairs = createScanPairs(source, date)
     PlotScanPairs(scanPairs, source, date, interval, threshold)
