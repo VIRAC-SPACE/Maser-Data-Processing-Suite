@@ -16,6 +16,7 @@ def parseArguments():
     # Optional arguments
     parser.add_argument("-i", "--interval", help="Set interval", type=float, default=0.9)
     parser.add_argument("-t", "--threshold", help="Set threshold for outlier filter", type=float, default=1.0)
+    parser.add_argument("-f", "--filter", help="Set filter default is True if filter is False bad data points is no removed", type=str, default="True")
 
     # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
@@ -43,20 +44,23 @@ def indexies(array, value):
    
 def createScanPairs(source, date):
     dataFileDir = "dataFiles/" + source + "/" + date
+    print dataFileDir
     
     dataFiles = list()
     for dataFile in os.listdir(dataFileDir):
         dataFiles.append(dataFile)
     
     dataFiles.sort()
-            
+
     scanPairs = list()
     i = 0
     j = 1
     for k in range(0, len(dataFiles) - 3):
-        scanPairs.append((dataFiles[i], dataFiles[j]))
-        i = i + 2
-        j = j + 2
+        if k >= len(dataFiles) /2:
+            scanPairs.append((dataFiles[i], dataFiles[j]))
+            
+            i = i + 2
+            j = j + 2
     
     return scanPairs
 
@@ -72,11 +76,17 @@ def is_outlier(points, threshold):
 
     return modified_z_score < threshold
 
-def PlotScanPairs(scanPairs, source, date, interval, threshold):
+def PlotScanPairs(scanPairs, source, date, interval, threshold, filter):
     y_u1_results = list()
     y_u9_results = list()
     datPairsCount = len(scanPairs)
     
+    filtering = True
+    if filter == "True":
+        filtering = True
+    else:
+        filtering = False
+
     for pair in scanPairs:
         scanNUmber1 = "dataFiles/" + source + "/" + date + "/" + pair[0]
         scanNUmber2 = "dataFiles/" + source + "/" + date + "/" + pair[1]
@@ -85,54 +95,62 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold):
         data_2 =  np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),5))
         data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
         data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
-       
-        outliersMask_1 = is_outlier(data_1[:, [0]], threshold)
-        outliersMask_2 = is_outlier(data_2[:, [0]], threshold)
         
-        bad_point_index_1 = indexies(outliersMask_1, False)
-        bad_point_index_2 = indexies(outliersMask_2, False)
-         
-        xdata_1_f = data_1[:, [0]].tolist()
-        xdata_2_f = data_2[:, [0]].tolist()
-        ydata_1_u1 = data_1[:, [1]].tolist()
-        ydata_2_u1 = data_2[:, [1]].tolist()
-        ydata_1_u9 = data_1[:, [2]].tolist()
-        ydata_2_u9 = data_2[:, [2]].tolist()
-        
-        mean_y1_u1 = np.mean(ydata_1_u1)
-        mean_y1_u9 = np.mean(ydata_1_u9)
-        mean_y2_u1 = np.mean(ydata_2_u1)
-        mean_y2_u9 = np.mean(ydata_2_u9)
-        
-        sd_y1_u1 = np.std(ydata_1_u1)
-        sd_y1_u9 = np.std(ydata_1_u9)
-        sd_y2_u1 = np.std(ydata_2_u1)
-        sd_y2_u9 = np.std(ydata_2_u9)
-        
-        print  bad_point_index_1[-1], len(ydata_1_u1), ydata_1_u1[bad_point_index_1[-1] + 1], ydata_1_u1[bad_point_index_1[0] - 1]
-        
-        for badPoint in bad_point_index_1:
-            ydata_1_u1[badPoint][0] = np.mean(ydata_1_u1[badPoint-1:badPoint+1]) 
+        if filtering:
+            outliersMask_1 = is_outlier(data_1[:, [0]], threshold)
+            outliersMask_2 = is_outlier(data_2[:, [0]], threshold)
             
-        for badPoint in bad_point_index_1:
-            ydata_1_u9[badPoint][0] = np.mean(ydata_1_u9[badPoint-1:badPoint+1])
+            bad_point_index_1 = indexies(outliersMask_1, False)
+            bad_point_index_2 = indexies(outliersMask_2, False)
+             
+            xdata_1_f = data_1[:, [0]].tolist()
+            xdata_2_f = data_2[:, [0]].tolist()
+            ydata_1_u1 = data_1[:, [1]].tolist()
+            ydata_2_u1 = data_2[:, [1]].tolist()
+            ydata_1_u9 = data_1[:, [2]].tolist()
+            ydata_2_u9 = data_2[:, [2]].tolist()
             
-        for badPoint in bad_point_index_2:
-            ydata_2_u1[badPoint][0] = np.mean(ydata_2_u1[badPoint-1:badPoint+1])
-        
-        for badPoint in bad_point_index_2:
-            ydata_2_u9[badPoint][0] = np.mean(ydata_2_u9[badPoint-1:badPoint+1]) 
-              
-        xdata_1_f = np.array(xdata_1_f)
-        xdata_2_f = np.array(xdata_2_f)
-        ydata_1_u1 = np.array(ydata_1_u1)
-        ydata_2_u1 = np.array(ydata_2_u1)
-        ydata_1_u9 = np.array(ydata_1_u9)
-        ydata_2_u9 = np.array(ydata_2_u9)
-        
-        #data_1 = data_1[outliersMask_1]
-        #data_2 = data_2[outliersMask_2]
-        
+            mean_y1_u1 = np.mean(ydata_1_u1)
+            mean_y1_u9 = np.mean(ydata_1_u9)
+            mean_y2_u1 = np.mean(ydata_2_u1)
+            mean_y2_u9 = np.mean(ydata_2_u9)
+            
+            sd_y1_u1 = np.std(ydata_1_u1)
+            sd_y1_u9 = np.std(ydata_1_u9)
+            sd_y2_u1 = np.std(ydata_2_u1)
+            sd_y2_u9 = np.std(ydata_2_u9)
+            
+            
+            for badPoint in bad_point_index_1:
+                ydata_1_u1[badPoint][0] = np.mean(ydata_1_u1[badPoint-1:badPoint+1]) 
+                
+            for badPoint in bad_point_index_1:
+                ydata_1_u9[badPoint][0] = np.mean(ydata_1_u9[badPoint-1:badPoint+1])
+                
+            for badPoint in bad_point_index_2:
+                ydata_2_u1[badPoint][0] = np.mean(ydata_2_u1[badPoint-1:badPoint+1])
+            
+            for badPoint in bad_point_index_2:
+                ydata_2_u9[badPoint][0] = np.mean(ydata_2_u9[badPoint-1:badPoint+1]) 
+           
+            xdata_1_f = np.array(xdata_1_f)
+            xdata_2_f = np.array(xdata_2_f)
+            ydata_1_u1 = np.array(ydata_1_u1)
+            ydata_2_u1 = np.array(ydata_2_u1)
+            ydata_1_u9 = np.array(ydata_1_u9)
+            ydata_2_u9 = np.array(ydata_2_u9)
+            
+            #data_1 = data_1[outliersMask_1]
+            #data_2 = data_2[outliersMask_2]
+            
+        else:
+            xdata_1_f = data_1[:, [0]]
+            xdata_2_f = data_2[:, [0]]
+            ydata_1_u1 = data_1[:, [1]]
+            ydata_2_u1 = data_2[:, [1]]
+            ydata_1_u9 = data_1[:, [2]]
+            ydata_2_u9 = data_2[:, [2]]
+            
         plt.figure("polarization u1 after correlation")
         plt.plot(xdata_1_f, ydata_1_u1, label=pair[0] )
         plt.plot(xdata_2_f, ydata_2_u1, label=pair[1]  )
@@ -256,6 +274,7 @@ def main():
     date = str(args.__dict__["date"])
     interval = float(args.__dict__["interval"])
     threshold = float(args.__dict__["threshold"])
+    filter = bool(args.__dict__["filter"])
     
     if interval <= 0.0:
         raise Exception("Interval cannot be negative or zero")
@@ -264,7 +283,7 @@ def main():
         raise Exception("Threshold cannot be negative or zero")
     
     scanPairs = createScanPairs(source, date)
-    PlotScanPairs(scanPairs, source, date, interval, threshold)
+    PlotScanPairs(scanPairs, source, date, interval, threshold, filter)
     sys.exit(0)
     
 if __name__=="__main__":
