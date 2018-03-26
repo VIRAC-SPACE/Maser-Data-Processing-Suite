@@ -40,18 +40,7 @@ def indexies(array, value):
         if array[i] == value:
             indexs.append(i)
     return indexs
-
-def meanOfcloseValues(array, index, interval):
-    localValus = [0] * (interval * 2 -1)
-    
-    j = 0
-    for i in range(index - interval, index -1):
-        localValus[j] = array[i]
-        j = j + 1
-    mean = np.mean(localValus)
-    print "mean ", np.mean(array)        
-    return mean
-       
+   
 def createScanPairs(source, date):
     dataFileDir = "dataFiles/" + source + "/" + date
     
@@ -110,24 +99,30 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold):
         ydata_1_u9 = data_1[:, [2]].tolist()
         ydata_2_u9 = data_2[:, [2]].tolist()
         
-        a = np.mean(ydata_1_u1)
-        b = np.mean(ydata_1_u9)
-        c = np.mean(ydata_2_u1)
-        d = np.mean(ydata_2_u9)
+        mean_y1_u1 = np.mean(ydata_1_u1)
+        mean_y1_u9 = np.mean(ydata_1_u9)
+        mean_y2_u1 = np.mean(ydata_2_u1)
+        mean_y2_u9 = np.mean(ydata_2_u9)
+        
+        sd_y1_u1 = np.std(ydata_1_u1)
+        sd_y1_u9 = np.std(ydata_1_u9)
+        sd_y2_u1 = np.std(ydata_2_u1)
+        sd_y2_u9 = np.std(ydata_2_u9)
+        
+        print  bad_point_index_1[-1], len(ydata_1_u1), ydata_1_u1[bad_point_index_1[-1] + 1], ydata_1_u1[bad_point_index_1[0] - 1]
         
         for badPoint in bad_point_index_1:
-            ydata_1_u1[badPoint][0] = a
+            ydata_1_u1[badPoint][0] = np.mean(ydata_1_u1[badPoint-1:badPoint+1]) 
             
         for badPoint in bad_point_index_1:
-            ydata_1_u9[badPoint][0] = b
+            ydata_1_u9[badPoint][0] = np.mean(ydata_1_u9[badPoint-1:badPoint+1])
             
         for badPoint in bad_point_index_2:
-            ydata_2_u1[badPoint][0] = c
+            ydata_2_u1[badPoint][0] = np.mean(ydata_2_u1[badPoint-1:badPoint+1])
         
         for badPoint in bad_point_index_2:
-            ydata_2_u9[badPoint][0] = d 
-            
-            
+            ydata_2_u9[badPoint][0] = np.mean(ydata_2_u9[badPoint-1:badPoint+1]) 
+              
         xdata_1_f = np.array(xdata_1_f)
         xdata_2_f = np.array(xdata_2_f)
         ydata_1_u1 = np.array(ydata_1_u1)
