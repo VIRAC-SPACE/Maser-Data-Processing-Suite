@@ -1,6 +1,7 @@
 #! /usr/bin/python
 import sys
 import os
+from scipy.stats import signaltonoise
 import matplotlib.pyplot as plt
 import numpy as np
 import argparse
@@ -17,6 +18,7 @@ def parseArguments():
     parser.add_argument("-i", "--interval", help="Set interval", type=float, default=0.9)
     parser.add_argument("-t", "--threshold", help="Set threshold for outlier filter", type=float, default=1.0)
     parser.add_argument("-f", "--filter", help="Set filter default is True if filter is False bad data points is no removed", type=str, default="True")
+    parser.add_argument("-p", "--paircount", help="Set pair count", type=int, default=2)
 
     # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
@@ -55,12 +57,11 @@ def createScanPairs(source, date):
     scanPairs = list()
     i = 0
     j = 1
-    for k in range(0, len(dataFiles) - 3):
-        if k >= len(dataFiles) /2:
-            scanPairs.append((dataFiles[i], dataFiles[j]))
-            
-            i = i + 2
-            j = j + 2
+    
+    for k in range(0, len(dataFiles) - len(dataFiles) /2):
+        scanPairs.append((dataFiles[i], dataFiles[j])) 
+        i = i + 2
+        j = j + 2
     
     return scanPairs
 
@@ -76,13 +77,17 @@ def is_outlier(points, threshold):
 
     return modified_z_score < threshold
 
-def PlotScanPairs(scanPairs, source, date, interval, threshold, filter):
+def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircount):
     y_u1_results = list()
     y_u9_results = list()
     datPairsCount = len(scanPairs)
+    pairCountList_u1 = list()
+    pairCountList_u9 = list()
+    pairCountList_u1_local = list()
+    pairCountList_u9_local = list()
     
     filtering = True
-    if filter == "True":
+    if str(filter) == "True":
         filtering = True
     else:
         filtering = False
@@ -96,7 +101,7 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter):
         data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
         data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
         
-        if filtering:
+        if filtering == True:
             outliersMask_1 = is_outlier(data_1[:, [0]], threshold)
             outliersMask_2 = is_outlier(data_2[:, [0]], threshold)
             
@@ -110,28 +115,27 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter):
             ydata_1_u9 = data_1[:, [2]].tolist()
             ydata_2_u9 = data_2[:, [2]].tolist()
             
-            mean_y1_u1 = np.mean(ydata_1_u1)
+            mean_y1_u1 = np.mean(ydata_1_u1) 
             mean_y1_u9 = np.mean(ydata_1_u9)
-            mean_y2_u1 = np.mean(ydata_2_u1)
-            mean_y2_u9 = np.mean(ydata_2_u9)
+            mean_y2_u1 = np.mean(ydata_2_u1) 
+            mean_y2_u9 = np.mean(ydata_2_u9) 
             
-            sd_y1_u1 = np.std(ydata_1_u1)
-            sd_y1_u9 = np.std(ydata_1_u9)
-            sd_y2_u1 = np.std(ydata_2_u1)
-            sd_y2_u9 = np.std(ydata_2_u9)
-            
-            
+            std_y1_u1 = np.std(ydata_1_u1) 
+            std_y1_u9 = np.std(ydata_1_u9)
+            std_y2_u1 = np.std(ydata_2_u1) 
+            std_y2_u9 = np.std(ydata_2_u9)
+                        
             for badPoint in bad_point_index_1:
-                ydata_1_u1[badPoint][0] = np.mean(ydata_1_u1[badPoint-1:badPoint+1]) 
+                ydata_1_u1[badPoint][0] = mean_y1_u1
                 
             for badPoint in bad_point_index_1:
-                ydata_1_u9[badPoint][0] = np.mean(ydata_1_u9[badPoint-1:badPoint+1])
+                ydata_1_u9[badPoint][0] = mean_y1_u9
                 
             for badPoint in bad_point_index_2:
-                ydata_2_u1[badPoint][0] = np.mean(ydata_2_u1[badPoint-1:badPoint+1])
+                ydata_2_u1[badPoint][0] =   mean_y2_u1
             
             for badPoint in bad_point_index_2:
-                ydata_2_u9[badPoint][0] = np.mean(ydata_2_u9[badPoint-1:badPoint+1]) 
+                ydata_2_u9[badPoint][0] = mean_y2_u9
            
             xdata_1_f = np.array(xdata_1_f)
             xdata_2_f = np.array(xdata_2_f)
@@ -142,7 +146,7 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter):
             
             #data_1 = data_1[outliersMask_1]
             #data_2 = data_2[outliersMask_2]
-            
+        
         else:
             xdata_1_f = data_1[:, [0]]
             xdata_2_f = data_2[:, [0]]
@@ -222,12 +226,24 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter):
         positiveveRange_u9 = data_y_u9[index_2_1:index_2_2]
                 
         result_u1 = (positiveveRange_u1 - negativeRange_u1)/2
+        
         print "total point count ", len( result_u1 )
         result_u9 = (positiveveRange_u9 - negativeRange_u9)/2
         
         x = np.linspace(0,maxFrequency/2, len(result_u1), dtype="float64").reshape(len(result_u1), 1)
         y_u1_results.append(result_u1)
-        y_u9_results.append(result_u9) 
+        y_u9_results.append(result_u9)
+        
+        pairCountList_u1_local.append(result_u1)
+        pairCountList_u9_local.append(result_u9)
+        if len(pairCountList_u1_local) == paircount: 
+            pairCountList_u1.append(pairCountList_u1_local)
+            pairCountList_u9.append(pairCountList_u9_local)
+            pairCountList_u1_local = list()
+            pairCountList_u9_local = list()
+        
+        ston = signaltonoise(result_u1)
+        print "signal vs noise ", ston
         
         plt.figure("polarization u1 second step")
         plt.plot(x, result_u1)
@@ -238,19 +254,30 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter):
         plt.plot(x, result_u9)
         plt.grid(True)
         plt.show()
-            
+     
     y_u1_avg = np.zeros(y_u1_results[0].shape)
     y_u2_avg = np.zeros(y_u9_results[0].shape)
     
+    #creating avg for pair count
+    pair_u1_avg = list()
+    pair_u9_avg = list()
+    
+    for k in range(0, len(pair_u1_avg)):
+        avg_u1 = np.mean(pair_u1_avg[k])
+        avg_u9 = np.mean(pair_u9_avg[k])
+        pair_u1_avg.append(avg_u1)
+        pair_u9_avg.append(avg_u9)
+    
+    # creating average for day
     for result in y_u1_results:
         y_u1_avg = y_u1_avg + result
-        
+            
     for result2 in y_u9_results:
         y_u2_avg = y_u2_avg + result2
-        
+            
     y_u1_avg = np.array(y_u1_avg/datPairsCount, dtype="float64")
-    y_u2_avg = np.array(y_u2_avg/datPairsCount, dtype="float64")  
-
+    y_u2_avg = np.array(y_u2_avg/datPairsCount, dtype="float64")
+        
     plt.figure("polarization u1 average for experiment")
     plt.plot(x, y_u1_avg)
     plt.grid(True)
@@ -265,8 +292,7 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter):
     totalResults = np.concatenate((x, y_u1_avg, y_u2_avg, dummyData, dummyData), axis=1)
     np.savetxt("dataFiles/" + source + date.replace(".", "_")  +"_n1.dat", totalResults)
     
-    return totalResults
-
+   
 def main():
     args = parseArguments()
     
@@ -274,7 +300,8 @@ def main():
     date = str(args.__dict__["date"])
     interval = float(args.__dict__["interval"])
     threshold = float(args.__dict__["threshold"])
-    filter = bool(args.__dict__["filter"])
+    filter = str(args.__dict__["filter"])
+    paircount = int(args.__dict__["paircount"])
     
     if interval <= 0.0:
         raise Exception("Interval cannot be negative or zero")
@@ -282,8 +309,11 @@ def main():
     if threshold <= 0.0:
         raise Exception("Threshold cannot be negative or zero")
     
+    if  paircount% 2 !=0:
+        raise Exception("Paircount must Even be " + "got " + str(paircount))
+    
     scanPairs = createScanPairs(source, date)
-    PlotScanPairs(scanPairs, source, date, interval, threshold, filter)
+    PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircount)
     sys.exit(0)
     
 if __name__=="__main__":
