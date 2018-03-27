@@ -81,10 +81,6 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
     y_u1_results = list()
     y_u9_results = list()
     datPairsCount = len(scanPairs)
-    pairCountList_u1 = list()
-    pairCountList_u9 = list()
-    pairCountList_u1_local = list()
-    pairCountList_u9_local = list()
     
     filtering = True
     if str(filter) == "True":
@@ -234,14 +230,6 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
         y_u1_results.append(result_u1)
         y_u9_results.append(result_u9)
         
-        pairCountList_u1_local.append(result_u1)
-        pairCountList_u9_local.append(result_u9)
-        if len(pairCountList_u1_local) == paircount: 
-            pairCountList_u1.append(pairCountList_u1_local)
-            pairCountList_u9.append(pairCountList_u9_local)
-            pairCountList_u1_local = list()
-            pairCountList_u9_local = list()
-        
         ston = signaltonoise(result_u1)
         print "signal vs noise ", ston
         
@@ -257,42 +245,71 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
      
     y_u1_avg = np.zeros(y_u1_results[0].shape)
     y_u2_avg = np.zeros(y_u9_results[0].shape)
-    
-    #creating avg for pair count
-    pair_u1_avg = list()
-    pair_u9_avg = list()
-    
-    for k in range(0, len(pair_u1_avg)):
-        avg_u1 = np.mean(pair_u1_avg[k])
-        avg_u9 = np.mean(pair_u9_avg[k])
-        pair_u1_avg.append(avg_u1)
-        pair_u9_avg.append(avg_u9)
-    
-    # creating average for day
-    for result in y_u1_results:
-        y_u1_avg = y_u1_avg + result
-            
-    for result2 in y_u9_results:
-        y_u2_avg = y_u2_avg + result2
-            
-    y_u1_avg = np.array(y_u1_avg/datPairsCount, dtype="float64")
-    y_u2_avg = np.array(y_u2_avg/datPairsCount, dtype="float64")
-        
-    plt.figure("polarization u1 average for experiment")
-    plt.plot(x, y_u1_avg)
-    plt.grid(True)
-    plt.show()
-        
-    plt.figure("polarization u9 average for experiment")
-    plt.plot(x, y_u2_avg)
-    plt.grid(True)
-    plt.show()
-    
     dummyData = np.zeros(len(result_u1), dtype="float64").reshape(len(result_u1), 1)
-    totalResults = np.concatenate((x, y_u1_avg, y_u2_avg, dummyData, dummyData), axis=1)
-    np.savetxt("dataFiles/" + source + date.replace(".", "_")  +"_n1.dat", totalResults)
     
-   
+    if  paircount == 0:
+        # creating average for day
+        for result in y_u1_results:
+            y_u1_avg = y_u1_avg + result
+                
+        for result2 in y_u9_results:
+            y_u2_avg = y_u2_avg + result2
+                
+        y_u1_avg = np.array(y_u1_avg/datPairsCount, dtype="float64")
+        y_u2_avg = np.array(y_u2_avg/datPairsCount, dtype="float64")
+            
+        plt.figure("polarization u1 average for experiment")
+        plt.plot(x, y_u1_avg)
+        plt.grid(True)
+        plt.show()
+            
+        plt.figure("polarization u9 average for experiment")
+        plt.plot(x, y_u2_avg)
+        plt.grid(True)
+        plt.show()
+        
+        totalResults = np.concatenate((x, y_u1_avg, y_u2_avg, dummyData, dummyData), axis=1)
+        np.savetxt("dataFiles/" + source + date.replace(".", "_")  +"_n1.dat", totalResults)
+    
+    elif paircount == 2:
+        
+        for output in range(0, len(y_u1_results)):
+            totalResults = np.concatenate((x, y_u1_results[output], y_u9_results[output], dummyData, dummyData), axis=1)
+            np.savetxt("dataFiles/" + source + date.replace(".", "_")  +"_k_" + str(output) +"_n1.dat", totalResults)
+            
+    else:
+        pairNumber = 0
+        check = 0
+       
+        for result in range(0, len(y_u1_results)):
+            pairNumber = pairNumber + 2
+            y_u1_avg = y_u1_avg + y_u1_results[result]
+            y_u2_avg = y_u2_avg + y_u9_results[result]
+            
+            if pairNumber == paircount:
+                
+                print check
+                check = check + 1
+                y_u1_avg = np.array(y_u1_avg/datPairsCount, dtype="float64")
+                y_u2_avg = np.array(y_u2_avg/datPairsCount, dtype="float64")
+                    
+                plt.figure("polarization u1 average for pair count")
+                plt.plot(x, y_u1_avg)
+                plt.grid(True)
+                plt.show()
+                    
+                plt.figure("polarization u9 average for pair count")
+                plt.plot(x, y_u2_avg)
+                plt.grid(True)
+                plt.show()
+                
+                totalResults = np.concatenate((x, y_u1_avg, y_u2_avg, dummyData, dummyData), axis=1)
+                np.savetxt("dataFiles/" + source + date.replace(".", "_")  +"_k_" + str(result) +"_n1.dat", totalResults)
+                y_u1_avg = np.zeros(y_u1_results[0].shape)
+                y_u2_avg = np.zeros(y_u9_results[0].shape)
+                
+                pairNumber = 0
+                
 def main():
     args = parseArguments()
     
