@@ -20,6 +20,7 @@ def parseArguments():
     # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/logConfig.yaml")
     parser.add_argument("-s", "--source", help="Set RA, DEC, Epoch, Source name", nargs="*", type=str, default=[])
+    # option -s example 
 
     # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 3.0')
@@ -58,6 +59,7 @@ class ExperimentLogReader():
         self.sourceName = list()
         self.clocks = list()
         self.scanList = list()
+        self.headerLines = list()
         self.scanLines = dict()
         self.Location = ""
         
@@ -111,10 +113,18 @@ class ExperimentLogReader():
                         
                     previousScan = key
                 
-                #Testing if line is not in header and it is not empty
-                    
+                #Testing if line is not in header and it is not empty   
                 if len(line) != 0 and append:
                     self.scanLines[key].append(line)
+                
+                #Testing if line is  in header and it is not empty    
+                elif len(line) != 0 and append==False:
+                    self.headerLines.append(line)
+                    
+            header = Scan(self.headerLines)
+            header.getParametrs()
+            header_source, header_sourceName, header_epoch, header_ra, header_dec, header_timeStart, header_timeStop, header_SystemtemperaturesForScan, header_freqBBC1, header_freqBBC2, header_loa, header_loc, header_clock = header.returnParametrs()
+            print header_freqBBC2
             
             for scan in self.scanLines:
                 scanData = Scan(self.scanLines[scan])
@@ -143,6 +153,9 @@ class ExperimentLogReader():
                         dec.append(Dec[0:2])
                         dec.append(Dec[2:4])
                         dec.append(Dec[4:len(Dec)])
+                    
+                    freqBBC2 = header_freqBBC2
+                    loc = header_loc
                     
                 self.sources.append(source)
                 self.sourceName.append(sourceName)
@@ -303,8 +316,7 @@ class ExperimentLogReader():
         del self.clocks
         del self.scanList
         del self.scanLines
-    
-        
+           
 def main():     
     if platform.system() == "Linux":
         os.environ['TZ'] = 'UTC'

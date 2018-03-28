@@ -118,7 +118,7 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
             df_y2_u1 = pd.DataFrame(data=ydata_2_u1)
             df_y2_u9 = pd.DataFrame(data=ydata_2_u9)
             
-            badPointRange = 1000
+            badPointRange = 500
             mean_y1_u1 = np.nan_to_num(df_y1_u1.rolling(window=badPointRange, center=True).mean())
             mean_y1_u9 = np.nan_to_num(df_y1_u9.rolling(window=badPointRange, center=True).mean())
             mean_y2_u1 = np.nan_to_num(df_y2_u1.rolling(window=badPointRange, center=True).mean())
