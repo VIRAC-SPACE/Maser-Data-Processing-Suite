@@ -4,6 +4,8 @@ import os
 from scipy.stats import signaltonoise
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+from pandas.stats.moments import rolling_mean
 import argparse
 
 def parseArguments():
@@ -111,27 +113,43 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
             ydata_1_u9 = data_1[:, [2]].tolist()
             ydata_2_u9 = data_2[:, [2]].tolist()
             
-            mean_y1_u1 = np.mean(ydata_1_u1) 
-            mean_y1_u9 = np.mean(ydata_1_u9)
-            mean_y2_u1 = np.mean(ydata_2_u1) 
-            mean_y2_u9 = np.mean(ydata_2_u9) 
+            df_y1_u1 = pd.DataFrame(data=ydata_1_u1)
+            df_y1_u9 = pd.DataFrame(data=ydata_1_u9)
+            df_y2_u1 = pd.DataFrame(data=ydata_2_u1)
+            df_y2_u9 = pd.DataFrame(data=ydata_2_u9)
             
-            std_y1_u1 = np.std(ydata_1_u1) 
-            std_y1_u9 = np.std(ydata_1_u9)
-            std_y2_u1 = np.std(ydata_2_u1) 
-            std_y2_u9 = np.std(ydata_2_u9)
-                        
-            for badPoint in bad_point_index_1:
-                ydata_1_u1[badPoint][0] = mean_y1_u1
+            badPointRange = 1000
+            mean_y1_u1 = np.nan_to_num(df_y1_u1.rolling(window=badPointRange, center=True).mean())
+            mean_y1_u9 = np.nan_to_num(df_y1_u9.rolling(window=badPointRange, center=True).mean())
+            mean_y2_u1 = np.nan_to_num(df_y2_u1.rolling(window=badPointRange, center=True).mean())
+            mean_y2_u9 = np.nan_to_num(df_y2_u9.rolling(window=badPointRange, center=True).mean())
+            
+            mean_y1_u1_2 = np.mean(ydata_1_u1)
+            mean_y1_u9_2 = np.mean(ydata_1_u9)
+            mean_y2_u1_2 = np.mean(ydata_2_u1)
+            mean_y2_u9_2 = np.mean(ydata_2_u9)
                 
             for badPoint in bad_point_index_1:
-                ydata_1_u9[badPoint][0] = mean_y1_u9
+                ydata_1_u1[badPoint][0] = mean_y1_u1[badPoint]
+                
+            for badPoint in bad_point_index_1:
+                ydata_1_u9[badPoint][0] = mean_y1_u9[badPoint]
                 
             for badPoint in bad_point_index_2:
-                ydata_2_u1[badPoint][0] =   mean_y2_u1
+                ydata_2_u1[badPoint][0] =   mean_y2_u1[badPoint]
             
             for badPoint in bad_point_index_2:
-                ydata_2_u9[badPoint][0] = mean_y2_u9
+                ydata_2_u9[badPoint][0] = mean_y2_u9[badPoint]
+                              
+            for nunNumber in range(0,  len(ydata_1_u1)):
+                if  ydata_1_u1[nunNumber][0] == 0:
+                    ydata_1_u1[nunNumber][0] = mean_y1_u1_2
+                if  ydata_1_u9[nunNumber][0] == 0:
+                    ydata_1_u9[nunNumber][0] = mean_y1_u9_2
+                if  ydata_2_u1[nunNumber][0] == 0:
+                    ydata_2_u1[nunNumber][0] = mean_y2_u1_2
+                if  ydata_2_u9[nunNumber][0] == 0:
+                    ydata_2_u9[nunNumber][0] = mean_y2_u9_2
            
             xdata_1_f = np.array(xdata_1_f)
             xdata_2_f = np.array(xdata_2_f)
@@ -230,8 +248,8 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
         y_u1_results.append(result_u1)
         y_u9_results.append(result_u9)
         
-        ston = signaltonoise(result_u1)
-        print "signal vs noise ", ston
+        #ston = signaltonoise(result_u1)
+        #print "signal vs noise ", ston
         
         plt.figure("polarization u1 second step")
         plt.plot(x, result_u1)
