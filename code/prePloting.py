@@ -248,8 +248,8 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
         y_u1_results.append(result_u1)
         y_u9_results.append(result_u9)
         
-        #ston = signaltonoise(result_u1)
-        #print "signal vs noise ", ston
+        ston = signaltonoise(result_u1)
+        print "signal vs noise ", ston
         
         plt.figure("polarization u1 second step")
         plt.plot(x, result_u1)
