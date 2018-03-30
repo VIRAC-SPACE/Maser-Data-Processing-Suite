@@ -29,9 +29,6 @@ def parseArguments():
     args = parser.parse_args()
 
     return args
-
-def usage():
-    print ('Usage: source and date')
     
 def file_len(fname):
     with open(fname) as f:
