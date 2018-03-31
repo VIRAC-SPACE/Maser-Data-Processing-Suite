@@ -14,8 +14,6 @@ from astropy.convolution import Gaussian1DKernel, convolve
 from scipy.interpolate import UnivariateSpline
 import peakutils
 import json
-import thread
-import threading
 import argparse
 
 from ploting import Plot
@@ -86,12 +84,11 @@ def frame(parent, size, sides, **options):
     f.pack(side = sides)
     return (f)
     
-class MaserPlot(Frame, threading.Thread):
+class MaserPlot(Frame):
     def __init__(self,  window, xdata, ydataU1, ydataU9, dataPoints, Systemtemperature1u, Systemtemperature9u, expername, source, location, scan, scanNumber):
         
         #Data init
         Frame.__init__(self)
-        threading.Thread.__init__(self)
         self.font = tkFont.Font(family="Times New Roman", size=20, weight=tkFont.BOLD)
         self.font_2 = tkFont.Font(family="Times New Roman", size=10)
         self.window = window
@@ -190,6 +187,7 @@ class MaserPlot(Frame, threading.Thread):
         self.y2array = self.y2array * calibration(self.calibrationScale, self.Systemtemperature9u)
             
         g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
+        print g1
         g2 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
     
         self.z1 = convolve(self.y1array, g1, boundary='extend')
@@ -322,7 +320,7 @@ class MaserPlot(Frame, threading.Thread):
         self.plot_3.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization")
         self.plot_3.plot(self.xarray, self.z1, 'ko', label='Data Points', markersize=1, picker=5)
         self.plot_3.addPickEvent(self.onpickU1)
-        self.plot_3.addSecondAss("x", "Data points", 0, self.dataPoints + 512, 1024)
+        self.plot_3.addSecondAxis("x", "Data points", 0, self.dataPoints + 512, 1024)
         #self.plot_1.addSlider([0.10, 0.15, 0.65, 0.03], "m", 10, 0, 5, None)
 
         #u9
@@ -330,7 +328,7 @@ class MaserPlot(Frame, threading.Thread):
         self.plot_4.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization")
         self.plot_4.plot(self.xarray, self.z2, 'ko', label='Data Points', markersize=1, picker=5)
         self.plot_4.addPickEvent(self.onpickU9)
-        self.plot_4.addSecondAss("x", "Data points", 0, self.dataPoints + 512, 1024)
+        self.plot_4.addSecondAxis("x", "Data points", 0, self.dataPoints + 512, 1024)
         #self.plot_2.addSlider([0.10, 0.25, 0.65, 0.03], "n", 10, 0, 5, None)
         
         #sliders
@@ -683,9 +681,6 @@ class MaserPlot(Frame, threading.Thread):
         self.plotFrame.destroy()
         self.window.destroy()
     
-    def run(self):
-        pass
-        
 def getData(dataFileName):
     try:
         data = np.fromfile(dataFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(dataFileName),5))
@@ -712,7 +707,6 @@ def getData(dataFileName):
 
 def getLogs(logfileName, dataFileName, singleSourceExperiment): 
     logs  = ExperimentLogReader("logs/" + logfileName, "prettyLogs/", singleSourceExperiment).getLogs()
-    print "logs/" + logfileName
     scanNumber = dataFileName.split(".")[0].split("_")[-1][1:len(dataFileName)]
     scan = logs[scanNumber]
     
@@ -731,7 +725,7 @@ def main():
     logFileName = str(args.__dict__["logFile"])
     dataFileName = str(args.__dict__["datafile"])
     singleSourceExperiment = list(args.__dict__["single"])
-    
+     
     #get Data and Logs
     try:
         Systemtemperature1u, Systemtemperature9u, location, source, scan, scanNumber = getLogs(logFileName, dataFileName, singleSourceExperiment)
@@ -755,6 +749,7 @@ def main():
         ploting = MaserPlot(window, xdata, y1data, y2data, dataPoints, Systemtemperature1u, Systemtemperature9u, expername, source, location, scan, scanNumber)
         img = tk.Image("photo", file="viraclogo.png")
         window.call('wm','iconphoto', window._w,img)
+        
         ploting.mainloop()
         
         sys.exit(0)

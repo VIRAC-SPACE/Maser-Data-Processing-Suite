@@ -13,7 +13,7 @@ try:
 except:
     from Tkinter import *
     import Tkinter as tk
-
+    
 class Plot():
     
     def __init__(self, fig_size_x, fig_size_y, window, frame):
@@ -31,7 +31,7 @@ class Plot():
         self.figure.set_canvas(self.canvas)
         self.canvas.get_tk_widget().pack(side=sides)
         self.graph.set_title(title,  y=1.08) 
-        
+                
         self.toolbar = tkagg.NavigationToolbar2TkAgg(self.canvas, self.window)
         self.toolbar.update()
         self.canvas._tkcanvas.pack(side=LEFT, expand=1)
@@ -54,6 +54,7 @@ class Plot():
 
     def remannotation(self):
         self.annotate.remove()
+        del  self.annotate
         
     def canvasShow(self):
         self.canvas.show()
@@ -64,11 +65,11 @@ class Plot():
     def removePickEvent(self):
         self.figure.canvas.mpl_disconnect(self.cid)
         
-    def addSecondAss(self, ass, label, start, stop, step):
-        self.second_x_ass = self.graph.twiny()
-        self.second_x_ass.set_xlabel(label)
-        self.graph.tick_params(axis=ass)
-        self.second_x_ass.set_xticks(range(start, stop, step))
+    def addSecondAxis(self, axiss, label, start, stop, step):
+        self.second_x_axis = self.graph.twiny()
+        self.second_x_axis.set_xlabel(label)
+        self.graph.tick_params(axis=axiss)
+        self.second_x_axis.set_xticks(range(start, stop, step))
         
     def addSlider(self, cords, label, start, stop, init, callback):
         self.figure.subplots_adjust(bottom=0.25)

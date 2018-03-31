@@ -1,7 +1,7 @@
 #! /usr/bin/python
 import sys
 import os
-from scipy.stats import signaltonoise
+#from scipy.stats import signaltonoise
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -97,8 +97,8 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
         data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
         
         if filtering == True:
-            outliersMask_1 = is_outlier(data_1[:, [0]], threshold)
-            outliersMask_2 = is_outlier(data_2[:, [0]], threshold)
+            outliersMask_1 = is_outlier(data_1, threshold)
+            outliersMask_2 = is_outlier(data_2, threshold)
             
             bad_point_index_1 = indexies(outliersMask_1, False)
             bad_point_index_2 = indexies(outliersMask_2, False)
@@ -245,8 +245,8 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
         y_u1_results.append(result_u1)
         y_u9_results.append(result_u9)
         
-        ston = signaltonoise(result_u1)
-        print "signal vs noise ", ston
+        #ston = signaltonoise(result_u1)
+        #print "signal vs noise ", ston
         
         plt.figure("polarization u1 second step")
         plt.plot(x, result_u1)

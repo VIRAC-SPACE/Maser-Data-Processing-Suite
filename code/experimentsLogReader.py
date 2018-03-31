@@ -155,6 +155,7 @@ class ExperimentLogReader():
                     
                     freqBBC2 = header_freqBBC2
                     loc = header_loc
+                    loa = header_loa
                     
                 self.sources.append(source)
                 self.sourceName.append(sourceName)
