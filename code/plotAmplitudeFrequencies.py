@@ -15,6 +15,7 @@ from scipy.interpolate import UnivariateSpline
 import peakutils
 import json
 import argparse
+import ConfigParser
 
 from ploting import Plot
 from experimentsLogReader import ExperimentLogReader
@@ -27,6 +28,7 @@ def parseArguments():
     epilog="""Maser Ploter.""")
 
     # Positional mandatory arguments
+    parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/config.cfg")
     parser.add_argument("logFile", help="Experiment log file name", type=str)
     parser.add_argument("datafile", help="Experiment correlation file name", type=str)
 
@@ -64,19 +66,7 @@ def FWHM(x, y, constant):
     index_1 =  (np.abs(x-root1)).argmin()
     index_2 =  (np.abs(x-root2)).argmin()
     return (index_1, index_2)
-    
-def is_outlier(points, thresh=4.5):
-    if len(points.shape) == 1:
-        points = points[:,None]
-    median = np.median(points, axis=0)
-    diff = np.sum((points - median)**2, axis=-1)
-    diff = np.sqrt(diff)
-    med_abs_deviation = np.median(diff)
-
-    modified_z_score = 0.6745 * diff / med_abs_deviation
-
-    return modified_z_score < thresh
-    
+        
 def frame(parent, size, sides, **options):
     Width=size[0]
     Height=size[1]
@@ -684,19 +674,17 @@ class MaserPlot(Frame):
 def getData(dataFileName):
     try:
         data = np.fromfile(dataFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(dataFileName),5))
-    except(IOError):
-            print "IO Error"
+        
+    except IOError as e:
+        print "IO Error",  e
+        sys.exit(1)
             
     except:
         print("Unexpected error:", sys.exc_info()[0])
-        raise
         sys.exit(1)
              
     else:
         data = np.delete(data, (0), axis=0) #izdzes masiva primo elementu
-        
-        outliersMask = is_outlier(data[:, [0]])
-        data = data[outliersMask]
         dataPoints = data.shape[0]
         
         xdata = data[:, [0]]
@@ -705,8 +693,8 @@ def getData(dataFileName):
     
         return (xdata, y1data, y2data, dataPoints)
 
-def getLogs(logfileName, dataFileName, singleSourceExperiment): 
-    logs  = ExperimentLogReader("logs/" + logfileName, "prettyLogs/", singleSourceExperiment).getLogs()
+def getLogs(logfileName, dataFileName, singleSourceExperiment, prettyLogsPath): 
+    logs  = ExperimentLogReader(logfileName, prettyLogsPath, singleSourceExperiment).getLogs()
     scanNumber = dataFileName.split(".")[0].split("_")[-1][1:len(dataFileName)]
     scan = logs[scanNumber]
     
@@ -721,20 +709,26 @@ def getLogs(logfileName, dataFileName, singleSourceExperiment):
 def main():
     # Parse the arguments
     args = parseArguments()
-    
+    configFilePath = str(args.__dict__["config"])
     logFileName = str(args.__dict__["logFile"])
     dataFileName = str(args.__dict__["datafile"])
     singleSourceExperiment = list(args.__dict__["single"])
-     
+    
+    #Creating config parametrs
+    config = ConfigParser.RawConfigParser()
+    config.read(configFilePath)
+    logPath = config.get('logs', "logPath")
+    prettyLogsPath =  config.get('logs', "prettyLogsPath")
+    dataFilesPath =  config.get('dataFiles', "dataFilePath")
+
     #get Data and Logs
     try:
-        Systemtemperature1u, Systemtemperature9u, location, source, scan, scanNumber = getLogs(logFileName, dataFileName, singleSourceExperiment)
+        Systemtemperature1u, Systemtemperature9u, location, source, scan, scanNumber = getLogs(logPath + logFileName, dataFilesPath + dataFileName, singleSourceExperiment, prettyLogsPath)
         expername = logFileName.split(".")[0][:-2]
-        xdata, y1data, y2data, dataPoints = getData(dataFileName)
+        xdata, y1data, y2data, dataPoints = getData(dataFilesPath + dataFileName)
     
-    except(TypeError):
-        print("TypeError error:")
-        raise
+    except TypeError as e:
+        print"TypeError error:", e 
         sys.exit(1)
          
     except:

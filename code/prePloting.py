@@ -1,12 +1,13 @@
 #! /usr/bin/python
 import sys
 import os
-#from scipy.stats import signaltonoise
+from scipy.stats import signaltonoise
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from pandas.stats.moments import rolling_mean
 import argparse
+import ConfigParser
 
 def parseArguments():
     # Create argument parser
@@ -17,6 +18,7 @@ def parseArguments():
     parser.add_argument("date", help="Experiment date", type=str)
 
     # Optional arguments
+    parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/config.cfg")
     parser.add_argument("-i", "--interval", help="Set interval", type=float, default=0.9)
     parser.add_argument("-t", "--threshold", help="Set threshold for outlier filter", type=float, default=1.0)
     parser.add_argument("-f", "--filter", help="Set filter default is True if filter is False bad data points is no removed", type=str, default="True")
@@ -76,7 +78,7 @@ def is_outlier(points, threshold):
 
     return modified_z_score < threshold
 
-def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircount):
+def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircount, dataFilesPath, badPointRange):
     y_u1_results = list()
     y_u9_results = list()
     datPairsCount = len(scanPairs)
@@ -88,8 +90,8 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
         filtering = False
 
     for pair in scanPairs:
-        scanNUmber1 = "dataFiles/" + source + "/" + date + "/" + pair[0]
-        scanNUmber2 = "dataFiles/" + source + "/" + date + "/" + pair[1]
+        scanNUmber1 = dataFilesPath + source + "/" + date + "/" + pair[0]
+        scanNUmber2 = dataFilesPath + source + "/" + date + "/" + pair[1]
         
         data_1 =  np.fromfile(scanNUmber1, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber1),5))
         data_2 =  np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),5))
@@ -115,7 +117,6 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
             df_y2_u1 = pd.DataFrame(data=ydata_2_u1)
             df_y2_u9 = pd.DataFrame(data=ydata_2_u9)
             
-            badPointRange = 500
             mean_y1_u1 = np.nan_to_num(df_y1_u1.rolling(window=badPointRange, center=True).mean())
             mean_y1_u9 = np.nan_to_num(df_y1_u9.rolling(window=badPointRange, center=True).mean())
             mean_y2_u1 = np.nan_to_num(df_y2_u1.rolling(window=badPointRange, center=True).mean())
@@ -245,8 +246,8 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
         y_u1_results.append(result_u1)
         y_u9_results.append(result_u9)
         
-        #ston = signaltonoise(result_u1)
-        #print "signal vs noise ", ston
+        ston = signaltonoise(result_u1)
+        print "signal vs noise ", ston
         
         plt.figure("polarization u1 second step")
         plt.plot(x, result_u1)
@@ -284,13 +285,13 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
         plt.show()
         
         totalResults = np.concatenate((x, y_u1_avg, y_u2_avg, dummyData, dummyData), axis=1)
-        np.savetxt("dataFiles/" + source + date.replace(".", "_")  +"_n1.dat", totalResults)
+        np.savetxt(dataFilesPath + source + date.replace(".", "_")  +"_n1.dat", totalResults)
     
     elif paircount == 2:
         
         for output in range(0, len(y_u1_results)):
             totalResults = np.concatenate((x, y_u1_results[output], y_u9_results[output], dummyData, dummyData), axis=1)
-            np.savetxt("dataFiles/" + source + date.replace(".", "_")  +"_k_" + str(output) +"_n1.dat", totalResults)
+            np.savetxt(dataFilesPath + source + date.replace(".", "_")  +"_k_" + str(output) +"_n1.dat", totalResults)
             
     else:
         pairNumber = 0
@@ -319,7 +320,7 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
                 plt.show()
                 
                 totalResults = np.concatenate((x, y_u1_avg, y_u2_avg, dummyData, dummyData), axis=1)
-                np.savetxt("dataFiles/" + source + date.replace(".", "_")  +"_k_" + str(result) +"_n1.dat", totalResults)
+                np.savetxt(dataFilesPath + source + date.replace(".", "_")  +"_k_" + str(result) +"_n1.dat", totalResults)
                 y_u1_avg = np.zeros(y_u1_results[0].shape)
                 y_u2_avg = np.zeros(y_u9_results[0].shape)
                 
@@ -327,13 +328,18 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
                 
 def main():
     args = parseArguments()
-    
     source = str(args.__dict__["source"])
     date = str(args.__dict__["date"])
     interval = float(args.__dict__["interval"])
     threshold = float(args.__dict__["threshold"])
     filter = str(args.__dict__["filter"])
     paircount = int(args.__dict__["paircount"])
+    configFilePath = str(args.__dict__["config"])
+    
+    config = ConfigParser.RawConfigParser()
+    config.read(configFilePath)
+    dataFilesPath =  config.get('dataFiles', "dataFilePath")
+    badPointRange =  config.getint('parametrs', "badPointRange")
     
     if interval <= 0.0:
         raise Exception("Interval cannot be negative or zero")
@@ -345,7 +351,7 @@ def main():
         raise Exception("Paircount must Even be " + "got " + str(paircount))
     
     scanPairs = createScanPairs(source, date)
-    PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircount)
+    PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircount, dataFilesPath, badPointRange)
     sys.exit(0)
     
 if __name__=="__main__":

@@ -5,8 +5,8 @@ import time
 import datetime
 import argparse
 import platform
+import ConfigParser
 
-import yaml
 from scan import Scan
     
 def parseArguments():
@@ -18,7 +18,7 @@ def parseArguments():
     parser.add_argument("logFile", help="Experiment log file name", type=str)
 
     # Optional arguments
-    parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/logConfig.yaml")
+    parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/config.cfg")
     parser.add_argument("-s", "--source", help="Set RA, DEC, Epoch, Source name", nargs="*", type=str, default=[])
     # option -s example 
 
@@ -67,18 +67,19 @@ class ExperimentLogReader():
             self.single = True
         else:
             self.single = False
-    
+        
         try:
             self.logfile = open(self.logs, "r")
             self.datafile = open(self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat", "w")
             
-        except(IOError):
-            print "IO Error"
+        except IOError as e:
+            print "IO Error",  e
+            sys.exit(1)
             
         except:
             print("Unexpected error:", sys.exc_info()[0])
-            raise
-            
+            sys.exit(1)
+                
         else:
             append = False
             key = 0
@@ -328,24 +329,21 @@ def main():
      
     # Parse the arguments
     args = parseArguments()
-    
     logFileName = str(args.__dict__["logFile"])
     configFilePath = str(args.__dict__["config"])
     singleSourceExperiment = list(args.__dict__["source"])
     
     #Creating config parametrs
-    config = dict()
-    for key, value in yaml.load(open(configFilePath)).iteritems():
-        config[key] = value
-
-    logPath =  config["logPath"]
-    prettyLogsPath = config["prettyLogsPath"]
-    
+    config = ConfigParser.RawConfigParser()
+    config.read(configFilePath)
+    logPath = config.get('logs', "logPath")
+    prettyLogsPath =  config.get('logs', "prettyLogsPath")
+        
     experimentLogReader = ExperimentLogReader(logPath + logFileName, prettyLogsPath, singleSourceExperiment)
     experimentLogReader.writeOutput()
+    
     sys.exit(0)
     
 if __name__=="__main__":
     main()
-    
     
