@@ -1,6 +1,8 @@
 #! /usr/bin/python
 import sys
 import os
+import scipy
+import scipy.stats
 from scipy.stats import signaltonoise
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,6 +10,7 @@ import pandas as pd
 from pandas.stats.moments import rolling_mean
 import argparse
 import ConfigParser
+import re
 
 def parseArguments():
     # Create argument parser
@@ -264,6 +267,7 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
     dummyData = np.zeros(len(result_u1), dtype="float64").reshape(len(result_u1), 1)
     
     if  paircount == 0:
+        i = 0
         # creating average for day
         for result in y_u1_results:
             y_u1_avg = y_u1_avg + result
@@ -284,19 +288,23 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
         plt.grid(True)
         plt.show()
         
+        scan_number = int(re.split("([0-9]+)", scanPairs[i][0])[-2])
         totalResults = np.concatenate((x, y_u1_avg, y_u2_avg, dummyData, dummyData), axis=1)
-        np.savetxt(dataFilesPath + source + date.replace(".", "_")  +"_n1.dat", totalResults)
+        np.savetxt(dataFilesPath + source + date.replace(".", "_")  + "_n_" + str(scan_number) + ".dat", totalResults)
     
     elif paircount == 2:
         
+        i = 0
         for output in range(0, len(y_u1_results)):
+            scan_number = int(re.split("([0-9]+)", scanPairs[i][0])[-2])
             totalResults = np.concatenate((x, y_u1_results[output], y_u9_results[output], dummyData, dummyData), axis=1)
-            np.savetxt(dataFilesPath + source + date.replace(".", "_")  +"_k_" + str(output) +"_n1.dat", totalResults)
-            
+            np.savetxt(dataFilesPath + source + date.replace(".", "_")  +"_k_" + str(output) + "_n_" + str(scan_number) + ".dat", totalResults)
+            i = i + 1   
     else:
         pairNumber = 0
         check = 0
-       
+        
+        i = 0
         for result in range(0, len(y_u1_results)):
             pairNumber = pairNumber + 2
             y_u1_avg = y_u1_avg + y_u1_results[result]
@@ -304,7 +312,6 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
             
             if pairNumber == paircount:
                 
-                print check
                 check = check + 1
                 y_u1_avg = np.array(y_u1_avg/datPairsCount, dtype="float64")
                 y_u2_avg = np.array(y_u2_avg/datPairsCount, dtype="float64")
@@ -319,12 +326,14 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
                 plt.grid(True)
                 plt.show()
                 
+                scan_number = int(re.split("([0-9]+)", scanPairs[i][0])[-2])
                 totalResults = np.concatenate((x, y_u1_avg, y_u2_avg, dummyData, dummyData), axis=1)
-                np.savetxt(dataFilesPath + source + date.replace(".", "_")  +"_k_" + str(result) +"_n1.dat", totalResults)
+                np.savetxt(dataFilesPath + source + date.replace(".", "_")  +"_k_" + str(result) + "_n_" + str(scan_number) + ".dat", totalResults)
                 y_u1_avg = np.zeros(y_u1_results[0].shape)
                 y_u2_avg = np.zeros(y_u9_results[0].shape)
                 
                 pairNumber = 0
+            i = i + 1       
                 
 def main():
     args = parseArguments()
