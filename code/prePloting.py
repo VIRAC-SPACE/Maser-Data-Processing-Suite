@@ -290,7 +290,7 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
         
         scan_number = int(re.split("([0-9]+)", scanPairs[i][0])[-2])
         totalResults = np.concatenate((x, y_u1_avg, y_u2_avg, dummyData, dummyData), axis=1)
-        np.savetxt(dataFilesPath + source + date.replace(".", "_")  + "_n_" + str(scan_number) + ".dat", totalResults)
+        np.savetxt(dataFilesPath + source + date.replace(".", "_")  + "_n" + str(scan_number) + ".dat", totalResults)
     
     elif paircount == 2:
         
@@ -298,7 +298,7 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
         for output in range(0, len(y_u1_results)):
             scan_number = int(re.split("([0-9]+)", scanPairs[i][0])[-2])
             totalResults = np.concatenate((x, y_u1_results[output], y_u9_results[output], dummyData, dummyData), axis=1)
-            np.savetxt(dataFilesPath + source + date.replace(".", "_")  +"_k_" + str(output) + "_n_" + str(scan_number) + ".dat", totalResults)
+            np.savetxt(dataFilesPath + source + date.replace(".", "_")  +"_k_" + str(output) + "_n" + str(scan_number) + ".dat", totalResults)
             i = i + 1   
     else:
         pairNumber = 0
@@ -328,7 +328,7 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
                 
                 scan_number = int(re.split("([0-9]+)", scanPairs[i][0])[-2])
                 totalResults = np.concatenate((x, y_u1_avg, y_u2_avg, dummyData, dummyData), axis=1)
-                np.savetxt(dataFilesPath + source + date.replace(".", "_")  +"_k_" + str(result) + "_n_" + str(scan_number) + ".dat", totalResults)
+                np.savetxt(dataFilesPath + source + date.replace(".", "_")  +"_k_" + str(result) + "_n" + str(scan_number) + ".dat", totalResults)
                 y_u1_avg = np.zeros(y_u1_results[0].shape)
                 y_u2_avg = np.zeros(y_u9_results[0].shape)
                 

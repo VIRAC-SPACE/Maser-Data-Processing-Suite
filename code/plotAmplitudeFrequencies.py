@@ -693,16 +693,29 @@ def getData(dataFileName):
 def getLogs(logfileName, dataFileName, singleSourceExperiment, prettyLogsPath): 
     logs  = ExperimentLogReader(logfileName, prettyLogsPath, singleSourceExperiment).getLogs()
     scanNumber = dataFileName.split(".")[0].split("_")[-1][1:len(dataFileName)]
-    scan = logs[scanNumber]
+    print dataFileName.split(".")[0].split("_")[-1]
     
-    Systemtemperature1u = float(scan["Systemtemperature"][0])
-    Systemtemperature9u = float(scan["Systemtemperature"][1])
+    try:
+        scan = logs[scanNumber]
+        
+    except KeyError as e:
+        print "KeyError",  e
+        sys.exit(1)
+            
+    except:
+        print("Unexpected error:", sys.exc_info()[0])
+        sys.exit(1)
+        
+    else:
     
-    location = logs["location"]
-    source = scan["source"]
+        Systemtemperature1u = float(scan["Systemtemperature"][0])
+        Systemtemperature9u = float(scan["Systemtemperature"][1])
+        
+        location = logs["location"]
+        source = scan["source"]
+       
+        return (Systemtemperature1u, Systemtemperature9u, location, source, scan, scanNumber)
     
-    return (Systemtemperature1u, Systemtemperature9u, location, source, scan, scanNumber)
-
 def main():
     # Parse the arguments
     args = parseArguments()
