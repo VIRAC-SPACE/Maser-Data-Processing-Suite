@@ -336,8 +336,8 @@ def main():
     #Creating config parametrs
     config = ConfigParser.RawConfigParser()
     config.read(configFilePath)
-    logPath = config.get('logs', "logPath")
-    prettyLogsPath =  config.get('logs', "prettyLogsPath")
+    logPath = config.get('paths', "logPath")
+    prettyLogsPath =  config.get('paths', "prettyLogsPath")
         
     experimentLogReader = ExperimentLogReader(logPath + logFileName, prettyLogsPath, singleSourceExperiment)
     experimentLogReader.writeOutput()

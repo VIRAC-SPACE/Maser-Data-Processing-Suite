@@ -338,7 +338,7 @@ def main():
     
     config = ConfigParser.RawConfigParser()
     config.read(configFilePath)
-    dataFilesPath =  config.get('dataFiles', "dataFilePath")
+    dataFilesPath =  config.get('paths', "dataFilePath")
     badPointRange =  config.getint('parametrs', "badPointRange")
     
     if interval <= 0.0:

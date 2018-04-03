@@ -20,8 +20,6 @@ import ConfigParser
 from ploting import Plot
 from experimentsLogReader import ExperimentLogReader
 
-calibrationScales = {"IRBENE":12, "IRBENE16":26}
-
 def parseArguments():
     # Create argument parser
     parser = argparse.ArgumentParser(description='''Plots maser plota. ''',
@@ -75,7 +73,7 @@ def frame(parent, size, sides, **options):
     return (f)
     
 class MaserPlot(Frame):
-    def __init__(self,  window, xdata, ydataU1, ydataU9, dataPoints, Systemtemperature1u, Systemtemperature9u, expername, source, location, scan, scanNumber):
+    def __init__(self,  window, xdata, ydataU1, ydataU9, dataPoints, Systemtemperature1u, Systemtemperature9u, expername, source, location, scan, scanNumber, calibrationScales):
         
         #Data init
         Frame.__init__(self)
@@ -93,6 +91,7 @@ class MaserPlot(Frame):
         self.scan = scan
         self.scanNumber = scanNumber
         self.dataPoints = dataPoints
+        self.calibrationScales = calibrationScales
         
         #Making sure that data is numpy array
         self.xarray = np.zeros(self.dataPoints)
@@ -117,9 +116,8 @@ class MaserPlot(Frame):
         self.FWHMconstant = 0.3
         self.polynomialOrder = 9
         self.f0 = 6668519200 
-        self.calibrationScale = calibrationScales[self.location]
+        self.calibrationScale = self.calibrationScales[self.location]
         self.FreqStart = self.scan["FreqStart"]
-        print self.FreqStart
         
         #start window frame
         self.plotFrame = frame(self.window,(1000,1000), LEFT)
@@ -177,7 +175,6 @@ class MaserPlot(Frame):
         self.y2array = self.y2array * calibration(self.calibrationScale, self.Systemtemperature9u)
             
         g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
-        print g1
         g2 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
     
         self.z1 = convolve(self.y1array, g1, boundary='extend')
@@ -717,9 +714,11 @@ def main():
     #Creating config parametrs
     config = ConfigParser.RawConfigParser()
     config.read(configFilePath)
-    logPath = config.get('logs', "logPath")
-    prettyLogsPath =  config.get('logs', "prettyLogsPath")
-    dataFilesPath =  config.get('dataFiles', "dataFilePath")
+    logPath = config.get('paths', "logPath")
+    prettyLogsPath =  config.get('paths', "prettyLogsPath")
+    dataFilesPath =  config.get('paths', "dataFilePath")
+    
+    calibrationScales = {"IRBENE":config.getint('parametrs', "irbene"), "IRBENE16":config.getint('parametrs', "irbene16")}
 
     #get Data and Logs
     try:
@@ -740,7 +739,7 @@ def main():
         #Create App
         window = tk.Tk()
         window.configure(background='light goldenrod')
-        ploting = MaserPlot(window, xdata, y1data, y2data, dataPoints, Systemtemperature1u, Systemtemperature9u, expername, source, location, scan, scanNumber)
+        ploting = MaserPlot(window, xdata, y1data, y2data, dataPoints, Systemtemperature1u, Systemtemperature9u, expername, source, location, scan, scanNumber, calibrationScales)
         img = tk.Image("photo", file="viraclogo.png")
         window.call('wm','iconphoto', window._w,img)
         
