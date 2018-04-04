@@ -20,7 +20,7 @@ def parseArguments():
     # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/config.cfg")
     parser.add_argument("-s", "--source", help="Set RA, DEC, Epoch, Source name", nargs="*", type=str, default=[])
-    # option -s example 
+    # option -s example cepa 225617.90 620149.7 2000.0
 
     # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 3.0')
@@ -126,6 +126,7 @@ class ExperimentLogReader():
             header.getParametrs()
             header_source, header_sourceName, header_epoch, header_ra, header_dec, header_timeStart, header_timeStop, header_SystemtemperaturesForScan, header_freqBBC1, header_freqBBC2, header_loa, header_loc, header_clock = header.returnParametrs()
             
+            print header_source, header_sourceName, header_epoch, header_ra, header_dec
             for scan in self.scanLines:
                 scanData = Scan(self.scanLines[scan])
                 self.scanList.append(scanData)
@@ -134,7 +135,8 @@ class ExperimentLogReader():
                 source, sourceName, epoch, ra, dec, timeStart, timeStop, SystemtemperaturesForScan, freqBBC1, freqBBC2, loa, loc, clock = scanData.returnParametrs()
                 
                 if self.single:
-                    source =  self.singleSourceName[0] + "," + self.singleSourceName[1] + "," + self.singleSourceName[2] 
+                    source =  self.singleSourceName[0] + "," + self.singleSourceName[1] + "," + self.singleSourceName[2]
+                    sourceName = self.singleSourceName[0]
                     ra = list()
                     dec = list()
                     Ra = self.singleSourceName[1]
@@ -157,7 +159,7 @@ class ExperimentLogReader():
                     freqBBC2 = header_freqBBC2
                     loc = header_loc
                     loa = header_loa
-                    
+              
                 self.sources.append(source)
                 self.sourceName.append(sourceName)
                 self.Epochs.append(epoch)

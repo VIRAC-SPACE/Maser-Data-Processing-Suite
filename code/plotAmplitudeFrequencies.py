@@ -510,17 +510,30 @@ class MaserPlot(Frame):
         ### u9
         self.ceb_2 = fit_ceb(ceb, np.append(self.x_u9[self.m:self.a_u9], self.x_u9[self.b_u9:self.n]),  np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]))
         
+        # Fit the data using poly fit
+        x_u1 = np.append(self.x_u1[self.m:self.a_u1], self.x_u1[self.b_u1:self.n])
+        x_u9 = np.append(self.x_u9[self.m:self.a_u9], self.x_u9[self.b_u9:self.n])
+        y_u1 = np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n])
+        y_u9 = np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n])
+        z_u1 = np.polyfit(x_u1, y_u1, self.polynomialOrder)
+        z_u9 = np.polyfit(x_u9, y_u9, self.polynomialOrder)
+       
+        p_u1 = np.poly1d(z_u1)
+        p_u9 = np.poly1d(z_u9)
+        
         #u1 plot
         self.plot_5 = Plot(6,6, self.masterFrame, self.plotFrame)
         self.plot_5.creatPlot(LEFT, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization")
         self.plot_5.plot(np.append(self.x_u1[self.m:self.a_u1], self.x_u1[self.b_u1:self.n]), np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]), 'ko', label='Data Points',  markersize=1)
         self.plot_5.plot(self.x_u1[self.m:self.n], self.ceb_1(self.x_u1[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
+        self.plot_5.plot(self.x_u1[self.m:self.n], p_u1(self.x_u1[self.m:self.n]), 'b', label='Numpy polyfit', markersize=1)
         
         #u9 plot
         self.plot_6 = Plot(6,6, self.masterFrame, self.plotFrame)
         self.plot_6.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization")
         self.plot_6.plot(np.append(self.x_u9[self.m:self.a_u9], self.x_u9[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), 'ko', label='Data Points',  markersize=1)
         self.plot_6.plot(self.x_u9[self.m:self.n], self.ceb_2(self.x_u9[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
+        self.plot_6.plot(self.x_u9[self.m:self.n], p_u9(self.x_u9[self.m:self.n]), 'b', label='Numpy polyfit', markersize=1)
         
     def plotLocalMaximum(self):
         self.state = 2
@@ -693,7 +706,6 @@ def getData(dataFileName):
 def getLogs(logfileName, dataFileName, singleSourceExperiment, prettyLogsPath): 
     logs  = ExperimentLogReader(logfileName, prettyLogsPath, singleSourceExperiment).getLogs()
     scanNumber = dataFileName.split(".")[0].split("_")[-1][1:len(dataFileName)]
-    print dataFileName.split(".")[0].split("_")[-1]
     
     try:
         scan = logs[scanNumber]
