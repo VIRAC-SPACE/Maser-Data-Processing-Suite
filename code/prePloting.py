@@ -3,13 +3,13 @@ import sys
 import os
 import scipy
 import scipy.stats
-from scipy.stats import signaltonoise
+#from scipy.stats import signaltonoise
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from pandas.stats.moments import rolling_mean
 import argparse
-import ConfigParser
+import configparser
 import re
 
 def parseArguments():
@@ -50,7 +50,7 @@ def indexies(array, value):
    
 def createScanPairs(source, date):
     dataFileDir = "dataFiles/" + source + "/" + date
-    print dataFileDir
+    print (dataFileDir)
     
     dataFiles = list()
     for dataFile in os.listdir(dataFileDir):
@@ -62,7 +62,7 @@ def createScanPairs(source, date):
     i = 0
     j = 1
     
-    for k in range(0, len(dataFiles) - len(dataFiles) /2):
+    for k in range(0, int(len(dataFiles) - len(dataFiles) /2)):
         scanPairs.append((dataFiles[i], dataFiles[j])) 
         i = i + 2
         j = j + 2
@@ -214,7 +214,7 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
 
         #check indexies
         if index_2_2 - index_2_1!= index_1_2 - index_1_1:
-            print "befor correction", index_2_2 - index_2_1 + 1,  index_1_2 - index_1_1 + 1, [index_1_1, index_1_2], [index_2_1, index_2_2]
+            print ("befor correction", index_2_2 - index_2_1 + 1,  index_1_2 - index_1_1 + 1, [index_1_1, index_1_2], [index_2_1, index_2_2])
             if index_2_2 - index_2_1 + 1 > index_1_2:
                 index = np.abs(index_2_2 - index_2_1 + 1 - index_1_2) 
                 index_1_1 = (np.abs(xdata_1_f-frecquencyRange_1[0])).argmin()
@@ -229,10 +229,10 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
                 index_2_1 = (np.abs(xdata_1_f-frecquencyRange_2[0])).argmin() -index
                 index_2_2 = (np.abs(xdata_1_f-frecquencyRange_2[1])).argmin()
                 
-            print "after correction", index_2_2 - index_2_1,  index_1_2 - index_1_1, [index_1_1, index_1_2], [index_2_1, index_2_2]
+            print ("after correction", index_2_2 - index_2_1,  index_1_2 - index_1_1, [index_1_1, index_1_2], [index_2_1, index_2_2])
             
         else:
-            print "indexies correct", index_2_2 - index_2_1,  index_1_2 - index_1_1, [index_1_1, index_1_2], [index_2_1, index_2_2]
+            print ("indexies correct", index_2_2 - index_2_1,  index_1_2 - index_1_1, [index_1_1, index_1_2], [index_2_1, index_2_2])
           
         negativeRange_u1 = data_y_u1[index_1_1:index_1_2]
         positiveveRange_u1 = data_y_u1[index_2_1:index_2_2]
@@ -242,15 +242,15 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
                 
         result_u1 = (positiveveRange_u1 - negativeRange_u1)/2
         
-        print "total point count ", len( result_u1 )
+        print ("total point count ", len( result_u1 ))
         result_u9 = (positiveveRange_u9 - negativeRange_u9)/2
         
         x = np.linspace(0,maxFrequency/2, len(result_u1), dtype="float64").reshape(len(result_u1), 1)
         y_u1_results.append(result_u1)
         y_u9_results.append(result_u9)
         
-        ston = signaltonoise(result_u1)
-        print "signal vs noise ", ston
+        #ston = signaltonoise(result_u1)
+        #print ("signal vs noise ", ston)
         
         plt.figure("polarization u1 second step")
         plt.plot(x, result_u1)
@@ -345,7 +345,7 @@ def main():
     paircount = int(args.__dict__["paircount"])
     configFilePath = str(args.__dict__["config"])
     
-    config = ConfigParser.RawConfigParser()
+    config = configparser.RawConfigParser()
     config.read(configFilePath)
     dataFilesPath =  config.get('paths', "dataFilePath")
     badPointRange =  config.getint('parametrs', "badPointRange")

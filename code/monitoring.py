@@ -5,7 +5,7 @@ from matplotlib.dates import date2num
 from datetime import datetime
 import json
 import argparse
-import ConfigParser
+import configparser
 
 def parseArguments():
     # Create argument parser
@@ -31,7 +31,7 @@ def main():
     source = str(args.__dict__["source"])
      
     #Creating config parametrs
-    config = ConfigParser.RawConfigParser()
+    config = configparser.RawConfigParser()
     config.read(configFilePath)
     resultDir = config.get('paths', "resultFilePath")
     resultFileName = source + ".json"

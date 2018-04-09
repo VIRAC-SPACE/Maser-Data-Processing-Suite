@@ -46,22 +46,22 @@ if __name__=="__main__":
         experName = logFileName.split(".")[0][:-2]
         
         if experName in result:
-            print "Experiment " + experName + " already is processed"
+            print ("Experiment " + experName + " already is processed")
         
         else:
             scan_numbers = None
-            #try:
-            scan_numbers = ExperimentLogReader("logs/" + logFileName, prettyLogDir, []).getScansForSource(source_name) # find all scansg
-            #except:
-                #print("Unexpected error:", sys.exc_info()[0])
-                #print "Got Logreader Error"
+            try:
+                scan_numbers = ExperimentLogReader("logs/" + logFileName, prettyLogDir, []).getScansForSource(source_name) # find all scansg
+            except:
+                print("Unexpected error:", sys.exc_info()[0])
+                print ("Got Logreader Error")
                 
             if scan_numbers != None:
-                print scan_numbers
+                print (scan_numbers)
                 for scan in scan_numbers:
                     dataFile = experName + "_n" + scan + ".dat"
                     
-                    print "Log file is", logFileDir + logFileName, "Data file is", dataFile
-                    os.system("python2  " +  "code/plotAmplitudeFrequencies.py " + logFileName + " " + dataFile)
+                    print ("Log file is", logFileDir + logFileName, "Data file is", dataFile)
+                    os.system("python3  " +  "code/plotAmplitudeFrequencies.py " + logFileName + " " + dataFile)
                   
     sys.exit(0)

@@ -1,5 +1,6 @@
-import Tkinter
-import tkSimpleDialog
+# -*- coding: utf-8 -*-
+import tkinter
+from tkinter import simpledialog
 from decimal import Decimal
 
 class Scan():
@@ -69,9 +70,9 @@ class Scan():
                     try:
                         float(t)
                     except:
-                        root = Tkinter.Tk()
+                        root = tkinter.Tk()
                         root.withdraw()
-                        newT = tkSimpleDialog.askfloat("System temperature error", "Got " + t + " Expected number between 0 and 300", minvalue = 0, maxvalue = 300)
+                        newT = simpledialog.askfloat("System temperature error", "Got " + t + " Expected number between 0 and 300", minvalue = 0, maxvalue = 300)
                         self.manualyChangedSystemTemU1 = True
                         t = newT
                         root.destroy()
@@ -79,9 +80,9 @@ class Scan():
                             t = 0
                         
                     if float(t) < 0 or float(t) > 300:
-                        root = Tkinter.Tk()
+                        root = tkinter.Tk()
                         root.withdraw()
-                        newT = tkSimpleDialog.askfloat("System temperature error", "Got " + t + " Expected number between 0 and 300", minvalue = 0, maxvalue = 300)
+                        newT = simpledialog.askfloat("System temperature error", "Got " + t + " Expected number between 0 and 300", minvalue = 0, maxvalue = 300)
                         self.manualyChangedSystemTemU1 = True
                         t = newT
                         root.destroy()
@@ -95,9 +96,9 @@ class Scan():
                     try:
                         float(t)
                     except:
-                        root = Tkinter.Tk()
+                        root = tkinter.Tk()
                         root.withdraw()
-                        newT = tkSimpleDialog.askfloat("System temperature error", "Got " + t + " Expected number", minvalue = 0, maxvalue = 300)
+                        newT = simpledialog.askfloat("System temperature error", "Got " + t + " Expected number", minvalue = 0, maxvalue = 300)
                         self.manualyChangedSystemTemU9 = True
                         t = newT
                         root.destroy()
@@ -105,9 +106,9 @@ class Scan():
                             t = 0
                             
                     if float(t) < 0 or float(t) > 300:
-                        root = Tkinter.Tk()
+                        root = tkinter.Tk()
                         root.withdraw()
-                        newT = tkSimpleDialog.askfloat("System temperature error", "Got " + t + "Expected number", minvalue = 0, maxvalue = 300)
+                        newT = simpledialog.askfloat("System temperature error", "Got " + t + "Expected number", minvalue = 0, maxvalue = 300)
                         self.manualyChangedSystemTemU9 = True
                         t = newT
                         root.destroy()
@@ -121,9 +122,9 @@ class Scan():
                 try:
                     float(self.freqBBC1)
                 except:
-                    root = Tkinter.Tk()
+                    root = tkinter.Tk()
                     root.withdraw()
-                    newfreqBBC1 = tkSimpleDialog.askfloat("BBC error", "Got " + self.freqBBC1 + " Expected number", minvalue = 0)
+                    newfreqBBC1 = simpledialog.askfloat("BBC error", "Got " + self.freqBBC1 + " Expected number", minvalue = 0)
                     self.manualyChangedBBC1 = True
                     self.freqBBC1 = newfreqBBC1
                     root.destroy()
@@ -131,9 +132,9 @@ class Scan():
                         self.freqBBC1 = 0
                             
                 if float(self.freqBBC1) < 0:
-                    root = Tkinter.Tk()
+                    root = tkinter.Tk()
                     root.withdraw()
-                    newfreqBBC1 = tkSimpleDialog.askfloat("BBC error", "Got " + self.freqBBC1 + "Expected number", minvalue = 0)
+                    newfreqBBC1 = simpledialog.askfloat("BBC error", "Got " + self.freqBBC1 + "Expected number", minvalue = 0)
                     self.freqBBC1 = newfreqBBC1
                     root.destroy()
                     if self.freqBBC1 == "" or self.freqBBC1 == None:
@@ -144,9 +145,9 @@ class Scan():
                 try:
                     float(self.freqBBC2)
                 except:
-                    root = Tkinter.Tk()
+                    root = tkinter.Tk()
                     root.withdraw()
-                    newfreqBBC2 = tkSimpleDialog.askfloat("BBC error", "Got " + self.freqBBC2 + " Expected number", minvalue = 0)
+                    newfreqBBC2 = simpledialog.askfloat("BBC error", "Got " + self.freqBBC2 + " Expected number", minvalue = 0)
                     self.manualyChangedBBC2 = True
                     self.freqBBC2 = newfreqBBC2
                     root.destroy()
@@ -154,9 +155,9 @@ class Scan():
                         self.freqBBC2 = 0
                             
                 if float(self.freqBBC2) < 0:
-                    root = Tkinter.Tk()
+                    root = tkinter.Tk()
                     root.withdraw()
-                    newfreqBBC2 = tkSimpleDialog.askfloat("BBC error", "Got " + self.freqBBC2 + "Expected number", minvalue = 0)
+                    newfreqBBC2 = simpledialog.askfloat("BBC error", "Got " + self.freqBBC2 + "Expected number", minvalue = 0)
                     self.freqBBC2 = newfreqBBC2
                     root.destroy()
                     if self.freqBBC2 == "" or self.freqBBC2 == None:
@@ -169,9 +170,9 @@ class Scan():
                     try:
                         float(self.freqBBC1)
                     except:
-                        root = Tkinter.Tk()
+                        root = tkinter.Tk()
                         root.withdraw()
-                        newfreqBBC1 = tkSimpleDialog.askfloat("System temperature error", "Got " + self.freqBBC1 + " Expected number", minvalue = 0)
+                        newfreqBBC1 = simpledialog.askfloat("System temperature error", "Got " + self.freqBBC1 + " Expected number", minvalue = 0)
                         self.manualyChangedBBC1 = True
                         self.freqBBC1 = newfreqBBC1
                         root.destroy()
@@ -179,9 +180,9 @@ class Scan():
                             self.freqBBC1 = 0
                                 
                     if float(self.freqBBC1) < 0:
-                        root = Tkinter.Tk()
+                        root = tkinter.Tk()
                         root.withdraw()
-                        newfreqBBC1 = tkSimpleDialog.askfloat("System temperature error", "Got " + self.freqBBC1 + "Expected number", minvalue = 0)
+                        newfreqBBC1 = simpledialog.askfloat("System temperature error", "Got " + self.freqBBC1 + "Expected number", minvalue = 0)
                         self.manualyChangedBBC1 = True
                         self.freqBBC1 = newfreqBBC1
                         root.destroy()
@@ -195,9 +196,9 @@ class Scan():
                     try:
                         float(self.freqBBC2)
                     except:
-                        root = Tkinter.Tk()
+                        root = tkinter.Tk()
                         root.withdraw()
-                        newfreqBBC2 = tkSimpleDialog.askfloat("System temperature error", "Got " + self.freqBBC2 + " Expected number", minvalue = 0)
+                        newfreqBBC2 = simpledialog.askfloat("System temperature error", "Got " + self.freqBBC2 + " Expected number", minvalue = 0)
                         self.manualyChangedBBC2 = True
                         self.freqBBC2 = newfreqBBC2
                         root.destroy()
@@ -205,9 +206,9 @@ class Scan():
                             self.freqBBC2 = 0
                                 
                     if float(self.freqBBC2) < 0:
-                        root = Tkinter.Tk()
+                        root = tkinter.Tk()
                         root.withdraw()
-                        newfreqBBC2 = tkSimpleDialog.askfloat("System temperature error", "Got " + self.freqBBC2 + "Expected number", minvalue = 0)
+                        newfreqBBC2 = simpledialog.askfloat("System temperature error", "Got " + self.freqBBC2 + "Expected number", minvalue = 0)
                         self.manualyChangedBBC2 = True
                         self.freqBBC2 = newfreqBBC2
                         root.destroy()

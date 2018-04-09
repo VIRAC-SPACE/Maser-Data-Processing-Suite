@@ -41,7 +41,7 @@ class Plot():
         
     def plot(self, x, y, line, **options):
         self.graph.plot(x, y, line, **options)
-        self.graph.legend(loc=2)
+        self.graph.legend()
         
     def annotations(self, xvalues, yvalues):
         ax = self.figure.add_subplot(111)

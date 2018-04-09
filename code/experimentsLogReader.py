@@ -1,11 +1,12 @@
 #! /usr/bin/python
+# -*- coding: utf-8 -*-
 import os
 import sys
 import time
 import datetime
 import argparse
 import platform
-import ConfigParser
+import configparser
 
 from scan import Scan
     
@@ -66,15 +67,15 @@ class ExperimentLogReader():
             self.single = False
         
         try:
-            self.logfile = open(self.logs, "r")
+            #self.logfile = open(self.logs, "r")
             self.datafile = open(self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat", "w")
             
         except IOError as e:
-            print "IO Error",  e
+            print ("IO Error",  e)
             sys.exit(1)
         
         except IndexError as e:
-            print "Index Error",  e
+            print ("Index Error",  e)
             sys.exit(1)
             
         except:
@@ -86,43 +87,51 @@ class ExperimentLogReader():
             key = 0
             previousScan = 0
             
-            for line in self.logfile.readlines():
-            
-                if "location" in line:
-                    self.Location = line.split(";")[1].split(",")[1].strip()
-                    year = line.split(".")[0]
-                    dayNumber = line.split(".")[1]
-                    date = datetime.datetime(int(year), 1, 1) + datetime.timedelta(int(dayNumber) - 1)
-                    day = date.day
-                    monthNr = date.month
-                    month = datetime.date(1900, int(monthNr) , 1).strftime('%B')[0:3]
-                    
-                    self.dates = str(day).zfill(2) + " " + month + " " + str(year)
-                
-                elif "scan_name=no" in line:
-                    append = True 
-                    self.scan_name = line.split(":")[3].split(",")[0].split("=")[1][2:].lstrip("0")
-                    key = int(self.scan_name)
-                    
-                    if self.scan_name in self.scan_names:
-                        raise Exception("Two scans with same name " + self.scan_name)
+            with open(self.logs, 'rb') as contents:
+                lines = contents.readlines()
+                for line in lines:
+                    try:
+                        line = line.decode("utf-8")
+                    except:
+                        pass
+                        #print(line)
+                    else:
+
+                        if "location" in line:
+                            self.Location = line.split(";")[1].split(",")[1].strip()
+                            year = line.split(".")[0]
+                            dayNumber = line.split(".")[1]
+                            date = datetime.datetime(int(year), 1, 1) + datetime.timedelta(int(dayNumber) - 1)
+                            day = date.day
+                            monthNr = date.month
+                            month = datetime.date(1900, int(monthNr) , 1).strftime('%B')[0:3]
+                            
+                            self.dates = str(day).zfill(2) + " " + month + " " + str(year)
                         
-                    self.scan_names.append(self.scan_name)
-                    self.scanLines[key] = list()
-                    
-                    if  previousScan !=0 and previousScan +1 != key:
-                        print "Skipped scan ", previousScan + 1
+                        elif "scan_name=no" in line:
+                            append = True 
+                            self.scan_name = line.split(":")[3].split(",")[0].split("=")[1][2:].lstrip("0")
+                            key = int(self.scan_name)
+                            
+                            if self.scan_name in self.scan_names:
+                                raise Exception("Two scans with same name " + self.scan_name)
+                            
+                            self.scan_names.append(self.scan_name)
+                            self.scanLines[key] = list()
+                            
+                            if  previousScan !=0 and previousScan +1 != key:
+                                print ("Skipped scan ", previousScan + 1)
+                                
+                            previousScan = key
                         
-                    previousScan = key
-                
-                #Testing if line is not in header and it is not empty   
-                if len(line) != 0 and append:
-                    self.scanLines[key].append(line)
-                
-                #Testing if line is  in header and it is not empty    
-                elif len(line) != 0 and append==False:
-                    self.headerLines.append(line)
-                    
+                        #Testing if line is not in header and it is not empty   
+                        if len(line) != 0 and append:
+                            self.scanLines[key].append(line)
+                        
+                        #Testing if line is  in header and it is not empty    
+                        elif len(line) != 0 and append==False:
+                            self.headerLines.append(line)
+                        
             header = Scan(self.headerLines)
             header.getParametrs()
             header_source, header_sourceName, header_epoch, header_ra, header_dec, header_timeStart, header_timeStop, header_SystemtemperaturesForScan, header_freqBBC1, header_freqBBC2, header_loa, header_loc, header_clock = header.returnParametrs()
@@ -190,7 +199,7 @@ class ExperimentLogReader():
                 self.FreqStop.append(float(self.FreqBBC2s[f])  + float(self.locs[f]))
             
             #print(len(self.FreqStart), " ", len(self.scan_names), " ", len(self.FreqBBC1s), " ", len(self.FreqBBC2s))
-            self.logfile.close()
+            #self.logfile.close()
    
     def writeOutput(self):
         self.datafile.write("Start;Header;")
@@ -221,8 +230,8 @@ class ExperimentLogReader():
         
         self.datafile.write("End;Header;----------------------;")
         self.datafile.write("\n")
-    
         for scan in range (0, len(self.scan_names)):
+            
             self.datafile.write("Scan;" + self.scan_names[scan].zfill(2) + ";")
             self.datafile.write("\n")
         
@@ -337,7 +346,7 @@ def main():
     singleSourceExperiment = list(args.__dict__["source"])
     
     #Creating config parametrs
-    config = ConfigParser.RawConfigParser()
+    config = configparser.RawConfigParser()
     config.read(configFilePath)
     logPath = config.get('paths', "logPath")
     prettyLogsPath =  config.get('paths', "prettyLogsPath")

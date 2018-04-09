@@ -2,10 +2,10 @@
 import os
 import sys
 import numpy as np
-from Tkinter import *
-import Tkinter as tk
-import tkFont
-import tkMessageBox
+from tkinter import *
+import tkinter as tk
+from tkinter import font
+from tkinter import messagebox
 from time import strptime 
 import scipy.constants
 from astropy.modeling import fitting
@@ -15,7 +15,7 @@ from scipy.interpolate import UnivariateSpline
 import peakutils
 import json
 import argparse
-import ConfigParser
+import configparser
 
 from ploting import Plot
 from experimentsLogReader import ExperimentLogReader
@@ -84,8 +84,8 @@ class MaserPlot(Frame):
         
         #Data init
         Frame.__init__(self)
-        self.font = tkFont.Font(family="Times New Roman", size=20, weight=tkFont.BOLD)
-        self.font_2 = tkFont.Font(family="Times New Roman", size=10)
+        self.font = font.Font(family="Times New Roman", size=20, weight=font.BOLD)
+        self.font_2 = font.Font(family="Times New Roman", size=10)
         self.window = window
         self.xdata = xdata
         self.ydataU1= ydataU1
@@ -175,7 +175,7 @@ class MaserPlot(Frame):
         self.FWHMconstant = float(newValues[5])
         self.polynomialOrder = int(newValues[6])
         
-        tkMessageBox.showinfo("", "Data was changed")
+        messagebox.showinfo("", "Data was changed")
     
     def calibration(self):
         self.y1array = self.y1array * calibration(self.calibrationScale, self.Systemtemperature1u)
@@ -505,19 +505,19 @@ class MaserPlot(Frame):
                     lsrShift = Header[1]
                 elif vards == "MJD":
                     mjd = Header[1]
-                    print "MJD: \t", mjd
+                    print ("MJD: \t", mjd)
                 elif vards == "Vobs":
                     Vobs = Header[1]
-                    print "Vobs: \t", Vobs
+                    print ("Vobs: \t", Vobs)
                 elif vards == "AtFreq":
                     AtFreq = Header[1]
-                    print "At Freq: \t", AtFreq
+                    print ("At Freq: \t", AtFreq)
                 elif vards == "FreqShift":
                     FreqShift = Header[1]
-                    print "FreqShift: \t", FreqShift
+                    print ("FreqShift: \t", FreqShift)
                 elif vards == "VelTotal":
                     VelTotal = float(Header[1])
-                    print "VelTotal: \t", VelTotal
+                    print ("VelTotal: \t", VelTotal)
                 #Header +=1
     
         Vobs = float(Vobs)
@@ -713,7 +713,7 @@ def getData(dataFileName):
         data = np.fromfile(dataFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(dataFileName),5))
         
     except IOError as e:
-        print "IO Error",  e
+        print ("IO Error",  e)
         sys.exit(1)
             
     except:
@@ -738,7 +738,7 @@ def getLogs(logfileName, dataFileName, singleSourceExperiment, prettyLogsPath):
         scan = logs[scanNumber]
         
     except KeyError as e:
-        print "KeyError",  e
+        print ("KeyError",  e)
         sys.exit(1)
             
     except:
@@ -764,7 +764,7 @@ def main():
     singleSourceExperiment = list(args.__dict__["single"])
     
     #Creating config parametrs
-    config = ConfigParser.RawConfigParser()
+    config = configparser.RawConfigParser()
     config.read(configFilePath)
     logPath = config.get('paths', "logPath")
     prettyLogsPath =  config.get('paths', "prettyLogsPath")
@@ -779,7 +779,7 @@ def main():
         xdata, y1data, y2data, dataPoints = getData(dataFilesPath + dataFileName)
     
     except TypeError as e:
-        print"TypeError error:", e 
+        print ("TypeError error:", e)
         sys.exit(1)
          
     except:
