@@ -1,5 +1,4 @@
 #! /usr/bin/python
-import sys
 import matplotlib.pyplot  as plt
 from matplotlib.dates import date2num
 from datetime import datetime
@@ -110,7 +109,6 @@ def main():
     x = [date2num(date) for date in  dateList]
     
     Symbols =  ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
-    Color = ["r", "g", "b"]
     fig = plt.figure()
     graph = fig.add_subplot(111)
     for i in range(0, len(y_u1)):
@@ -124,4 +122,4 @@ def main():
 
 if __name__=="__main__":
     main()
-   
+    
