@@ -126,7 +126,7 @@ class ExperimentLogReader():
             header.getParametrs()
             header_source, header_sourceName, header_epoch, header_ra, header_dec, header_timeStart, header_timeStop, header_SystemtemperaturesForScan, header_freqBBC1, header_freqBBC2, header_loa, header_loc, header_clock = header.returnParametrs()
             
-            print header_source, header_sourceName, header_epoch, header_ra, header_dec
+            #print header_source, header_sourceName, header_epoch, header_ra, header_dec
             for scan in self.scanLines:
                 scanData = Scan(self.scanLines[scan])
                 self.scanList.append(scanData)

@@ -27,7 +27,7 @@ class Plot():
         self.figure = Figure(figsize=(self.fig_size_x,self.fig_size_y))
         self.graph = self.figure.add_subplot(111)
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.frame)
-        self.canvas.show()
+        self.canvas.draw()
         self.figure.set_canvas(self.canvas)
         self.canvas.get_tk_widget().pack(side=sides)
         self.graph.set_title(title,  y=1.08) 
@@ -57,7 +57,7 @@ class Plot():
         del  self.annotate
         
     def canvasShow(self):
-        self.canvas.show()
+        self.canvas.draw()
     
     def addPickEvent(self, callback):
         self.cid = self.canvas.mpl_connect('pick_event', callback)
