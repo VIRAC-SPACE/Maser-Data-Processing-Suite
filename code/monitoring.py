@@ -1,4 +1,5 @@
 #! /usr/bin/python
+import sys
 import matplotlib.pyplot  as plt
 from matplotlib.dates import date2num
 from datetime import datetime
@@ -119,6 +120,8 @@ def main():
     graph.set_xticklabels([date.strftime("%d %m %Y %H:%M:%S") for date in  dateList])
     plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", borderaxespad=0)
     plt.show()
+    
+    sys.exit(0)
 
 if __name__=="__main__":
     main()
