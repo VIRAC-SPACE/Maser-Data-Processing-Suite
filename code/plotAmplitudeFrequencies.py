@@ -71,6 +71,13 @@ def frame(parent, size, sides, **options):
     f=tk.Frame(parent, width=Width, height=Height, background="light goldenrod", **options)
     f.pack(side = sides)
     return (f)
+
+def indexies(array, value):
+    indexs = list()
+    for i in range(0, len(array)-1):
+        if array[i] == value:
+            indexs.append(i)
+    return indexs
     
 class MaserPlot(Frame):
     def __init__(self,  window, xdata, ydataU1, ydataU9, dataPoints, Systemtemperature1u, Systemtemperature9u, expername, source, location, scan, scanNumber, calibrationScales):
@@ -339,7 +346,7 @@ class MaserPlot(Frame):
         p = tuple(zip(xdata[ind], ydata[ind]))
         self.plot_3.plot(p[0][0], p[0][1], 'ro',  markersize=1,  picker=5)
         self.points_1u.append(p[0])
-        self.points_9u.append(p[0])
+        #self.points_9u.append(p[0])
         self.plot_3.canvasShow()
         
     def onpickU9(self, event):
@@ -350,7 +357,7 @@ class MaserPlot(Frame):
         p = tuple(zip(xdata[ind], ydata[ind]))
         self.plot_4.plot(p[0][0], p[0][1], 'ro', markersize=1, picker=5)
         self.points_9u.append(p[0])
-        self.points_1u.append(p[0])
+        #self.points_1u.append(p[0])
         self.plot_4.canvasShow()
         
     def onpick_maxU1(self, event):
@@ -435,6 +442,16 @@ class MaserPlot(Frame):
         
         print ("pirms dzesanas ", self.xarray_u9.shape[0])
         
+        bad_u1_indexies = list()
+        bad_u9_indexies = list()
+        
+        for bad in range(0, len(self.points_1u)):
+            bad_u1_indexies.append(indexies(self.xarray_u1, self.points_1u[bad][0]))
+        for bad in range(0, len(self.points_9u)):
+            bad_u9_indexies.append(indexies(self.xarray_u9, self.points_9u[bad][0]))
+            
+        bad_u1_indexies, bad_u9_indexies
+        
         for p_u1 in self.points_1u:
             self.xarray_u1 = np.delete(self.xarray_u1, self.xarray_u1[self.xarray_u1 == p_u1[0]])
             self.z1 = np.delete(self.z1, self.z1[self.z1 == p_u1[1]])
@@ -442,7 +459,15 @@ class MaserPlot(Frame):
         for p_u9 in self.points_9u:
             self.xarray_u9 = np.delete(self.xarray_u9, self.xarray_u9[self.xarray_u9 == p_u9[0]])
             self.z2 = np.delete(self.z2, self.z2[self.z2 == p_u9[1]])
-        
+            
+        for bad in range(0, len(bad_u9_indexies)):
+            self.xarray_u1 = np.delete(self.xarray_u1, self.xarray_u1[bad_u9_indexies[bad]])
+            self.z1 = np.delete(self.z1, self.xarray_u9[bad_u9_indexies[bad]])
+                                       
+        for bad in range(0, len(bad_u1_indexies)):
+            self.xarray_u9 = np.delete(self.xarray_u9, self.xarray_u9[bad_u1_indexies[bad]])
+            self.z2 = np.delete(self.z2, self.xarray_u9[bad_u1_indexies[bad]])
+                                       
         self.dataPoints_u1 = self.xarray_u1.shape[0]
         self.dataPoints_u9 = self.xarray_u9.shape[0]
         

@@ -67,7 +67,6 @@ class ExperimentLogReader():
         
         try:
             self.logfile = open(self.logs, "r")
-            print self.logs.split(".")
             self.datafile = open(self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat", "w")
             
         except IOError as e:
