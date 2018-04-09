@@ -20,7 +20,7 @@ if __name__=="__main__":
         sys.exit(1)
     
     source_name = sys.argv[1]
-    
+     
     #paths 
     logFileDir = "logs/"
     dataFileDir = "dataFiles/"
@@ -29,7 +29,7 @@ if __name__=="__main__":
     resultFileName = source_name + ".json"
     
     if os.path.isfile(resultDir + resultFileName):
-            pass
+        pass
     else:
         os.system("touch " + resultDir +  resultFileName)
             
@@ -50,10 +50,11 @@ if __name__=="__main__":
         
         else:
             scan_numbers = None
-            try:
-                scan_numbers = ExperimentLogReader(logFileDir + logFileName, prettyLogDir, False).getScansForSource(source_name) # find all scansg
-            except:
-                print "Got Logreader Error"
+            #try:
+            scan_numbers = ExperimentLogReader("logs/" + logFileName, prettyLogDir, []).getScansForSource(source_name) # find all scansg
+            #except:
+                #print("Unexpected error:", sys.exc_info()[0])
+                #print "Got Logreader Error"
                 
             if scan_numbers != None:
                 print scan_numbers
@@ -61,6 +62,6 @@ if __name__=="__main__":
                     dataFile = experName + "_n" + scan + ".dat"
                     
                     print "Log file is", logFileDir + logFileName, "Data file is", dataFile
-                    os.system("python2  " +  "code/plotAmplitudeFrequencies.py " + logFileName + " " + dataFileDir + dataFile)
+                    os.system("python2  " +  "code/plotAmplitudeFrequencies.py " + logFileName + " " + dataFile)
                   
     sys.exit(0)

@@ -339,6 +339,7 @@ class MaserPlot(Frame):
         p = tuple(zip(xdata[ind], ydata[ind]))
         self.plot_3.plot(p[0][0], p[0][1], 'ro',  markersize=1,  picker=5)
         self.points_1u.append(p[0])
+        self.points_9u.append(p[0])
         self.plot_3.canvasShow()
         
     def onpickU9(self, event):
@@ -349,6 +350,7 @@ class MaserPlot(Frame):
         p = tuple(zip(xdata[ind], ydata[ind]))
         self.plot_4.plot(p[0][0], p[0][1], 'ro', markersize=1, picker=5)
         self.points_9u.append(p[0])
+        self.points_1u.append(p[0])
         self.plot_4.canvasShow()
         
     def onpick_maxU1(self, event):

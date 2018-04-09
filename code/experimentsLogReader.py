@@ -29,10 +29,7 @@ def parseArguments():
     args = parser.parse_args()
 
     return args
-    
-def usage():
-    print ('Usage:   log file')
-    
+        
 class ExperimentLogReader():
     def __init__(self, logs, prettyLogs, singleSourceName=None):
         self.logs = logs
@@ -70,10 +67,15 @@ class ExperimentLogReader():
         
         try:
             self.logfile = open(self.logs, "r")
+            print self.logs.split(".")
             self.datafile = open(self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat", "w")
             
         except IOError as e:
             print "IO Error",  e
+            sys.exit(1)
+        
+        except IndexError as e:
+            print "Index Error",  e
             sys.exit(1)
             
         except:
@@ -190,7 +192,7 @@ class ExperimentLogReader():
             
             #print(len(self.FreqStart), " ", len(self.scan_names), " ", len(self.FreqBBC1s), " ", len(self.FreqBBC2s))
             self.logfile.close()
-           
+   
     def writeOutput(self):
         self.datafile.write("Start;Header;")
         self.datafile.write("\n")
