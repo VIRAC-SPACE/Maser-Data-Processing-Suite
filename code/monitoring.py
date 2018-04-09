@@ -4,21 +4,39 @@ import matplotlib.pyplot  as plt
 from matplotlib.dates import date2num
 from datetime import datetime
 import json
+import argparse
+import ConfigParser
 
-if __name__=="__main__":
-    
-    if len(sys.argv) < 1:
-        #usage()
-        sys.exit(1)
+def parseArguments():
+    # Create argument parser
+    parser = argparse.ArgumentParser(description='''Monitoring velocity amplitudes in time. ''',
+    epilog="""Monitor.""")
+
+    # Positional mandatory arguments
+    parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/config.cfg")
+    parser.add_argument("source", help="Source to monitor", type=str)
+
+    # Print version
+    parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 2.0')
+
+    # Parse arguments
+    args = parser.parse_args()
+
+    return args
+
+def main():
+    # Parse the arguments
+    args = parseArguments()
+    configFilePath = str(args.__dict__["config"])
+    source = str(args.__dict__["source"])
+     
+    #Creating config parametrs
+    config = ConfigParser.RawConfigParser()
+    config.read(configFilePath)
+    resultDir = config.get('paths', "resultFilePath")
+    resultFileName = source + ".json"
     
     months = {"Jan":"1", "Feb":"2", "Mar":"3", "Apr":"4", "May":"5", "Jun":"6", "Jul":"7", "Aug":"8", "Sep":"9", "Oct":"10", "Nov":"11", "Dec":"12"}
-    
-    source_name = sys.argv[1]  
-    logFileDir = "logs/"
-    dataFileDir = "dataFiles/"
-    prettyLogDir = "prettyLogs/"
-    resultDir = "results/"
-    resultFileName = source_name + ".json"
     
     with open(resultDir + resultFileName) as result_data:    
             result = json.load(result_data)
@@ -103,5 +121,7 @@ if __name__=="__main__":
     graph.set_xticklabels([date.strftime("%d %m %Y %H:%M:%S") for date in  dateList])
     plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", borderaxespad=0)
     plt.show()
-    
-    
+
+if __name__=="__main__":
+    main()
+   

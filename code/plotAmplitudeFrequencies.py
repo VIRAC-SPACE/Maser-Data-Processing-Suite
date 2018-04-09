@@ -22,7 +22,7 @@ from experimentsLogReader import ExperimentLogReader
 
 def parseArguments():
     # Create argument parser
-    parser = argparse.ArgumentParser(description='''Plots maser plota. ''',
+    parser = argparse.ArgumentParser(description='''Plots maser plot. ''',
     epilog="""Maser Ploter.""")
 
     # Positional mandatory arguments
