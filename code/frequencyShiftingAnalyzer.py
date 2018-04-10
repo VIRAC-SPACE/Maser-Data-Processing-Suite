@@ -7,9 +7,13 @@ from tkinter import *
 import tkinter as tk
 from tkinter import font
 import numpy as np
+import scipy.constants
 import pandas as pd
 from pandas.stats.moments import rolling_mean
+from time import strptime
+import re
 
+from experimentsLogReader import ExperimentLogReader
 from ploting import Plot
 
 def parseArguments():
@@ -19,13 +23,15 @@ def parseArguments():
     # Positional mandatory arguments
     parser.add_argument("source", help="Experiment source", type=str)
     parser.add_argument("date", help="Experiment date", type=str)
+    parser.add_argument("logFile", help="Experiment log file name", type=str)
 
     # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/config.cfg")
     parser.add_argument("-i", "--interval", help="Set interval", type=float, default=0.9)
     parser.add_argument("-t", "--threshold", help="Set threshold for outlier filter", type=float, default=1.0)
     parser.add_argument("-f", "--filter", help="Set filter default is True if filter is False bad data points is no removed", type=str, default="True")
-    parser.add_argument("-p", "--paircount", help="Set pair count", type=int, default=2)
+    parser.add_argument("-s", "--single", help="Set RA, DEC, Epoch, Source name", nargs="*", type=str, default=[])
+    # option -s example cepa 225617.90 620149.7 2000.0
 
     # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
@@ -66,8 +72,14 @@ def is_outlier(points, threshold):
 
     return modified_z_score < threshold
 
+def dopler(ObservedFrequency, velocityReceiver, f0):
+    c = scipy.constants.speed_of_light
+    #f0 = 6668519200 # Hz 
+    velocitySoure = (-((ObservedFrequency/f0)-1)*c + (velocityReceiver * 1000))/1000
+    return velocitySoure
+
 class Analyzer(Frame):
-    def __init__(self, window, source, date, filter, threshold, badPointRange, dataPath):
+    def __init__(self, window, source, date, filter, threshold, badPointRange, interval, dataPath, logs):
         Frame.__init__(self)
         self.window = window
         self.source = source
@@ -82,6 +94,11 @@ class Analyzer(Frame):
         self.font_2 = font.Font(family="Times New Roman", size=10)
         self.masterFrame = frame(self.window,(1000,1000), RIGHT)
         self.index = 0
+        self.interval = interval
+        self.totalResults_u1 = list()
+        self.totalResults_u9 = list()
+        self.logs = logs
+        self.f0 = 6668519200
         
         self.__UI__()
         
@@ -181,6 +198,49 @@ class Analyzer(Frame):
     
     def createNegativeAndPositiveSpike(self, array1, array2):
         return array1 - array2
+    
+    def createTotalResult(self, array_x, array_y, interval, maxFrequency):
+        if interval > maxFrequency/4.0:
+            raise Exception("Interval cannot be larger than 0.25 of frequency range ", "max interval " + str(maxFrequency/4.0))
+        
+        frecquencyRange_1 = (maxFrequency/4.0 - interval, maxFrequency/4.0  + interval) #Negative range
+        frecquencyRange_2 = (maxFrequency*(3.0/4.0) - interval, maxFrequency*(3.0/4.0) + interval) #positive range
+        
+        #Creating index
+        index_1_1 = (np.abs(array_x-frecquencyRange_1[0])).argmin()
+        index_1_2 = (np.abs(array_x-frecquencyRange_1[1])).argmin() 
+
+        index_2_1 = (np.abs(array_x-frecquencyRange_2[0])).argmin() 
+        index_2_2 = (np.abs(array_x-frecquencyRange_2[1])).argmin()
+        
+        #check indexies
+        if index_2_2 - index_2_1!= index_1_2 - index_1_1:
+            print ("befor correction", index_2_2 - index_2_1 + 1,  index_1_2 - index_1_1 + 1, [index_1_1, index_1_2], [index_2_1, index_2_2])
+            if index_2_2 - index_2_1 + 1 > index_1_2:
+                index = np.abs(index_2_2 - index_2_1 + 1 - index_1_2) 
+                index_1_1 = (np.abs(array_x-frecquencyRange_1[0])).argmin()
+                index_1_2 = (np.abs(array_x-frecquencyRange_1[1])).argmin() -1
+                index_2_1 = (np.abs(array_x-frecquencyRange_2[0])).argmin() + index
+                index_2_2 = (np.abs(array_x-frecquencyRange_2[1])).argmin() 
+                
+            elif index_2_2 - index_2_1 + 1 < index_1_2:
+                index = np.abs(index_2_2 - index_2_1 + 1 - index_1_2)
+                index_1_1 = (np.abs(array_x-frecquencyRange_1[0])).argmin()
+                index_1_2 = (np.abs(array_x-frecquencyRange_1[1])).argmin() +1
+                index_2_1 = (np.abs(array_x-frecquencyRange_2[0])).argmin() -index
+                index_2_2 = (np.abs(array_x-frecquencyRange_2[1])).argmin()
+                
+            print ("after correction", index_2_2 - index_2_1,  index_1_2 - index_1_1, [index_1_1, index_1_2], [index_2_1, index_2_2])
+            
+        else:
+            print ("indexies correct", index_2_2 - index_2_1,  index_1_2 - index_1_1, [index_1_1, index_1_2], [index_2_1, index_2_2])
+            
+            negativeRange = array_y[index_1_1:index_1_2]
+            positiveveRange = array_y[index_2_1:index_2_2]
+            
+            totalResult = (positiveveRange - negativeRange)/2
+            
+            return totalResult
         
     def nextPair(self):
         self.plot_start_u1.removePolt()
@@ -191,6 +251,10 @@ class Analyzer(Frame):
         self.plot_negative_positive_u9.removePolt()
         self.plotFrame_negative_positive.destroy()
         del self.plotFrame_negative_positive
+        self.plot_total_u1.removePolt()
+        self.plot_total_u9.removePolt()
+        self.plotFrame_total.destroy()
+        del self.plotFrame_total
         self.index = self.index + 1
         self.plotingPairs(self.index)
         
@@ -198,8 +262,10 @@ class Analyzer(Frame):
         self.window.title("Analyze for " + self.source + " " + self.date)
         
         pair = self.scanPairs[index]
-        self.plotFrame_start = frame(self.window,(1000,1000), TOP)
-        self.plotFrame_negative_positive = frame(self.window,(1000,1000), BOTTOM)
+        self.plotFrame_start = frame(self.window,(1000, 1000), TOP)
+        self.plotFrame_total = frame(self.window,(1000, 1000), BOTTOM)
+        self.plotFrame_negative_positive = frame(self.window,(1000, 1000), BOTTOM)
+        
         scanNUmber1 = self.dataFileDir + "/" + pair[0]
         scanNUmber2 = self.dataFileDir + "/" + pair[1]
             
@@ -209,12 +275,12 @@ class Analyzer(Frame):
         data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
             
         xdata_1_f, xdata_2_f, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
-        self.plot_start_u1 = Plot(5,5, self.masterFrame, self.plotFrame_start)
+        self.plot_start_u1 = Plot(4,4, self.masterFrame, self.plotFrame_start)
         self.plot_start_u1.creatPlot(None, 'Frequency Mhz', 'Amplitude', "u1 Polarization")
         self.plot_start_u1.plot(xdata_1_f, ydata_1_u1, 'b', label=pair[0])
         self.plot_start_u1.plot(xdata_1_f, ydata_2_u1, 'r', label=pair[1])
             
-        self.plot_start_u9 = Plot(5,5, self.masterFrame, self.plotFrame_start)
+        self.plot_start_u9 = Plot(4,4, self.masterFrame, self.plotFrame_start)
         self.plot_start_u9.creatPlot(None, 'Frequency Mhz', 'Amplitude', "u9 Polarization")
         self.plot_start_u9.plot(xdata_2_f, ydata_1_u9, 'b', label=pair[0])
         self.plot_start_u9.plot(xdata_2_f, ydata_2_u9, 'r', label=pair[1])
@@ -222,16 +288,97 @@ class Analyzer(Frame):
         data_u1 = self.createNegativeAndPositiveSpike(ydata_1_u1, ydata_2_u1)
         data_u9 = self.createNegativeAndPositiveSpike(ydata_1_u9, ydata_2_u9)
         
-        self.plot_negative_positive_u1 = Plot(5,5, self.masterFrame, self.plotFrame_negative_positive)
-        self.plot_negative_positive_u1.creatPlot(None, 'Frequency Mhz', 'Amplitude', "u1 Polarization")
+        self.plot_negative_positive_u1 = Plot(4,4, self.masterFrame, self.plotFrame_negative_positive)
+        self.plot_negative_positive_u1.creatPlot(None, 'Frequency Mhz', 'Amplitude', None)
         self.plot_negative_positive_u1.plot(xdata_1_f, data_u1, 'b', label=pair[0] +  "-" + pair[1])
         
-        self.plot_negative_positive_u9 = Plot(5,5, self.masterFrame, self.plotFrame_negative_positive)
-        self.plot_negative_positive_u9.creatPlot(None, 'Frequency Mhz', 'Amplitude', "u9 Polarization")
+        self.plot_negative_positive_u9 = Plot(4,4, self.masterFrame, self.plotFrame_negative_positive)
+        self.plot_negative_positive_u9.creatPlot(None, 'Frequency Mhz', 'Amplitude', None)
         self.plot_negative_positive_u9.plot(xdata_1_f, data_u9, 'b', label=pair[0] +  "-" + pair[1])
+        
+        maxFrequency = np.max(xdata_1_f)
+        total_u1 = self.createTotalResult(xdata_1_f, data_u1, self.interval, maxFrequency)
+        total_u9 = self.createTotalResult(xdata_1_f, data_u9, self.interval, maxFrequency)
+        self.x = np.linspace(0,maxFrequency/2, len(total_u1), dtype="float64").reshape(len(total_u1), 1)
+        
+        self.totalResults_u1.append(total_u1)
+        self.totalResults_u9.append(total_u9)
+        
+        self.plot_total_u1 = Plot(4,4, self.masterFrame, self.plotFrame_total)
+        self.plot_total_u1.creatPlot(None, 'Frequency Mhz', 'Amplitude', None)
+        self.plot_total_u1.plot(self.x, total_u1, 'b')
+        
+        self.plot_total_u9 = Plot(4,4, self.masterFrame, self.plotFrame_total)
+        self.plot_total_u9.creatPlot(None, 'Frequency Mhz', 'Amplitude', None)
+        self.plot_total_u9.plot(self.x, total_u9, 'b')
          
         if index == self.datPairsCount -1:
             self.nextPairButton.destroy()
+            
+    def plotTotalResults(self):
+        velocitys_avg = np.zeros(self.totalResults_u1[0].shape)
+        y_u1_avg = np.zeros(self.totalResults_u1[0].shape)
+        y_u9_avg = np.zeros(self.totalResults_u9[0].shape)
+        
+        for p in range(0,  len(self.datPairsCount)):
+            scan_number = int(re.split("([0-9]+)", self.scanPairs[p][0])[-2])
+            scan = self.log[str(scan_number)]
+            
+            timeStr = scan['startTime'].replace(":", " ")
+            dateStrList = scan['dates'].split()
+            dateStrList[1] = strptime(dateStrList[1],'%b').tm_mon
+            dateStr = str(dateStrList[2]) + " " + str(dateStrList[1]) + " " + str(dateStrList[0])
+            RaStr = " ".join(scan["Ra"])
+            DecStr = " ".join(scan["Dec"])
+            FreqStart = scan['FreqStart']
+            dopsetPar= dateStr + " " + timeStr + " " + RaStr + " " + DecStr
+            os.system("code/dopsetpy_v1.5 " + dopsetPar)
+        
+            # dopsetpy parametru nolasisana
+            with open('lsrShift.dat') as openfileobject:
+                for line in openfileobject:
+                    Header = line.split(';')
+                    vards = Header[0]
+                    if vards == "Date":
+                        dateStr = Header[1]
+                    elif vards == "Time":
+                        laiks = Header[1]
+                    elif vards == "RA":
+                        RaStr = Header[1]
+                    elif vards == "DEC":
+                        DecStr = Header[1]
+                    elif vards == "Source":
+                        Source = Header[1]
+                    elif vards == "LSRshift":
+                        lsrShift = Header[1]
+                    elif vards == "MJD":
+                        mjd = Header[1]
+                        print ("MJD: \t", mjd)
+                    elif vards == "Vobs":
+                        Vobs = Header[1]
+                        print ("Vobs: \t", Vobs)
+                    elif vards == "AtFreq":
+                        AtFreq = Header[1]
+                        print ("At Freq: \t", AtFreq)
+                    elif vards == "FreqShift":
+                        FreqShift = Header[1]
+                        print ("FreqShift: \t", FreqShift)
+                    elif vards == "VelTotal":
+                        VelTotal = float(Header[1])
+                        print ("VelTotal: \t", VelTotal)
+                    #Header +=1
+        
+            Vobs = float(Vobs)
+            lsrCorr = float(lsrShift)*1.e6 # for MHz 
+            
+            velocitys = dopler((self.x + FreqStart) * (10 ** 6), VelTotal, self.f0)
+            y_u1_avg =  y_u1_avg + self.totalResults_u1[p]
+            y_u9_avg =  y_u9_avg + self.totalResults_u9[p]
+            velocitys_avg = velocitys_avg / velocitys
+        
+        velocitys_avg =  velocitys_avg/len(self.totalResults_u1)
+        y_u1_avg = y_u1_avg/len(self.totalResults_u1)
+        y_u9_avg = y_u9_avg/len(self.totalResults_u9)
         
     def __UI__(self):
         if self.index != self.datPairsCount -1: # cheking if there is not one pair
@@ -247,16 +394,19 @@ def main():
     args = parseArguments()
     source = str(args.__dict__["source"])
     date = str(args.__dict__["date"])
+    logFile = str(args.__dict__["logFile"])
     interval = float(args.__dict__["interval"])
     threshold = float(args.__dict__["threshold"])
     filter = str(args.__dict__["filter"])
-    paircount = int(args.__dict__["paircount"])
+    singleSourceExperiment = list(args.__dict__["single"])
     configFilePath = str(args.__dict__["config"])
     
     config = configparser.RawConfigParser()
     config.read(configFilePath)
     dataFilesPath =  config.get('paths', "dataFilePath")
+    prettyLogsPath =  config.get('paths', "prettyLogsPath")
     badPointRange =  config.getint('parametrs', "badPointRange")
+    logs  = ExperimentLogReader(logFile, prettyLogsPath, singleSourceExperiment).getLogs()
     
     if filter == "True" or filter == "true":
         filtering = True
@@ -267,15 +417,12 @@ def main():
         raise Exception("Interval cannot be negative or zero")
     
     if threshold <= 0.0:
-        raise Exception("Threshold cannot be negative or zero")
-    
-    if  paircount% 2 !=0:
-        raise Exception("Paircount must Even be " + "got " + str(paircount))
+        raise Exception("Threshold cannot be negative or zero")   
     
     #Create App
     window = tk.Tk()
     window.configure(background='light goldenrod')
-    ploting = Analyzer(window, source, date, filtering, threshold, badPointRange, dataFilesPath)
+    ploting = Analyzer(window, source, date, filtering, threshold, badPointRange, interval, dataFilesPath, logs)
     img = tk.Image("photo", file="viraclogo.png")
     window.call('wm','iconphoto', window._w,img)
         
@@ -285,3 +432,4 @@ def main():
 
 if __name__=="__main__":
     main()
+    

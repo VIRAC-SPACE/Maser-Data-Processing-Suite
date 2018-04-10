@@ -30,7 +30,8 @@ class Plot():
         self.canvas.draw()
         self.figure.set_canvas(self.canvas)
         self.canvas.get_tk_widget().pack(side=sides)
-        self.graph.set_title(title,  y=1.08) 
+        if title != None:
+            self.graph.set_title(title,  y=1.08) 
                 
         self.toolbar = tkagg.NavigationToolbar2TkAgg(self.canvas, self.window)
         self.toolbar.update()
