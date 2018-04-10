@@ -80,7 +80,7 @@ class Analyzer(Frame):
         self.datPairsCount = len(self.scanPairs)
         self.font = font.Font(family="Times New Roman", size=20, weight=font.BOLD)
         self.font_2 = font.Font(family="Times New Roman", size=10)
-        self.masterFrame = frame(self.window,(1000,1000), None)
+        self.masterFrame = frame(self.window,(1000,1000), RIGHT)
         self.index = 0
         
         self.__UI__()
@@ -178,20 +178,28 @@ class Analyzer(Frame):
             ydata_2_u9 = data2[:, [2]]
             
             return (xdata_1_f, xdata_2_f, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9)
+    
+    def createNegativeAndPositiveSpike(self, array1, array2):
+        return array1 - array2
         
     def nextPair(self):
         self.plot_start_u1.removePolt()
         self.plot_start_u9.removePolt()
-        self.plotFrame.destroy()
-        del self.plotFrame
+        self.plotFrame_start.destroy()
+        del self.plotFrame_start
+        self.plot_negative_positive_u1.removePolt()
+        self.plot_negative_positive_u9.removePolt()
+        self.plotFrame_negative_positive.destroy()
+        del self.plotFrame_negative_positive
         self.index = self.index + 1
-        self.plotingInitialPairs(self.index)
+        self.plotingPairs(self.index)
         
-    def plotingInitialPairs(self, index):
-        self.window.title("After correlation")
+    def plotingPairs(self, index):
+        self.window.title("Analyze for " + self.source + " " + self.date)
         
         pair = self.scanPairs[index]
-        self.plotFrame = frame(self.window,(1000,1000), LEFT)
+        self.plotFrame_start = frame(self.window,(1000,1000), TOP)
+        self.plotFrame_negative_positive = frame(self.window,(1000,1000), BOTTOM)
         scanNUmber1 = self.dataFileDir + "/" + pair[0]
         scanNUmber2 = self.dataFileDir + "/" + pair[1]
             
@@ -201,25 +209,36 @@ class Analyzer(Frame):
         data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
             
         xdata_1_f, xdata_2_f, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
-        self.plot_start_u1 = Plot(5,5, self.masterFrame, self.plotFrame)
+        self.plot_start_u1 = Plot(5,5, self.masterFrame, self.plotFrame_start)
         self.plot_start_u1.creatPlot(None, 'Frequency Mhz', 'Amplitude', "u1 Polarization")
         self.plot_start_u1.plot(xdata_1_f, ydata_1_u1, 'b', label=pair[0])
         self.plot_start_u1.plot(xdata_1_f, ydata_2_u1, 'r', label=pair[1])
             
-        self.plot_start_u9 = Plot(5,5, self.masterFrame, self.plotFrame)
+        self.plot_start_u9 = Plot(5,5, self.masterFrame, self.plotFrame_start)
         self.plot_start_u9.creatPlot(None, 'Frequency Mhz', 'Amplitude', "u9 Polarization")
         self.plot_start_u9.plot(xdata_2_f, ydata_1_u9, 'b', label=pair[0])
-        self.plot_start_u9.plot(xdata_2_f, ydata_2_u9, 'r', label=pair[1]) 
+        self.plot_start_u9.plot(xdata_2_f, ydata_2_u9, 'r', label=pair[1])
         
+        data_u1 = self.createNegativeAndPositiveSpike(ydata_1_u1, ydata_2_u1)
+        data_u9 = self.createNegativeAndPositiveSpike(ydata_1_u9, ydata_2_u9)
+        
+        self.plot_negative_positive_u1 = Plot(5,5, self.masterFrame, self.plotFrame_negative_positive)
+        self.plot_negative_positive_u1.creatPlot(None, 'Frequency Mhz', 'Amplitude', "u1 Polarization")
+        self.plot_negative_positive_u1.plot(xdata_1_f, data_u1, 'b', label=pair[0] +  "-" + pair[1])
+        
+        self.plot_negative_positive_u9 = Plot(5,5, self.masterFrame, self.plotFrame_negative_positive)
+        self.plot_negative_positive_u9.creatPlot(None, 'Frequency Mhz', 'Amplitude', "u9 Polarization")
+        self.plot_negative_positive_u9.plot(xdata_1_f, data_u9, 'b', label=pair[0] +  "-" + pair[1])
+         
         if index == self.datPairsCount -1:
             self.nextPairButton.destroy()
         
     def __UI__(self):
-        if self.index != self.datPairsCount -1:
+        if self.index != self.datPairsCount -1: # cheking if there is not one pair
             self.nextPairButton = Button (self.masterFrame, text="Next pair", command=self.nextPair, activebackground="Blue", background="Blue", font=self.font)
             self.nextPairButton.pack()
             
-        self.plotingInitialPairs(self.index)
+        self.plotingPairs(self.index)
         
     def _quit(self):
         self.window.destroy()
