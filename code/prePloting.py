@@ -1,9 +1,6 @@
 #! /usr/bin/python
 import sys
 import os
-import scipy
-import scipy.stats
-#from scipy.stats import signaltonoise
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -47,6 +44,13 @@ def indexies(array, value):
         if array[i] == value:
             indexs.append(i)
     return indexs
+
+def STON(array):
+    std = np.std(array) 
+    max = np.max(array)
+    
+    ston = max/(std*3)
+    return ston
    
 def createScanPairs(source, date):
     dataFileDir = "dataFiles/" + source + "/" + date
@@ -84,6 +88,9 @@ def is_outlier(points, threshold):
 def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircount, dataFilesPath, badPointRange):
     y_u1_results = list()
     y_u9_results = list()
+    ston_u1_list = list()
+    ston_u9_list = list()
+    ston_avg_list = list()
     datPairsCount = len(scanPairs)
     
     filtering = True
@@ -249,8 +256,16 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
         y_u1_results.append(result_u1)
         y_u9_results.append(result_u9)
         
-        #ston = signaltonoise(result_u1)
-        #print ("signal vs noise ", ston)
+        ston_u1 = STON(result_u1)
+        ston_u9 = STON(result_u9)
+        ston_avg = STON(((result_u1 + result_u9)/2))
+        ston_u1_list.append(ston_u1)
+        ston_u9_list.append(ston_u9)
+        ston_avg_list.append(ston_avg)
+
+        print ("signal vs noise polarization u1", ston_u1)
+        print ("signal vs noise polarization u9", ston_u9)
+        print ("signal vs noise polarization AVG", ston_avg)
         
         plt.figure("polarization u1 second step")
         plt.plot(x, result_u1)
@@ -295,11 +310,21 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
     elif paircount == 2:
         
         i = 0
+        signal_to_noise_x_list = list()
         for output in range(0, len(y_u1_results)):
             scan_number = int(re.split("([0-9]+)", scanPairs[i][0])[-2])
             totalResults = np.concatenate((x, y_u1_results[output], y_u9_results[output], dummyData, dummyData), axis=1)
             np.savetxt(dataFilesPath + source + date.replace(".", "_")  +"_k_" + str(output) + "_n" + str(scan_number) + ".dat", totalResults)
-            i = i + 1   
+            i = i + 1
+            signal_to_noise_x_list.append(output)  
+            
+        plt.figure("Signal to Noise")
+        plt.plot(signal_to_noise_x_list, ston_u1_list, "*r", label="polarization u1")
+        plt.plot(signal_to_noise_x_list, ston_u9_list, "og", label="polarization u9")
+        plt.plot(signal_to_noise_x_list, ston_avg_list, "vb", label="polarization AVG")
+        plt.grid(True)
+        plt.legend()
+        plt.show() 
     else:
         pairNumber = 0
         check = 0
@@ -334,7 +359,9 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
                 
                 pairNumber = 0
             i = i + 1       
-                
+         
+        
+              
 def main():
     args = parseArguments()
     source = str(args.__dict__["source"])
