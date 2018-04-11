@@ -333,12 +333,12 @@ class Analyzer(Frame):
         ydata_2_u9 = ydata_2_u9 * calibration(self.calibrationScale, tsys_u9_2)
         
         self.plot_start_u1 = Plot(4,4, self.masterFrame, self.plotFrame_start)
-        self.plot_start_u1.creatPlot(None, 'Frequency Mhz', 'Amplitude', "u1 Polarization")
+        self.plot_start_u1.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', "u1 Polarization")
         self.plot_start_u1.plot(xdata_1_f, ydata_1_u1, 'b', label=pair[0])
         self.plot_start_u1.plot(xdata_1_f, ydata_2_u1, 'r', label=pair[1])
             
         self.plot_start_u9 = Plot(4,4, self.masterFrame, self.plotFrame_start)
-        self.plot_start_u9.creatPlot(None, 'Frequency Mhz', 'Amplitude', "u9 Polarization")
+        self.plot_start_u9.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', "u9 Polarization")
         self.plot_start_u9.plot(xdata_2_f, ydata_1_u9, 'b', label=pair[0])
         self.plot_start_u9.plot(xdata_2_f, ydata_2_u9, 'r', label=pair[1])
         
@@ -346,11 +346,11 @@ class Analyzer(Frame):
         data_u9 = self.createNegativeAndPositiveSpike(ydata_1_u9, ydata_2_u9)
         
         self.plot_negative_positive_u1 = Plot(4,4, self.masterFrame, self.plotFrame_negative_positive)
-        self.plot_negative_positive_u1.creatPlot(None, 'Frequency Mhz', 'Amplitude', None)
+        self.plot_negative_positive_u1.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', None)
         self.plot_negative_positive_u1.plot(xdata_1_f, data_u1, 'b', label=pair[0] +  "-" + pair[1])
         
         self.plot_negative_positive_u9 = Plot(4,4, self.masterFrame, self.plotFrame_negative_positive)
-        self.plot_negative_positive_u9.creatPlot(None, 'Frequency Mhz', 'Amplitude', None)
+        self.plot_negative_positive_u9.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', None)
         self.plot_negative_positive_u9.plot(xdata_1_f, data_u9, 'b', label=pair[0] +  "-" + pair[1])
         
         maxFrequency = np.max(xdata_1_f)
@@ -362,11 +362,11 @@ class Analyzer(Frame):
         self.totalResults_u9.append(total_u9)
         
         self.plot_total_u1 = Plot(4,4, self.masterFrame, self.plotFrame_total)
-        self.plot_total_u1.creatPlot(None, 'Frequency Mhz', 'Amplitude', None)
+        self.plot_total_u1.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', None)
         self.plot_total_u1.plot(self.x, total_u1, 'b')
         
         self.plot_total_u9 = Plot(4,4, self.masterFrame, self.plotFrame_total)
-        self.plot_total_u9.creatPlot(None, 'Frequency Mhz', 'Amplitude', None)
+        self.plot_total_u9.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', None)
         self.plot_total_u9.plot(self.x, total_u9, 'b')
         
         ston_u1 = STON(total_u1)
@@ -472,11 +472,11 @@ class Analyzer(Frame):
         self.plotFrame_STON = frame(self.window,(1000, 1000), BOTTOM)
         
         self.plot_velocity_u1 = Plot(5,5, self.masterFrame, self.plotFrame_velocity)
-        self.plot_velocity_u1.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Amplitude', "u1 Polarization")
+        self.plot_velocity_u1.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization")
         self.plot_velocity_u1.plot(velocitys_avg, y_u1_avg, 'b')
         
         self.plot_velocity_u9 = Plot(5,5, self.masterFrame, self.plotFrame_velocity)
-        self.plot_velocity_u9.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Amplitude', "u9 Polarization")
+        self.plot_velocity_u9.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization")
         self.plot_velocity_u9.plot(velocitys_avg, y_u9_avg, 'b')
         
         ston_x = np.arange(0, len(self.STON_list_u1))
