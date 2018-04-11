@@ -354,6 +354,8 @@ class Analyzer(Frame):
         del self.plotFrame_start
         del self.plotFrame_total
         del self.plotFrame_negative_positive
+        self.totalResultButton.destroy()
+        del self.totalResultButton
         
         velocitys_avg = np.zeros(self.totalResults_u1[0].shape)
         y_u1_avg = np.zeros(self.totalResults_u1[0].shape)
@@ -422,16 +424,16 @@ class Analyzer(Frame):
         self.plotFrame_velocity = frame(self.window,(1000, 1000), TOP)
         self.plotFrame_STON = frame(self.window,(1000, 1000), BOTTOM)
         
-        self.plot_velocity_u1 = Plot(4,4, self.masterFrame, self.plotFrame_velocity)
+        self.plot_velocity_u1 = Plot(5,5, self.masterFrame, self.plotFrame_velocity)
         self.plot_velocity_u1.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Amplitude', "u1 Polarization")
         self.plot_velocity_u1.plot(velocitys_avg, y_u1_avg, 'b')
         
-        self.plot_velocity_u9 = Plot(4,4, self.masterFrame, self.plotFrame_velocity)
+        self.plot_velocity_u9 = Plot(5,5, self.masterFrame, self.plotFrame_velocity)
         self.plot_velocity_u9.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Amplitude', "u9 Polarization")
         self.plot_velocity_u9.plot(velocitys_avg, y_u9_avg, 'b')
         
         ston_x = np.arange(0, len(self.STON_list_u1))
-        self.plot_STON = Plot(4,4, self.masterFrame, self.plotFrame_STON)
+        self.plot_STON = Plot(5,5, self.masterFrame, self.plotFrame_STON)
         self.plot_STON.creatPlot(None, 'Pair', 'Ratio', "Signal to Noise")
         self.plot_STON.plot(ston_x, self.STON_list_u1, '*r', label="u1 Polarization")
         self.plot_STON.plot(ston_x, self.STON_list_u9, 'og', label="u9 Polarization")
