@@ -359,9 +359,7 @@ def PlotScanPairs(scanPairs, source, date, interval, threshold, filter, paircoun
                 
                 pairNumber = 0
             i = i + 1       
-         
-        
-              
+                   
 def main():
     args = parseArguments()
     source = str(args.__dict__["source"])
