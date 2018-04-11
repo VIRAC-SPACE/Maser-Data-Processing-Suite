@@ -99,7 +99,8 @@ class Analyzer(Frame):
         self.totalResults_u9 = list()
         self.logs = logs
         self.f0 = 6668519200
-        
+    
+        self.window.title("Analyze for " + self.source + " " + self.date)
         self.__UI__()
         
     def createScanPairs(self):
@@ -259,8 +260,7 @@ class Analyzer(Frame):
         self.plotingPairs(self.index)
         
     def plotingPairs(self, index):
-        self.window.title("Analyze for " + self.source + " " + self.date)
-        
+    
         pair = self.scanPairs[index]
         self.plotFrame_start = frame(self.window,(1000, 1000), TOP)
         self.plotFrame_total = frame(self.window,(1000, 1000), BOTTOM)
@@ -314,15 +314,36 @@ class Analyzer(Frame):
          
         if index == self.datPairsCount -1:
             self.nextPairButton.destroy()
+            self.totalResultButton = Button (self.masterFrame, text="Move to total results", command=self.plotTotalResults, activebackground="Blue", background="Blue", font=self.font)
+            self.totalResultButton.pack()
             
     def plotTotalResults(self):
+        self.plot_start_u1.removePolt()
+        self.plot_start_u9.removePolt()
+        self.plot_negative_positive_u1.removePolt()
+        self.plot_negative_positive_u9.removePolt()
+        self.plot_total_u1.removePolt()
+        self.plot_total_u9.removePolt()
+        del self.plot_start_u1
+        del self.plot_start_u9
+        del self.plot_negative_positive_u1
+        del self.plot_negative_positive_u9
+        del self.plot_total_u1
+        del self.plot_total_u9
+        self.plotFrame_start.destroy()
+        self.plotFrame_total.destroy()
+        self.plotFrame_negative_positive.destroy()
+        del self.plotFrame_start
+        del self.plotFrame_total
+        del self.plotFrame_negative_positive
+        
         velocitys_avg = np.zeros(self.totalResults_u1[0].shape)
         y_u1_avg = np.zeros(self.totalResults_u1[0].shape)
         y_u9_avg = np.zeros(self.totalResults_u9[0].shape)
         
-        for p in range(0,  len(self.datPairsCount)):
+        for p in range(0,  self.datPairsCount):
             scan_number = int(re.split("([0-9]+)", self.scanPairs[p][0])[-2])
-            scan = self.log[str(scan_number)]
+            scan = self.logs[str(scan_number)]
             
             timeStr = scan['startTime'].replace(":", " ")
             dateStrList = scan['dates'].split()
@@ -374,11 +395,20 @@ class Analyzer(Frame):
             velocitys = dopler((self.x + FreqStart) * (10 ** 6), VelTotal, self.f0)
             y_u1_avg =  y_u1_avg + self.totalResults_u1[p]
             y_u9_avg =  y_u9_avg + self.totalResults_u9[p]
-            velocitys_avg = velocitys_avg / velocitys
+            velocitys_avg = velocitys_avg + velocitys
         
         velocitys_avg =  velocitys_avg/len(self.totalResults_u1)
         y_u1_avg = y_u1_avg/len(self.totalResults_u1)
         y_u9_avg = y_u9_avg/len(self.totalResults_u9)
+        
+        self.plotFrame_velocity = frame(self.window,(1000, 1000), TOP)
+        self.plot_velocity_u1 = Plot(4,4, self.masterFrame, self.plotFrame_velocity)
+        self.plot_velocity_u1.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Amplitude', "u1 Polarization")
+        self.plot_velocity_u1.plot(velocitys_avg, y_u1_avg, 'b')
+        
+        self.plot_velocity_u9 = Plot(4,4, self.masterFrame, self.plotFrame_velocity)
+        self.plot_velocity_u9.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Amplitude', "u9 Polarization")
+        self.plot_velocity_u9.plot(velocitys_avg, y_u9_avg, 'b')
         
     def __UI__(self):
         if self.index != self.datPairsCount -1: # cheking if there is not one pair
@@ -405,8 +435,9 @@ def main():
     config.read(configFilePath)
     dataFilesPath =  config.get('paths', "dataFilePath")
     prettyLogsPath =  config.get('paths', "prettyLogsPath")
+    logPath = config.get('paths', "logPath")
     badPointRange =  config.getint('parametrs', "badPointRange")
-    logs  = ExperimentLogReader(logFile, prettyLogsPath, singleSourceExperiment).getLogs()
+    logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, singleSourceExperiment).getLogs()
     
     if filter == "True" or filter == "true":
         filtering = True
