@@ -95,6 +95,7 @@ class Analyzer(Frame):
         self.badPointRange = badPointRange
         self.date = date
         self.dataFileDir = dataPath + self.source + "/" + self.date
+        self.dataFilesPath = dataPath
         self.scanPairs = self.createScanPairs()
         self.datPairsCount = len(self.scanPairs)
         self.font = font.Font(family="Times New Roman", size=20, weight=font.BOLD)
@@ -438,6 +439,9 @@ class Analyzer(Frame):
         self.plot_STON.plot(ston_x, self.STON_list_u1, '*r', label="u1 Polarization")
         self.plot_STON.plot(ston_x, self.STON_list_u9, 'og', label="u9 Polarization")
         self.plot_STON.plot(ston_x, self.STON_list_AVG, 'vb', label="AVG Polarization")
+        
+        totalResults = np.concatenate((velocitys_avg, y_u1_avg, y_u9_avg), axis=1)
+        np.savetxt(self.dataFilesPath + self.source + self.date.replace(".", "_")  + ".dat", totalResults)
         
     def __UI__(self):
         if self.index != self.datPairsCount -1: # cheking if there is not one pair
