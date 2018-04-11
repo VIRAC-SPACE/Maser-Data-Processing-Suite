@@ -78,6 +78,13 @@ def dopler(ObservedFrequency, velocityReceiver, f0):
     velocitySoure = (-((ObservedFrequency/f0)-1)*c + (velocityReceiver * 1000))/1000
     return velocitySoure
 
+def STON(array):
+    std = np.std(array) 
+    max = np.max(array)
+    
+    ston = max/(std*3)
+    return ston
+
 class Analyzer(Frame):
     def __init__(self, window, source, date, filter, threshold, badPointRange, interval, dataPath, logs):
         Frame.__init__(self)
@@ -97,6 +104,9 @@ class Analyzer(Frame):
         self.interval = interval
         self.totalResults_u1 = list()
         self.totalResults_u9 = list()
+        self.STON_list_u1 = list()
+        self.STON_list_u9 = list()
+        self.STON_list_AVG = list()
         self.logs = logs
         self.f0 = 6668519200
     
@@ -311,6 +321,14 @@ class Analyzer(Frame):
         self.plot_total_u9 = Plot(4,4, self.masterFrame, self.plotFrame_total)
         self.plot_total_u9.creatPlot(None, 'Frequency Mhz', 'Amplitude', None)
         self.plot_total_u9.plot(self.x, total_u9, 'b')
+        
+        ston_u1 = STON(total_u1)
+        ston_u9 = STON(total_u9)
+        stone_AVG = STON(((total_u1 + total_u9)/2))
+        
+        self.STON_list_u1.append(ston_u1)
+        self.STON_list_u9.append(ston_u9)
+        self.STON_list_AVG.append(stone_AVG)
          
         if index == self.datPairsCount -1:
             self.nextPairButton.destroy()
@@ -402,6 +420,8 @@ class Analyzer(Frame):
         y_u9_avg = y_u9_avg/len(self.totalResults_u9)
         
         self.plotFrame_velocity = frame(self.window,(1000, 1000), TOP)
+        self.plotFrame_STON = frame(self.window,(1000, 1000), BOTTOM)
+        
         self.plot_velocity_u1 = Plot(4,4, self.masterFrame, self.plotFrame_velocity)
         self.plot_velocity_u1.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Amplitude', "u1 Polarization")
         self.plot_velocity_u1.plot(velocitys_avg, y_u1_avg, 'b')
@@ -409,6 +429,13 @@ class Analyzer(Frame):
         self.plot_velocity_u9 = Plot(4,4, self.masterFrame, self.plotFrame_velocity)
         self.plot_velocity_u9.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Amplitude', "u9 Polarization")
         self.plot_velocity_u9.plot(velocitys_avg, y_u9_avg, 'b')
+        
+        ston_x = np.arange(0, len(self.STON_list_u1))
+        self.plot_STON = Plot(4,4, self.masterFrame, self.plotFrame_STON)
+        self.plot_STON.creatPlot(None, 'Pair', 'Ratio', "Signal to Noise")
+        self.plot_STON.plot(ston_x, self.STON_list_u1, '*r', label="u1 Polarization")
+        self.plot_STON.plot(ston_x, self.STON_list_u9, 'og', label="u9 Polarization")
+        self.plot_STON.plot(ston_x, self.STON_list_AVG, 'vb', label="AVG Polarization")
         
     def __UI__(self):
         if self.index != self.datPairsCount -1: # cheking if there is not one pair
