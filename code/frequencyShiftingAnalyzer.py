@@ -297,6 +297,7 @@ class Analyzer(Frame):
         scan_1 = self.logs[str(scan_number_1)]
         scan_2 = self.logs[str(scan_number_2)]
         
+        # get system temperature
         tsys_u1_1 = scan_1['Systemtemperature'][0]
         tsys_u1_2 = scan_2['Systemtemperature'][0]
         tsys_u9_1 = scan_1['Systemtemperature'][1]
