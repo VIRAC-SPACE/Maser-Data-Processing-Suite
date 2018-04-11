@@ -101,6 +101,19 @@ class Analyzer(Frame):
         
         self.plotSmoothData = Button (self.masterFrame, text="Smooth Data", command=self.plotSmoothData, activebackground="Blue", background="Blue", font=self.font)
         self.plotSmoothData.pack()
+        
+        
+        infoPanelLabelsText = ["Experiment name: " + self.expername, "Scan number: " + self.scanNumber, "Source: " + self.source, "Station: " + self.location, "Date: " + self.scan["dates"], "Start time: " + self.scan["startTime"], "Stop time: " + self.scan["stopTime"], "System temperature 1u: " + str(self.Systemtemperature1u), "System temperature 9u: " + str(self.Systemtemperature9u), "Frequency Start: " + str(self.scan["FreqStart"]), "f0", "Calibration scale", "FWHM constant", "Polynomial order"]
+        infoPanelEntryText = [{"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"defaultValue":self.Systemtemperature1u,"addEntry":True}, {"defaultValue":self.Systemtemperature9u,"addEntry":True}, {"defaultValue":self.scan["FreqStart"],"addEntry":True}, {"defaultValue":self.f0, "addEntry":True}, {"defaultValue":str(self.calibrationScale), "addEntry":True}, {"defaultValue":str(self.FWHMconstant), "addEntry":True}, {"defaultValue":str(self.polynomialOrder), "addEntry":True}]
+        
+        for i in range(0, len(infoPanelLabelsText)): 
+            self.infoLabel = Label(self.infoFrame, text=infoPanelLabelsText[i], anchor=W, justify=LEFT, font=self.font_2)
+            self.infoLabel.pack(fill=BOTH)
+            
+            if  infoPanelEntryText[i]["addEntry"]:
+                self.infoInputField = Entry(self.infoFrame, font=self.font_2)
+                self.infoInputField.insert(0, str(infoPanelEntryText[i]["defaultValue"]))
+                self.infoInputField.pack(fill=BOTH)
           
     def plotSmoothData(self):
         self.plotSmoothData.destroy()
