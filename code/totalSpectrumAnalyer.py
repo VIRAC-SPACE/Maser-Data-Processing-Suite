@@ -89,6 +89,7 @@ class Analyzer(Frame):
             
     def plotInitData(self):
         
+        self.infoFrame = frame(self.window,(1000,1000), LEFT)
         self.plotFrame = frame(self.window,(1000,1000), TOP)
         self.plot_1 = Plot(6,6, self.masterFrame, self.plotFrame)
         self.plot_1.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization")
