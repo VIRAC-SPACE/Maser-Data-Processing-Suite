@@ -6,6 +6,7 @@ import configparser
 from tkinter import *
 import tkinter as tk
 from tkinter import font
+from tkinter import simpledialog
 import numpy as np
 import scipy.constants
 import pandas as pd
@@ -78,6 +79,11 @@ def dopler(ObservedFrequency, velocityReceiver, f0):
     velocitySoure = (-((ObservedFrequency/f0)-1)*c + (velocityReceiver * 1000))/1000
     return velocitySoure
 
+def calibration(calibrationScale, Tsys):
+    calibrationScale = float(calibrationScale)
+    Tsys = float(Tsys)
+    return float(calibrationScale)*float(Tsys)
+
 def STON(array):
     std = np.std(array) 
     max = np.max(array)
@@ -86,7 +92,7 @@ def STON(array):
     return ston
 
 class Analyzer(Frame):
-    def __init__(self, window, source, date, filter, threshold, badPointRange, interval, dataPath, logs):
+    def __init__(self, window, source, date, filter, threshold, badPointRange, interval, dataPath, logs, calibrationScales):
         Frame.__init__(self)
         self.window = window
         self.source = source
@@ -110,6 +116,9 @@ class Analyzer(Frame):
         self.STON_list_AVG = list()
         self.logs = logs
         self.f0 = 6668519200
+        self.calibrationScales = calibrationScales
+        self.location = self.logs["location"]
+        self.calibrationScale = self.calibrationScales[self.location]
     
         self.window.title("Analyze for " + self.source + " " + self.date)
         self.__UI__()
@@ -279,6 +288,37 @@ class Analyzer(Frame):
         
         scanNUmber1 = self.dataFileDir + "/" + pair[0]
         scanNUmber2 = self.dataFileDir + "/" + pair[1]
+        
+        scan_number_1 = int(re.split("([0-9]+)", pair[0])[-2])
+        scan_number_2 = int(re.split("([0-9]+)", pair[1])[-2])
+        
+        print ("scan number", scan_number_1, scan_number_2)
+        
+        scan_1 = self.logs[str(scan_number_1)]
+        scan_2 = self.logs[str(scan_number_2)]
+        
+        tsys_u1_1 = scan_1['Systemtemperature'][0]
+        tsys_u1_2 = scan_2['Systemtemperature'][0]
+        tsys_u9_1 = scan_1['Systemtemperature'][1]
+        tsys_u9_2 = scan_2['Systemtemperature'][1]
+        
+        print ("tsys", tsys_u1_1, tsys_u1_2, tsys_u9_1, tsys_u9_2)
+        
+        if float(tsys_u1_1) == 0:
+            newT = simpledialog.askfloat("System temperature is zero",  " Expected number between 0 and 300", minvalue = 1, maxvalue = 300)
+            tsys_u1_1 = newT
+            
+        if float(tsys_u1_2) == 0:
+            newT = simpledialog.askfloat("System temperature is zero",  " Expected number between 0 and 300", minvalue = 1, maxvalue = 300)
+            tsys_u1_2 = newT
+            
+        if float(tsys_u9_1) == 0:
+            newT = simpledialog.askfloat("System temperature is zero",  " Expected number between 0 and 300", minvalue = 1, maxvalue = 300)
+            tsys_u9_1 = newT
+            
+        if float(tsys_u9_2) == 0:
+            newT = simpledialog.askfloat("System temperature is zero",  " Expected number between 0 and 300", minvalue = 1, maxvalue = 300)
+            tsys_u9_2 = newT
             
         data_1 = np.fromfile(scanNUmber1, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber1),5))
         data_2 = np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),5))
@@ -286,6 +326,12 @@ class Analyzer(Frame):
         data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
             
         xdata_1_f, xdata_2_f, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
+        
+        ydata_1_u1 = ydata_1_u1 * calibration(self.calibrationScale, tsys_u1_1)
+        ydata_2_u1 = ydata_2_u1 * calibration(self.calibrationScale, tsys_u1_2)
+        ydata_1_u9 = ydata_1_u9 * calibration(self.calibrationScale, tsys_u9_1)
+        ydata_2_u9 = ydata_2_u9 * calibration(self.calibrationScale, tsys_u9_2)
+        
         self.plot_start_u1 = Plot(4,4, self.masterFrame, self.plotFrame_start)
         self.plot_start_u1.creatPlot(None, 'Frequency Mhz', 'Amplitude', "u1 Polarization")
         self.plot_start_u1.plot(xdata_1_f, ydata_1_u1, 'b', label=pair[0])
@@ -472,6 +518,8 @@ def main():
     badPointRange =  config.getint('parametrs', "badPointRange")
     logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, singleSourceExperiment).getLogs()
     
+    calibrationScales = {"IRBENE":config.getint('parametrs', "irbene"), "IRBENE16":config.getint('parametrs', "irbene16")}
+    
     if filter == "True" or filter == "true":
         filtering = True
     else:
@@ -486,7 +534,7 @@ def main():
     #Create App
     window = tk.Tk()
     window.configure(background='light goldenrod')
-    ploting = Analyzer(window, source, date, filtering, threshold, badPointRange, interval, dataFilesPath, logs)
+    ploting = Analyzer(window, source, date, filtering, threshold, badPointRange, interval, dataFilesPath, logs, calibrationScales)
     img = tk.Image("photo", file="viraclogo.png")
     window.call('wm','iconphoto', window._w,img)
         
