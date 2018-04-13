@@ -52,7 +52,10 @@ def frame(parent, size, sides, **options):
 class Analyzer(Frame):
     def __init__(self, window, datafile):
         Frame.__init__(self)
+        self.font_2 = font.Font(family="Times New Roman", size=10)
         self.window = window
+        self.FWHMconstant = 0.3
+        self.polynomialOrder = 3
         
         try:
             data = np.fromfile(datafile, dtype="float64", count=-1, sep=" ") .reshape((file_len(datafile),3))
@@ -89,29 +92,29 @@ class Analyzer(Frame):
             
     def plotInitData(self):
         
-        self.infoFrame = frame(self.window,(1000,1000), LEFT)
-        self.plotFrame = frame(self.window,(1000,1000), TOP)
+        #self.infoFrame = frame(self.window,(1000,1000), LEFT)
+        self.plotFrame = frame(self.window,(1000,1000), RIGHT)
         self.plot_1 = Plot(6,6, self.masterFrame, self.plotFrame)
-        self.plot_1.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization")
+        self.plot_1.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization")
         self.plot_1.plot(self.xarray, self.y1array, 'ko', label='Data Points', markersize=1)
         
         self.plot_2 = Plot(6,6, self.masterFrame, self.plotFrame)
-        self.plot_2.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization")
+        self.plot_2.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization")
         self.plot_2.plot(self.xarray, self.y2array, 'ko', label='Data Points', markersize=1)
         
         self.plotSmoothData = Button (self.masterFrame, text="Smooth Data", command=self.plotSmoothData, activebackground="Blue", background="Blue", font=self.font)
         self.plotSmoothData.pack()
         
         
-        infoPanelLabelsText = ["Experiment name: " + self.expername, "Scan number: " + self.scanNumber, "Source: " + self.source, "Station: " + self.location, "Date: " + self.scan["dates"], "Start time: " + self.scan["startTime"], "Stop time: " + self.scan["stopTime"], "System temperature 1u: " + str(self.Systemtemperature1u), "System temperature 9u: " + str(self.Systemtemperature9u), "Frequency Start: " + str(self.scan["FreqStart"]), "f0", "Calibration scale", "FWHM constant", "Polynomial order"]
-        infoPanelEntryText = [{"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"addEntry":False}, {"defaultValue":self.Systemtemperature1u,"addEntry":True}, {"defaultValue":self.Systemtemperature9u,"addEntry":True}, {"defaultValue":self.scan["FreqStart"],"addEntry":True}, {"defaultValue":self.f0, "addEntry":True}, {"defaultValue":str(self.calibrationScale), "addEntry":True}, {"defaultValue":str(self.FWHMconstant), "addEntry":True}, {"defaultValue":str(self.polynomialOrder), "addEntry":True}]
+        infoPanelLabelsText = ["FWHM constant", "Polynomial order"]
+        infoPanelEntryText = [ {"defaultValue":str(self.FWHMconstant), "addEntry":True}, {"defaultValue":str(self.polynomialOrder), "addEntry":True}]
         
         for i in range(0, len(infoPanelLabelsText)): 
-            self.infoLabel = Label(self.infoFrame, text=infoPanelLabelsText[i], anchor=W, justify=LEFT, font=self.font_2)
+            self.infoLabel = Label(self.masterFrame, text=infoPanelLabelsText[i], anchor=W, justify=LEFT, font=self.font_2)
             self.infoLabel.pack(fill=BOTH)
             
             if  infoPanelEntryText[i]["addEntry"]:
-                self.infoInputField = Entry(self.infoFrame, font=self.font_2)
+                self.infoInputField = Entry(self.masterFrame, font=self.font_2)
                 self.infoInputField.insert(0, str(infoPanelEntryText[i]["defaultValue"]))
                 self.infoInputField.pack(fill=BOTH)
           
