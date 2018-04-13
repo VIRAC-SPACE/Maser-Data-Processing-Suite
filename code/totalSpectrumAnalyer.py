@@ -8,6 +8,9 @@ import tkinter as tk
 from tkinter import font
 import numpy as np
 from astropy.convolution import Gaussian1DKernel, convolve
+from scipy.interpolate import UnivariateSpline
+import peakutils
+import json
 
 from ploting import Plot
 
@@ -48,6 +51,15 @@ def frame(parent, size, sides, **options):
     f=tk.Frame(parent, width=Width, height=Height, background="light goldenrod", **options)
     f.pack(side = sides)
     return (f)
+
+def FWHM(x, y, constant):
+    spline = UnivariateSpline(x, y-np.max(y)/2, k=3, s=2)
+    spline.set_smoothing_factor(0.5)
+    root1 = spline.roots()[0] - constant
+    root2 = spline.roots()[-1] + constant
+    index_1 =  (np.abs(x-root1)).argmin()
+    index_2 =  (np.abs(x-root2)).argmin()
+    return (index_1, index_2)
 
 class Analyzer(Frame):
     def __init__(self, window, datafile):
@@ -93,7 +105,7 @@ class Analyzer(Frame):
     def plotInitData(self):
         
         #self.infoFrame = frame(self.window,(1000,1000), LEFT)
-        self.plotFrame = frame(self.window,(1000,1000), RIGHT)
+        self.plotFrame = frame(self.window,(1000,1000), None)
         self.plot_1 = Plot(6,6, self.masterFrame, self.plotFrame)
         self.plot_1.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization")
         self.plot_1.plot(self.xarray, self.y1array, 'ko', label='Data Points', markersize=1)
@@ -104,7 +116,6 @@ class Analyzer(Frame):
         
         self.plotSmoothData = Button (self.masterFrame, text="Smooth Data", command=self.plotSmoothData, activebackground="Blue", background="Blue", font=self.font)
         self.plotSmoothData.pack()
-        
         
         infoPanelLabelsText = ["FWHM constant", "Polynomial order"]
         infoPanelEntryText = [ {"defaultValue":str(self.FWHMconstant), "addEntry":True}, {"defaultValue":str(self.polynomialOrder), "addEntry":True}]
@@ -121,6 +132,9 @@ class Analyzer(Frame):
     def plotSmoothData(self):
         self.plotSmoothData.destroy()
         del self.plotSmoothData
+        
+        self.plotPolinomial = Button (self.masterFrame, text="Plot polinomial", command=self.plotPlonomials, activebackground="Blue", background="Blue", font=self.font)
+        self.plotPolinomial.pack()
         
         g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
         g2 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
@@ -141,6 +155,15 @@ class Analyzer(Frame):
         self.plot_4 = Plot(6,6, self.masterFrame, self.plotFrame)
         self.plot_4.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization")
         self.plot_4.plot(self.xdata, self.z2, 'ko', label='Data Points', markersize=1, picker=5)
+        
+    def plotPlonomials(self):
+        self.plot_3.removePolt()
+        self.plot_4.removePolt()
+        del self.plot_3
+        del self.plot_4
+        
+        self.a_u1, self.b_u1 = FWHM(self.xdata, self.z1, self.FWHMconstant)
+        self.a_u9, self.b_u9 = FWHM(self.xdata, self.z2, self.FWHMconstant)
         
 def main(): 
     
