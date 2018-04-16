@@ -48,6 +48,13 @@ def file_len(fname):
             pass
     return i + 1
 
+def indexies(array, value):
+    indexs = list()
+    for i in range(0, len(array)-1):
+        if array[i] == value:
+            indexs.append(i)
+    return indexs
+
 def frame(parent, size, sides, **options):
     Width=size[0]
     Height=size[1]
@@ -268,14 +275,21 @@ class Analyzer(Frame):
         del self.plot_1
         del self.plot_2
         
+        self.points_1u = list()
+        self.points_9u = list()
+        
         #self.plotFrame = frame(self.window,(1000,1000), TOP)
         self.plot_3 = Plot(6,6, self.masterFrame, self.plotFrame)
         self.plot_3.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization")
         self.plot_3.plot(self.xdata, self.z1, 'ko', label='Data Points', markersize=1, picker=5)
+        self.plot_3.addPickEvent(self.onpickU1)
+        #self.plot_3.addSecondAxis("x", "Data points", 0, self.dataPoints + 512, 1024)
         
         self.plot_4 = Plot(6,6, self.masterFrame, self.plotFrame)
         self.plot_4.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization")
         self.plot_4.plot(self.xdata, self.z2, 'ko', label='Data Points', markersize=1, picker=5)
+        self.plot_4.addPickEvent(self.onpickU9)
+        #self.plot_4.addSecondAxis("x", "Data points", 0, self.dataPoints + 512, 1024)
         
         self.a, self.b = FWHM(self.xdata, (self.z1 + self.z2)/2, self.FWHMconstant)
         
@@ -298,11 +312,39 @@ class Analyzer(Frame):
         self.n = self.nSlider.get()
         self.mSlider.destroy()
         self.nSlider.destroy()
+        self.plot_3.removePickEvent()
+        self.plot_4.removePickEvent()
         self.plot_3.removePolt()
         self.plot_4.removePolt()
         del self.plot_3
         del self.plot_4
         
+        bad_u1_indexies = list()
+        bad_u9_indexies = list()
+        
+        for bad in range(0, len(self.points_1u)):
+            bad_u1_indexies.append(indexies(self.xdata, self.points_1u[bad][0]))
+        for bad in range(0, len(self.points_9u)):
+            bad_u9_indexies.append(indexies(self.xdata, self.points_9u[bad][0]))
+            
+        bad_u1_indexies, bad_u9_indexies
+        
+        for p_u1 in self.points_1u:
+            self.xdata = np.delete(self.xdata, self.xdata[self.xdata == p_u1[0]])
+            self.z1 = np.delete(self.z1, self.z1[self.z1 == p_u1[1]])
+            
+        for p_u9 in self.points_9u:
+            self.xdata = np.delete(self.xdata, self.xdata[self.xdata == p_u9[0]])
+            self.z2 = np.delete(self.z2, self.z2[self.z2 == p_u9[1]])
+            
+        for bad in range(0, len(bad_u9_indexies)):
+            self.xdata = np.delete(self.xdata, self.xdata[bad_u9_indexies[bad]])
+            self.z1 = np.delete(self.z1, self.xdata[bad_u9_indexies[bad]])
+                                       
+        for bad in range(0, len(bad_u1_indexies)):
+            self.xdata = np.delete(self.xdata, self.xdata[bad_u1_indexies[bad]])
+            self.z2 = np.delete(self.z2, self.xdata[bad_u1_indexies[bad]])
+                                       
         self.a_u1, self.b_u1 = FWHM(self.xdata, self.z1, self.FWHMconstant)
         self.a_u9, self.b_u9 = FWHM(self.xdata, self.z2, self.FWHMconstant)
          
