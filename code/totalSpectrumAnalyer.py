@@ -61,8 +61,8 @@ def FWHM(x, y, constant):
     root1 = max + 2*std  #+ constant
     root2 = max - 2*std  #- constant
     
-    index_1 =  (np.abs(y-root1)).argmin() #- constant
-    index_2 =  (np.abs(y-root2)).argmin() #- constant
+    index_1 =  (np.abs(y-root1)).argmin() - constant
+    index_2 =  (np.abs(y-root2)).argmin() + constant
     print ("roots ", root1, root2)
     print ("Indexies ", index_1, index_2)
     #index_1 = 900
@@ -111,6 +111,7 @@ class Analyzer(Frame):
         self.plotInitData()
             
     def plotInitData(self):
+        self.window.title("Info")
         
         #self.infoFrame = frame(self.window,(1000,1000), LEFT)
         self.plotFrame = frame(self.window,(1000,1000), None)
@@ -138,6 +139,8 @@ class Analyzer(Frame):
                 self.infoInputField.pack(fill=BOTH)
           
     def plotSmoothData(self):
+        self.window.title("Smooth Data")
+        
         self.plotSmoothData.destroy()
         del self.plotSmoothData
         
@@ -165,6 +168,8 @@ class Analyzer(Frame):
         self.plot_4.plot(self.xdata, self.z2, 'ko', label='Data Points', markersize=1, picker=5)
         
     def plotPlonomials(self):
+        self.window.title("Polynomial and Data points")
+        
         self.plot_3.removePolt()
         self.plot_4.removePolt()
         del self.plot_3
