@@ -256,12 +256,12 @@ class Analyzer(Frame):
         else:
             print ("indexies correct", index_2_2 - index_2_1,  index_1_2 - index_1_1, [index_1_1, index_1_2], [index_2_1, index_2_2])
             
-            negativeRange = array_y[index_1_1:index_1_2]
-            positiveveRange = array_y[index_2_1:index_2_2]
+        negativeRange = array_y[index_1_1:index_1_2]
+        positiveveRange = array_y[index_2_1:index_2_2]
             
-            totalResult = (positiveveRange - negativeRange)/2
+        totalResult = (positiveveRange - negativeRange)/2
             
-            return totalResult
+        return totalResult
         
     def nextPair(self):
         self.plot_start_u1.removePolt()
@@ -288,6 +288,8 @@ class Analyzer(Frame):
         
         scanNUmber1 = self.dataFileDir + "/" + pair[0]
         scanNUmber2 = self.dataFileDir + "/" + pair[1]
+        
+        print ("data files ", scanNUmber1, scanNUmber2)
         
         scan_number_1 = int(re.split("([0-9]+)", pair[0])[-2])
         scan_number_2 = int(re.split("([0-9]+)", pair[1])[-2])

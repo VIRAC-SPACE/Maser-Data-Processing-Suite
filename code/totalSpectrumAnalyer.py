@@ -8,6 +8,9 @@ import tkinter as tk
 from tkinter import font
 import numpy as np
 from astropy.convolution import Gaussian1DKernel, convolve
+import astropy.modeling as model
+from astropy.modeling import fitting
+from astropy.modeling.polynomial import Chebyshev1D
 from scipy.interpolate import UnivariateSpline
 import peakutils
 import json
@@ -53,20 +56,25 @@ def frame(parent, size, sides, **options):
     return (f)
 
 def FWHM(x, y, constant):
-    spline = UnivariateSpline(x, y-np.max(y)/2, k=3, s=2)
-    spline.set_smoothing_factor(0.5)
-    root1 = spline.roots()[0] - constant
-    root2 = spline.roots()[-1] + constant
-    index_1 =  (np.abs(x-root1)).argmin()
-    index_2 =  (np.abs(x-root2)).argmin()
+    max = np.max(y)
+    std = np.std(y)
+    root1 = max + 2*std  #+ constant
+    root2 = max - 2*std  #- constant
+    
+    index_1 =  (np.abs(y-root1)).argmin() #- constant
+    index_2 =  (np.abs(y-root2)).argmin() #- constant
+    print ("roots ", root1, root2)
+    print ("Indexies ", index_1, index_2)
+    #index_1 = 900
+    #index_2 = 1500
     return (index_1, index_2)
-
+   
 class Analyzer(Frame):
     def __init__(self, window, datafile):
         Frame.__init__(self)
         self.font_2 = font.Font(family="Times New Roman", size=10)
         self.window = window
-        self.FWHMconstant = 0.3
+        self.FWHMconstant = 200
         self.polynomialOrder = 3
         
         try:
@@ -162,8 +170,35 @@ class Analyzer(Frame):
         del self.plot_3
         del self.plot_4
         
+        self.m = 0
+        self.n = self.dataPoints
+        
         self.a_u1, self.b_u1 = FWHM(self.xdata, self.z1, self.FWHMconstant)
         self.a_u9, self.b_u9 = FWHM(self.xdata, self.z2, self.FWHMconstant)
+        
+        # Fit the data using a Chebyshev astro py
+        ceb = Chebyshev1D(self.polynomialOrder, domain=None, window=[-1, 1], n_models=None, model_set_axis=None, name=None, meta=None)
+        fit_ceb = fitting.LevMarLSQFitter()
+        
+        ### u1
+        self.ceb_1 = fit_ceb(ceb, np.append(self.xdata[self.m:self.a_u1], self.xdata[self.b_u1:self.n]),  np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]))
+       
+        ### u9
+        self.ceb_2 = fit_ceb(ceb, np.append(self.xdata[self.m:self.a_u9], self.xdata[self.b_u9:self.n]),  np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]))
+        
+        #u1 plot
+        self.plot_5 = Plot(6,6, self.masterFrame, self.plotFrame)
+        self.plot_5.creatPlot(LEFT, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization")
+        self.plot_5.plot(np.append(self.xdata[self.m:self.a_u1], self.xdata[self.b_u1:self.n]), np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]), 'ko', label='Data Points',  markersize=1)
+        self.plot_5.plot(self.xdata[self.m:self.n], self.ceb_1(self.xdata[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
+        #self.plot_5.plot(self.x_u1[self.m:self.n], p_u1(self.x_u1[self.m:self.n]), 'b', label='Numpy polyfit', markersize=1)
+        
+        #u9 plot
+        self.plot_6 = Plot(6,6, self.masterFrame, self.plotFrame)
+        self.plot_6.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization")
+        self.plot_6.plot(np.append(self.xdata[self.m:self.a_u9], self.xdata[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), 'ko', label='Data Points',  markersize=1)
+        self.plot_6.plot(self.xdata[self.m:self.n], self.ceb_2(self.xdata[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
+        #self.plot_6.plot(self.x_u9[self.m:self.n], p_u9(self.x_u9[self.m:self.n]), 'b', label='Numpy polyfit', markersize=1)
         
 def main(): 
     
