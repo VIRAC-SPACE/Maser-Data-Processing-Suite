@@ -8,10 +8,8 @@ import tkinter as tk
 from tkinter import font, messagebox
 import numpy as np
 from astropy.convolution import Gaussian1DKernel, convolve
-import astropy.modeling as model
 from astropy.modeling import fitting
 from astropy.modeling.polynomial import Chebyshev1D
-from scipy.interpolate import UnivariateSpline
 import peakutils
 import json
 
@@ -298,11 +296,11 @@ class Analyzer(Frame):
         self.previousN = self.n -1
         
         self.mSlider = tk.Scale(self.masterFrame, from_= self.m, to = self.a-1, orient=HORIZONTAL, label="M", length=400, variable=self.m, command=self.updateEnd, foreground="Red", highlightcolor="Yellow")
-        self.mSlider.pack(side=BOTTOM)
+        self.mSlider.pack(side=BOTTOM, fill=BOTH)
         self.m = self.mSlider.get()
         
         self.nSlider = tk.Scale(self.masterFrame, from_ = self.b-1 , to = self.n, orient=HORIZONTAL, label="N", length=400, variable=self.n, command=self.updateEnd, foreground="Red", highlightcolor="Yellow")
-        self.nSlider.pack(side=BOTTOM)
+        self.nSlider.pack(side=BOTTOM, fill=BOTH)
         self.nSlider.set(self.n)
         self.n = self.nSlider.get()
         
@@ -318,6 +316,12 @@ class Analyzer(Frame):
         self.plot_4.removePolt()
         del self.plot_3
         del self.plot_4
+        
+        self.plotPolinomial.destroy()
+        del self.plotPolinomial
+        
+        self.plotLocalMaximum = Button (self.masterFrame, text="Plot local maximums", command=self.plotLocalMaximum, activebackground="Green", background="Green", font=self.font)
+        self.plotLocalMaximum.pack(fill=BOTH)
      
         print ("Before deliting  ", self.xdata.shape[0])
         bad_u1_indexies = list()
@@ -368,27 +372,77 @@ class Analyzer(Frame):
         self.plot_6.plot(self.xdata[self.m:self.n], self.ceb_2(self.xdata[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
         #self.plot_6.plot(self.x_u9[self.m:self.n], p_u9(self.x_u9[self.m:self.n]), 'b', label='Numpy polyfit', markersize=1)
         
+    def plotLocalMaximum(self):
+        self.plotLocalMaximum.destroy()
+        del self.plotLocalMaximum
+        self.plot_5.removePolt()
+        self.plot_6.removePolt()
+        del self.plot_5
+        del self.plot_6
+        self.window.title("Local maximums")
+        self.monitoringButton = Button (self.masterFrame, text="Add points to monitoring", command=self.createResult, activebackground="Green", background="Green", font=self.font)
+        self.monitoringButton.pack(fill=BOTH)
+        
+        thres=0.1
+        
+        self.z1 = self.z1.reshape(len(self.z1), 1)
+        self.z2 = self.z2.reshape(len(self.z2), 1)
+        
+        y1values = self.z1[self.m:self.n] - self.ceb_1(self.xdata[self.m:self.n])
+        y2values = self.z2[self.m:self.n] - self.ceb_2(self.xdata[self.m:self.n])
+        
+        print ("y1values", y1values.shape, y1values[0], self.z1.shape, self.ceb_1(self.xdata).shape)
+        
+        #indexsu apreikinasana
+        indexes_for_ceb = peakutils.indexes(y1values.tolist(), thres=thres, min_dist=10)
+        indexes_for_ceb2 = peakutils.indexes(y2values, thres=thres, min_dist=10)
+        
+        self.plot_7 = Plot(5,5, self.masterFrame, self.plotFrame)
+        self.plot_7.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization")
+        self.plot_7.plot(self.xdata[self.m:self.n], y1values, 'b', label='Signal - polynomial', markersize=1)
+        self.plot_7.plot(self.xdata[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
+        self.plot_7.addPickEvent(self.onpick_maxU1)
+        self.plot_7.annotations(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb])
+        
+        #u9
+        self.plot_8 = Plot(5,5, self.masterFrame, self.plotFrame)
+        self.plot_8.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization")
+        self.plot_8.plot(self.xdata[self.m:self.n], y1values, 'b', label='Signal - polynomial', markersize=1)
+        self.plot_8.plot(self.xdata[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
+        self.plot_8.addPickEvent(self.onpick_maxU9)
+        self.plot_8.annotations(self.xdata[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2])
+        
+        #mid plot
+        avg_y = (y1values + y2values) / 2
+        indexes_for_avg = peakutils.indexes(avg_y, thres=thres, min_dist=10)
+        
+        self.plot_9 = Plot(5,5, self.masterFrame, self.plotFrame)
+        self.plot_9.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Average Polarization")
+        self.plot_9.plot(self.xdata, avg_y, 'b', label='Signal - polynomial', markersize=1)
+        self.plot_9.plot(self.xdata[indexes_for_avg], avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
+        self.plot_9.addPickEvent(self.onpick_maxAVG)
+        self.plot_9.annotations(self.xdata[indexes_for_avg], avg_y[indexes_for_avg])
+        
+        self.maxU1 = list()
+        self.maxU9 = list()
+        self.avgMax = list()
+        self.maxu1_index = list()
+        self.maxu9_index = list()
+        self.maxavg_index = list()
+        
+    def createResult(self):
+        pass
+        
 def main(): 
     
     args = parseArguments()
-    '''
-    source = str(args.__dict__["source"])
-    date = str(args.__dict__["date"])
-    logFile = str(args.__dict__["logFile"])
-    interval = float(args.__dict__["interval"])
-    threshold = float(args.__dict__["threshold"])
-    filter = str(args.__dict__["filter"])
-    singleSourceExperiment = list(args.__dict__["single"])
-    '''
+   
     datafile = str(args.__dict__["datafile"])
     configFilePath = str(args.__dict__["config"])
     
     config = configparser.RawConfigParser()
     config.read(configFilePath)
     dataFilesPath =  config.get('paths', "dataFilePath")
-    prettyLogsPath =  config.get('paths', "prettyLogsPath")
-    logPath = config.get('paths', "logPath")
-    #logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, singleSourceExperiment).getLogs()
     
     #Create App
     window = tk.Tk()
@@ -403,3 +457,4 @@ def main():
 
 if __name__=="__main__":
     main()
+    
