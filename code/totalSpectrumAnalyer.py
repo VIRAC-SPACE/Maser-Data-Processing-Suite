@@ -318,7 +318,8 @@ class Analyzer(Frame):
         self.plot_4.removePolt()
         del self.plot_3
         del self.plot_4
-        
+     
+        print ("Before deliting  ", self.xdata.shape[0])
         bad_u1_indexies = list()
         bad_u9_indexies = list()
         
@@ -327,23 +328,18 @@ class Analyzer(Frame):
         for bad in range(0, len(self.points_9u)):
             bad_u9_indexies.append(indexies(self.xdata, self.points_9u[bad][0]))
             
-        bad_u1_indexies, bad_u9_indexies
+        bad_u1_indexies.sort()
+        bad_u9_indexies.sort()
         
-        for p_u1 in self.points_1u:
-            self.xdata = np.delete(self.xdata, self.xdata[self.xdata == p_u1[0]])
-            self.z1 = np.delete(self.z1, self.z1[self.z1 == p_u1[1]])
+        bad_list_indexies = bad_u1_indexies + bad_u9_indexies
+        bad_list_indexies = np.unique(bad_list_indexies, return_index=False, return_inverse=False, return_counts=False,)
+        
+        for bad in range(0, len(bad_list_indexies)):
+            self.xdata = np.delete(self.xdata, self.xdata[bad_list_indexies[bad]])
+            self.z1 = np.delete(self.z1, self.z1[bad_list_indexies[bad]])
+            self.z2 = np.delete(self.z2, self.z2[bad_list_indexies[bad]])
             
-        for p_u9 in self.points_9u:
-            self.xdata = np.delete(self.xdata, self.xdata[self.xdata == p_u9[0]])
-            self.z2 = np.delete(self.z2, self.z2[self.z2 == p_u9[1]])
-            
-        for bad in range(0, len(bad_u9_indexies)):
-            self.xdata = np.delete(self.xdata, self.xdata[bad_u9_indexies[bad]])
-            self.z1 = np.delete(self.z1, self.xdata[bad_u9_indexies[bad]])
-                                       
-        for bad in range(0, len(bad_u1_indexies)):
-            self.xdata = np.delete(self.xdata, self.xdata[bad_u1_indexies[bad]])
-            self.z2 = np.delete(self.z2, self.xdata[bad_u1_indexies[bad]])
+        print ("After deliting  ", self.xdata.shape[0])
                                        
         self.a_u1, self.b_u1 = FWHM(self.xdata, self.z1, self.FWHMconstant)
         self.a_u9, self.b_u9 = FWHM(self.xdata, self.z2, self.FWHMconstant)
