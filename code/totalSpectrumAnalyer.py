@@ -22,18 +22,10 @@ def parseArguments():
     parser = argparse.ArgumentParser(description='''plotting tool. ''', epilog="""PRE PLOTTER.""")
     
     # Positional mandatory arguments
-    #parser.add_argument("source", help="Experiment source", type=str)
-    #parser.add_argument("date", help="Experiment date", type=str)
-    #parser.add_argument("logFile", help="Experiment log file name", type=str)
     parser.add_argument("datafile", help="Experiment correlation file name", type=str)
 
     # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/config.cfg")
-    parser.add_argument("-i", "--interval", help="Set interval", type=float, default=0.9)
-    parser.add_argument("-t", "--threshold", help="Set threshold for outlier filter", type=float, default=1.0)
-    parser.add_argument("-f", "--filter", help="Set filter default is True if filter is False bad data points is no removed", type=str, default="True")
-    parser.add_argument("-s", "--single", help="Set RA, DEC, Epoch, Source name", nargs="*", type=str, default=[])
-    # option -s example cepa 225617.90 620149.7 2000.0
 
     # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
@@ -87,7 +79,7 @@ def FWHM(x, y, constant):
     '''
    
 class Analyzer(Frame):
-    def __init__(self, window, datafile):
+    def __init__(self, window, datafile, resultFilePath):
         Frame.__init__(self)
         self.font_2 = font.Font(family="Times New Roman", size=10)
         self.window = window
@@ -95,8 +87,11 @@ class Analyzer(Frame):
         self.polynomialOrder = 3
         self.source = re.split("([A-Z, a-z]+)", datafile.split("/")[-1].split(".")[0])[1]
         self.expername = datafile.split("/")[-1].split(".")[0]
-        self.date = re.split("([A-Z, a-z]+)", datafile.split("/")[-1].split(".")[0])[2]
+        self.date = re.split("([A-Z, a-z]+)", datafile.split("/")[-1].split(".")[0])[2][0:-1]
         self.location = datafile.split("/")[-1].split(".")[0].split("_")[-1]
+        self.resultFilePath = resultFilePath
+        
+        self.infoSet = set()
         
         try:
             data = np.fromfile(datafile, dtype="float64", count=-1, sep=" ") .reshape((file_len(datafile),3))
@@ -262,20 +257,33 @@ class Analyzer(Frame):
         infoPanelLabelsText = ["FWHM constant", "Polynomial order"]
         infoPanelEntryText = [ {"defaultValue":str(self.FWHMconstant), "addEntry":True}, {"defaultValue":str(self.polynomialOrder), "addEntry":True}]
         
-        for i in range(0, len(infoPanelLabelsText)): 
+        for i in range(0, len(infoPanelLabelsText)):
+            
             self.infoLabel = Label(self.masterFrame, text=infoPanelLabelsText[i], anchor=W, justify=LEFT, font=self.font_2)
             self.infoLabel.pack(fill=BOTH)
+            self.infoSet.add(self.infoLabel)
             
             if  infoPanelEntryText[i]["addEntry"]:
                 self.infoInputField = Entry(self.masterFrame, font=self.font_2)
                 self.infoInputField.insert(0, str(infoPanelEntryText[i]["defaultValue"]))
                 self.infoInputField.pack(fill=BOTH)
+                self.infoSet.add(self.infoInputField)
           
     def plotSmoothData(self):
         self.window.title("Smooth Data")
         
+        self.infoLabel.destroy()
+        self.startChangeData.destroy()
+        del self.startChangeData
         self.plotSmoothData.destroy()
         del self.plotSmoothData
+        
+        while len(self.infoSet) !=0:
+            info_item = self.infoSet.pop()
+            info_item.destroy()
+            del info_item
+            
+        del self.infoSet
         
         self.plotPolinomial = Button (self.masterFrame, text="Plot polinomial", command=self.plotPlonomials, activebackground="Green", background="Green", font=self.font)
         self.plotPolinomial.pack(fill=BOTH)
@@ -341,7 +349,7 @@ class Analyzer(Frame):
         self.plotLocalMaximum = Button (self.masterFrame, text="Plot local maximums", command=self.plotLocalMaximum, activebackground="Green", background="Green", font=self.font)
         self.plotLocalMaximum.pack(fill=BOTH)
      
-        print ("Before deliting  ", self.xdata.shape[0])
+        print ("Before deliting  ", self.xarray.shape[0])
         bad_u1_indexies = list()
         bad_u9_indexies = list()
         
@@ -356,12 +364,16 @@ class Analyzer(Frame):
         bad_list_indexies = bad_u1_indexies + bad_u9_indexies
         bad_list_indexies = np.unique(bad_list_indexies, return_index=False, return_inverse=False, return_counts=False,)
         
+        print ("Tyoes b", len(self.z1), len(self.z2), len(self.xarray))
+        
         for bad in range(0, len(bad_list_indexies)):
-            self.xdata = np.delete(self.xarray, self.xarray[bad_list_indexies[bad]])
+            self.xarray = np.delete(self.xarray, self.xarray[bad_list_indexies[bad]])
             self.z1 = np.delete(self.z1, self.z1[bad_list_indexies[bad]])
             self.z2 = np.delete(self.z2, self.z2[bad_list_indexies[bad]])
+ 
+        print ("Tyoes a", len(self.z1), len(self.z2), len(self.xarray))
             
-        print ("After deliting  ", self.xdata.shape[0])
+        print ("After deliting  ", self.xarray.shape[0])
                                        
         self.a_u1, self.b_u1 = FWHM(self.xarray, self.z1, self.FWHMconstant)
         self.a_u9, self.b_u9 = FWHM(self.xarray, self.z2, self.FWHMconstant)
@@ -408,9 +420,7 @@ class Analyzer(Frame):
         
         y1values = self.z1[self.m:self.n] - self.ceb_1(self.xarray[self.m:self.n])
         y2values = self.z2[self.m:self.n] - self.ceb_2(self.xarray[self.m:self.n])
-        
-        print ("y1values", y1values.shape, y1values[0], self.z1.shape, self.ceb_1(self.xarray).shape)
-        
+          
         #indexsu apreikinasana
         indexes_for_ceb = peakutils.indexes(y1values, thres=thres, min_dist=10)
         indexes_for_ceb2 = peakutils.indexes(y2values, thres=thres, min_dist=10)
@@ -432,14 +442,15 @@ class Analyzer(Frame):
         
         #mid plot
         avg_y = (y1values + y2values) / 2
+        
         indexes_for_avg = peakutils.indexes(avg_y, thres=thres, min_dist=10)
         
         self.plot_9 = Plot(5,5, self.masterFrame, self.plotFrame)
         self.plot_9.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Average Polarization")
-        self.plot_9.plot(self.xarray, avg_y, 'b', label='Signal - polynomial', markersize=1)
-        self.plot_9.plot(self.xarray[indexes_for_avg], avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
+        self.plot_9.plot(self.xarray[self.m:self.n], avg_y, 'b', label='Signal - polynomial', markersize=1)
+        self.plot_9.plot(self.xarray[self.m:self.n][indexes_for_avg], avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
         self.plot_9.addPickEvent(self.onpick_maxAVG)
-        self.plot_9.annotations(self.xarray[indexes_for_avg], avg_y[indexes_for_avg])
+        self.plot_9.annotations(self.xarray[self.m:self.n][indexes_for_avg], avg_y[indexes_for_avg])
         
         self.maxU1 = list()
         self.maxU9 = list()
@@ -453,19 +464,18 @@ class Analyzer(Frame):
         endLabel = Label(master=self.masterFrame, text="Result file creating in progress!")
         endLabel.pack()
         
-        resultDir = "results/"
         resultFileName = self.source + ".json"
     
-        if os.path.isfile(resultDir + resultFileName):
+        if os.path.isfile(self.resultFilePath + resultFileName):
             pass
         else:
-            os.system("touch " + resultDir +  resultFileName)
+            os.system("touch " + self.resultFilePath +  resultFileName)
             
-            resultFile = open (resultDir +  resultFileName, "w")
+            resultFile = open (self.resultFilePath +  resultFileName, "w")
             resultFile.write("{ \n" + "\n}")
             resultFile.close()
         
-        with open(resultDir + resultFileName) as result_data:    
+        with open(self.resultFilePath + resultFileName) as result_data:    
             result = json.load(result_data)
         
         if self.expername not in result:
@@ -486,7 +496,7 @@ class Analyzer(Frame):
         #result[self.expername][self.scanNumber]["index_for_polarizationU9"] =  self.maxu9_index
         #result[self.expername][self.scanNumber]["index_for_polarizationAVG"] =  self.maxavg_index
         
-        resultFile = open (resultDir +  resultFileName, "w")
+        resultFile = open (self.resultFilePath +  resultFileName, "w")
         resultFile.write(json.dumps(result, indent=2))
         resultFile.close() 
         
@@ -507,11 +517,12 @@ def main():
     config = configparser.RawConfigParser()
     config.read(configFilePath)
     dataFilesPath =  config.get('paths', "dataFilePath")
+    resultFilePath =  config.get('paths', "resultFilePath")
     
     #Create App
     window = tk.Tk()
     window.configure(background='light goldenrod')
-    ploting = Analyzer(window, dataFilesPath + datafile)
+    ploting = Analyzer(window, dataFilesPath + datafile, resultFilePath)
     img = tk.Image("photo", file="viraclogo.png")
     window.call('wm','iconphoto', window._w,img)
         
