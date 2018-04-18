@@ -325,11 +325,13 @@ class Analyzer(Frame):
             
         data_1 = np.fromfile(scanNUmber1, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber1),5))
         data_2 = np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),5))
+        print ("init data", data_1[0], data_1[1])
         data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
         data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
+        print ("init data", data_1[0], data_1[1])
             
         xdata_1_f, xdata_2_f, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
-        
+           
         ydata_1_u1 = ydata_1_u1 * calibration(self.calibrationScale, tsys_u1_1)
         ydata_2_u1 = ydata_2_u1 * calibration(self.calibrationScale, tsys_u1_2)
         ydata_1_u9 = ydata_1_u9 * calibration(self.calibrationScale, tsys_u9_1)
@@ -461,6 +463,8 @@ class Analyzer(Frame):
         
             Vobs = float(Vobs)
             lsrCorr = float(lsrShift)*1.e6 # for MHz 
+            
+            #print ("dopler ", dopler((0 + FreqStart) * (10 ** 6), VelTotal, self.f0), dopler((self.x[0] + FreqStart) * (10 ** 6), VelTotal, self.f0)) 
             
             velocitys = dopler((self.x + FreqStart) * (10 ** 6), VelTotal, self.f0)
             y_u1_avg =  y_u1_avg + self.totalResults_u1[p]

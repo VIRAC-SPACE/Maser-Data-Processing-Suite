@@ -10,6 +10,7 @@ import numpy as np
 from astropy.convolution import Gaussian1DKernel, convolve
 from astropy.modeling import fitting
 from astropy.modeling.polynomial import Chebyshev1D
+from scipy.interpolate import UnivariateSpline
 import peakutils
 import json
 
@@ -61,6 +62,15 @@ def frame(parent, size, sides, **options):
     return (f)
 
 def FWHM(x, y, constant):
+    spline = UnivariateSpline(x, y-np.max(y)/2, k=3, s=20)
+    spline.set_smoothing_factor(0.5)
+    root1 = spline.roots()[0] - constant
+    root2 = spline.roots()[-1] + constant
+    index_1 =  (np.abs(x-root1)).argmin()
+    index_2 =  (np.abs(x-root2)).argmin()
+    return (index_1, index_2)
+    
+    '''
     max = np.max(y)
     std = np.std(y)
     root1 = max + 2*std  #+ constant
@@ -73,13 +83,14 @@ def FWHM(x, y, constant):
     #index_1 = 900
     #index_2 = 1500
     return (index_1, index_2)
+    '''
    
 class Analyzer(Frame):
     def __init__(self, window, datafile):
         Frame.__init__(self)
         self.font_2 = font.Font(family="Times New Roman", size=10)
         self.window = window
-        self.FWHMconstant = 200
+        self.FWHMconstant = 1
         self.polynomialOrder = 3
         
         try:
@@ -111,6 +122,8 @@ class Analyzer(Frame):
                 self.xarray[i] = self.xdata[i]
                 self.y1array[i] = self.y_u1[i]
                 self.y2array[i] = self.y_u9[i]
+                
+            self.xarray =  np.flip(self.xarray,0)
             
             self.font = font.Font(family="Times New Roman", size=20, weight=font.BOLD)    
             self.masterFrame = frame(self.window,(1000,1000), RIGHT)
@@ -279,17 +292,17 @@ class Analyzer(Frame):
         #self.plotFrame = frame(self.window,(1000,1000), TOP)
         self.plot_3 = Plot(6,6, self.masterFrame, self.plotFrame)
         self.plot_3.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization")
-        self.plot_3.plot(self.xdata, self.z1, 'ko', label='Data Points', markersize=1, picker=5)
+        self.plot_3.plot(self.xarray, self.z1, 'ko', label='Data Points', markersize=1, picker=5)
         self.plot_3.addPickEvent(self.onpickU1)
         #self.plot_3.addSecondAxis("x", "Data points", 0, self.dataPoints + 512, 1024)
         
         self.plot_4 = Plot(6,6, self.masterFrame, self.plotFrame)
         self.plot_4.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization")
-        self.plot_4.plot(self.xdata, self.z2, 'ko', label='Data Points', markersize=1, picker=5)
+        self.plot_4.plot(self.xarray, self.z2, 'ko', label='Data Points', markersize=1, picker=5)
         self.plot_4.addPickEvent(self.onpickU9)
         #self.plot_4.addSecondAxis("x", "Data points", 0, self.dataPoints + 512, 1024)
         
-        self.a, self.b = FWHM(self.xdata, (self.z1 + self.z2)/2, self.FWHMconstant)
+        self.a, self.b = FWHM(self.xarray, (self.z1 + self.z2)/2, self.FWHMconstant)
         
         #sliders
         self.previousM = self.m
@@ -328,9 +341,9 @@ class Analyzer(Frame):
         bad_u9_indexies = list()
         
         for bad in range(0, len(self.points_1u)):
-            bad_u1_indexies.append(indexies(self.xdata, self.points_1u[bad][0]))
+            bad_u1_indexies.append(indexies(self.xarray, self.points_1u[bad][0]))
         for bad in range(0, len(self.points_9u)):
-            bad_u9_indexies.append(indexies(self.xdata, self.points_9u[bad][0]))
+            bad_u9_indexies.append(indexies(self.xarray, self.points_9u[bad][0]))
             
         bad_u1_indexies.sort()
         bad_u9_indexies.sort()
@@ -339,37 +352,37 @@ class Analyzer(Frame):
         bad_list_indexies = np.unique(bad_list_indexies, return_index=False, return_inverse=False, return_counts=False,)
         
         for bad in range(0, len(bad_list_indexies)):
-            self.xdata = np.delete(self.xdata, self.xdata[bad_list_indexies[bad]])
+            self.xdata = np.delete(self.xarray, self.xarray[bad_list_indexies[bad]])
             self.z1 = np.delete(self.z1, self.z1[bad_list_indexies[bad]])
             self.z2 = np.delete(self.z2, self.z2[bad_list_indexies[bad]])
             
         print ("After deliting  ", self.xdata.shape[0])
                                        
-        self.a_u1, self.b_u1 = FWHM(self.xdata, self.z1, self.FWHMconstant)
-        self.a_u9, self.b_u9 = FWHM(self.xdata, self.z2, self.FWHMconstant)
+        self.a_u1, self.b_u1 = FWHM(self.xarray, self.z1, self.FWHMconstant)
+        self.a_u9, self.b_u9 = FWHM(self.xarray, self.z2, self.FWHMconstant)
          
         # Fit the data using a Chebyshev astro py
         ceb = Chebyshev1D(self.polynomialOrder, domain=None, window=[-1, 1], n_models=None, model_set_axis=None, name=None, meta=None)
         fit_ceb = fitting.LevMarLSQFitter()
         
         ### u1
-        self.ceb_1 = fit_ceb(ceb, np.append(self.xdata[self.m:self.a_u1], self.xdata[self.b_u1:self.n]),  np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]))
+        self.ceb_1 = fit_ceb(ceb, np.append(self.xarray[self.m:self.a_u1], self.xarray[self.b_u1:self.n]),  np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]))
        
         ### u9
-        self.ceb_2 = fit_ceb(ceb, np.append(self.xdata[self.m:self.a_u9], self.xdata[self.b_u9:self.n]),  np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]))
+        self.ceb_2 = fit_ceb(ceb, np.append(self.xarray[self.m:self.a_u9], self.xarray[self.b_u9:self.n]),  np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]))
         
         #u1 plot
         self.plot_5 = Plot(6,6, self.masterFrame, self.plotFrame)
         self.plot_5.creatPlot(LEFT, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization")
-        self.plot_5.plot(np.append(self.xdata[self.m:self.a_u1], self.xdata[self.b_u1:self.n]), np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]), 'ko', label='Data Points',  markersize=1)
-        self.plot_5.plot(self.xdata[self.m:self.n], self.ceb_1(self.xdata[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
+        self.plot_5.plot(np.append(self.xarray[self.m:self.a_u1], self.xarray[self.b_u1:self.n]), np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]), 'ko', label='Data Points',  markersize=1)
+        self.plot_5.plot(self.xarray[self.m:self.n], self.ceb_1(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
         #self.plot_5.plot(self.x_u1[self.m:self.n], p_u1(self.x_u1[self.m:self.n]), 'b', label='Numpy polyfit', markersize=1)
         
         #u9 plot
         self.plot_6 = Plot(6,6, self.masterFrame, self.plotFrame)
         self.plot_6.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization")
-        self.plot_6.plot(np.append(self.xdata[self.m:self.a_u9], self.xdata[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), 'ko', label='Data Points',  markersize=1)
-        self.plot_6.plot(self.xdata[self.m:self.n], self.ceb_2(self.xdata[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
+        self.plot_6.plot(np.append(self.xarray[self.m:self.a_u9], self.xarray[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), 'ko', label='Data Points',  markersize=1)
+        self.plot_6.plot(self.xarray[self.m:self.n], self.ceb_2(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
         #self.plot_6.plot(self.x_u9[self.m:self.n], p_u9(self.x_u9[self.m:self.n]), 'b', label='Numpy polyfit', markersize=1)
         
     def plotLocalMaximum(self):
@@ -385,32 +398,32 @@ class Analyzer(Frame):
         
         thres=0.1
         
-        self.z1 = self.z1.reshape(len(self.z1), 1)
-        self.z2 = self.z2.reshape(len(self.z2), 1)
+        #self.z1 = self.z1.reshape(len(self.z1), 1)
+        #self.z2 = self.z2.reshape(len(self.z2), 1)
         
-        y1values = self.z1[self.m:self.n] - self.ceb_1(self.xdata[self.m:self.n])
-        y2values = self.z2[self.m:self.n] - self.ceb_2(self.xdata[self.m:self.n])
+        y1values = self.z1[self.m:self.n] - self.ceb_1(self.xarray[self.m:self.n])
+        y2values = self.z2[self.m:self.n] - self.ceb_2(self.xarray[self.m:self.n])
         
-        print ("y1values", y1values.shape, y1values[0], self.z1.shape, self.ceb_1(self.xdata).shape)
+        print ("y1values", y1values.shape, y1values[0], self.z1.shape, self.ceb_1(self.xarray).shape)
         
         #indexsu apreikinasana
-        indexes_for_ceb = peakutils.indexes(y1values.tolist(), thres=thres, min_dist=10)
+        indexes_for_ceb = peakutils.indexes(y1values, thres=thres, min_dist=10)
         indexes_for_ceb2 = peakutils.indexes(y2values, thres=thres, min_dist=10)
         
         self.plot_7 = Plot(5,5, self.masterFrame, self.plotFrame)
         self.plot_7.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization")
-        self.plot_7.plot(self.xdata[self.m:self.n], y1values, 'b', label='Signal - polynomial', markersize=1)
-        self.plot_7.plot(self.xdata[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
+        self.plot_7.plot(self.xarray[self.m:self.n], y1values, 'b', label='Signal - polynomial', markersize=1)
+        self.plot_7.plot(self.xarray[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
         self.plot_7.addPickEvent(self.onpick_maxU1)
-        self.plot_7.annotations(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb])
+        self.plot_7.annotations(self.xarray[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb])
         
         #u9
         self.plot_8 = Plot(5,5, self.masterFrame, self.plotFrame)
         self.plot_8.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization")
-        self.plot_8.plot(self.xdata[self.m:self.n], y1values, 'b', label='Signal - polynomial', markersize=1)
-        self.plot_8.plot(self.xdata[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
+        self.plot_8.plot(self.xarray[self.m:self.n], y1values, 'b', label='Signal - polynomial', markersize=1)
+        self.plot_8.plot(self.xarray[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
         self.plot_8.addPickEvent(self.onpick_maxU9)
-        self.plot_8.annotations(self.xdata[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2])
+        self.plot_8.annotations(self.xarray[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2])
         
         #mid plot
         avg_y = (y1values + y2values) / 2
@@ -418,10 +431,10 @@ class Analyzer(Frame):
         
         self.plot_9 = Plot(5,5, self.masterFrame, self.plotFrame)
         self.plot_9.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Average Polarization")
-        self.plot_9.plot(self.xdata, avg_y, 'b', label='Signal - polynomial', markersize=1)
-        self.plot_9.plot(self.xdata[indexes_for_avg], avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
+        self.plot_9.plot(self.xarray, avg_y, 'b', label='Signal - polynomial', markersize=1)
+        self.plot_9.plot(self.xarray[indexes_for_avg], avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
         self.plot_9.addPickEvent(self.onpick_maxAVG)
-        self.plot_9.annotations(self.xdata[indexes_for_avg], avg_y[indexes_for_avg])
+        self.plot_9.annotations(self.xarray[indexes_for_avg], avg_y[indexes_for_avg])
         
         self.maxU1 = list()
         self.maxU9 = list()
