@@ -494,7 +494,7 @@ class Analyzer(Frame):
         self.plot_STON.plot(ston_x, self.STON_list_AVG, 'vb', label="AVG Polarization")
         
         totalResults = np.concatenate((velocitys_avg, y_u1_avg, y_u9_avg), axis=1)
-        np.savetxt(self.dataFilesPath + self.source + self.date.replace(".", "_")  + ".dat", totalResults)
+        np.savetxt(self.dataFilesPath + self.source + self.date.replace(".", "_") + "_" + self.logs["location"] + ".dat", totalResults)
         
     def __UI__(self):
         if self.index != self.datPairsCount -1: # cheking if there is not one pair

@@ -13,6 +13,7 @@ from astropy.modeling.polynomial import Chebyshev1D
 from scipy.interpolate import UnivariateSpline
 import peakutils
 import json
+import re
 
 from ploting import Plot
 
@@ -92,6 +93,10 @@ class Analyzer(Frame):
         self.window = window
         self.FWHMconstant = 1
         self.polynomialOrder = 3
+        self.source = re.split("([A-Z, a-z]+)", datafile.split("/")[-1].split(".")[0])[1]
+        self.expername = datafile.split("/")[-1].split(".")[0]
+        self.date = re.split("([A-Z, a-z]+)", datafile.split("/")[-1].split(".")[0])[2]
+        self.location = datafile.split("/")[-1].split(".")[0].split("_")[-1]
         
         try:
             data = np.fromfile(datafile, dtype="float64", count=-1, sep=" ") .reshape((file_len(datafile),3))
@@ -444,7 +449,53 @@ class Analyzer(Frame):
         self.maxavg_index = list()
         
     def createResult(self):
-        pass
+        
+        endLabel = Label(master=self.masterFrame, text="Result file creating in progress!")
+        endLabel.pack()
+        
+        resultDir = "results/"
+        resultFileName = self.source + ".json"
+    
+        if os.path.isfile(resultDir + resultFileName):
+            pass
+        else:
+            os.system("touch " + resultDir +  resultFileName)
+            
+            resultFile = open (resultDir +  resultFileName, "w")
+            resultFile.write("{ \n" + "\n}")
+            resultFile.close()
+        
+        with open(resultDir + resultFileName) as result_data:    
+            result = json.load(result_data)
+        
+        if self.expername not in result:
+            result[self.expername] = dict()
+                
+        self.maxU1.sort(key=lambda tup: tup[0], reverse=True)
+        self.maxU9.sort(key=lambda tup: tup[0], reverse=True)
+        self.avgMax.sort(key=lambda tup: tup[0], reverse=True)
+              
+        result[self.expername]["location"] = self.location
+        result[self.expername]["Date"] = self.date
+                    
+        result[self.expername]["polarizationU1"] = self.maxU1
+        result[self.expername]["polarizationU9"] = self.maxU9
+        result[self.expername]["polarizationAVG"] = self.avgMax
+                
+        #result[self.expername][self.scanNumber]["index_for_polarizationU1"] =  self.maxu1_index
+        #result[self.expername][self.scanNumber]["index_for_polarizationU9"] =  self.maxu9_index
+        #result[self.expername][self.scanNumber]["index_for_polarizationAVG"] =  self.maxavg_index
+        
+        resultFile = open (resultDir +  resultFileName, "w")
+        resultFile.write(json.dumps(result, indent=2))
+        resultFile.close() 
+        
+        self. _quit()
+        
+    def _quit(self):
+        self.masterFrame.destroy()
+        self.plotFrame.destroy()
+        self.window.destroy()
         
 def main(): 
     
