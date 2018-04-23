@@ -48,12 +48,18 @@ def main():
     velocitys_U1 = list()
     velocitys_U9 = list() 
     velocitys_AVG = list() 
-    dateList = list()  
+    dateList = list()
+    labels = list()
     for experiment in result:
             scanData = result[experiment]
+            date = scanData["Date"]
+            location = scanData["location"]
             amplitudes_for_u1 = scanData["polarizationU1"] # Got poitns for all experiments for polarization u1
             amplitudes_for_u9 = scanData["polarizationU9"] # Got poitns for all experiments for polarization u9
             amplitudes_for_uAVG = scanData["polarizationAVG"] # Got poitns for all experiments for polarization uAVG
+            
+            label = "Station is " + location + "\n" + "Date is " + " ".join(date.split("_"))  #+ "\n"  + "Polarization is " + "u1"
+            labels.append(label)
             
             v_list_u1 = list()
             for v in amplitudes_for_u1:
@@ -70,8 +76,6 @@ def main():
                 v_list_AVG.append(v[1])
             velocitys_AVG.append(v_list_AVG)
             
-            #time = scanData["startTime"]
-            date = scanData["Date"]
             dates = date.split("_")
             monthsNumber = str(int(dates[1]))
             dates[1] = monthsNumber
@@ -113,19 +117,21 @@ def main():
     x = [date2num(date) for date in  dateList]
     
     Symbols =  ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
+    
     fig = plt.figure()
+    #fig, ax = plt.subplots()
     graph = fig.add_subplot(111)
     for i in range(0, len(y_u1)):
-        graph.plot(x, y_u1[i], Symbols[i]+"r", label="polarizationU1 " + "Velocity " + str(i))
-        graph.plot(x, y_u9[i], Symbols[i]+"g", label="polarizationU9 " + "Velocity " + str(i))
-        graph.plot(x, y_avg[i], Symbols[i]+"b", label="polarizationUAVG " + "Velocity " + str(i))
+        graph.plot(x, y_u1[i], Symbols[i]+"r", label="polarization U1 " + "Velocity " + str(i))
+        graph.plot(x, y_u9[i], Symbols[i]+"g", label="polarization U9 " + "Velocity " + str(i))
+        graph.plot(x, y_avg[i], Symbols[i]+"b", label="polarization UAVG " + "Velocity " + str(i))
     graph.set_xticks(x)
     graph.set_xticklabels([date.strftime("%d %m %Y") for date in  dateList])
     plt.legend()
     
-    #fig.canvas.mpl_connect("motion_notify_event", hover)
-    mplcursors.cursor(hover=True)
-
+    cursor =  mplcursors.cursor(hover = True, highlight=True)
+    cursor.connect("add", lambda sel: sel.annotation.set_text(labels[sel.target.index]))
+   
     plt.show()
     
     sys.exit(0)
