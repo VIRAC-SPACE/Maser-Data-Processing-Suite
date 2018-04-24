@@ -124,7 +124,7 @@ def main():
     for i in range(0, len(y_u1)):
         graph.plot(x, y_u1[i], Symbols[i]+"r", label="polarization U1 " + "Velocity " + str(i))
         graph.plot(x, y_u9[i], Symbols[i]+"g", label="polarization U9 " + "Velocity " + str(i))
-        graph.plot(x, y_avg[i], Symbols[i]+"b", label="polarization UAVG " + "Velocity " + str(i))
+        graph.plot(x, y_avg[i], Symbols[i]+"b", label="polarization AVG " + "Velocity " + str(i))
     graph.set_xticks(x)
     graph.set_xticklabels([date.strftime("%d %m %Y") for date in  dateList])
     plt.legend()

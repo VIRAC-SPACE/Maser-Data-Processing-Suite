@@ -364,14 +364,10 @@ class Analyzer(Frame):
         bad_list_indexies = bad_u1_indexies + bad_u9_indexies
         bad_list_indexies = np.unique(bad_list_indexies, return_index=False, return_inverse=False, return_counts=False,)
         
-        print ("Tyoes b", len(self.z1), len(self.z2), len(self.xarray))
-        
         for bad in range(0, len(bad_list_indexies)):
             self.xarray = np.delete(self.xarray, self.xarray[bad_list_indexies[bad]])
             self.z1 = np.delete(self.z1, self.z1[bad_list_indexies[bad]])
             self.z2 = np.delete(self.z2, self.z2[bad_list_indexies[bad]])
- 
-        print ("Tyoes a", len(self.z1), len(self.z2), len(self.xarray))
             
         print ("After deliting  ", self.xarray.shape[0])
                                        
