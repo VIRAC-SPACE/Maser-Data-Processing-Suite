@@ -282,9 +282,9 @@ class Analyzer(Frame):
     def plotingPairs(self, index):
     
         pair = self.scanPairs[index]
-        self.plotFrame_start = frame(self.window,(1000, 1000), TOP)
-        self.plotFrame_total = frame(self.window,(1000, 1000), BOTTOM)
-        self.plotFrame_negative_positive = frame(self.window,(1000, 1000), BOTTOM)
+        self.plotFrame_start = frame(self.window,(15000, 1000), TOP)
+        self.plotFrame_total = frame(self.window,(15000, 1000), BOTTOM)
+        self.plotFrame_negative_positive = frame(self.window,(15000, 1000), BOTTOM)
         
         scanNUmber1 = self.dataFileDir + "/" + pair[0]
         scanNUmber2 = self.dataFileDir + "/" + pair[1]
@@ -325,10 +325,8 @@ class Analyzer(Frame):
             
         data_1 = np.fromfile(scanNUmber1, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber1),5))
         data_2 = np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),5))
-        print ("init data", data_1[0], data_1[1])
         data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
         data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
-        print ("init data", data_1[0], data_1[1])
             
         xdata_1_f, xdata_2_f, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
            
@@ -337,12 +335,12 @@ class Analyzer(Frame):
         ydata_1_u9 = ydata_1_u9 * calibration(self.calibrationScale, tsys_u9_1)
         ydata_2_u9 = ydata_2_u9 * calibration(self.calibrationScale, tsys_u9_2)
         
-        self.plot_start_u1 = Plot(4,4, self.masterFrame, self.plotFrame_start)
+        self.plot_start_u1 = Plot(3,3, self.masterFrame, self.plotFrame_start)
         self.plot_start_u1.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', "u1 Polarization")
         self.plot_start_u1.plot(xdata_1_f, ydata_1_u1, 'b', label=pair[0])
         self.plot_start_u1.plot(xdata_1_f, ydata_2_u1, 'r', label=pair[1])
             
-        self.plot_start_u9 = Plot(4,4, self.masterFrame, self.plotFrame_start)
+        self.plot_start_u9 = Plot(3,3, self.masterFrame, self.plotFrame_start)
         self.plot_start_u9.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', "u9 Polarization")
         self.plot_start_u9.plot(xdata_2_f, ydata_1_u9, 'b', label=pair[0])
         self.plot_start_u9.plot(xdata_2_f, ydata_2_u9, 'r', label=pair[1])
@@ -350,11 +348,11 @@ class Analyzer(Frame):
         data_u1 = self.createNegativeAndPositiveSpike(ydata_1_u1, ydata_2_u1)
         data_u9 = self.createNegativeAndPositiveSpike(ydata_1_u9, ydata_2_u9)
         
-        self.plot_negative_positive_u1 = Plot(4,4, self.masterFrame, self.plotFrame_negative_positive)
+        self.plot_negative_positive_u1 = Plot(3,3, self.masterFrame, self.plotFrame_negative_positive)
         self.plot_negative_positive_u1.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', None)
         self.plot_negative_positive_u1.plot(xdata_1_f, data_u1, 'b', label=pair[0] +  "-" + pair[1])
         
-        self.plot_negative_positive_u9 = Plot(4,4, self.masterFrame, self.plotFrame_negative_positive)
+        self.plot_negative_positive_u9 = Plot(3,3, self.masterFrame, self.plotFrame_negative_positive)
         self.plot_negative_positive_u9.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', None)
         self.plot_negative_positive_u9.plot(xdata_1_f, data_u9, 'b', label=pair[0] +  "-" + pair[1])
         
@@ -366,11 +364,11 @@ class Analyzer(Frame):
         self.totalResults_u1.append(total_u1)
         self.totalResults_u9.append(total_u9)
         
-        self.plot_total_u1 = Plot(4,4, self.masterFrame, self.plotFrame_total)
+        self.plot_total_u1 = Plot(3,3, self.masterFrame, self.plotFrame_total)
         self.plot_total_u1.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', None)
         self.plot_total_u1.plot(self.x, total_u1, 'b')
         
-        self.plot_total_u9 = Plot(4,4, self.masterFrame, self.plotFrame_total)
+        self.plot_total_u9 = Plot(3,3, self.masterFrame, self.plotFrame_total)
         self.plot_total_u9.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', None)
         self.plot_total_u9.plot(self.x, total_u9, 'b')
         

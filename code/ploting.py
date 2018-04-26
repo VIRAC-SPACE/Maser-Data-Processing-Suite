@@ -6,6 +6,10 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.backends.backend_tkagg as tkagg
 from matplotlib.widgets import Slider
+from matplotlib import rcParams
+rcParams['font.family'] = 'sans-serif'
+rcParams['font.sans-serif'] = ['Time New Roman']
+rcParams['font.size'] = 12
 
 try:
     from tkinter import *
