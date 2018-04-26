@@ -121,6 +121,7 @@ class Analyzer(Frame):
         self.calibrationScales = calibrationScales
         self.location = self.logs["location"]
         self.calibrationScale = self.calibrationScales[self.location]
+        self.expername = self.source + self.date + "_" + self.logs["location"]
     
         self.window.title("Analyze for " + self.source + " " + self.date)
         self.__UI__()
@@ -405,7 +406,6 @@ class Analyzer(Frame):
         self.plot_total_u9.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', None)
         self.plot_total_u9.plot(self.x, total_u9, 'b')
         
-        '''
         ston_u1 = STON(total_u1)
         ston_u9 = STON(total_u9)
         stone_AVG = STON(((total_u1 + total_u9)/2))
@@ -413,8 +413,7 @@ class Analyzer(Frame):
         self.STON_list_u1.append(ston_u1)
         self.STON_list_u9.append(ston_u9)
         self.STON_list_AVG.append(stone_AVG)
-        '''
-         
+        
         if index == self.datPairsCount -1:
             self.nextPairButton.destroy()
             self.totalResultButton = Button (self.masterFrame, text="Move to total results", command=self.plotTotalResults, activebackground="Blue", background="Blue", font=self.font)
@@ -519,14 +518,12 @@ class Analyzer(Frame):
         self.plot_velocity_u9.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization")
         self.plot_velocity_u9.plot(velocitys_avg, y_u9_avg, 'b')
         
-        '''
         ston_x = np.arange(0, len(self.STON_list_u1))
         self.plot_STON = Plot(5,5, self.masterFrame, self.plotFrame_STON)
         self.plot_STON.creatPlot(None, 'Pair', 'Ratio', "Signal to Noise")
         self.plot_STON.plot(ston_x, self.STON_list_u1, '*r', label="u1 Polarization")
         self.plot_STON.plot(ston_x, self.STON_list_u9, 'og', label="u9 Polarization")
         self.plot_STON.plot(ston_x, self.STON_list_AVG, 'vb', label="AVG Polarization")
-        '''
         
         totalResults = np.concatenate((velocitys_avg, y_u1_avg, y_u9_avg), axis=1)
         np.savetxt(self.dataFilesPath + self.source + self.date.replace(".", "_") + "_" + self.logs["location"] + ".dat", totalResults)
