@@ -122,6 +122,9 @@ class Analyzer(Frame):
         self.location = self.logs["location"]
         self.calibrationScale = self.calibrationScales[self.location]
         self.expername = self.source + self.date + "_" + self.logs["location"]
+        self.FreqStart = self.logs["header"]["FreqStart"]
+        #self.LO = 6100 
+        #self.IF0 = 567.518
     
         self.window.title("Analyze for " + self.source + " " + self.date)
         self.__UI__()
@@ -377,9 +380,7 @@ class Analyzer(Frame):
         #Calibration  
         data_u1 = self.calibration(xdata_1_f, ydata_1_u1, ydata_2_u1, float(tsys_u1_1), float(tsys_u9_2)) 
         data_u9 = self.calibration(xdata_1_f, ydata_1_u9, ydata_2_u9, float(tsys_u9_1), float(tsys_u9_2))
-        LO = 6100 
-        IF0 = 567.518
-        IF_SHIFT = 100
+       
         xdata_1_f = np.array(xdata_1_f)
         
         self.plot_negative_positive_u1 = Plot(4,4, self.masterFrame, self.plotFrame_negative_positive)
@@ -393,7 +394,7 @@ class Analyzer(Frame):
         maxFrequency = np.max(xdata_1_f)
         total_u1 = self.createTotalResult(xdata_1_f, data_u1, self.interval, maxFrequency)
         total_u9 = self.createTotalResult(xdata_1_f, data_u9, self.interval, maxFrequency)
-        self.x = np.linspace(0,maxFrequency/2, len(total_u1), dtype="float64").reshape(len(total_u1), 1)  + LO + IF0 + IF_SHIFT
+        self.x = np.linspace(0,maxFrequency/2, len(total_u1), dtype="float64").reshape(len(total_u1), 1)  + self.FreqStart
         
         self.totalResults_u1.append(total_u1)
         self.totalResults_u9.append(total_u9)

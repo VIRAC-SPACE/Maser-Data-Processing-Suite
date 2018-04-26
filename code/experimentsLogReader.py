@@ -134,7 +134,7 @@ class ExperimentLogReader():
                         
             header = Scan(self.headerLines)
             header.getParametrs()
-            header_source, header_sourceName, header_epoch, header_ra, header_dec, header_timeStart, header_timeStop, header_SystemtemperaturesForScan, header_freqBBC1, header_freqBBC2, header_loa, header_loc, header_clock = header.returnParametrs()
+            self.header_source, self.header_sourceName, self.header_epoch, self.header_ra, self.header_dec, self.header_timeStart, self.header_timeStop, self.header_SystemtemperaturesForScan, self.header_freqBBC1, self.header_freqBBC2, self.header_loa, self.header_loc, self.header_clock = header.returnParametrs()
             
             #print header_source, header_sourceName, header_epoch, header_ra, header_dec
             for scan in self.scanLines:
@@ -166,9 +166,9 @@ class ExperimentLogReader():
                         dec.append(Dec[2:4])
                         dec.append(Dec[4:len(Dec)])
                     
-                    freqBBC2 = header_freqBBC2
-                    loc = header_loc
-                    loa = header_loa
+                    freqBBC2 = self.header_freqBBC2
+                    loc = self.header_loc
+                    loa = self.header_loa
               
                 self.sources.append(source)
                 self.sourceName.append(sourceName)
@@ -289,6 +289,8 @@ class ExperimentLogReader():
         logs = dict()
         
         logs["location"] = self.Location
+        
+        logs["header"] = {"Systemtemperature":self.header_SystemtemperaturesForScan, "Ra":self.header_ra , "Dec":self.header_dec, "dates":self.dates, "startTime":self.header_timeStart, "FreqStart": float(self.header_freqBBC1) + float(self.header_loa), "sourceName":self.header_source, "source":self.header_sourceName, "stopTime": self.header_timeStop, "clockOffset": self.header_clock}
         
         for i in range(0, len(self.scan_names)):
             logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates, "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sources[i], "source":self.sourceName[i], "stopTime": self.timeStops[i], "clockOffset": self.clocks[i]}
