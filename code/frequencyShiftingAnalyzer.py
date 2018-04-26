@@ -13,6 +13,7 @@ import pandas as pd
 from pandas.stats.moments import rolling_mean
 from time import strptime
 import re
+import json
 
 from experimentsLogReader import ExperimentLogReader
 from ploting import Plot
@@ -92,7 +93,7 @@ def STON(array):
     return ston
 
 class Analyzer(Frame):
-    def __init__(self, window, source, date, filter, threshold, badPointRange, interval, dataPath, logs, calibrationScales):
+    def __init__(self, window, source, date, filter, threshold, badPointRange, interval, dataPath, resultPath, logs, calibrationScales):
         Frame.__init__(self)
         self.window = window
         self.source = source
@@ -102,6 +103,7 @@ class Analyzer(Frame):
         self.date = date
         self.dataFileDir = dataPath + self.source + "/" + self.date
         self.dataFilesPath = dataPath
+        self.resultPath = resultPath
         self.scanPairs = self.createScanPairs()
         self.datPairsCount = len(self.scanPairs)
         self.font = font.Font(family="Times New Roman", size=20, weight=font.BOLD)
@@ -202,8 +204,7 @@ class Analyzer(Frame):
             ydata_1_u9 = np.array(ydata_1_u9)
             ydata_2_u9 = np.array(ydata_2_u9)
             
-            #data_1 = data_1[outliersMask_1]
-            #data_2 = data_2[outliersMask_2]
+            self.dataPoints = len(xdata_1_f)
             
             return (xdata_1_f, xdata_2_f, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9)
         
@@ -215,10 +216,40 @@ class Analyzer(Frame):
             ydata_1_u9 = data1[:, [2]]
             ydata_2_u9 = data2[:, [2]]
             
+            self.dataPoints = len(xdata_1_f)
+            
             return (xdata_1_f, xdata_2_f, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9)
     
-    def createNegativeAndPositiveSpike(self, array1, array2):
-        return array1 - array2
+    def calibration(self, array_x, data_1, data_2, tsys_1, tsys_2):
+        #from AGN cal sessions (FS /usr2/control/rxg_files/c3.rxg):
+        DPFU_max = [0.0442016750, 0.0444381686]
+        G_El = [-0.0000740207, 0.0071794464, 0.8243803753]
+        Tcal = 3.859
+        k = 0.851
+        El = 50
+        DPFU = np.mean(DPFU_max)*np.polyval(G_El,El)
+        f_shift = 0.5
+        
+        P_sig = data_1 # Get Amplitudes
+        P_ref = data_2 # Get Amplitudes
+        
+        Ta_sig = float(tsys_1)*(P_sig - P_ref)/P_ref #only non-cal phase for dbbc possible...
+        Ta_ref = float(tsys_2)*(-P_ref + P_sig)/P_sig
+        
+        f_step = (array_x[self.dataPoints-1]-array_x[0])/(self.dataPoints-1); 
+        n_shift = int(f_shift/f_step);
+        
+        Ta_sig = np.roll(Ta_sig, -n_shift); # pos
+        Ta_ref = np.roll(Ta_ref, -n_shift); # neg
+        
+        #avg shifted spectrums
+        Ta = (Ta_sig + Ta_ref)/2 # Creting total spectr
+        
+        #K->Jy
+        Ta = Ta/DPFU/k
+        #cut out calibrated part
+  
+        return Ta
     
     def createTotalResult(self, array_x, array_y, interval, maxFrequency):
         if interval > maxFrequency/4.0:
@@ -325,6 +356,8 @@ class Analyzer(Frame):
             
         data_1 = np.fromfile(scanNUmber1, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber1),5))
         data_2 = np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),5))
+        
+        #Delete first row
         data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
         data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
             
@@ -342,11 +375,26 @@ class Analyzer(Frame):
             
         self.plot_start_u9 = Plot(3,3, self.masterFrame, self.plotFrame_start)
         self.plot_start_u9.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', "u9 Polarization")
+
+        self.plot_start_u1 = Plot(4,4, self.masterFrame, self.plotFrame_start)
+        self.plot_start_u1.creatPlot(None, 'Frequency Mhz', 'Amplitude', "u1 Polarization")
+        self.plot_start_u1.plot(xdata_1_f, ydata_1_u1, 'b', label=pair[0])
+        self.plot_start_u1.plot(xdata_1_f, ydata_2_u1, 'r', label=pair[1])
+            
+        self.plot_start_u9 = Plot(4,4, self.masterFrame, self.plotFrame_start)
+        self.plot_start_u9.creatPlot(None, 'Frequency Mhz', 'Amplitude', "u9 Polarization")
         self.plot_start_u9.plot(xdata_2_f, ydata_1_u9, 'b', label=pair[0])
         self.plot_start_u9.plot(xdata_2_f, ydata_2_u9, 'r', label=pair[1])
         
-        data_u1 = self.createNegativeAndPositiveSpike(ydata_1_u1, ydata_2_u1)
-        data_u9 = self.createNegativeAndPositiveSpike(ydata_1_u9, ydata_2_u9)
+        #Calibration  
+        data_u1 = self.calibration(xdata_1_f, ydata_1_u1, ydata_2_u1, float(tsys_u1_1), float(tsys_u9_2)) 
+        data_u9 = self.calibration(xdata_1_f, ydata_1_u9, ydata_2_u9, float(tsys_u9_1), float(tsys_u9_2))
+        LO = 6100 
+        IF0 = 567.518
+        IF_SHIFT = 100
+        xdata_1_f = np.array(xdata_1_f)
+        
+        xdata_1_f = np.array(xdata_1_f) + LO + IF0 + IF_SHIFT
         
         self.plot_negative_positive_u1 = Plot(3,3, self.masterFrame, self.plotFrame_negative_positive)
         self.plot_negative_positive_u1.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', None)
@@ -372,6 +420,7 @@ class Analyzer(Frame):
         self.plot_total_u9.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', None)
         self.plot_total_u9.plot(self.x, total_u9, 'b')
         
+        '''
         ston_u1 = STON(total_u1)
         ston_u9 = STON(total_u9)
         stone_AVG = STON(((total_u1 + total_u9)/2))
@@ -379,6 +428,7 @@ class Analyzer(Frame):
         self.STON_list_u1.append(ston_u1)
         self.STON_list_u9.append(ston_u9)
         self.STON_list_AVG.append(stone_AVG)
+        '''
          
         if index == self.datPairsCount -1:
             self.nextPairButton.destroy()
@@ -484,15 +534,34 @@ class Analyzer(Frame):
         self.plot_velocity_u9.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization")
         self.plot_velocity_u9.plot(velocitys_avg, y_u9_avg, 'b')
         
+        '''
         ston_x = np.arange(0, len(self.STON_list_u1))
         self.plot_STON = Plot(5,5, self.masterFrame, self.plotFrame_STON)
         self.plot_STON.creatPlot(None, 'Pair', 'Ratio', "Signal to Noise")
         self.plot_STON.plot(ston_x, self.STON_list_u1, '*r', label="u1 Polarization")
         self.plot_STON.plot(ston_x, self.STON_list_u9, 'og', label="u9 Polarization")
         self.plot_STON.plot(ston_x, self.STON_list_AVG, 'vb', label="AVG Polarization")
+        '''
         
         totalResults = np.concatenate((velocitys_avg, y_u1_avg, y_u9_avg), axis=1)
         np.savetxt(self.dataFilesPath + self.source + self.date.replace(".", "_") + "_" + self.logs["location"] + ".dat", totalResults)
+        
+        resultFile = self.resultPath + self.source + ".json"
+        
+        if os.path.isfile(resultFile):
+            pass
+        else:
+            os.system("touch " + resultFile)
+            
+            resultFile = open (resultFile, "w")
+            resultFile.write("{ \n" + "\n}")
+            resultFile.close()
+        
+        with open(resultFile) as result_data:    
+            result = json.load(result_data)
+        
+        if self.expername not in result:
+            result[self.expername] = dict()
         
     def __UI__(self):
         if self.index != self.datPairsCount -1: # cheking if there is not one pair
@@ -520,6 +589,7 @@ def main():
     dataFilesPath =  config.get('paths', "dataFilePath")
     prettyLogsPath =  config.get('paths', "prettyLogsPath")
     logPath = config.get('paths', "logPath")
+    resultPath = config.get('paths', "resultFilePath")
     badPointRange =  config.getint('parametrs', "badPointRange")
     logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, singleSourceExperiment).getLogs()
     
@@ -539,7 +609,7 @@ def main():
     #Create App
     window = tk.Tk()
     window.configure(background='light goldenrod')
-    ploting = Analyzer(window, source, date, filtering, threshold, badPointRange, interval, dataFilesPath, logs, calibrationScales)
+    ploting = Analyzer(window, source, date, filtering, threshold, badPointRange, interval, dataFilesPath, resultPath, logs, calibrationScales)
     img = tk.Image("photo", file="viraclogo.png")
     window.call('wm','iconphoto', window._w,img)
         
