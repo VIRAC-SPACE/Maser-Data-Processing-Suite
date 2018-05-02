@@ -33,13 +33,13 @@ class Plot():
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.frame)
         self.canvas.draw()
         self.figure.set_canvas(self.canvas)
-        self.canvas.get_tk_widget().pack(side=sides)
+        self.canvas.get_tk_widget().pack(side=sides, expand=YES)
         if title != None:
             self.graph.set_title(title,  y=1.08) 
                 
         self.toolbar = tkagg.NavigationToolbar2TkAgg(self.canvas, self.window)
         self.toolbar.update()
-        self.canvas._tkcanvas.pack(side=LEFT, expand=1)
+        self.canvas._tkcanvas.pack(side=LEFT, expand=YES)
         self.graph.grid(True)
         self.graph.set_xlabel(x_label)
         self.graph.set_ylabel (y_label)

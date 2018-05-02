@@ -52,7 +52,7 @@ def frame(parent, size, sides, **options):
     Width=size[0]
     Height=size[1]
     f=tk.Frame(parent, width=Width, height=Height, background="light goldenrod", **options)
-    f.pack(side = sides)
+    f.pack(side = sides, expand=YES)
     return (f)
 
 def indexies(array, value):
