@@ -110,19 +110,39 @@ class ExperimentLogReader():
                         
                         elif "scan_name=no" in line:
                             append = True 
-                            self.scan_name = line.split(":")[3].split(",")[0].split("=")[1][2:].lstrip("0")
-                            key = int(self.scan_name)
                             
-                            if self.scan_name in self.scan_names:
-                                raise Exception("Two scans with same name " + self.scan_name)
-                            
-                            self.scan_names.append(self.scan_name)
-                            self.scanLines[key] = list()
-                            
-                            if  previousScan !=0 and previousScan +1 != key:
-                                print ("Skipped scan ", previousScan + 1)
+                            if ";" not in line:
+                                self.scan_name = line.split(":")[3].split(",")[0].split("=")[1][2:].lstrip("0")
+                                key = int(self.scan_name)
                                 
-                            previousScan = key
+                                if self.scan_name in self.scan_names:
+                                    raise Exception("Two scans with same name " + self.scan_name)
+                                
+                                self.scan_names.append(self.scan_name)
+                                self.scanLines[key] = list()
+                                
+                                if  previousScan !=0 and previousScan +1 != key:
+                                    print ("Skipped scan ", previousScan + 1)
+                                    
+                                previousScan = key
+                                
+                            elif ";"  in line:
+                                self.scan_name = line.split(";")[1].split("=")[1].split(",")[0][2:].lstrip("0")
+                                print (self.scan_name)
+                                key = self.scan_name
+                                
+                                if self.scan_name in self.scan_names:
+                                    raise Exception("Two scans with same name " + self.scan_name)
+                                
+                                self.scan_names.append(self.scan_name)
+                                self.scanLines[key] = list()
+                                
+                                '''
+                                if  previousScan !=0 and previousScan +1 != key:
+                                    print ("Skipped scan ", previousScan + 1)
+                                    
+                                previousScan = key
+                                '''
                         
                         #Testing if line is not in header and it is not empty   
                         if len(line) != 0 and append:
