@@ -128,7 +128,6 @@ class ExperimentLogReader():
                                 
                             elif ";"  in line:
                                 self.scan_name = line.split(";")[1].split("=")[1].split(",")[0][2:].lstrip("0")
-                                print (self.scan_name)
                                 key = self.scan_name
                                 
                                 if self.scan_name in self.scan_names:

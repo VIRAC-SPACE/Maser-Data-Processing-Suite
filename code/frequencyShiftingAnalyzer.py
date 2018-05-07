@@ -24,7 +24,7 @@ def parseArguments():
     
     # Positional mandatory arguments
     parser.add_argument("source", help="Experiment source", type=str)
-    parser.add_argument("date", help="Experiment date", type=str)
+    parser.add_argument("iteration_number", help="iteration number ", type=int)
     parser.add_argument("logFile", help="Experiment log file name", type=str)
 
     # Optional arguments
@@ -93,19 +93,15 @@ def STON(array):
     return ston
 
 class Analyzer(Frame):
-    def __init__(self, window, source, date, filter, threshold, badPointRange, interval, dataPath, resultPath, logs, calibrationScales):
+    def __init__(self, window, source, iteration_number, filter, threshold, badPointRange, interval, dataPath, resultPath, logs, calibrationScales):
         Frame.__init__(self)
         self.window = window
         self.source = source
         self.threshold = threshold
         self.filter = filter
         self.badPointRange = badPointRange
-        self.date = date
-        self.dataFileDir = dataPath + self.source + "/" + self.date
         self.dataFilesPath = dataPath
         self.resultPath = resultPath
-        self.scanPairs = self.createScanPairs()
-        self.datPairsCount = len(self.scanPairs)
         self.font = font.Font(family="Times New Roman", size=20, weight=font.BOLD)
         self.font_2 = font.Font(family="Times New Roman", size=10)
         self.masterFrame = frame(self.window,(1000,1000), RIGHT)
@@ -116,7 +112,12 @@ class Analyzer(Frame):
         self.STON_list_u1 = list()
         self.STON_list_u9 = list()
         self.STON_list_AVG = list()
+        self.iteration_number = iteration_number
         self.logs = logs
+        self.date = self.logs["header"]["dates"]
+        self.dataFileDir = dataPath + self.source + "/" + str(self.iteration_number) + "/"
+        self.scanPairs = self.createScanPairs()
+        self.datPairsCount = len(self.scanPairs)
         self.f0 = 6668519200
         self.calibrationScales = calibrationScales
         self.location = self.logs["location"]
@@ -129,9 +130,8 @@ class Analyzer(Frame):
         self.window.title("Analyze for " + self.source + " " + self.date)
         self.__UI__()
         
-    def createScanPairs(self):
-        print (self.dataFileDir)
         
+    def createScanPairs(self):
         dataFiles = list()
         for dataFile in os.listdir(self.dataFileDir):
             dataFiles.append(dataFile)
@@ -237,8 +237,8 @@ class Analyzer(Frame):
         P_sig = data_1 # Get Amplitudes
         P_ref = data_2 # Get Amplitudes
         
-        Ta_sig = float(tsys_1)*(P_sig - P_ref)/P_ref #only non-cal phase for dbbc possible...
-        Ta_ref = float(tsys_2)*(-P_ref + P_sig)/P_sig
+        Ta_sig = float(tsys_1)*(-P_sig + P_ref)/P_ref #only non-cal phase for dbbc possible...
+        Ta_ref = float(tsys_2)*(P_ref - P_sig)/P_sig
         
         f_step = (array_x[self.dataPoints-1]-array_x[0])/(self.dataPoints-1); 
         n_shift = int(f_shift/f_step);
@@ -326,19 +326,19 @@ class Analyzer(Frame):
         
         print ("data files ", scanNUmber1, scanNUmber2)
         
-        scan_number_1 = int(re.split("([0-9]+)", pair[0])[-2])
-        scan_number_2 = int(re.split("([0-9]+)", pair[1])[-2])
+        scan_number_1 = pair[0].split(".")[0].split("_")[-1][2:].lstrip("0")
+        scan_number_2 = pair[1].split(".")[0].split("_")[-1][2:].lstrip("0")
         
-        print ("scan number", scan_number_1, scan_number_2)
+        print ("scan number", scan_number_1, scan_number_2, pair[0].split(".")[0].split("_")[-1])
         
         scan_1 = self.logs[str(scan_number_1)]
         scan_2 = self.logs[str(scan_number_2)]
         
         # get system temperature
         tsys_u1_1 = scan_1['Systemtemperature'][0]
-        tsys_u1_2 = scan_2['Systemtemperature'][0]
+        tsys_u1_2 = tsys_u1_1
         tsys_u9_1 = scan_1['Systemtemperature'][1]
-        tsys_u9_2 = scan_2['Systemtemperature'][1]
+        tsys_u9_2 = tsys_u9_1
         
         print ("tsys", tsys_u1_1, tsys_u1_2, tsys_u9_1, tsys_u9_2)
         
@@ -358,8 +358,8 @@ class Analyzer(Frame):
             newT = simpledialog.askfloat("System temperature is zero",  " Expected number between 0 and 300", minvalue = 1, maxvalue = 300)
             tsys_u9_2 = newT
             
-        data_1 = np.fromfile(scanNUmber1, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber1),5))
-        data_2 = np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),5))
+        data_1 = np.fromfile(scanNUmber1, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber1),9))
+        data_2 = np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),9))
         
         #Delete first row
         data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
@@ -555,11 +555,11 @@ class Analyzer(Frame):
         
     def _quit(self):
         self.window.destroy()
-
+    
 def main():
     args = parseArguments()
     source = str(args.__dict__["source"])
-    date = str(args.__dict__["date"])
+    iteration_number = int(args.__dict__["iteration_number"])
     logFile = str(args.__dict__["logFile"])
     interval = float(args.__dict__["interval"])
     threshold = float(args.__dict__["threshold"])
@@ -592,7 +592,7 @@ def main():
     #Create App
     window = tk.Tk()
     window.configure(background='light goldenrod')
-    ploting = Analyzer(window, source, date, filtering, threshold, badPointRange, interval, dataFilesPath, resultPath, logs, calibrationScales)
+    ploting = Analyzer(window, source, iteration_number, filtering, threshold, badPointRange, interval, dataFilesPath, resultPath, logs, calibrationScales)
     img = tk.Image("photo", file="viraclogo.png")
     window.call('wm','iconphoto', window._w,img)
         
