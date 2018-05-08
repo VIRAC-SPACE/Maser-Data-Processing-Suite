@@ -447,7 +447,10 @@ class Analyzer(Frame):
         y_u9_avg = np.zeros(self.totalResults_u9[0].shape)
         
         for p in range(0,  self.datPairsCount):
-            scan_number = int(re.split("([0-9]+)", self.scanPairs[p][0])[-2])
+            scan_number = self.scanPairs[p][0].split("_")[-1][2:].lstrip("0").split(".")[0]
+            print ("pairs ", self.scanPairs[p])
+            print ("scan_number ", scan_number)
+            #print (self.logs)
             scan = self.logs[str(scan_number)]
             
             timeStr = scan['startTime'].replace(":", " ")
