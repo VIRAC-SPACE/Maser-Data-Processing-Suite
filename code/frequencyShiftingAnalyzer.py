@@ -390,12 +390,15 @@ class Analyzer(Frame):
         self.plot_negative_positive_u9.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', None)
         self.plot_negative_positive_u9.plot(xdata_1_f, data_u9, 'b', label=pair[0] +  "-" + pair[1])
         
+        self.x = xdata_1_f
         maxFrequency = np.max(xdata_1_f)
-        total_u1 = self.createTotalResult(xdata_1_f, data_u1, self.interval, maxFrequency)
-        total_u9 = self.createTotalResult(xdata_1_f, data_u9, self.interval, maxFrequency)
+        f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1) 
+        f_shift = 0.5
+        n_shift = int(f_shift/f_step)
+        total_u1 = data_u1[(n_shift+1):(self.dataPoints - n_shift - 1)]#self.createTotalResult(xdata_1_f, data_u1, self.interval, maxFrequency)
+        total_u9 = data_u1[(n_shift+1):(self.dataPoints - n_shift - 1)]#self.createTotalResult(xdata_1_f, data_u9, self.interval, maxFrequency)
         
-        # frekvencu parveide uz 6000
-        self.x = np.linspace(0,maxFrequency/2, len(total_u1), dtype="float64").reshape(len(total_u1), 1)
+        self.x = self.x[(n_shift+1):(self.dataPoints - n_shift - 1)] #np.linspace(0,maxFrequency/2, len(total_u1), dtype="float64").reshape(len(total_u1), 1)
         
         self.totalResults_u1.append(total_u1)
         self.totalResults_u9.append(total_u9)
@@ -460,7 +463,8 @@ class Analyzer(Frame):
             RaStr = " ".join(scan["Ra"])
             DecStr = " ".join(scan["Dec"])
             FreqStart = scan['FreqStart']
-            dopsetPar= dateStr + " " + timeStr + " " + RaStr + " " + DecStr
+            dopsetPar = dateStr + " " + timeStr + " " + RaStr + " " + DecStr
+            #dopsetPar = "2018 03 18 06 29 00 18 48 10.80 -01 45 39.3"
             print ("dopsetPar", dopsetPar,  " dateStr ", dateStr + " timeStr " + timeStr + " RaStr " + RaStr + " DecStr" + DecStr)
             os.system("code/dopsetpy_v1.5 " + dopsetPar)
         
@@ -504,8 +508,8 @@ class Analyzer(Frame):
             #print ("dopler ", dopler((0 + FreqStart) * (10 ** 6), VelTotal, self.f0), dopler((self.x[0] + FreqStart) * (10 ** 6), VelTotal, self.f0)) 
             
             print ("self.x ", self.x)
-            #velocitys = dopler((self.x + FreqStart) * (10 ** 6), -VelTotal, self.f0)
-            velocitys = dopler((self.x + FreqStart) * (10 ** 6), -15.8421945322, self.f0)
+            velocitys = dopler((self.x + FreqStart) * (10 ** 6), VelTotal, self.f0)
+            #velocitys = dopler((self.x + FreqStart) * (10 ** 6), -15.8421945322, self.f0)
             print (" velocitys",  velocitys)
             y_u1_avg =  y_u1_avg + self.totalResults_u1[p]
             y_u9_avg =  y_u9_avg + self.totalResults_u9[p]
