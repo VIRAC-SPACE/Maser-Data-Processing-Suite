@@ -12,7 +12,6 @@ import scipy.constants
 import pandas as pd
 from pandas.stats.moments import rolling_mean
 from time import strptime
-import re
 import json
 
 from experimentsLogReader import ExperimentLogReader
@@ -394,7 +393,9 @@ class Analyzer(Frame):
         maxFrequency = np.max(xdata_1_f)
         total_u1 = self.createTotalResult(xdata_1_f, data_u1, self.interval, maxFrequency)
         total_u9 = self.createTotalResult(xdata_1_f, data_u9, self.interval, maxFrequency)
-        self.x = np.linspace(0,maxFrequency/2, len(total_u1), dtype="float64").reshape(len(total_u1), 1)  + self.FreqStart
+        
+        # frekvencu parveide uz 6000
+        self.x = np.linspace(0,maxFrequency/2, len(total_u1), dtype="float64").reshape(len(total_u1), 1)
         
         self.totalResults_u1.append(total_u1)
         self.totalResults_u9.append(total_u9)
@@ -450,7 +451,6 @@ class Analyzer(Frame):
             scan_number = self.scanPairs[p][0].split("_")[-1][2:].lstrip("0").split(".")[0]
             print ("pairs ", self.scanPairs[p])
             print ("scan_number ", scan_number)
-            #print (self.logs)
             scan = self.logs[str(scan_number)]
             
             timeStr = scan['startTime'].replace(":", " ")
@@ -461,6 +461,7 @@ class Analyzer(Frame):
             DecStr = " ".join(scan["Dec"])
             FreqStart = scan['FreqStart']
             dopsetPar= dateStr + " " + timeStr + " " + RaStr + " " + DecStr
+            print ("dopsetPar", dopsetPar,  " dateStr ", dateStr + " timeStr " + timeStr + " RaStr " + RaStr + " DecStr" + DecStr)
             os.system("code/dopsetpy_v1.5 " + dopsetPar)
         
             # dopsetpy parametru nolasisana
@@ -502,11 +503,15 @@ class Analyzer(Frame):
             
             #print ("dopler ", dopler((0 + FreqStart) * (10 ** 6), VelTotal, self.f0), dopler((self.x[0] + FreqStart) * (10 ** 6), VelTotal, self.f0)) 
             
-            velocitys = dopler((self.x + FreqStart) * (10 ** 6), VelTotal, self.f0)
+            print ("self.x ", self.x)
+            #velocitys = dopler((self.x + FreqStart) * (10 ** 6), -VelTotal, self.f0)
+            velocitys = dopler((self.x + FreqStart) * (10 ** 6), -15.8421945322, self.f0)
+            print (" velocitys",  velocitys)
             y_u1_avg =  y_u1_avg + self.totalResults_u1[p]
             y_u9_avg =  y_u9_avg + self.totalResults_u9[p]
             velocitys_avg = velocitys_avg + velocitys
         
+        print ("lens", len(self.totalResults_u1))
         velocitys_avg =  velocitys_avg/len(self.totalResults_u1)
         y_u1_avg = y_u1_avg/len(self.totalResults_u1)
         y_u9_avg = y_u9_avg/len(self.totalResults_u9)

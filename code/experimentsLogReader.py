@@ -168,7 +168,7 @@ class ExperimentLogReader():
                     sourceName = self.singleSourceName[0]
                     ra = list()
                     dec = list()
-                    Ra = self.singleSourceName[1]
+                    Ra =  self.singleSourceName[1]
                     Dec = self.singleSourceName[2]
                     epoch =  self.singleSourceName[3]
                     
