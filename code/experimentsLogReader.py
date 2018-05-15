@@ -58,6 +58,7 @@ class ExperimentLogReader():
         self.clocks = list()
         self.scanList = list()
         self.headerLines = list()
+        self.fs_frequency_list = list()
         self.scanLines = dict()
         self.Location = ""
         
@@ -153,7 +154,7 @@ class ExperimentLogReader():
                         
             header = Scan(self.headerLines)
             header.getParametrs()
-            self.header_source, self.header_sourceName, self.header_epoch, self.header_ra, self.header_dec, self.header_timeStart, self.header_timeStop, self.header_SystemtemperaturesForScan, self.header_freqBBC1, self.header_freqBBC2, self.header_loa, self.header_loc, self.header_clock = header.returnParametrs()
+            self.header_source, self.header_sourceName, self.header_epoch, self.header_ra, self.header_dec, self.header_timeStart, self.header_timeStop, self.header_SystemtemperaturesForScan, self.header_freqBBC1, self.header_freqBBC2, self.header_loa, self.header_loc, self.header_clock, self.header_fs_frequency = header.returnParametrs()
             
             #print header_source, header_sourceName, header_epoch, header_ra, header_dec
             for scan in self.scanLines:
@@ -161,7 +162,7 @@ class ExperimentLogReader():
                 self.scanList.append(scanData)
                 scanData.setScanNumber(scan)
                 scanData.getParametrs()
-                source, sourceName, epoch, ra, dec, timeStart, timeStop, SystemtemperaturesForScan, freqBBC1, freqBBC2, loa, loc, clock = scanData.returnParametrs()
+                source, sourceName, epoch, ra, dec, timeStart, timeStop, SystemtemperaturesForScan, freqBBC1, freqBBC2, loa, loc, clock, fs_frequency = scanData.returnParametrs()
                 
                 if self.single:
                     source =  self.singleSourceName[0] + "," + self.singleSourceName[1] + "," + self.singleSourceName[2]
@@ -188,7 +189,8 @@ class ExperimentLogReader():
                     freqBBC2 = self.header_freqBBC2
                     loc = self.header_loc
                     loa = self.header_loa
-              
+                    
+                self.fs_frequency_list.append(fs_frequency)
                 self.sources.append(source)
                 self.sourceName.append(sourceName)
                 self.Epochs.append(epoch)
@@ -202,7 +204,13 @@ class ExperimentLogReader():
                 self.loas.append(loa)
                 self.locs.append(loc)
                 self.clocks.append(clock)
-                            
+
+            if self.Systemtemperatures[-1] == [0, 0]:
+                tmpSystemperatures = list()
+                tmpSystemperatures.append(self.header_SystemtemperaturesForScan)
+                tmpSystemperatures.extend(self.Systemtemperatures)
+                self.Systemtemperatures = tmpSystemperatures
+                       
             for y in range(0, len(self.scan_names)):
                 try:
                     DurMin = datetime.datetime.strptime(self.timeStops[y], "%H:%M:%S") -  datetime.datetime.strptime(self.timeStarts[y], "%H:%M:%S")
@@ -297,6 +305,9 @@ class ExperimentLogReader():
             self.datafile.write("ClockOffset;" + str(self.clocks[scan]))
             self.datafile.write("\n")
             
+            self.datafile.write("fs_frequencyfs;" + str(self.fs_frequency_list[scan]))
+            self.datafile.write("\n")
+            
             self.datafile.write("End;" + self.scan_names[scan].zfill(2) + ";----------------------;")
             self.datafile.write("\n")
             
@@ -309,10 +320,10 @@ class ExperimentLogReader():
         
         logs["location"] = self.Location
         
-        logs["header"] = {"Systemtemperature":self.header_SystemtemperaturesForScan, "Ra":self.header_ra , "Dec":self.header_dec, "dates":self.dates, "startTime":self.header_timeStart, "FreqStart": float(self.header_freqBBC1) + float(self.header_loa), "sourceName":self.header_source, "source":self.header_sourceName, "stopTime": self.header_timeStop, "clockOffset": self.header_clock}
+        logs["header"] = {"Systemtemperature":self.header_SystemtemperaturesForScan, "Ra":self.header_ra , "Dec":self.header_dec, "dates":self.dates, "startTime":self.header_timeStart, "LO":float(self.header_loa), "BBC":self.header_freqBBC1, "FreqStart": float(self.header_freqBBC1) + float(self.header_loa), "sourceName":self.header_source, "source":self.header_sourceName, "stopTime": self.header_timeStop, "clockOffset": self.header_clock}
         
         for i in range(0, len(self.scan_names)):
-            logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates, "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sources[i], "source":self.sourceName[i], "stopTime": self.timeStops[i], "clockOffset": self.clocks[i]}
+            logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates, "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sources[i], "source":self.sourceName[i], "stopTime": self.timeStops[i], "clockOffset": self.clocks[i], "fs_frequencyfs":self.fs_frequency_list[i]}
 
         return logs
     

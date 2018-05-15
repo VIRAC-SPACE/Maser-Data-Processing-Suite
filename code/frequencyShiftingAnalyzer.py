@@ -122,9 +122,6 @@ class Analyzer(Frame):
         self.location = self.logs["location"]
         self.calibrationScale = self.calibrationScales[self.location]
         self.expername = self.source + self.date + "_" + self.logs["location"]
-        self.FreqStart = self.logs["header"]["FreqStart"]
-        #self.LO = 6100 
-        #self.IF0 = 567.518
     
         self.window.title("Analyze for " + self.source + " " + self.date)
         self.__UI__()
@@ -328,7 +325,7 @@ class Analyzer(Frame):
         scan_number_1 = pair[0].split(".")[0].split("_")[-1][2:].lstrip("0")
         scan_number_2 = pair[1].split(".")[0].split("_")[-1][2:].lstrip("0")
         
-        print ("scan number", scan_number_1, scan_number_2, pair[0].split(".")[0].split("_")[-1])
+        print ("scan number", scan_number_1, scan_number_2)
         
         scan_1 = self.logs[str(scan_number_1)]
         scan_2 = self.logs[str(scan_number_2)]
@@ -391,7 +388,6 @@ class Analyzer(Frame):
         self.plot_negative_positive_u9.plot(xdata_1_f, data_u9, 'b', label=pair[0] +  "-" + pair[1])
         
         self.x = xdata_1_f
-        maxFrequency = np.max(xdata_1_f)
         f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1) 
         f_shift = 0.5
         n_shift = int(f_shift/f_step)
@@ -451,20 +447,21 @@ class Analyzer(Frame):
         y_u9_avg = np.zeros(self.totalResults_u9[0].shape)
         
         for p in range(0,  self.datPairsCount):
-            scan_number = self.scanPairs[p][0].split("_")[-1][2:].lstrip("0").split(".")[0]
+            scan_number_1 = self.scanPairs[p][0].split("_")[-1][2:].lstrip("0").split(".")[0]
+            scan_number_2 = self.scanPairs[p][1].split("_")[-1][2:].lstrip("0").split(".")[0]
             print ("pairs ", self.scanPairs[p])
-            print ("scan_number ", scan_number)
-            scan = self.logs[str(scan_number)]
+            scan_1 = self.logs[str(scan_number_1)]
+            scan_2 = self.logs[str(scan_number_2)]
             
-            timeStr = scan['startTime'].replace(":", " ")
-            dateStrList = scan['dates'].split()
+            timeStr = scan_1['startTime'].replace(":", " ")
+            dateStrList = scan_1['dates'].split()
             dateStrList[1] = strptime(dateStrList[1],'%b').tm_mon
             dateStr = str(dateStrList[2]) + " " + str(dateStrList[1]) + " " + str(dateStrList[0])
-            RaStr = " ".join(scan["Ra"])
-            DecStr = " ".join(scan["Dec"])
-            FreqStart = scan['FreqStart']
+            RaStr = " ".join(scan_1["Ra"])
+            DecStr = " ".join(scan_1["Dec"])
+            FreqStart = (float(scan_1["fs_frequencyfs"])  +   float(scan_2["fs_frequencyfs"]))/2  + float(self.logs["header"]["BBC"])
+            print ("FreqStart", FreqStart, "log frecq ", float(scan_1["fs_frequencyfs"]), float(scan_2["fs_frequencyfs"]), "BBC", float(self.logs["header"]["BBC"]))
             dopsetPar = dateStr + " " + timeStr + " " + RaStr + " " + DecStr
-            #dopsetPar = "2018 03 18 06 29 00 18 48 10.80 -01 45 39.3"
             print ("dopsetPar", dopsetPar,  " dateStr ", dateStr + " timeStr " + timeStr + " RaStr " + RaStr + " DecStr" + DecStr)
             os.system("code/dopsetpy_v1.5 " + dopsetPar)
         
@@ -505,17 +502,11 @@ class Analyzer(Frame):
             Vobs = float(Vobs)
             lsrCorr = float(lsrShift)*1.e6 # for MHz 
             
-            #print ("dopler ", dopler((0 + FreqStart) * (10 ** 6), VelTotal, self.f0), dopler((self.x[0] + FreqStart) * (10 ** 6), VelTotal, self.f0)) 
-            
-            print ("self.x ", self.x)
             velocitys = dopler((self.x + FreqStart) * (10 ** 6), VelTotal, self.f0)
-            #velocitys = dopler((self.x + FreqStart) * (10 ** 6), -15.8421945322, self.f0)
-            print (" velocitys",  velocitys)
             y_u1_avg =  y_u1_avg + self.totalResults_u1[p]
             y_u9_avg =  y_u9_avg + self.totalResults_u9[p]
             velocitys_avg = velocitys_avg + velocitys
-        
-        print ("lens", len(self.totalResults_u1))
+            
         velocitys_avg =  velocitys_avg/len(self.totalResults_u1)
         y_u1_avg = y_u1_avg/len(self.totalResults_u1)
         y_u9_avg = y_u9_avg/len(self.totalResults_u9)
