@@ -327,8 +327,8 @@ class Analyzer(Frame):
         
         print ("scan number", scan_number_1, scan_number_2)
         
-        scan_1 = self.logs[str(scan_number_1)]
-        scan_2 = self.logs[str(scan_number_2)]
+        scan_1 = self.logs[str(scan_number_2)]
+        scan_2 = self.logs[str(scan_number_1)]
         
         # get system temperature
         tsys_u1_1 = scan_1['Systemtemperature'][0]
@@ -342,18 +342,10 @@ class Analyzer(Frame):
             newT = simpledialog.askfloat("System temperature is zero",  " Expected number between 0 and 300", minvalue = 1, maxvalue = 300)
             tsys_u1_1 = newT
             
-        if float(tsys_u1_2) == 0:
-            newT = simpledialog.askfloat("System temperature is zero",  " Expected number between 0 and 300", minvalue = 1, maxvalue = 300)
-            tsys_u1_2 = newT
-            
         if float(tsys_u9_1) == 0:
             newT = simpledialog.askfloat("System temperature is zero",  " Expected number between 0 and 300", minvalue = 1, maxvalue = 300)
             tsys_u9_1 = newT
-            
-        if float(tsys_u9_2) == 0:
-            newT = simpledialog.askfloat("System temperature is zero",  " Expected number between 0 and 300", minvalue = 1, maxvalue = 300)
-            tsys_u9_2 = newT
-            
+                
         data_1 = np.fromfile(scanNUmber1, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber1),9))
         data_2 = np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),9))
         
@@ -514,9 +506,15 @@ class Analyzer(Frame):
         self.plotFrame_velocity = frame(self.window,(1000, 1000), TOP)
         self.plotFrame_STON = frame(self.window,(1000, 1000), BOTTOM)
         
+        test_file = "/home/janis/Documents/workspace-sts/DataProcessingForMaserObservation/dataFiles/cepa_2018-05-07_m193_n02.dat.out"
+        test_data = np.fromfile(test_file, dtype="float64", count=-1, sep=" ") .reshape((file_len(test_file),4))
+        x = test_data[:, [0]].tolist()
+        y = test_data[:, [1]].tolist()
+        
         self.plot_velocity_u1 = Plot(5,5, self.masterFrame, self.plotFrame_velocity)
         self.plot_velocity_u1.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization")
         self.plot_velocity_u1.plot(velocitys_avg, y_u1_avg, 'b')
+        self.plot_velocity_u1.plot(x, y, 'r')
         
         self.plot_velocity_u9 = Plot(5,5, self.masterFrame, self.plotFrame_velocity)
         self.plot_velocity_u9.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization")

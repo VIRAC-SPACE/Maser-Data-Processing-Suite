@@ -205,7 +205,12 @@ class ExperimentLogReader():
                 self.locs.append(loc)
                 self.clocks.append(clock)
 
-            if self.Systemtemperatures[-1] == [0, 0]:
+            if  self.single:
+                tmp_fs_frequency = list()
+                tmp_fs_frequency.append(self.header_fs_frequency)
+                tmp_fs_frequency.extend(self.fs_frequency_list)
+                self.fs_frequency_list = tmp_fs_frequency
+                
                 tmpSystemperatures = list()
                 tmpSystemperatures.append(self.header_SystemtemperaturesForScan)
                 tmpSystemperatures.extend(self.Systemtemperatures)
@@ -317,7 +322,6 @@ class ExperimentLogReader():
     def getLogs(self):
         self.writeOutput()
         logs = dict()
-        
         logs["location"] = self.Location
         
         logs["header"] = {"Systemtemperature":self.header_SystemtemperaturesForScan, "Ra":self.header_ra , "Dec":self.header_dec, "dates":self.dates, "startTime":self.header_timeStart, "LO":float(self.header_loa), "BBC":self.header_freqBBC1, "FreqStart": float(self.header_freqBBC1) + float(self.header_loa), "sourceName":self.header_source, "source":self.header_sourceName, "stopTime": self.header_timeStop, "clockOffset": self.header_clock}
