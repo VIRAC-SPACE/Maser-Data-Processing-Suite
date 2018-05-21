@@ -19,6 +19,7 @@ class Scan():
         self.loc = 0.0
         self.clock = 0.0
         self.fs_frequency = 0.0
+        self.elevation = 0.0
         
         self.ra = list()
         self.dec = list()
@@ -227,9 +228,12 @@ class Scan():
                 
             elif "rxc=sg=*f*r*e*q" in line:
                 self.fs_frequency = line.split(";")[-1].split("=")[-1].split(" ")[1]
+            
+            elif "#antcn#tr" in line:
+                self.elevation = line.split()[3]
                               
     def returnParametrs(self):
-        return (self.source, self.sourceName, self.Epoch, self.ra, self.dec, self.timeStart, self.timeStop, self.SystemtemperaturesForScan, self.freqBBC1, self.freqBBC2, self.loa, self.loc, self.clock, self.fs_frequency)
+        return (self.source, self.sourceName, self.Epoch, self.ra, self.dec, self.timeStart, self.timeStop, self.SystemtemperaturesForScan, self.freqBBC1, self.freqBBC2, self.loa, self.loc, self.clock, self.fs_frequency, self.elevation)
     
     def getmanualyChangedSystemTemU1(self):
         return  self.manualyChangedSystemTemU1

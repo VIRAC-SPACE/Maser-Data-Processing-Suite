@@ -1,4 +1,4 @@
-#! /usr/bin/python
+#! /usr/bin/python3
 import sys
 import os
 import argparse
@@ -28,7 +28,6 @@ def parseArguments():
 
     # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/config.cfg")
-    parser.add_argument("-i", "--interval", help="Set interval", type=float, default=700)
     parser.add_argument("-t", "--threshold", help="Set threshold for outlier filter", type=float, default=1.0)
     parser.add_argument("-f", "--filter", help="Set filter default is True if filter is False bad data points is no removed", type=str, default="True")
     parser.add_argument("-s", "--single", help="Set RA, DEC, Epoch, Source name", nargs="*", type=str, default=[])
@@ -79,11 +78,6 @@ def dopler(ObservedFrequency, velocityReceiver, f0):
     velocitySoure = (-((ObservedFrequency/f0)-1)*c + (velocityReceiver * 1000))/1000
     return velocitySoure
 
-def calibration(calibrationScale, Tsys):
-    calibrationScale = float(calibrationScale)
-    Tsys = float(Tsys)
-    return float(calibrationScale)*float(Tsys)
-
 def STON(array):
     std = np.std(array) 
     max = np.max(array)
@@ -92,7 +86,7 @@ def STON(array):
     return ston
 
 class Analyzer(Frame):
-    def __init__(self, window, source, iteration_number, filter, threshold, badPointRange, interval, dataPath, resultPath, logs, calibrationScales):
+    def __init__(self, window, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs):
         Frame.__init__(self)
         self.window = window
         self.source = source
@@ -105,7 +99,6 @@ class Analyzer(Frame):
         self.font_2 = font.Font(family="Times New Roman", size=10)
         self.masterFrame = frame(self.window,(1000,1000), RIGHT)
         self.index = 0
-        self.interval = interval
         self.totalResults_u1 = list()
         self.totalResults_u9 = list()
         self.STON_list_u1 = list()
@@ -118,7 +111,6 @@ class Analyzer(Frame):
         self.scanPairs = self.createScanPairs()
         self.datPairsCount = len(self.scanPairs)
         self.f0 = 6668519200
-        self.calibrationScales = calibrationScales
         self.location = self.logs["location"]
         self.calibrationScale = self.calibrationScales[self.location]
         self.expername = self.source + self.date + "_" + self.logs["location"]
@@ -153,8 +145,7 @@ class Analyzer(Frame):
             bad_point_index_1 = indexies(outliersMask_1, False)
             bad_point_index_2 = indexies(outliersMask_2, False)
              
-            xdata_1_f = data1[:, [0]].tolist()
-            xdata_2_f = data2[:, [0]].tolist()
+            xdata = data1[:, [0]].tolist()
             ydata_1_u1 = data1[:, [1]].tolist()
             ydata_2_u1 = data2[:, [1]].tolist()
             ydata_1_u9 = data1[:, [2]].tolist()
@@ -197,37 +188,34 @@ class Analyzer(Frame):
                 if  ydata_2_u9[nunNumber][0] == 0:
                     ydata_2_u9[nunNumber][0] = mean_y2_u9_2
            
-            xdata_1_f = np.array(xdata_1_f)
-            xdata_2_f = np.array(xdata_2_f)
+            xdata = np.array(xdata)
             ydata_1_u1 = np.array(ydata_1_u1)
             ydata_2_u1 = np.array(ydata_2_u1)
             ydata_1_u9 = np.array(ydata_1_u9)
             ydata_2_u9 = np.array(ydata_2_u9)
             
-            self.dataPoints = len(xdata_1_f)
+            self.dataPoints = len(xdata)
             
-            return (xdata_1_f, xdata_2_f, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9)
+            return (xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9)
         
         else:
-            xdata_1_f = data1[:, [0]]
-            xdata_2_f = data2[:, [0]]
+            xdata = data1[:, [0]]
             ydata_1_u1 = data1[:, [1]]
             ydata_2_u1 = data2[:, [1]]
             ydata_1_u9 = data1[:, [2]]
             ydata_2_u9 = data2[:, [2]]
             
-            self.dataPoints = len(xdata_1_f)
+            self.dataPoints = len(xdata)
             
-            return (xdata_1_f, xdata_2_f, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9)
+            return (xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9)
     
-    def calibration(self, array_x, data_1, data_2, tsys_1, tsys_2):
+    def calibration(self, array_x, data_1, data_2, tsys_1, tsys_2, elevation):
         #from AGN cal sessions (FS /usr2/control/rxg_files/c3.rxg):
         DPFU_max = [0.0442016750, 0.0444381686]
         G_El = [-0.0000740207, 0.0071794464, 0.8243803753]
         Tcal = 3.859
         k = 0.851
-        El = 50
-        DPFU = np.mean(DPFU_max)*np.polyval(G_El,El)
+        DPFU = np.mean(DPFU_max)*np.polyval(G_El, elevation)
         f_shift = 0.5
         
         P_sig = data_1 # Get Amplitudes
@@ -247,53 +235,9 @@ class Analyzer(Frame):
         
         #K->Jy
         Ta = Ta/DPFU/k
-        #cut out calibrated part
   
         return Ta
     
-    def createTotalResult(self, array_x, array_y, interval, maxFrequency):
-        if interval > maxFrequency/4.0:
-            raise Exception("Interval cannot be larger than 0.25 of frequency range ", "max interval " + str(maxFrequency/4.0))
-        
-        frecquencyRange_1 = (maxFrequency/4.0 - interval, maxFrequency/4.0  + interval) #Negative range
-        frecquencyRange_2 = (maxFrequency*(3.0/4.0) - interval, maxFrequency*(3.0/4.0) + interval) #positive range
-        
-        #Creating index
-        index_1_1 = (np.abs(array_x-frecquencyRange_1[0])).argmin()
-        index_1_2 = (np.abs(array_x-frecquencyRange_1[1])).argmin() 
-
-        index_2_1 = (np.abs(array_x-frecquencyRange_2[0])).argmin() 
-        index_2_2 = (np.abs(array_x-frecquencyRange_2[1])).argmin()
-        
-        #check indexies
-        if index_2_2 - index_2_1!= index_1_2 - index_1_1:
-            print ("befor correction", index_2_2 - index_2_1 + 1,  index_1_2 - index_1_1 + 1, [index_1_1, index_1_2], [index_2_1, index_2_2])
-            if index_2_2 - index_2_1 + 1 > index_1_2:
-                index = np.abs(index_2_2 - index_2_1 + 1 - index_1_2) 
-                index_1_1 = (np.abs(array_x-frecquencyRange_1[0])).argmin()
-                index_1_2 = (np.abs(array_x-frecquencyRange_1[1])).argmin() -1
-                index_2_1 = (np.abs(array_x-frecquencyRange_2[0])).argmin() + index
-                index_2_2 = (np.abs(array_x-frecquencyRange_2[1])).argmin() 
-                
-            elif index_2_2 - index_2_1 + 1 < index_1_2:
-                index = np.abs(index_2_2 - index_2_1 + 1 - index_1_2)
-                index_1_1 = (np.abs(array_x-frecquencyRange_1[0])).argmin()
-                index_1_2 = (np.abs(array_x-frecquencyRange_1[1])).argmin() +1
-                index_2_1 = (np.abs(array_x-frecquencyRange_2[0])).argmin() -index
-                index_2_2 = (np.abs(array_x-frecquencyRange_2[1])).argmin()
-                
-            print ("after correction", index_2_2 - index_2_1,  index_1_2 - index_1_1, [index_1_1, index_1_2], [index_2_1, index_2_2])
-            
-        else:
-            print ("indexies correct", index_2_2 - index_2_1,  index_1_2 - index_1_1, [index_1_1, index_1_2], [index_2_1, index_2_2])
-            
-        negativeRange = array_y[index_1_1:index_1_2]
-        positiveveRange = array_y[index_2_1:index_2_2]
-            
-        totalResult = (positiveveRange - negativeRange)/2
-            
-        return totalResult
-        
     def nextPair(self):
         self.plot_start_u1.removePolt()
         self.plot_start_u9.removePolt()
@@ -336,7 +280,9 @@ class Analyzer(Frame):
         tsys_u9_1 = scan_1['Systemtemperature'][1]
         tsys_u9_2 = tsys_u9_1
         
-        print ("tsys", tsys_u1_1, tsys_u1_2, tsys_u9_1, tsys_u9_2)
+        elevation = (float(scan_1["elevation"]) + float(scan_2["elevation"])) /2
+        
+        print ("tsys", tsys_u1_1, tsys_u9_1)
         
         if float(tsys_u1_1) == 0:
             newT = simpledialog.askfloat("System temperature is zero",  " Expected number between 0 and 300", minvalue = 1, maxvalue = 300)
@@ -353,40 +299,40 @@ class Analyzer(Frame):
         data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
         data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
             
-        xdata_1_f, xdata_2_f, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
+        xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
            
         self.plot_start_u1 = Plot(4,4, self.masterFrame, self.plotFrame_start)
         self.plot_start_u1.creatPlot(None, 'Frequency Mhz', 'Amplitude', "u1 Polarization")
-        self.plot_start_u1.plot(xdata_1_f, ydata_1_u1, 'b', label=pair[0])
-        self.plot_start_u1.plot(xdata_1_f, ydata_2_u1, 'r', label=pair[1])
+        self.plot_start_u1.plot(xdata, ydata_1_u1, 'b', label=pair[0])
+        self.plot_start_u1.plot(xdata, ydata_2_u1, 'r', label=pair[1])
             
         self.plot_start_u9 = Plot(4,4, self.masterFrame, self.plotFrame_start)
         self.plot_start_u9.creatPlot(None, 'Frequency Mhz', 'Amplitude', "u9 Polarization")
-        self.plot_start_u9.plot(xdata_2_f, ydata_1_u9, 'b', label=pair[0])
-        self.plot_start_u9.plot(xdata_2_f, ydata_2_u9, 'r', label=pair[1])
+        self.plot_start_u9.plot(xdata, ydata_1_u9, 'b', label=pair[0])
+        self.plot_start_u9.plot(xdata, ydata_2_u9, 'r', label=pair[1])
         
         #Calibration  
-        data_u1 = self.calibration(xdata_1_f, ydata_1_u1, ydata_2_u1, float(tsys_u1_1), float(tsys_u9_2)) 
-        data_u9 = self.calibration(xdata_1_f, ydata_1_u9, ydata_2_u9, float(tsys_u9_1), float(tsys_u9_2))
+        data_u1 = self.calibration(xdata, ydata_1_u1, ydata_2_u1, float(tsys_u1_1), float(tsys_u1_2), elevation) 
+        data_u9 = self.calibration(xdata, ydata_1_u9, ydata_2_u9, float(tsys_u9_1), float(tsys_u9_2), elevation)
        
-        xdata_1_f = np.array(xdata_1_f)
+        xdata = np.array(xdata)
         
         self.plot_negative_positive_u1 = Plot(4,4, self.masterFrame, self.plotFrame_negative_positive)
         self.plot_negative_positive_u1.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', None)
-        self.plot_negative_positive_u1.plot(xdata_1_f, data_u1, 'b', label=pair[0] +  "-" + pair[1])
+        self.plot_negative_positive_u1.plot(xdata, data_u1, 'b', label=pair[0] +  "-" + pair[1])
         
         self.plot_negative_positive_u9 = Plot(4,4, self.masterFrame, self.plotFrame_negative_positive)
         self.plot_negative_positive_u9.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', None)
-        self.plot_negative_positive_u9.plot(xdata_1_f, data_u9, 'b', label=pair[0] +  "-" + pair[1])
+        self.plot_negative_positive_u9.plot(xdata, data_u9, 'b', label=pair[0] +  "-" + pair[1])
         
-        self.x = xdata_1_f
+        self.x = xdata
         f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1) 
         f_shift = 0.5
         n_shift = int(f_shift/f_step)
-        total_u1 = data_u1[(n_shift+1):(self.dataPoints - n_shift - 1)]#self.createTotalResult(xdata_1_f, data_u1, self.interval, maxFrequency)
-        total_u9 = data_u1[(n_shift+1):(self.dataPoints - n_shift - 1)]#self.createTotalResult(xdata_1_f, data_u9, self.interval, maxFrequency)
+        total_u1 = data_u1[(n_shift+1):(self.dataPoints - n_shift - 1)]
+        total_u9 = data_u9[(n_shift+1):(self.dataPoints - n_shift - 1)]
         
-        self.x = self.x[(n_shift+1):(self.dataPoints - n_shift - 1)] #np.linspace(0,maxFrequency/2, len(total_u1), dtype="float64").reshape(len(total_u1), 1)
+        self.x = self.x[(n_shift+1):(self.dataPoints - n_shift - 1)] 
         
         self.totalResults_u1.append(total_u1)
         self.totalResults_u9.append(total_u9)
@@ -506,7 +452,8 @@ class Analyzer(Frame):
         self.plotFrame_velocity = frame(self.window,(1000, 1000), TOP)
         self.plotFrame_STON = frame(self.window,(1000, 1000), BOTTOM)
         
-        test_file = "/home/janis/Documents/workspace-sts/DataProcessingForMaserObservation/dataFiles/cepa_2018-05-07_m193_n02.dat.out"
+        # testing data
+        #test_file = "/home/janis/Documents/workspace-sts/DataProcessingForMaserObservation/dataFiles/cepa_2018-05-07_m193_n02.dat.out"
         #test_data = np.fromfile(test_file, dtype="float64", count=-1, sep=" ") .reshape((file_len(test_file),4))
         #x = test_data[:, [0]].tolist()
         #y = test_data[:, [1]].tolist()
@@ -532,7 +479,7 @@ class Analyzer(Frame):
         output_file_name = output_file_name.replace(" ", "")
         np.savetxt(output_file_name, totalResults)
         
-        resultFile = self.resultPath + self.source + ".json"
+        resultFile = str(self.resultPath) + str(self.source) + ".json"
         
         if os.path.isfile(resultFile):
             pass
@@ -564,7 +511,6 @@ def main():
     source = str(args.__dict__["source"])
     iteration_number = int(args.__dict__["iteration_number"])
     logFile = str(args.__dict__["logFile"])
-    interval = float(args.__dict__["interval"])
     threshold = float(args.__dict__["threshold"])
     filter = str(args.__dict__["filter"])
     singleSourceExperiment = list(args.__dict__["single"])
@@ -579,23 +525,18 @@ def main():
     badPointRange =  config.getint('parametrs', "badPointRange")
     logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, singleSourceExperiment).getLogs()
     
-    calibrationScales = {"IRBENE":config.getint('parametrs', "irbene"), "IRBENE16":config.getint('parametrs', "irbene16")}
-    
     if filter == "True" or filter == "true":
         filtering = True
     else:
         filtering = False
         
-    if interval <= 0.0:
-        raise Exception("Interval cannot be negative or zero")
-    
     if threshold <= 0.0:
         raise Exception("Threshold cannot be negative or zero")   
     
     #Create App
     window = tk.Tk()
     window.configure(background='light goldenrod')
-    ploting = Analyzer(window, source, iteration_number, filtering, threshold, badPointRange, interval, dataFilesPath, resultPath, logs, calibrationScales)
+    ploting = Analyzer(window, source, iteration_number, filtering, threshold, badPointRange, dataFilesPath, resultPath, logs)
     img = tk.Image("photo", file="viraclogo.png")
     window.call('wm','iconphoto', window._w,img)
         
