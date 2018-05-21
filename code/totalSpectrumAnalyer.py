@@ -124,6 +124,8 @@ class Analyzer(Frame):
                 self.y2array[i] = self.y_u9[i]
                 
             self.xarray =  np.flip(self.xarray,0)
+            self.y1array =  np.flip(self.y1array,0)
+            self.y2array =  np.flip(self.y2array,0)
             
             self.font = font.Font(family="Times New Roman", size=20, weight=font.BOLD)    
             self.masterFrame = frame(self.window,(1000,1000), RIGHT)

@@ -507,14 +507,14 @@ class Analyzer(Frame):
         self.plotFrame_STON = frame(self.window,(1000, 1000), BOTTOM)
         
         test_file = "/home/janis/Documents/workspace-sts/DataProcessingForMaserObservation/dataFiles/cepa_2018-05-07_m193_n02.dat.out"
-        test_data = np.fromfile(test_file, dtype="float64", count=-1, sep=" ") .reshape((file_len(test_file),4))
-        x = test_data[:, [0]].tolist()
-        y = test_data[:, [1]].tolist()
+        #test_data = np.fromfile(test_file, dtype="float64", count=-1, sep=" ") .reshape((file_len(test_file),4))
+        #x = test_data[:, [0]].tolist()
+        #y = test_data[:, [1]].tolist()
         
         self.plot_velocity_u1 = Plot(5,5, self.masterFrame, self.plotFrame_velocity)
         self.plot_velocity_u1.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization")
         self.plot_velocity_u1.plot(velocitys_avg, y_u1_avg, 'b')
-        self.plot_velocity_u1.plot(x, y, 'r')
+        #self.plot_velocity_u1.plot(x, y, 'r')
         
         self.plot_velocity_u9 = Plot(5,5, self.masterFrame, self.plotFrame_velocity)
         self.plot_velocity_u9.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization")
@@ -528,7 +528,9 @@ class Analyzer(Frame):
         self.plot_STON.plot(ston_x, self.STON_list_AVG, 'vb', label="AVG Polarization")
         
         totalResults = np.concatenate((velocitys_avg, y_u1_avg, y_u9_avg), axis=1)
-        np.savetxt(self.dataFilesPath + self.source + self.date.replace(".", "_") + "_" + self.logs["location"] + ".dat", totalResults)
+        output_file_name = self.dataFilesPath + self.source + self.date.replace(".", "_") + "_" + self.logs["location"] + ".dat"
+        output_file_name = output_file_name.replace(" ", "")
+        np.savetxt(output_file_name, totalResults)
         
         resultFile = self.resultPath + self.source + ".json"
         
