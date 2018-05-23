@@ -550,23 +550,23 @@ def main():
     prettyLogsPath =  config.get('paths', "prettyLogsPath")
     logPath = config.get('paths', "logPath")
     resultPath = config.get('paths', "resultFilePath")
-    badPointRange =  config.getint('parametrs', "badPointRange")
-    f_shift =  config.getfloat('parametrs', "f_shift")
+    badPointRange =  config.getint('parameters', "badPointRange")
+    f_shift =  config.getfloat('parameters', "f_shift")
 
     logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, singleSourceExperiment).getLogs()
     location = logs["location"]
     
     if location == "IRBENE":
-        DPFU_max =  config.get('parametrs', "DPFU_max").split(",")
-        G_El =  config.get('parametrs', "G_El").split(",")
-        Tcal =  config.getdouble('parametrs', "Tcal")
-        k =  config.getdouble('parametrs', "k")
+        DPFU_max =  config.get('parameters', "DPFU_max").split(",")
+        G_El =  config.get('parameters', "G_El").split(",")
+        Tcal =  config.getdouble('parameters', "Tcal")
+        k =  config.getdouble('parameters', "k")
     
     elif location == "IRBENE16":
-        DPFU_max =  config.get('parametrs', "DPFU_max_16").split(",")
-        G_El =  config.get('parametrs', "G_El_16").split(",")
-        Tcal =  config.getfloat('parametrs', "Tcal_16")
-        k =  config.getfloat('parametrs', "k_16")
+        DPFU_max =  config.get('parameters', "DPFU_max_16").split(",")
+        G_El =  config.get('parameters', "G_El_16").split(",")
+        Tcal =  config.getfloat('parameters', "Tcal_16")
+        k =  config.getfloat('parameters', "k_16")
     
     DPFU_max = [float(i) for i in DPFU_max]
     G_El = [float(i) for i in G_El]
