@@ -1,7 +1,7 @@
-DateTime;2018-05-21 11:19:24;
-LSRshift;   0.4216235262;MHz;
-MJD;58259.4718;
-Vobs;   -0.1236;km/s;
+DateTime;2018-04-20 11:35:45;
+LSRshift;   0.2574652072;MHz;
+MJD;58228.4832;
+Vobs;   -0.1013;km/s;
 AtFreq;6668.5190429688;MHz;
-FreqShift;   0.4216235262;MHz;
-VelTotal;  18.9546663134;km/s;
+FreqShift;   0.2574652072;MHz;
+VelTotal;  11.5747029898;km/s;

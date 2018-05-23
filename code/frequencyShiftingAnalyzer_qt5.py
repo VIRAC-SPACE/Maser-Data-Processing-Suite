@@ -241,14 +241,18 @@ class Analyzer(QWidget):
         return Ta
     
     def nextPair(self):
-        self.plot_start_u1.removePolt()
-        self.plot_start_u9.removePolt()
-        self.plot_negative_positive_u1.removePolt()
-        self.plot_negative_positive_u9.removePolt()
-        self.plot_total_u1.removePolt()
-        self.plot_total_u9.removePolt()
-        self.index = self.index + 1
-        self.plotingPairs(self.index)
+        if self.index == self.datPairsCount -1:
+            pass
+        
+        else:
+            self.plot_start_u1.removePolt()
+            self.plot_start_u9.removePolt()
+            self.plot_negative_positive_u1.removePolt()
+            self.plot_negative_positive_u9.removePolt()
+            self.plot_total_u1.removePolt()
+            self.plot_total_u9.removePolt()
+            self.index = self.index + 1
+            self.plotingPairs(self.index)
         
     def plotingPairs(self, index):
         pair = self.scanPairs[index]
@@ -345,7 +349,172 @@ class Analyzer(QWidget):
         self.STON_list_u1.append(ston_u1)
         self.STON_list_u9.append(ston_u9)
         self.STON_list_AVG.append(stone_AVG)
+        
+        if index == self.datPairsCount -1:
+            self.nextPairButton.setText('Move to total results')
+            self.nextPairButton.clicked.connect(self.plotTotalResults)
             
+    def plotTotalResults(self):
+        
+        self.grid.removeWidget(self.plot_start_u1)
+        self.grid.removeWidget(self.plot_start_u9)
+        self.grid.removeWidget(self.plot_negative_positive_u1)
+        self.grid.removeWidget(self.plot_negative_positive_u9)
+        self.grid.removeWidget(self.plot_total_u1)
+        self.grid.removeWidget(self.plot_total_u9)
+        
+        self.plot_start_u1.removePolt()
+        self.plot_start_u9.removePolt()
+        self.plot_negative_positive_u1.removePolt()
+        self.plot_negative_positive_u9.removePolt()
+        self.plot_total_u1.removePolt()
+        self.plot_total_u9.removePolt()
+        
+        self.plot_start_u1.hide()
+        self.plot_start_u9.hide()
+        self.plot_negative_positive_u1.hide()
+        self.plot_negative_positive_u9.hide()
+        self.plot_total_u1.hide()
+        self.plot_total_u9.hide()
+        
+        self.plot_start_u1.close()
+        self.plot_start_u9.close()
+        self.plot_negative_positive_u1.close()
+        self.plot_negative_positive_u9.close()
+        self.plot_total_u1.close()
+        self.plot_total_u9.close()
+        
+        del self.plot_start_u1
+        #del self.plot_start_u9
+        #del self.plot_negative_positive_u1
+        #del self.plot_negative_positive_u9
+        #del self.plot_total_u1
+        #del self.plot_total_u9
+        
+        self.grid.removeWidget(self.nextPairButton)
+        self.nextPairButton.hide()
+        self.nextPairButton.close()
+        del self.nextPairButton 
+        
+        velocitys_avg = np.zeros(self.totalResults_u1[0].shape)
+        y_u1_avg = np.zeros(self.totalResults_u1[0].shape)
+        y_u9_avg = np.zeros(self.totalResults_u9[0].shape)
+        
+        for p in range(0,  self.datPairsCount):
+            scan_number_1 = self.scanPairs[p][0].split("_")[-1][2:].lstrip("0").split(".")[0]
+            scan_number_2 = self.scanPairs[p][1].split("_")[-1][2:].lstrip("0").split(".")[0]
+            print ("pairs ", self.scanPairs[p])
+            scan_1 = self.logs[str(scan_number_1)]
+            scan_2 = self.logs[str(scan_number_2)]
+            
+            timeStr = scan_1['startTime'].replace(":", " ")
+            dateStrList = scan_1['dates'].split()
+            dateStrList[1] = strptime(dateStrList[1],'%b').tm_mon
+            dateStr = str(dateStrList[2]) + " " + str(dateStrList[1]) + " " + str(dateStrList[0])
+            RaStr = " ".join(scan_1["Ra"])
+            DecStr = " ".join(scan_1["Dec"])
+            FreqStart = (float(scan_1["fs_frequencyfs"])  +   float(scan_2["fs_frequencyfs"]))/2  + float(self.logs["header"]["BBC"])
+            print ("FreqStart", FreqStart, "log frecq ", float(scan_1["fs_frequencyfs"]), float(scan_2["fs_frequencyfs"]), "BBC", float(self.logs["header"]["BBC"]))
+            dopsetPar = dateStr + " " + timeStr + " " + RaStr + " " + DecStr
+            print ("dopsetPar", dopsetPar,  " dateStr ", dateStr + " timeStr " + timeStr + " RaStr " + RaStr + " DecStr" + DecStr)
+            os.system("code/dopsetpy_v1.5 " + dopsetPar)
+            
+            # dopsetpy parametru nolasisana
+            with open('lsrShift.dat') as openfileobject:
+                for line in openfileobject:
+                    Header = line.split(';')
+                    vards = Header[0]
+                    if vards == "Date":
+                        dateStr = Header[1]
+                    elif vards == "Time":
+                        laiks = Header[1]
+                    elif vards == "RA":
+                        RaStr = Header[1]
+                    elif vards == "DEC":
+                        DecStr = Header[1]
+                    elif vards == "Source":
+                        Source = Header[1]
+                    elif vards == "LSRshift":
+                        lsrShift = Header[1]
+                    elif vards == "MJD":
+                        mjd = Header[1]
+                        print ("MJD: \t", mjd)
+                    elif vards == "Vobs":
+                        Vobs = Header[1]
+                        print ("Vobs: \t", Vobs)
+                    elif vards == "AtFreq":
+                        AtFreq = Header[1]
+                        print ("At Freq: \t", AtFreq)
+                    elif vards == "FreqShift":
+                        FreqShift = Header[1]
+                        print ("FreqShift: \t", FreqShift)
+                    elif vards == "VelTotal":
+                        VelTotal = float(Header[1])
+                        print ("VelTotal: \t", VelTotal)
+                    #Header +=1
+                    
+            Vobs = float(Vobs)
+            lsrCorr = float(lsrShift)*1.e6 # for MHz 
+            
+            velocitys = dopler((self.x + FreqStart) * (10 ** 6), VelTotal, self.f0)
+            y_u1_avg =  y_u1_avg + self.totalResults_u1[p]
+            y_u9_avg =  y_u9_avg + self.totalResults_u9[p]
+            velocitys_avg = velocitys_avg + velocitys
+        
+        velocitys_avg =  velocitys_avg/len(self.totalResults_u1)
+        y_u1_avg = y_u1_avg/len(self.totalResults_u1)
+        y_u9_avg = y_u9_avg/len(self.totalResults_u9)
+             
+        self.plot_velocity_u1 = Plot()
+        self.plot_velocity_u1.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization")
+        self.plot_velocity_u1.plot(velocitys_avg, y_u1_avg, 'b')
+        #self.plot_velocity_u1.plot(x, y, 'r')
+        
+        self.plot_velocity_u9 = Plot()
+        self.plot_velocity_u9.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization")
+        self.plot_velocity_u9.plot(velocitys_avg, y_u9_avg, 'b')
+        
+        #self.plot_velocity_uAVG = Plot()
+        #self.plot_velocity_uAVG.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization")
+        #self.plot_velocity_uAVG.plot(velocitys_avg, (y_u9_avg +  y_u1_avg )/2 , 'b')
+        
+        print (velocitys_avg)
+        
+        ston_x = np.arange(0, len(self.STON_list_u1))
+        self.plot_STON = Plot()
+        self.plot_STON.creatPlot(None, 'Pair', 'Ratio', "Signal to Noise")
+        self.plot_STON.plot(ston_x, self.STON_list_u1, '*r', label="u1 Polarization")
+        self.plot_STON.plot(ston_x, self.STON_list_u9, 'og', label="u9 Polarization")
+        self.plot_STON.plot(ston_x, self.STON_list_AVG, 'vb', label="AVG Polarization")
+        
+        self.grid.addWidget(self.plot_velocity_u1, 0, 0)
+        self.grid.addWidget(self.plot_velocity_u9, 0, 1)
+        
+        self.grid.addWidget(self.plot_STON, 1, 0)
+        
+        totalResults = np.concatenate((velocitys_avg, y_u1_avg, y_u9_avg), axis=1)
+        output_file_name = self.dataFilesPath + self.source + self.date.replace(".", "_") + "_" + self.logs["location"] + ".dat"
+        output_file_name = output_file_name.replace(" ", "")
+        np.savetxt(output_file_name, totalResults)
+        
+        resultFile = str(self.resultPath) + str(self.source) + ".json"
+        
+        if os.path.isfile(resultFile):
+            pass
+        else:
+            os.system("touch " + resultFile)
+            
+            resultFile = open (resultFile, "w")
+            resultFile.write("{ \n" + "\n}")
+            resultFile.close()
+        
+        with open(resultFile) as result_data:    
+            result = json.load(result_data)
+        
+        if self.expername not in result:
+            result[self.expername] = dict()
+            
+                
     def __UI__(self):
         
         if self.index != self.datPairsCount -1: # cheking if there is not one pair
