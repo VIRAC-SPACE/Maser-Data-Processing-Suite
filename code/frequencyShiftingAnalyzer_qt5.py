@@ -298,12 +298,13 @@ class Analyzer(QWidget):
         xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
                
         self.plot_start_u1 = Plot()
-        self.plot_start_u1.creatPlot(None, 'Frequency Mhz', 'Amplitude', "u1 Polarization")
+        self.plot_start_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u1 Polarization", (1, 0))
+        #grid, x_label, y_label, title, toolbarpos
         self.plot_start_u1.plot(xdata, ydata_1_u1, 'b', label=pair[0])
         self.plot_start_u1.plot(xdata, ydata_2_u1, 'r', label=pair[1])
             
         self.plot_start_u9 = Plot()
-        self.plot_start_u9.creatPlot(None, 'Frequency Mhz', 'Amplitude', "u9 Polarization")
+        self.plot_start_u9.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u9 Polarization", (1, 1))
         self.plot_start_u9.plot(xdata, ydata_1_u9, 'b', label=pair[0])
         self.plot_start_u9.plot(xdata, ydata_2_u9, 'r', label=pair[1])
             
@@ -317,15 +318,15 @@ class Analyzer(QWidget):
         xdata = np.array(xdata)
         
         self.plot_negative_positive_u1 = Plot()
-        self.plot_negative_positive_u1.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', None)
+        self.plot_negative_positive_u1.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (3, 0))
         self.plot_negative_positive_u1.plot(xdata, data_u1, 'b', label=pair[0] +  "-" + pair[1])
         
         self.plot_negative_positive_u9 = Plot()
-        self.plot_negative_positive_u9.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', None)
+        self.plot_negative_positive_u9.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (3, 1))
         self.plot_negative_positive_u9.plot(xdata, data_u9, 'b', label=pair[0] +  "-" + pair[1])
         
-        self.grid.addWidget(self.plot_negative_positive_u1, 1, 0)
-        self.grid.addWidget(self.plot_negative_positive_u9, 1, 1)
+        self.grid.addWidget(self.plot_negative_positive_u1, 2, 0)
+        self.grid.addWidget(self.plot_negative_positive_u9, 2, 1)
         
         self.x = xdata
         f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1) 
@@ -340,15 +341,15 @@ class Analyzer(QWidget):
         self.totalResults_u9.append(total_u9)
         
         self.plot_total_u1 = Plot()
-        self.plot_total_u1.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', None)
+        self.plot_total_u1.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (5, 0))
         self.plot_total_u1.plot(self.x, total_u1, 'b')
         
         self.plot_total_u9 = Plot()
-        self.plot_total_u9.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', None)
+        self.plot_total_u9.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (5, 1))
         self.plot_total_u9.plot(self.x, total_u9, 'b')
         
-        self.grid.addWidget(self.plot_total_u1, 2, 0)
-        self.grid.addWidget(self.plot_total_u9, 2, 1)
+        self.grid.addWidget(self.plot_total_u1, 4, 0)
+        self.grid.addWidget(self.plot_total_u9, 4, 1)
         
         ston_u1 = STON(total_u1)
         ston_u9 = STON(total_u9)
@@ -474,23 +475,21 @@ class Analyzer(QWidget):
         y_u9_avg = y_u9_avg/len(self.totalResults_u9)
              
         self.plot_velocity_u1 = Plot()
-        self.plot_velocity_u1.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization")
+        self.plot_velocity_u1.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization", (1,0))
         self.plot_velocity_u1.plot(velocitys_avg, y_u1_avg, 'b')
         #self.plot_velocity_u1.plot(x, y, 'r')
         
         self.plot_velocity_u9 = Plot()
-        self.plot_velocity_u9.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization")
+        self.plot_velocity_u9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization", (1,1))
         self.plot_velocity_u9.plot(velocitys_avg, y_u9_avg, 'b')
         
         #self.plot_velocity_uAVG = Plot()
         #self.plot_velocity_uAVG.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization")
         #self.plot_velocity_uAVG.plot(velocitys_avg, (y_u9_avg +  y_u1_avg )/2 , 'b')
         
-        print (velocitys_avg)
-        
         ston_x = np.arange(0, len(self.STON_list_u1))
         self.plot_STON = Plot()
-        self.plot_STON.creatPlot(None, 'Pair', 'Ratio', "Signal to Noise")
+        self.plot_STON.creatPlot(self.grid, 'Pair', 'Ratio', "Signal to Noise", (3,0))
         self.plot_STON.plot(ston_x, self.STON_list_u1, '*r', label="u1 Polarization")
         self.plot_STON.plot(ston_x, self.STON_list_u9, 'og', label="u9 Polarization")
         self.plot_STON.plot(ston_x, self.STON_list_AVG, 'vb', label="AVG Polarization")
@@ -498,7 +497,7 @@ class Analyzer(QWidget):
         self.grid.addWidget(self.plot_velocity_u1, 0, 0)
         self.grid.addWidget(self.plot_velocity_u9, 0, 1)
         
-        self.grid.addWidget(self.plot_STON, 1, 0)
+        self.grid.addWidget(self.plot_STON, 2, 0)
         
         totalResults = np.concatenate((velocitys_avg, y_u1_avg, y_u9_avg), axis=1)
         output_file_name = self.dataFilesPath + self.source + self.date.replace(".", "_") + "_" + self.logs["location"] + ".dat"
@@ -528,7 +527,7 @@ class Analyzer(QWidget):
         if self.index != self.datPairsCount -1: # cheking if there is not one pair
             self.nextPairButton = QPushButton("Next pair", self)
             self.nextPairButton.clicked.connect(self.nextPair)
-            self.grid.addWidget(self.nextPairButton, 3, 3)
+            self.grid.addWidget(self.nextPairButton, 5, 3)
             
         self.plotingPairs(self.index)
         
