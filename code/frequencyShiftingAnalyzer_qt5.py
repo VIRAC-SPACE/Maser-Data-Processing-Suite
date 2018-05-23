@@ -3,7 +3,7 @@
 
 import sys
 import os
-from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QDesktopWidget, QPushButton)
+from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QDesktopWidget, QPushButton, QInputDialog)
 from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QFont    
 import argparse
@@ -279,6 +279,14 @@ class Analyzer(QWidget):
         elevation = (float(scan_1["elevation"]) + float(scan_2["elevation"])) /2
             
         print ("tsys", tsys_u1_1, tsys_u9_1)
+        
+        if float(tsys_u1_1) == 0:
+            newT, ok = QInputDialog.getDouble(self, 'tsys error', 'Enter valid tsys:', 0, 1, 300)
+            tsys_u1_1 = newT
+            
+        if float(tsys_u9_1) == 0:
+            newT, ok = QInputDialog.getDouble(self, 'tsys error', 'Enter valid tsys:', 0, 1, 300)
+            tsys_u9_1 = newT
             
         data_1 = np.fromfile(scanNUmber1, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber1),9))
         data_2 = np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),9))
