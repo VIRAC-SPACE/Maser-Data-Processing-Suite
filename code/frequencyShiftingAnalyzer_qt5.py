@@ -319,11 +319,11 @@ class Analyzer(QWidget):
         
         self.plot_negative_positive_u1 = Plot()
         self.plot_negative_positive_u1.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (3, 0))
-        self.plot_negative_positive_u1.plot(xdata, data_u1, 'b', label=pair[0] +  "-" + pair[1])
+        self.plot_negative_positive_u1.plot(xdata, data_u1, 'b', label=pair[0] +  "\n-\n" + pair[1])
         
         self.plot_negative_positive_u9 = Plot()
         self.plot_negative_positive_u9.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (3, 1))
-        self.plot_negative_positive_u9.plot(xdata, data_u9, 'b', label=pair[0] +  "-" + pair[1])
+        self.plot_negative_positive_u9.plot(xdata, data_u9, 'b', label=pair[0] +  "\n-\n" + pair[1])
         
         self.grid.addWidget(self.plot_negative_positive_u1, 2, 0)
         self.grid.addWidget(self.plot_negative_positive_u9, 2, 1)
@@ -364,20 +364,13 @@ class Analyzer(QWidget):
             self.nextPairButton.clicked.connect(self.plotTotalResults)
             
     def plotTotalResults(self):
-        
+       
         self.grid.removeWidget(self.plot_start_u1)
         self.grid.removeWidget(self.plot_start_u9)
         self.grid.removeWidget(self.plot_negative_positive_u1)
         self.grid.removeWidget(self.plot_negative_positive_u9)
         self.grid.removeWidget(self.plot_total_u1)
         self.grid.removeWidget(self.plot_total_u9)
-        
-        self.plot_start_u1.removePolt()
-        self.plot_start_u9.removePolt()
-        self.plot_negative_positive_u1.removePolt()
-        self.plot_negative_positive_u9.removePolt()
-        self.plot_total_u1.removePolt()
-        self.plot_total_u9.removePolt()
         
         self.plot_start_u1.hide()
         self.plot_start_u9.hide()
@@ -393,17 +386,27 @@ class Analyzer(QWidget):
         self.plot_total_u1.close()
         self.plot_total_u9.close()
         
+        self.plot_start_u1.removePolt()
+        self.plot_start_u9.removePolt()
+        self.plot_negative_positive_u1.removePolt()
+        self.plot_negative_positive_u9.removePolt()
+        self.plot_total_u1.removePolt()
+        self.plot_total_u9.removePolt()
+        
         del self.plot_start_u1
-        #del self.plot_start_u9
-        #del self.plot_negative_positive_u1
-        #del self.plot_negative_positive_u9
-        #del self.plot_total_u1
-        #del self.plot_total_u9
+        del self.plot_start_u9
+        del self.plot_negative_positive_u1
+        del self.plot_negative_positive_u9
+        del self.plot_total_u1
+        del self.plot_total_u9
         
         self.grid.removeWidget(self.nextPairButton)
         self.nextPairButton.hide()
         self.nextPairButton.close()
         del self.nextPairButton 
+        
+        for i in reversed(range(self.grid.count())): 
+            self.grid.itemAt(i).widget().deleteLater()
         
         velocitys_avg = np.zeros(self.totalResults_u1[0].shape)
         y_u1_avg = np.zeros(self.totalResults_u1[0].shape)
