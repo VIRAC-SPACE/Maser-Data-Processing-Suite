@@ -80,7 +80,7 @@ def STON(array):
     return ston
 
 class Analyzer(QWidget):
-    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs):
+    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, f_shift, DPFU_max, G_El, Tcal, k):
         super().__init__()
        
         self.setWindowIcon(QIcon('viraclogo.png'))
@@ -107,6 +107,11 @@ class Analyzer(QWidget):
         self.f0 = 6668519200
         self.location = self.logs["location"]
         self.expername = self.source + self.date + "_" + self.logs["location"]
+        self.f_shift = f_shift
+        self.DPFU_max = DPFU_max
+        self.G_El = G_El
+        self.Tcal = Tcal
+        self.k = k
         
         self.setWindowTitle("Analyze for " + self.source + " " + self.date)
         self.grid = QGridLayout()
@@ -213,12 +218,8 @@ class Analyzer(QWidget):
         
     def calibration(self, array_x, data_1, data_2, tsys_1, tsys_2, elevation):
         #from AGN cal sessions (FS /usr2/control/rxg_files/c3.rxg):
-        DPFU_max = [0.0442016750, 0.0444381686]
-        G_El = [-0.0000740207, 0.0071794464, 0.8243803753]
-        Tcal = 3.859
-        k = 0.851
-        DPFU = np.mean(DPFU_max)*np.polyval(G_El, elevation)
-        f_shift = 0.5
+        
+        DPFU = np.mean(self.DPFU_max)*np.polyval(self.G_El, elevation)
             
         P_sig = data_1 # Get Amplitudes
         P_ref = data_2 # Get Amplitudes
@@ -227,7 +228,7 @@ class Analyzer(QWidget):
         Ta_ref = float(tsys_2)*(P_ref - P_sig)/P_sig
             
         f_step = (array_x[self.dataPoints-1]-array_x[0])/(self.dataPoints-1); 
-        n_shift = int(f_shift/f_step);
+        n_shift = int(self.f_shift/f_step);
             
         Ta_sig = np.roll(Ta_sig, -n_shift); # pos
         Ta_ref = np.roll(Ta_ref, -n_shift); # neg
@@ -236,7 +237,7 @@ class Analyzer(QWidget):
         Ta = (Ta_sig + Ta_ref)/2 # Creting total spectr
             
         #K->Jy
-        Ta = Ta/DPFU/k
+        Ta = Ta/DPFU/self.k
   
         return Ta
     
@@ -330,8 +331,7 @@ class Analyzer(QWidget):
         
         self.x = xdata
         f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1) 
-        f_shift = 0.5
-        n_shift = int(f_shift/f_step)
+        n_shift = int(self.f_shift/f_step)
         total_u1 = data_u1[(n_shift+1):(self.dataPoints - n_shift - 1)]
         total_u9 = data_u9[(n_shift+1):(self.dataPoints - n_shift - 1)]
         
@@ -551,20 +551,38 @@ def main():
     logPath = config.get('paths', "logPath")
     resultPath = config.get('paths', "resultFilePath")
     badPointRange =  config.getint('parametrs', "badPointRange")
+    f_shift =  config.getfloat('parametrs', "f_shift")
+
     logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, singleSourceExperiment).getLogs()
+    location = logs["location"]
     
+    if location == "IRBENE":
+        DPFU_max =  config.get('parametrs', "DPFU_max").split(",")
+        G_El =  config.get('parametrs', "G_El").split(",")
+        Tcal =  config.getdouble('parametrs', "Tcal")
+        k =  config.getdouble('parametrs', "k")
+    
+    elif location == "IRBENE16":
+        DPFU_max =  config.get('parametrs', "DPFU_max_16").split(",")
+        G_El =  config.get('parametrs', "G_El_16").split(",")
+        Tcal =  config.getfloat('parametrs', "Tcal_16")
+        k =  config.getfloat('parametrs', "k_16")
+    
+    DPFU_max = [float(i) for i in DPFU_max]
+    G_El = [float(i) for i in G_El]
+        
     if filter == "True" or filter == "true":
         filtering = True
     else:
         filtering = False
-        
+    
     if threshold <= 0.0:
         raise Exception("Threshold cannot be negative or zero")   
     
     #Create App
     qApp = QApplication(sys.argv)
 
-    aw = Analyzer(source, iteration_number, filtering, threshold, badPointRange, dataFilesPath, resultPath, logs)
+    aw = Analyzer(source, iteration_number, filtering, threshold, badPointRange, dataFilesPath, resultPath, logs, f_shift, DPFU_max, G_El, Tcal, k)
     aw.show()
     sys.exit(qApp.exec_())
     
