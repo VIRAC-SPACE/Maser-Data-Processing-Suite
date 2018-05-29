@@ -7,6 +7,7 @@ matplotlib.use('Qt5Agg')
 from PyQt5 import QtCore, QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.backends.backend_qt5agg as qt5agg
+from matplotlib.widgets import Slider
 from matplotlib.figure import Figure
 from matplotlib import rcParams
 rcParams['font.family'] = 'sans-serif'
@@ -20,13 +21,11 @@ class Plot(FigureCanvas):
         self.fig = Figure(figsize=(width, height))
         FigureCanvas.__init__(self, self.fig)
         self.setParent(self.parent)
-        self.canvas = FigureCanvas(self.fig)
-        ##self.canvas.setSizePolicy(self, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
-        #self.canvas.updateGeometry(self)
+        FigureCanvas.setSizePolicy(self, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        FigureCanvas.updateGeometry(self)
     
     def plot(self, x, y, line, **options):
         self.graph.plot(x,y, line, **options)
-        
         self.graph.legend()
         
     def creatPlot(self, grid, x_label, y_label, title,toolbarpos):
@@ -62,19 +61,26 @@ class Plot(FigureCanvas):
         del self.annotate
         
     def canvasShow(self):
-        self.canvas.draw()
+        FigureCanvas.draw(self)
     
     def addPickEvent(self, callback):
-        self.cid = self.canvas.mpl_connect('pick_event', callback)
+        self.cid = FigureCanvas.mpl_connect(self, 'pick_event', callback)
     
     def removePickEvent(self):
-        self.figure.canvas.mpl_disconnect(self.cid)
+        FigureCanvas.mpl_disconnect(self.cid)
         
     def addSecondAxis(self, axiss, label, start, stop, step):
         self.second_x_axis = self.graph.twiny()
         self.second_x_axis.set_xlabel(label)
         self.graph.tick_params(axis=axiss)
         self.second_x_axis.set_xticks(range(start, stop, step))
+        
+    def addSlider(self, cords, label, start, stop, init, callback):
+        self.figure.subplots_adjust(bottom=0.25)
+        axcolor = 'lightgoldenrodyellow'
+        Axes = self.figure.add_axes(cords, axisbg=axcolor)
+        slider=Slider(Axes, label,  start, stop, valinit=init)
+        slider.on_changed(callback)
     
     def removePolt(self):
         self.fig.clf()
@@ -83,11 +89,11 @@ class Plot(FigureCanvas):
         self.toolbar.hide()
         self.toolbar.close()
         self.toolbar.destroy()
-        self.canvas.destroy()
+        #self.canvas.destroy()
         
     def __del__(self):
         del self.fig
         
-        del self.canvas
+        #del self.canvas
         del self.toolbar
         del self
