@@ -503,7 +503,7 @@ class Analyzer(QWidget):
         self.grid.addWidget(self.plot_STON, 2, 0)
         
         totalResults = np.concatenate((velocitys_avg, y_u1_avg, y_u9_avg), axis=1)
-        output_file_name = self.dataFilesPath + self.source + self.date.replace(".", "_") + "_" + self.logs["location"] + ".dat"
+        output_file_name = self.dataFilesPath + self.source + self.date.replace(" ", "_") + "_" + self.logs["location"] + ".dat"
         output_file_name = output_file_name.replace(" ", "")
         np.savetxt(output_file_name, totalResults)
         
