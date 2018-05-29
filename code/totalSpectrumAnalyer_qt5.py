@@ -276,13 +276,14 @@ class Analyzer(QWidget):
         self.plot_3.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization", (1, 0))
         self.plot_3.plot(self.xarray, self.z1, 'ko', label='Data Points', markersize=1, picker=5)
         self.plot_3.addPickEvent(self.onpickU1)
-        self.plot_3.addSecondAxis("x", "Data points", 0, self.dataPoints + 512, 1024)
+        self.plot_3.addSecondAxis("x", "Data points", 0, self.dataPoints + 512, 512)
+        self.plot_3.addSlider()
         
         self.plot_4 = Plot()
         self.plot_4.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization", (1, 1))
         self.plot_4.plot(self.xarray, self.z2, 'ko', label='Data Points', markersize=1, picker=5)
         self.plot_4.addPickEvent(self.onpickU9)
-        self.plot_4.addSecondAxis("x", "Data points", 0, self.dataPoints + 512, 1024)
+        self.plot_4.addSecondAxis("x", "Data points", 0, self.dataPoints + 512, 512)
         
         self.grid.addWidget(self.plot_3, 0, 0)
         self.grid.addWidget(self.plot_4, 0, 1)
