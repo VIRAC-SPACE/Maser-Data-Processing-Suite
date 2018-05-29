@@ -10,7 +10,8 @@ from astropy.modeling.polynomial import Chebyshev1D
 from scipy.interpolate import UnivariateSpline
 import peakutils
 import json
-from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QDesktopWidget, QPushButton, QMessageBox, QLabel, QLineEdit, QSlider)
+from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QMessageBox, QLabel, QLineEdit, QSlider)
+from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QFont
@@ -467,6 +468,106 @@ class Analyzer(QWidget):
         self.plotLocalMaximumButton.close()
         self.grid.removeWidget(self.plotLocalMaximumButton)
         del self.plotLocalMaximumButton
+        
+        self.monitoringButton = QPushButton("Add points to monitoring", self)
+        self.grid.addWidget(self.monitoringButton, 3, 3)
+        self.monitoringButton.clicked.connect(self.createResult)
+        self.monitoringButton.setStyleSheet("background-color: green")
+        
+        thres=0.1
+        
+        y1values = self.z1[self.m:self.n] - self.ceb_1(self.xarray[self.m:self.n])
+        y2values = self.z2[self.m:self.n] - self.ceb_2(self.xarray[self.m:self.n])
+          
+        #indexsu apreikinasana
+        indexes_for_ceb = peakutils.indexes(y1values, thres=thres, min_dist=10)
+        indexes_for_ceb2 = peakutils.indexes(y2values, thres=thres, min_dist=10)
+        
+        self.plot_7 = Plot()
+        self.plot_7.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0))
+        self.plot_7.plot(self.xarray[self.m:self.n], y1values, 'b', label='Signal - polynomial', markersize=1)
+        self.plot_7.plot(self.xarray[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
+        self.plot_7.addPickEvent(self.onpick_maxU1)
+        self.plot_7.annotations(self.xarray[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb])
+        
+        #u9
+        self.plot_8 = Plot()
+        self.plot_8.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1))
+        self.plot_8.plot(self.xarray[self.m:self.n], y1values, 'b', label='Signal - polynomial', markersize=1)
+        self.plot_8.plot(self.xarray[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
+        self.plot_8.addPickEvent(self.onpick_maxU9)
+        self.plot_8.annotations(self.xarray[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2])
+        
+        #mid plot
+        avg_y = (y1values + y2values) / 2
+        
+        indexes_for_avg = peakutils.indexes(avg_y, thres=thres, min_dist=10)
+        
+        self.plot_9 = Plot()
+        self.plot_9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Average Polarization", (1, 2))
+        self.plot_9.plot(self.xarray[self.m:self.n], avg_y, 'b', label='Signal - polynomial', markersize=1)
+        self.plot_9.plot(self.xarray[self.m:self.n][indexes_for_avg], avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
+        self.plot_9.addPickEvent(self.onpick_maxAVG)
+        self.plot_9.annotations(self.xarray[self.m:self.n][indexes_for_avg], avg_y[indexes_for_avg])
+        
+        self.grid.addWidget(self.plot_7, 0, 0)
+        self.grid.addWidget(self.plot_8, 0, 1)
+        self.grid.addWidget(self.plot_9, 0, 2)
+        
+        self.maxU1 = list()
+        self.maxU9 = list()
+        self.avgMax = list()
+        self.maxu1_index = list()
+        self.maxu9_index = list()
+        self.maxavg_index = list()
+        
+    def createResult(self):
+        resultFileName = self.source + ".json"
+        
+        if os.path.isfile(self.resultFilePath + resultFileName):
+            pass
+        else:
+            os.system("touch " + self.resultFilePath +  resultFileName)
+            
+            resultFile = open (self.resultFilePath +  resultFileName, "w")
+            resultFile.write("{ \n" + "\n}")
+            resultFile.close()
+        
+        with open(self.resultFilePath + resultFileName) as result_data:    
+            result = json.load(result_data)
+        
+        if self.expername not in result:
+            result[self.expername] = dict()
+                
+        self.maxU1.sort(key=lambda tup: tup[0], reverse=True)
+        self.maxU9.sort(key=lambda tup: tup[0], reverse=True)
+        self.avgMax.sort(key=lambda tup: tup[0], reverse=True)
+              
+        result[self.expername]["location"] = self.location
+        result[self.expername]["Date"] = self.date
+                    
+        result[self.expername]["polarizationU1"] = self.maxU1
+        result[self.expername]["polarizationU9"] = self.maxU9
+        result[self.expername]["polarizationAVG"] = self.avgMax
+                
+        #result[self.expername][self.scanNumber]["index_for_polarizationU1"] =  self.maxu1_index
+        #result[self.expername][self.scanNumber]["index_for_polarizationU9"] =  self.maxu9_index
+        #result[self.expername][self.scanNumber]["index_for_polarizationAVG"] =  self.maxavg_index
+        
+        resultFile = open (self.resultFilePath +  resultFileName, "w")
+        resultFile.write(json.dumps(result, indent=2))
+        resultFile.close()
+        
+        self. _quit()
+    
+    @QtCore.pyqtSlot()   
+    def _quit(self):
+        for i in reversed(range(self.grid.count())): 
+            self.grid.itemAt(i).widget().deleteLater()
+        
+        self.hide()
+        self.close()
+        del self
               
 def main():
     args = parseArguments()
