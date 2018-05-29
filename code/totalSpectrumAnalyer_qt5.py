@@ -87,7 +87,7 @@ class Analyzer(QWidget):
             sys.exit(1)
                  
         else:
-            self.dataPoints = data.shape[0]
+            self.dataPoints = data.shape[0] 
             self.m = 0
             self.n = self.dataPoints
             
@@ -263,6 +263,10 @@ class Analyzer(QWidget):
         del self.plot_1
         del self.plot_2
         
+        self.plotPolinomialButton = QPushButton("Plot polynomials", self)
+        self.grid.addWidget(self.plotPolinomialButton, 4, 3)
+        self.plotPolinomialButton.clicked.connect(self.plotPlonomials)
+        
         g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
         g2 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
     
@@ -277,7 +281,6 @@ class Analyzer(QWidget):
         self.plot_3.plot(self.xarray, self.z1, 'ko', label='Data Points', markersize=1, picker=5)
         self.plot_3.addPickEvent(self.onpickU1)
         self.plot_3.addSecondAxis("x", "Data points", 0, self.dataPoints + 512, 512)
-        self.plot_3.addSlider()
         
         self.plot_4 = Plot()
         self.plot_4.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization", (1, 1))
@@ -298,26 +301,68 @@ class Analyzer(QWidget):
         self.n_slider = QSlider(Qt.Horizontal, self)
         self.m_slider.setFocusPolicy(Qt.NoFocus)
         self.n_slider.setFocusPolicy(Qt.NoFocus)
-        self.m_slider.setMinimum(10)
-        self.m_slider.setMaximum(20)
-        self.n_slider.setMinimum(20)
-        self.n_slider.setMaximum(10)
-        self.n_slider.setValue(19)
+        self.m_slider.setMinimum(self.m) 
+        self.m_slider.setMaximum(self.a-1)
+        self.n_slider.setMinimum(self.b-1)
+        self.n_slider.setMaximum(self.n)
+        self.n_slider.setValue(self.n)
         self.m_slider.setMinimumSize(200, 0)
         self.m_slider.setMinimumSize(200, 0)
-        self.m_slider.valueChanged[int].connect(self.changeValue)
-        self.n_slider.valueChanged[int].connect(self.changeValue_2)
+        self.m_slider.valueChanged[int].connect(self.change_M)
+        self.n_slider.valueChanged[int].connect(self.change_N)
         
-        self.grid.addWidget(self.m_slider, 3,3)
-        self.grid.addWidget(self.n_slider, 4,3)
+        self.grid.addWidget(self.m_slider, 2,3)
+        self.grid.addWidget(self.n_slider, 3,3)
         
-    def changeValue(self, value):
-        print (value)
-        pass 
+        self.m = self.m_slider.value()
+        self.n = self.n_slider.value()
+        
+    def change_M(self, value):
+        self.plot_3.plot(self.xarray[int(self.previousM)], self.z1[int(self.previousM)], 'ko', markersize=1)
+        self.plot_4.plot(self.xarray[int(self.previousM)], self.z2[int(self.previousM)], 'ko', markersize=1)
+        
+        self.plot_3.annotation(self.xarray[int(self.previousM)], self.z1[int(self.previousM)], " ")
+        self.plot_4.annotation(self.xarray[int(self.previousM)], self.z2[int(self.previousM)], " ")
+        
+        self.plot_3.remannotation()
+        self.plot_4.remannotation()
+
+        self.plot_3.annotation(self.xarray[int(value)], self.z1[int(value)], "M")
+        self.plot_4.annotation(self.xarray[int(value)], self.z2[int(value)], "M")
+        
+        self.plot_3.plot(self.xarray[int(value)], self.z1[int(value)], 'ro', markersize=1)
+        self.plot_4.plot(self.xarray[int(value)], self.z2[int(value)], 'ro', markersize=1)
+         
+        self.plot_3.canvasShow()
+        self.plot_4.canvasShow()
+ 
+        self.previousM = value
     
-    def changeValue_2(self, value):
-        print (value)
-        pass
+    def change_N(self, value):
+        self.plot_3.plot(self.xarray[int(self.previousN-1)], self.z1[int(self.previousN-1)], 'ko', markersize=1)
+        self.plot_4.plot(self.xarray[int(self.previousN-1)], self.z2[int(self.previousN-1)], 'ko', markersize=1)
+        
+        self.plot_3.annotation(self.xarray[int(self.previousN-1)], self.z1[int(self.previousN-1)], " ")
+        self.plot_4.annotation(self.xarray[int(self.previousN-1)], self.z2[int(self.previousN-1)], " ")
+
+        self.plot_3.remannotation()
+        self.plot_4.remannotation()
+        
+        self.plot_3.annotation(self.xarray[int(value-1)], self.z1[int(value-1)], "N")
+        self.plot_4.annotation(self.xarray[int(value-1)], self.z2[int(value-1)], "N")
+        
+        self.plot_3.plot(self.xarray[int(value-1)], self.z1[int(value-1)], 'ro', markersize=1)
+        self.plot_4.plot(self.xarray[int(value-1)], self.z2[int(value-1)], 'ro', markersize=1)
+        
+        self.plot_3.canvasShow()
+        self.plot_4.canvasShow()
+        
+        self.previousN = value
+        
+    def plotPlonomials(self):
+        self.setWindowTitle("Polynomial and Data points")
+        self.m = self.m_slider.value()
+        self.n = self.n_slider.value()
               
 def main():
     args = parseArguments()
