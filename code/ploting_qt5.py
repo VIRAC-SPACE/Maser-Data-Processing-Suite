@@ -67,7 +67,7 @@ class Plot(FigureCanvas):
         self.cid = FigureCanvas.mpl_connect(self, 'pick_event', callback)
     
     def removePickEvent(self):
-        FigureCanvas.mpl_disconnect(self.cid)
+        FigureCanvas.mpl_disconnect(self, self.cid)
         
     def addSecondAxis(self, axiss, label, start, stop, step):
         self.second_x_axis = self.graph.twiny()

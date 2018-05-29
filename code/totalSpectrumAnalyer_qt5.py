@@ -266,6 +266,7 @@ class Analyzer(QWidget):
         self.plotPolinomialButton = QPushButton("Plot polynomials", self)
         self.grid.addWidget(self.plotPolinomialButton, 4, 3)
         self.plotPolinomialButton.clicked.connect(self.plotPlonomials)
+        self.plotPolinomialButton.setStyleSheet("background-color: green")
         
         g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
         g2 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
@@ -363,6 +364,109 @@ class Analyzer(QWidget):
         self.setWindowTitle("Polynomial and Data points")
         self.m = self.m_slider.value()
         self.n = self.n_slider.value()
+        
+        self.plot_3.removePickEvent()
+        self.plot_4.removePickEvent()
+        self.plot_3.hide()
+        self.plot_3.close()
+        self.plot_4.hide()
+        self.plot_4.close()
+        self.grid.removeWidget(self.plot_3)
+        self.grid.removeWidget(self.plot_4)
+        self.plot_3.removePolt()
+        self.plot_4.removePolt()
+        del self.plot_3
+        del self.plot_4
+        
+        self.m_slider.hide()
+        self.m_slider.close()
+        self.n_slider.hide()
+        self.n_slider.close()
+        self.grid.removeWidget(self.m_slider)
+        self.grid.removeWidget(self.n_slider)
+        del self.m_slider
+        del self.n_slider
+        
+        self.plotPolinomialButton.hide()
+        self.plotPolinomialButton.close()
+        self.grid.removeWidget(self.plotPolinomialButton)
+        del self.plotPolinomialButton
+        
+        self.plotLocalMaximumButton = QPushButton("Plot local maximums", self)
+        self.grid.addWidget(self.plotLocalMaximumButton, 3, 3)
+        self.plotLocalMaximumButton.clicked.connect(self.plotLocalMaximum)
+        self.plotLocalMaximumButton.setStyleSheet("background-color: green")
+        
+        print ("Before deliting  ", self.xarray.shape[0])
+        bad_u1_indexies = list()
+        bad_u9_indexies = list()
+        
+        for bad in range(0, len(self.points_1u)):
+            bad_u1_indexies.append(indexies(self.xarray, self.points_1u[bad][0]))
+        for bad in range(0, len(self.points_9u)):
+            bad_u9_indexies.append(indexies(self.xarray, self.points_9u[bad][0]))
+            
+        bad_u1_indexies.sort()
+        bad_u9_indexies.sort()
+        
+        bad_list_indexies = bad_u1_indexies + bad_u9_indexies
+        bad_list_indexies = np.unique(bad_list_indexies, return_index=False, return_inverse=False, return_counts=False,)
+        
+        for bad in range(0, len(bad_list_indexies)):
+            self.xarray = np.delete(self.xarray, self.xarray[bad_list_indexies[bad]])
+            self.z1 = np.delete(self.z1, self.z1[bad_list_indexies[bad]])
+            self.z2 = np.delete(self.z2, self.z2[bad_list_indexies[bad]])
+            
+        print ("After deliting  ", self.xarray.shape[0])
+                                       
+        self.a_u1, self.b_u1 = FWHM(self.xarray, self.z1, self.FWHMconstant)
+        self.a_u9, self.b_u9 = FWHM(self.xarray, self.z2, self.FWHMconstant)
+         
+        # Fit the data using a Chebyshev astro py
+        ceb = Chebyshev1D(self.polynomialOrder, domain=None, window=[-1, 1], n_models=None, model_set_axis=None, name=None, meta=None)
+        fit_ceb = fitting.LevMarLSQFitter()
+        
+        ### u1
+        self.ceb_1 = fit_ceb(ceb, np.append(self.xarray[self.m:self.a_u1], self.xarray[self.b_u1:self.n]),  np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]))
+       
+        ### u9
+        self.ceb_2 = fit_ceb(ceb, np.append(self.xarray[self.m:self.a_u9], self.xarray[self.b_u9:self.n]),  np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]))
+        
+        #u1 plot
+        self.plot_5 = Plot()
+        self.plot_5.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0))
+        self.plot_5.plot(np.append(self.xarray[self.m:self.a_u1], self.xarray[self.b_u1:self.n]), np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]), 'ko', label='Data Points',  markersize=1)
+        self.plot_5.plot(self.xarray[self.m:self.n], self.ceb_1(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
+        #self.plot_5.plot(self.x_u1[self.m:self.n], p_u1(self.x_u1[self.m:self.n]), 'b', label='Numpy polyfit', markersize=1)
+        
+        #u9 plot
+        self.plot_6 = Plot()
+        self.plot_6.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 0))
+        self.plot_6.plot(np.append(self.xarray[self.m:self.a_u9], self.xarray[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), 'ko', label='Data Points',  markersize=1)
+        self.plot_6.plot(self.xarray[self.m:self.n], self.ceb_2(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
+        #self.plot_6.plot(self.x_u9[self.m:self.n], p_u9(self.x_u9[self.m:self.n]), 'b', label='Numpy polyfit', markersize=1)
+        
+        self.grid.addWidget(self.plot_5, 0, 0)
+        self.grid.addWidget(self.plot_6, 0, 1)
+        
+    def plotLocalMaximum(self):
+        self.setWindowTitle("Local maximums")
+        
+        self.plot_5.hide()
+        self.plot_5.close()
+        self.plot_6.hide()
+        self.plot_6.close()
+        self.grid.removeWidget(self.plot_5)
+        self.grid.removeWidget(self.plot_6)
+        self.plot_5.removePolt()
+        self.plot_6.removePolt()
+        del self.plot_5
+        del self.plot_6
+        
+        self.plotLocalMaximumButton.hide()
+        self.plotLocalMaximumButton.close()
+        self.grid.removeWidget(self.plotLocalMaximumButton)
+        del self.plotLocalMaximumButton
               
 def main():
     args = parseArguments()
