@@ -69,7 +69,7 @@ class Analyzer(QWidget):
         self.polynomialOrder = 3
         self.source = re.split("([A-Z, a-z]+)", datafile.split("/")[-1].split(".")[0])[1]
         self.expername = datafile.split("/")[-1].split(".")[0]
-        self.date = re.split("([A-Z, a-z]+)", datafile.split("/")[-1].split(".")[0])[2][0:-1]
+        self.date = datafile.split("/")[1].split("_")[0][len(self.source):]
         self.location = datafile.split("/")[-1].split(".")[0].split("_")[-1]
         self.resultFilePath = resultFilePath
         
