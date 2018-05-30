@@ -113,7 +113,7 @@ def main():
     fig = plt.figure()
     #fig, ax = plt.subplots()
     graph = fig.add_subplot(111)
-    for i in range(0, len(source_velocities)-1):
+    for i in range(0, len(source_velocities)):
         graph.plot(x, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + source_velocities[i])
         graph.plot(x, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+"g", label="polarization U9 " + "Velocity " + source_velocities[i])
         graph.plot(x, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+"b", label="polarization AVG " + "Velocity " + source_velocities[i])
