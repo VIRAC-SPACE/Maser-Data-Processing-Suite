@@ -71,6 +71,7 @@ class Analyzer(QWidget):
         self.expername = datafile.split("/")[-1].split(".")[0]
         self.location = datafile.split("/")[-1].split(".")[0].split("_")[-2]
         self.date = datafile.split("/")[-1].split(".")[0][len(self.source):][:len(self.location)+3]
+        self.iteration_number = datafile.split("/")[-1].split(".")[0].split("_")[-1]
         self.resultFilePath = resultFilePath
         
         self.infoSet = set()
@@ -551,6 +552,7 @@ class Analyzer(QWidget):
               
         result[self.expername]["location"] = self.location
         result[self.expername]["Date"] = self.date
+        result[self.expername]["Iteration_number"] = int(self.iteration_number)
                     
         result[self.expername]["polarizationU1"] = self.maxU1
         result[self.expername]["polarizationU9"] = self.maxU9
@@ -564,7 +566,7 @@ class Analyzer(QWidget):
         resultFile.write(json.dumps(result, indent=2))
         resultFile.close()
         
-        self. _quit()
+        self._quit()
     
     @QtCore.pyqtSlot()   
     def _quit(self):
