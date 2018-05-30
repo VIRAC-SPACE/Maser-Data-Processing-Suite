@@ -59,7 +59,7 @@ def FWHM(x, y, constant):
     return (index_1, index_2)
 
 class Analyzer(QWidget):
-    def __init__(self, datafile, resultFilePath):
+    def __init__(self, datafile, resultFilePath, source_velocities):
         super().__init__()
        
         self.setWindowIcon(QIcon('viraclogo.png'))
@@ -73,6 +73,7 @@ class Analyzer(QWidget):
         self.date = datafile.split("/")[-1].split(".")[0][len(self.source):][:len(self.location)+3]
         self.iteration_number = datafile.split("/")[-1].split(".")[0].split("_")[-1]
         self.resultFilePath = resultFilePath
+        self.source_velocities = source_velocities
         
         self.infoSet = set()
         self.infoSet_2 = list()
@@ -545,6 +546,16 @@ class Analyzer(QWidget):
         
         if self.expername not in result:
             result[self.expername] = dict()
+            
+        for source_vel in self.source_velocities:
+            if all (np.abs(item[0] - float(source_vel)) >= 0.09 for item in self.maxU1):
+                self.maxU1.append([float(source_vel), 0])
+                
+            if all (np.abs(item[0] - float(source_vel)) >= 0.09 for item in self.maxU9):
+                self.maxU9.append([float(source_vel), 0])
+            
+            if all (np.abs(item[0] - float(source_vel)) >= 0.09 for item in self.avgMax):
+                self.avgMax.append([float(source_vel), 0]) 
                 
         self.maxU1.sort(key=lambda tup: tup[0], reverse=True)
         self.maxU9.sort(key=lambda tup: tup[0], reverse=True)
@@ -552,8 +563,8 @@ class Analyzer(QWidget):
               
         result[self.expername]["location"] = self.location
         result[self.expername]["Date"] = self.date
-        result[self.expername]["Iteration_number"] = int(self.iteration_number)
-                    
+        result[self.expername]["Iteration_number"] = self.iteration_number
+                
         result[self.expername]["polarizationU1"] = self.maxU1
         result[self.expername]["polarizationU9"] = self.maxU9
         result[self.expername]["polarizationAVG"] = self.avgMax
@@ -587,11 +598,13 @@ def main():
     config.read(configFilePath)
     dataFilesPath =  config.get('paths', "dataFilePath")
     resultFilePath =  config.get('paths', "resultFilePath")
+    source = re.split("([A-Z, a-z]+)", datafile.split("/")[-1].split(".")[0])[1]
+    source_velocities = config.get('velocities', source).split(",")
     
     #Create App
     qApp = QApplication(sys.argv)
 
-    aw = Analyzer(dataFilesPath + datafile, resultFilePath)
+    aw = Analyzer(dataFilesPath + datafile, resultFilePath, source_velocities)
     aw.show()
     sys.exit(qApp.exec_())
     
