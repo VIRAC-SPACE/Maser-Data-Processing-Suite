@@ -25,9 +25,6 @@ def parseArguments():
 
     return args
 
-def hover(event):
-    print (event)
-
 def main():
     # Parse the arguments
     args = parseArguments()
@@ -38,6 +35,9 @@ def main():
     config = configparser.RawConfigParser()
     config.read(configFilePath)
     resultDir = config.get('paths', "resultFilePath")
+    source_velocities = config.get('velocities', source).split(",")
+    velocities_range = 0.06
+    
     resultFileName = source + ".json"
     
     months = {"Jan":"1", "Feb":"2", "Mar":"3", "Apr":"4", "May":"5", "Jun":"6", "Jul":"7", "Aug":"8", "Sep":"9", "Oct":"10", "Nov":"11", "Dec":"12"}
@@ -58,7 +58,7 @@ def main():
             amplitudes_for_u9 = scanData["polarizationU9"] # Got poitns for all experiments for polarization u9
             amplitudes_for_uAVG = scanData["polarizationAVG"] # Got poitns for all experiments for polarization uAVG
             
-            label = "Station is " + location + "\n" + "Date is " + " ".join(date.split("_"))  #+ "\n"  + "Polarization is " + "u1"
+            label = "Station is " + location + "\n" + "Date is " + " ".join(date.split("_"))  
             labels.append(label)
             
             v_list_u1 = list()
@@ -77,8 +77,8 @@ def main():
             velocitys_AVG.append(v_list_AVG)
             
             dates = date.split("_")
-            monthsNumber = str(int(dates[1]))
-            dates[1] = monthsNumber
+            monthsNumber = dates[1]
+            dates[1] = months[monthsNumber]
             date = " ".join(dates)
             key_u1 = date #+ " " + time
             dateNumber = datetime.strptime(key_u1.strip(),  '%d %m %Y')
@@ -122,9 +122,9 @@ def main():
     #fig, ax = plt.subplots()
     graph = fig.add_subplot(111)
     for i in range(0, len(y_u1)):
-        graph.plot(x, y_u1[i], Symbols[i]+"r", label="polarization U1 " + "Velocity " + str(i))
-        graph.plot(x, y_u9[i], Symbols[i]+"g", label="polarization U9 " + "Velocity " + str(i))
-        graph.plot(x, y_avg[i], Symbols[i]+"b", label="polarization AVG " + "Velocity " + str(i))
+        graph.plot(x, y_u1[i], Symbols[i]+"r", label="polarization U1 " + "Velocity " + source_velocities[i])
+        graph.plot(x, y_u9[i], Symbols[i]+"g", label="polarization U9 " + "Velocity " + source_velocities[i])
+        graph.plot(x, y_avg[i], Symbols[i]+"b", label="polarization AVG " + "Velocity " + source_velocities[i])
     graph.set_xticks(x)
     graph.set_xticklabels([date.strftime("%d %m %Y") for date in  dateList])
     plt.legend()

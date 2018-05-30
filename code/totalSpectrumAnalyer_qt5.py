@@ -10,7 +10,7 @@ from astropy.modeling.polynomial import Chebyshev1D
 from scipy.interpolate import UnivariateSpline
 import peakutils
 import json
-from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QMessageBox, QLabel, QLineEdit, QSlider)
+from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QMessageBox, QLabel, QLineEdit, QSlider, QDesktopWidget)
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
@@ -63,14 +63,14 @@ class Analyzer(QWidget):
         super().__init__()
        
         self.setWindowIcon(QIcon('viraclogo.png'))
-        #self.center()
+        self.center()
         
         self.FWHMconstant = 1
         self.polynomialOrder = 3
         self.source = re.split("([A-Z, a-z]+)", datafile.split("/")[-1].split(".")[0])[1]
         self.expername = datafile.split("/")[-1].split(".")[0]
-        self.date = datafile.split("/")[1].split("_")[0][len(self.source):]
         self.location = datafile.split("/")[-1].split(".")[0].split("_")[-1]
+        self.date = datafile.split("/")[-1].split(".")[0][len(self.source):][:len(self.location)+3]
         self.resultFilePath = resultFilePath
         
         self.infoSet = set()
@@ -115,6 +115,12 @@ class Analyzer(QWidget):
             self.grid.setSpacing(10)
             
             self.plotInitData()
+            
+    def center(self):
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
     
     def onpickU1(self, event):
         thisline = event.artist
@@ -442,7 +448,7 @@ class Analyzer(QWidget):
         
         #u9 plot
         self.plot_6 = Plot()
-        self.plot_6.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 0))
+        self.plot_6.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1))
         self.plot_6.plot(np.append(self.xarray[self.m:self.a_u9], self.xarray[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), 'ko', label='Data Points',  markersize=1)
         self.plot_6.plot(self.xarray[self.m:self.n], self.ceb_2(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
         #self.plot_6.plot(self.x_u9[self.m:self.n], p_u9(self.x_u9[self.m:self.n]), 'b', label='Numpy polyfit', markersize=1)

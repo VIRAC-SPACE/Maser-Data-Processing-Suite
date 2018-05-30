@@ -13,7 +13,6 @@ import scipy.constants
 import pandas as pd
 from pandas.stats.moments import rolling_mean
 from time import strptime
-import json
 
 from experimentsLogReader import ExperimentLogReader
 from ploting_qt5 import  Plot
@@ -295,12 +294,11 @@ class Analyzer(QWidget):
         #Delete first row
         data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
         data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
-                
+              
         xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
                
         self.plot_start_u1 = Plot()
         self.plot_start_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u1 Polarization", (1, 0))
-        #grid, x_label, y_label, title, toolbarpos
         self.plot_start_u1.plot(xdata, ydata_1_u1, 'b', label=pair[0])
         self.plot_start_u1.plot(xdata, ydata_2_u1, 'r', label=pair[1])
             
@@ -505,25 +503,7 @@ class Analyzer(QWidget):
         totalResults = np.concatenate((velocitys_avg, y_u1_avg, y_u9_avg), axis=1)
         output_file_name = self.dataFilesPath + self.source + self.date.replace(" ", "_") + "_" + self.logs["location"] + ".dat"
         output_file_name = output_file_name.replace(" ", "")
-        np.savetxt(output_file_name, totalResults)
-        
-        resultFile = str(self.resultPath) + str(self.source) + ".json"
-        
-        if os.path.isfile(resultFile):
-            pass
-        else:
-            os.system("touch " + resultFile)
-            
-            resultFile = open (resultFile, "w")
-            resultFile.write("{ \n" + "\n}")
-            resultFile.close()
-        
-        with open(resultFile) as result_data:    
-            result = json.load(result_data)
-        
-        if self.expername not in result:
-            result[self.expername] = dict()
-            
+        np.savetxt(output_file_name, totalResults)    
                 
     def __UI__(self):
         
