@@ -19,7 +19,7 @@ def parseArguments():
     parser.add_argument("logFile", help="Experiment log file name", type=str)
 
     # Optional arguments
-    parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/config.cfg")
+    parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-s", "--source", help="Set RA, DEC, Epoch, Source name", nargs="*", type=str, default=[])
     # option -s example cepa 225617.90 620149.7 2000.0
 

@@ -27,7 +27,7 @@ def parseArguments():
     parser.add_argument("logFile", help="Experiment log file name", type=str)
 
     # Optional arguments
-    parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/config.cfg")
+    parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-t", "--threshold", help="Set threshold for outlier filter", type=float, default=1.0)
     parser.add_argument("-f", "--filter", help="Set filter default is True if filter is False bad data points is no removed", type=str, default="True")
     parser.add_argument("-s", "--single", help="Set RA, DEC, Epoch, Source name", nargs="*", type=str, default=[])

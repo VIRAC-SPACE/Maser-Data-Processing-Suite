@@ -14,7 +14,7 @@ def parseArguments():
     epilog="""Monitor.""")
 
     # Positional mandatory arguments
-    parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/config.cfg")
+    parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("source", help="Source to monitor", type=str)
 
     # Print version

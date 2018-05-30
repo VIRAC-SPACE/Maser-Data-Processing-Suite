@@ -26,7 +26,7 @@ def parseArguments():
     epilog="""Maser Ploter.""")
 
     # Positional mandatory arguments
-    parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/config.cfg")
+    parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("logFile", help="Experiment log file name", type=str)
     parser.add_argument("datafile", help="Experiment correlation file name", type=str)
 

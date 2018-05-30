@@ -27,7 +27,7 @@ def parseArguments():
     parser.add_argument("datafile", help="Experiment correlation file name", type=str)
 
     # Optional arguments
-    parser.add_argument("-c", "--config", help="Configuration Yaml file", type=str, default="config/config.cfg")
+    parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
 
     # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
