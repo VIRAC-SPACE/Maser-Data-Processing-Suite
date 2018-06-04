@@ -20,8 +20,7 @@ def parseArguments():
 
     # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
-    parser.add_argument("-s", "--source", help="Set RA, DEC, Epoch, Source name", nargs="*", type=str, default=[])
-    # option -s example cepa 225617.90 620149.7 2000.0
+    parser.add_argument("-s", "--source", help="Source name", type=str, default="")
 
     # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 3.0')
@@ -32,10 +31,10 @@ def parseArguments():
     return args
         
 class ExperimentLogReader():
-    def __init__(self, logs, prettyLogs, singleSourceName=None):
+    def __init__(self, logs, prettyLogs, coordinates=None, sourceName=None):
         self.logs = logs
         self.prettyLogs = prettyLogs
-        self.singleSourceName = singleSourceName
+        self.coordinates = coordinates
         self.scan_names = list()
         self.sources = list()
         self.dates = ""
@@ -54,7 +53,7 @@ class ExperimentLogReader():
         self.loas = list()
         self.locs = list()
         self.scanNameString = list()
-        self.sourceName = list()
+        self.sourceName_list = list()
         self.clocks = list()
         self.scanList = list()
         self.headerLines = list()
@@ -62,14 +61,14 @@ class ExperimentLogReader():
         self.elevation_list = list()
         self.scanLines = dict()
         self.Location = ""
+        self.sourceName = sourceName
         
-        if len(self.singleSourceName) != 0:
+        if len(self.coordinates) != 0:
             self.single = True
         else:
             self.single = False
         
         try:
-            #self.logfile = open(self.logs, "r")
             self.datafile = open(self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat", "w")
             
         except IOError as e:
@@ -166,13 +165,14 @@ class ExperimentLogReader():
                 source, sourceName, epoch, ra, dec, timeStart, timeStop, SystemtemperaturesForScan, freqBBC1, freqBBC2, loa, loc, clock, fs_frequency, elevation = scanData.returnParametrs()
                 
                 if self.single:
-                    source =  self.singleSourceName[0] + "," + self.singleSourceName[1] + "," + self.singleSourceName[2]
-                    sourceName = self.singleSourceName[0]
+                    
+                    source =  self.sourceName + "," + self.coordinates[0] + "," + self.coordinates[1]
+                    sourceName = self.sourceName
                     ra = list()
                     dec = list()
-                    Ra =  self.singleSourceName[1]
-                    Dec = self.singleSourceName[2]
-                    epoch =  self.singleSourceName[3]
+                    Ra =  self.coordinates[0]
+                    Dec = self.coordinates[1]
+                    epoch =  self.coordinates[2]
                     
                     ra.append(Ra[0:2])
                     ra.append(Ra[2:4])
@@ -193,7 +193,7 @@ class ExperimentLogReader():
                     
                 self.fs_frequency_list.append(fs_frequency)
                 self.sources.append(source)
-                self.sourceName.append(sourceName)
+                self.sourceName_list.append(sourceName)
                 self.Epochs.append(epoch)
                 self.RAs.append(ra)
                 self.DECs.append(dec)
@@ -384,15 +384,20 @@ def main():
     args = parseArguments()
     logFileName = str(args.__dict__["logFile"])
     configFilePath = str(args.__dict__["config"])
-    singleSourceExperiment = list(args.__dict__["source"])
+    singleSourceExperiment = str(args.__dict__["source"])
     
     #Creating config parametrs
     config = configparser.RawConfigParser()
     config.read(configFilePath)
     logPath = config.get('paths', "logPath")
     prettyLogsPath =  config.get('paths', "prettyLogsPath")
+    
+    if len(singleSourceExperiment) != 0:
+        coordinates = config.get('sources', singleSourceExperiment).split(",")
+    else:
+        coordinates = []
         
-    experimentLogReader = ExperimentLogReader(logPath + logFileName, prettyLogsPath, singleSourceExperiment)
+    experimentLogReader = ExperimentLogReader(logPath + logFileName, prettyLogsPath, coordinates, singleSourceExperiment)
     experimentLogReader.writeOutput()
     
     sys.exit(0)
