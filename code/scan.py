@@ -56,7 +56,7 @@ class Scan():
                     self.dec.append(self.DEC[0:3])
                     self.dec.append(self.DEC[3:5])
                     self.dec.append(self.DEC[5:len(self.DEC)])
-                else:    
+                else:
                     self.dec.append(self.DEC[0:2])
                     self.dec.append(self.DEC[2:4])
                     self.dec.append(self.DEC[4:len(self.DEC)])

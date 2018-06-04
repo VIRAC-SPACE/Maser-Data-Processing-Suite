@@ -3,6 +3,7 @@ import sys
 import matplotlib.pyplot  as plt
 from matplotlib.dates import date2num
 import mplcursors
+import numpy as np
 from datetime import datetime
 import json
 import argparse
@@ -124,6 +125,15 @@ def main():
     cursor.connect("add", lambda sel: sel.annotation.set_text(labels[sel.target.index]))
    
     plt.show()
+    
+    date_list_2 = list()
+    
+    for d in date_list:
+        date_list_2.append(datetime.strptime(d, '%dd %mm %y'))
+     
+    for i in range(0, len(source_velocities)):
+        fig, ax = plt.subplots()
+        im = ax.imshow(np.array([date_list_2, velocitie_dict["avg"][source_velocities[i]]]))
     
     sys.exit(0)
     

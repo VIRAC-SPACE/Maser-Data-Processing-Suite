@@ -22,7 +22,7 @@ def parseArguments():
     parser = argparse.ArgumentParser(description='''Creates input file for plotting tool. ''', epilog="""PRE PLOTTER.""")
     
     # Positional mandatory arguments
-    parser.add_argument("source", help="Experiment source", type=str)
+    parser.add_argument("source", help="Experiment source", type=str, default="")
     parser.add_argument("iteration_number", help="iteration number ", type=int)
     parser.add_argument("logFile", help="Experiment log file name", type=str)
 
@@ -30,8 +30,6 @@ def parseArguments():
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-t", "--threshold", help="Set threshold for outlier filter", type=float, default=1.0)
     parser.add_argument("-f", "--filter", help="Set filter default is True if filter is False bad data points is no removed", type=str, default="True")
-    parser.add_argument("-s", "--single", help="Set RA, DEC, Epoch, Source name", nargs="*", type=str, default=[])
-    # option -s example cepa 225617.90 620149.7 2000.0
 
     # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
@@ -247,8 +245,6 @@ class Analyzer(QWidget):
         else:
             self.plot_start_u1.removePolt()
             self.plot_start_u9.removePolt()
-            self.plot_negative_positive_u1.removePolt()
-            self.plot_negative_positive_u9.removePolt()
             self.plot_total_u1.removePolt()
             self.plot_total_u9.removePolt()
             self.index = self.index + 1
@@ -315,18 +311,7 @@ class Analyzer(QWidget):
         data_u9 = self.calibration(xdata, ydata_1_u9, ydata_2_u9, float(tsys_u9_1), float(tsys_u9_2), elevation)
        
         xdata = np.array(xdata)
-        
-        self.plot_negative_positive_u1 = Plot()
-        self.plot_negative_positive_u1.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (3, 0))
-        self.plot_negative_positive_u1.plot(xdata, data_u1, 'b', label=pair[0] +  "\n-\n" + pair[1])
-        
-        self.plot_negative_positive_u9 = Plot()
-        self.plot_negative_positive_u9.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (3, 1))
-        self.plot_negative_positive_u9.plot(xdata, data_u9, 'b', label=pair[0] +  "\n-\n" + pair[1])
-        
-        self.grid.addWidget(self.plot_negative_positive_u1, 2, 0)
-        self.grid.addWidget(self.plot_negative_positive_u9, 2, 1)
-        
+            
         self.x = xdata
         f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1) 
         n_shift = int(self.f_shift/f_step)
@@ -365,36 +350,26 @@ class Analyzer(QWidget):
        
         self.grid.removeWidget(self.plot_start_u1)
         self.grid.removeWidget(self.plot_start_u9)
-        self.grid.removeWidget(self.plot_negative_positive_u1)
-        self.grid.removeWidget(self.plot_negative_positive_u9)
         self.grid.removeWidget(self.plot_total_u1)
         self.grid.removeWidget(self.plot_total_u9)
         
         self.plot_start_u1.hide()
         self.plot_start_u9.hide()
-        self.plot_negative_positive_u1.hide()
-        self.plot_negative_positive_u9.hide()
         self.plot_total_u1.hide()
         self.plot_total_u9.hide()
         
         self.plot_start_u1.close()
         self.plot_start_u9.close()
-        self.plot_negative_positive_u1.close()
-        self.plot_negative_positive_u9.close()
         self.plot_total_u1.close()
         self.plot_total_u9.close()
         
         self.plot_start_u1.removePolt()
         self.plot_start_u9.removePolt()
-        self.plot_negative_positive_u1.removePolt()
-        self.plot_negative_positive_u9.removePolt()
         self.plot_total_u1.removePolt()
         self.plot_total_u9.removePolt()
         
         del self.plot_start_u1
         del self.plot_start_u9
-        del self.plot_negative_positive_u1
-        del self.plot_negative_positive_u9
         del self.plot_total_u1
         del self.plot_total_u9
         
@@ -413,7 +388,7 @@ class Analyzer(QWidget):
         for p in range(0,  self.datPairsCount):
             scan_number_1 = self.scanPairs[p][0].split("_")[-1][2:].lstrip("0").split(".")[0]
             scan_number_2 = self.scanPairs[p][1].split("_")[-1][2:].lstrip("0").split(".")[0]
-            print ("pairs ", self.scanPairs[p])
+            print ("\npairs ", self.scanPairs[p])
             scan_1 = self.logs[str(scan_number_1)]
             scan_2 = self.logs[str(scan_number_2)]
             
@@ -521,7 +496,6 @@ def main():
     logFile = str(args.__dict__["logFile"])
     threshold = float(args.__dict__["threshold"])
     filter = str(args.__dict__["filter"])
-    singleSourceExperiment = list(args.__dict__["single"])
     configFilePath = str(args.__dict__["config"])
     
     config = configparser.RawConfigParser()
@@ -532,8 +506,9 @@ def main():
     resultPath = config.get('paths', "resultFilePath")
     badPointRange =  config.getint('parameters', "badPointRange")
     f_shift =  config.getfloat('parameters', "f_shift")
+    coordinates = config.get('sources', source).replace(" ", "").split(",")
 
-    logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, singleSourceExperiment).getLogs()
+    logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getLogs()
     location = logs["location"]
     
     if location == "IRBENE":

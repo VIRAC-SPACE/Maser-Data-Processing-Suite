@@ -182,7 +182,7 @@ class ExperimentLogReader():
                         dec.append(Dec[0:3])
                         dec.append(Dec[3:5])
                         dec.append(Dec[5:len(self.Dec)])
-                    else:    
+                    else:
                         dec.append(Dec[0:2])
                         dec.append(Dec[2:4])
                         dec.append(Dec[4:len(Dec)])
@@ -332,7 +332,7 @@ class ExperimentLogReader():
         logs["header"] = {"Systemtemperature":self.header_SystemtemperaturesForScan, "Ra":self.header_ra , "Dec":self.header_dec, "dates":self.dates, "startTime":self.header_timeStart, "LO":float(self.header_loa), "BBC":self.header_freqBBC1, "FreqStart": float(self.header_freqBBC1) + float(self.header_loa), "sourceName":self.header_source, "source":self.header_sourceName, "stopTime": self.header_timeStop, "clockOffset": self.header_clock}
         
         for i in range(0, len(self.scan_names)):
-            logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates, "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sources[i], "source":self.sourceName[i], "stopTime": self.timeStops[i], "clockOffset": self.clocks[i], "fs_frequencyfs":self.fs_frequency_list[i], "elevation":self.elevation_list[i]}
+            logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates, "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sourceName_list[i], "source":self.sources, "stopTime": self.timeStops[i], "clockOffset": self.clocks[i], "fs_frequencyfs":self.fs_frequency_list[i], "elevation":self.elevation_list[i]}
 
         return logs
     
@@ -393,7 +393,7 @@ def main():
     prettyLogsPath =  config.get('paths', "prettyLogsPath")
     
     if len(singleSourceExperiment) != 0:
-        coordinates = config.get('sources', singleSourceExperiment).split(",")
+        coordinates = config.get('sources', singleSourceExperiment).replace(" ", "").split(",")
     else:
         coordinates = []
         
