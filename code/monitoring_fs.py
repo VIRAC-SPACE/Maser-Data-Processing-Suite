@@ -4,6 +4,7 @@ import matplotlib.pyplot  as plt
 from matplotlib.dates import date2num
 import mplcursors
 import numpy as np
+import pandas as pd
 from datetime import datetime
 import json
 import argparse
@@ -129,12 +130,17 @@ def main():
     date_list_2 = list()
     
     for d in date_list:
-        date_list_2.append(datetime.strptime(d, '%dd %mm %y'))
-     
-    for i in range(0, len(source_velocities)):
-        fig, ax = plt.subplots()
-        im = ax.imshow(np.array([date_list_2, velocitie_dict["avg"][source_velocities[i]]]))
+        date_list_2.append(datetime.strptime(d, '%d %m %Y'))
     
+    '''
+    fig, ax = plt.subplots()
+    for i in range(0, len(source_velocities)):
+        im = ax.imshow(np.array([date_list_2, velocitie_dict["avg"][source_velocities[i]]]), cmap=plt.cm.Greys)
+    '''
+        
+    df = pd.DataFrame(result_list)
+    #df.plot.(x='date', y='polarizationUAVG[0]', C='polarizationUAVG[1]', reduce_C_function=np.max, gridsize=25)
+       
     sys.exit(0)
     
 if __name__=="__main__":
