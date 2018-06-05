@@ -46,20 +46,18 @@ def main():
     
     path = dataFilesPath + sourceName + "/"
     iterations = list()
-    
+     
     for iteration in os.listdir(path):
         iterations.append(iteration)
             
     iterations.sort(key=int, reverse=False)
-    
+     
     logfile_list = list()
     
     for log in os.listdir(logPath):
         if log.startswith(sourceName):
             logfile_list.append(log)
-    
-    print (logfile_list)
-    
+            
     resultFileName = sourceName + ".json"
         
     if os.path.isfile(resultPath + resultFileName):
@@ -81,11 +79,13 @@ def main():
             processed_iteration.append(experiment[-1])
     
     #python3 code/frequencyShiftingAnalyzer_qt5.py cepa 7 cepa_ib_7.log  -f false            
-    for i in iterations:
+    
+    for i in range(0, len(iterations)):
+        
         if i not in processed_iteration:
-            frequencyShiftingParametr = sourceName + " " + i  + " " + sourceName+"_"+"*"  + logfile_list[findLogFile(logfile_list, i)]
+            frequencyShiftingParametr = sourceName + " " + iterations[i] + " " + str(logfile_list[findLogFile(logfile_list, iterations[i])])
             print (frequencyShiftingParametr)
-
+           
 if __name__=="__main__":
     main()
     
