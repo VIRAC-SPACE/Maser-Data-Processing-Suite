@@ -12,7 +12,6 @@ import numpy as np
 import scipy.constants
 import pandas as pd
 from pandas.stats.moments import rolling_mean
-from time import strptime
 
 from experimentsLogReader import ExperimentLogReader
 from ploting_qt5 import  Plot
@@ -29,7 +28,7 @@ def parseArguments():
     # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-t", "--threshold", help="Set threshold for outlier filter", type=float, default=1.0)
-    parser.add_argument("-f", "--filter", help="Set filter default is True if filter is False bad data points is no removed", type=str, default="True")
+    parser.add_argument("-f", "--filter", help="Set filter default is True if filter is False bad data points is no removed", type=str, default="False")
 
     # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
@@ -394,7 +393,8 @@ class Analyzer(QWidget):
             
             timeStr = scan_1['startTime'].replace(":", " ")
             dateStrList = scan_1['dates'].split()
-            dateStrList[1] = strptime(dateStrList[1],'%b').tm_mon
+            months = {"Jan":"1", "Feb":"2", "Mar":"3", "Apr":"4", "May":"5", "Jun":"6", "Jul":"7", "Aug":"8", "Sep":"9", "Oct":"10", "Nov":"11", "Dec":"12"}
+            dateStrList[1] = int(months[dateStrList[1]])
             dateStr = str(dateStrList[2]) + " " + str(dateStrList[1]) + " " + str(dateStrList[0])
             RaStr = " ".join(scan_1["Ra"])
             DecStr = " ".join(scan_1["Dec"])
@@ -514,8 +514,8 @@ def main():
     if location == "IRBENE":
         DPFU_max =  config.get('parameters', "DPFU_max").split(",")
         G_El =  config.get('parameters', "G_El").split(",")
-        Tcal =  config.getdouble('parameters', "Tcal")
-        k =  config.getdouble('parameters', "k")
+        Tcal =  config.getfloat('parameters', "Tcal")
+        k =  config.getfloat('parameters', "k")
     
     elif location == "IRBENE16":
         DPFU_max =  config.get('parameters', "DPFU_max_16").split(",")

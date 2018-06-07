@@ -78,13 +78,12 @@ def main():
         if experiment[-1]  in iterations:
             processed_iteration.append(experiment[-1])
     
-    #python3 code/frequencyShiftingAnalyzer_qt5.py cepa 7 cepa_ib_7.log  -f false            
-    
     for i in range(0, len(iterations)):
         
         if i not in processed_iteration:
             frequencyShiftingParametr = sourceName + " " + iterations[i] + " " + str(logfile_list[findLogFile(logfile_list, iterations[i])])
-            print (frequencyShiftingParametr)
+            print ("Execute ",  "python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
+            os.system("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
            
 if __name__=="__main__":
     main()
