@@ -13,11 +13,13 @@ class Scan():
         self.Epoch = 0
         self.timeStart = "None"
         self.timeStop = "None"
-        self.freqBBC1 = 0
-        self.freqBBC2 = 0
-        self.loa = 0
-        self.loc = 0
-        self.clock = 0
+        self.freqBBC1 = 0.0
+        self.freqBBC2 = 0.0
+        self.loa = 0.0
+        self.loc = 0.0
+        self.clock = 0.0
+        self.fs_frequency = 0.0
+        self.elevation = 0.0
         
         self.ra = list()
         self.dec = list()
@@ -54,7 +56,7 @@ class Scan():
                     self.dec.append(self.DEC[0:3])
                     self.dec.append(self.DEC[3:5])
                     self.dec.append(self.DEC[5:len(self.DEC)])
-                else:    
+                else:
                     self.dec.append(self.DEC[0:2])
                     self.dec.append(self.DEC[2:4])
                     self.dec.append(self.DEC[4:len(self.DEC)])
@@ -223,9 +225,15 @@ class Scan():
             
             elif "/gps-fmout/" in line:  
                 self.clock = Decimal(line.split("/")[2])
+                
+            elif "rxc=sg=*f*r*e*q" in line:
+                self.fs_frequency = line.split(";")[-1].split("=")[-1].split(" ")[1]
+            
+            elif "#antcn#tr" in line:
+                self.elevation = line.split()[3]
                               
     def returnParametrs(self):
-        return (self.source, self.sourceName, self.Epoch, self.ra, self.dec, self.timeStart, self.timeStop, self.SystemtemperaturesForScan, self.freqBBC1, self.freqBBC2, self.loa, self.loc, self.clock)
+        return (self.source, self.sourceName, self.Epoch, self.ra, self.dec, self.timeStart, self.timeStop, self.SystemtemperaturesForScan, self.freqBBC1, self.freqBBC2, self.loa, self.loc, self.clock, self.fs_frequency, self.elevation)
     
     def getmanualyChangedSystemTemU1(self):
         return  self.manualyChangedSystemTemU1

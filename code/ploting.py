@@ -21,29 +21,38 @@ except:
 class Plot():
     
     def __init__(self, fig_size_x, fig_size_y, window, frame):
+        
         self.window = window
         self.frame = frame
         
         self.fig_size_x = fig_size_x
         self.fig_size_y = fig_size_y
+        
+        self.figure = Figure(figsize=(self.fig_size_x,self.fig_size_y))
     
     def creatPlot(self, sides, x_label, y_label, title):
+        self.graph = self.figure.add_subplot(111)
+        self.sides = sides
+        self.x_label = x_label
+        self.y_label = y_label
+        self.title = title
+        
         self.figure = Figure(figsize=(self.fig_size_x,self.fig_size_y))
         self.graph = self.figure.add_subplot(111)
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.frame)
         self.canvas.draw()
         self.figure.set_canvas(self.canvas)
-        self.canvas.get_tk_widget().pack(side=sides)
+        self.canvas.get_tk_widget().pack(side=sides, expand=YES)
         if title != None:
             self.graph.set_title(title,  y=1.08) 
                 
         self.toolbar = tkagg.NavigationToolbar2TkAgg(self.canvas, self.window)
         self.toolbar.update()
-        self.canvas._tkcanvas.pack(side=LEFT, expand=1)
+        self.canvas._tkcanvas.pack(side=LEFT, expand=YES)
         self.graph.grid(True)
         self.graph.set_xlabel(x_label)
         self.graph.set_ylabel (y_label)
-        
+         
     def plot(self, x, y, line, **options):
         self.graph.plot(x, y, line, **options)
         self.graph.legend()
@@ -59,7 +68,7 @@ class Plot():
 
     def remannotation(self):
         self.annotate.remove()
-        del  self.annotate
+        del self.annotate
         
     def canvasShow(self):
         self.canvas.draw()
