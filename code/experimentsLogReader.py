@@ -181,7 +181,7 @@ class ExperimentLogReader():
                     if Dec[0] == "-":
                         dec.append(Dec[0:3])
                         dec.append(Dec[3:5])
-                        dec.append(Dec[5:len(self.Dec)])
+                        dec.append(Dec[5:len(Dec)])
                     else:
                         dec.append(Dec[0:2])
                         dec.append(Dec[2:4])
