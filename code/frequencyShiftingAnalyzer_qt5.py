@@ -273,6 +273,8 @@ class Analyzer(QWidget):
         tsys_u9_2 = tsys_u9_1
             
         elevation = (float(scan_1["elevation"]) + float(scan_2["elevation"])) /2
+        
+        print ("elevation", elevation)
             
         print ("tsys", tsys_u1_1, tsys_u9_1)
         
@@ -402,7 +404,6 @@ class Analyzer(QWidget):
             dateStr = str(dateStrList[2]) + " " + str(dateStrList[1]) + " " + str(dateStrList[0])
             RaStr = " ".join(scan_1["Ra"])
             DecStr = " ".join(scan_1["Dec"])
-            #FreqStart = (float(scan_1["fs_frequencyfs"])  +   float(scan_2["fs_frequencyfs"]))/2  + float(self.logs["header"]["BBC"])
             dopsetPar = dateStr + " " + timeStr + " " + RaStr + " " + DecStr
             print ("dopsetPar", dopsetPar,  " dateStr ", dateStr + " timeStr " + timeStr + " RaStr " + RaStr + " DecStr" + DecStr)
             os.system("code/dopsetpy_v1.5 " + dopsetPar)
