@@ -76,7 +76,7 @@ def STON(array):
     return ston
 
 class Analyzer(QWidget):
-    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, f_shift, DPFU_max, G_El, Tcal, k):
+    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, DPFU_max, G_El, Tcal, k):
         super().__init__()
        
         self.setWindowIcon(QIcon('viraclogo.png'))
@@ -103,7 +103,6 @@ class Analyzer(QWidget):
         self.f0 = 6668519200
         self.location = self.logs["location"]
         self.expername = self.source + self.date + "_" + self.logs["location"]
-        self.f_shift = f_shift
         self.DPFU_max = DPFU_max
         self.G_El = G_El
         self.Tcal = Tcal
@@ -222,9 +221,9 @@ class Analyzer(QWidget):
             
         Ta_sig = float(tsys_1)*(-P_sig + P_ref)/P_ref #only non-cal phase for dbbc possible...
         Ta_ref = float(tsys_2)*(P_ref - P_sig)/P_sig
-            
+        
+        f_shift = np.max(array_x) /4.0
         f_step = (array_x[self.dataPoints-1]-array_x[0])/(self.dataPoints-1); 
-        f_shift = np.max(array_x) / 4.0
         n_shift = int(f_shift/f_step);
             
         Ta_sig = np.roll(Ta_sig, -n_shift); # pos
@@ -313,8 +312,9 @@ class Analyzer(QWidget):
         xdata = np.array(xdata)
             
         self.x = xdata
-        f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1) 
-        n_shift = int(self.f_shift/f_step)
+        f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1)
+        f_shift = np.max(self.x) / 4.0
+        n_shift = int(f_shift/f_step)
         total_u1 = data_u1[(n_shift+1):(self.dataPoints - n_shift - 1)]
         total_u9 = data_u9[(n_shift+1):(self.dataPoints - n_shift - 1)]
         
@@ -506,7 +506,6 @@ def main():
     logPath = config.get('paths', "logPath")
     resultPath = config.get('paths', "resultFilePath")
     badPointRange =  config.getint('parameters', "badPointRange")
-    f_shift =  config.getfloat('parameters', "f_shift")
     coordinates = config.get('sources', source).replace(" ", "").split(",")
 
     logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getLogs()
@@ -538,7 +537,7 @@ def main():
     #Create App
     qApp = QApplication(sys.argv)
 
-    aw = Analyzer(source, iteration_number, filtering, threshold, badPointRange, dataFilesPath, resultPath, logs, f_shift, DPFU_max, G_El, Tcal, k)
+    aw = Analyzer(source, iteration_number, filtering, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max, G_El, Tcal, k)
     aw.show()
     sys.exit(qApp.exec_())
     
