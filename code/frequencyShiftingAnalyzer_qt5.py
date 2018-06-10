@@ -76,7 +76,7 @@ def STON(array):
     return ston
 
 class Analyzer(QWidget):
-    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, DPFU_max, G_El, Tcal, k):
+    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart):
         super().__init__()
        
         self.setWindowIcon(QIcon('viraclogo.png'))
@@ -107,6 +107,7 @@ class Analyzer(QWidget):
         self.G_El = G_El
         self.Tcal = Tcal
         self.k = k
+        self.fstart = fstart
         
         self.setWindowTitle("Analyze for " + self.source + " " + self.date)
         self.grid = QGridLayout()
@@ -385,6 +386,8 @@ class Analyzer(QWidget):
         y_u1_avg = np.zeros(self.totalResults_u1[0].shape)
         y_u9_avg = np.zeros(self.totalResults_u9[0].shape)
         
+        FreqStart = self.fstart +  float(self.logs["header"]["BBC"])
+        print ("FreqStart", FreqStart, "BBC", float(self.logs["header"]["BBC"]))                                
         for p in range(0,  self.datPairsCount):
             scan_number_1 = self.scanPairs[p][0].split("_")[-1][2:].lstrip("0").split(".")[0]
             scan_number_2 = self.scanPairs[p][1].split("_")[-1][2:].lstrip("0").split(".")[0]
@@ -399,8 +402,7 @@ class Analyzer(QWidget):
             dateStr = str(dateStrList[2]) + " " + str(dateStrList[1]) + " " + str(dateStrList[0])
             RaStr = " ".join(scan_1["Ra"])
             DecStr = " ".join(scan_1["Dec"])
-            FreqStart = (float(scan_1["fs_frequencyfs"])  +   float(scan_2["fs_frequencyfs"]))/2  + float(self.logs["header"]["BBC"])
-            print ("FreqStart", FreqStart, "log frecq ", float(scan_1["fs_frequencyfs"]), float(scan_2["fs_frequencyfs"]), "BBC", float(self.logs["header"]["BBC"]))
+            #FreqStart = (float(scan_1["fs_frequencyfs"])  +   float(scan_2["fs_frequencyfs"]))/2  + float(self.logs["header"]["BBC"])
             dopsetPar = dateStr + " " + timeStr + " " + RaStr + " " + DecStr
             print ("dopsetPar", dopsetPar,  " dateStr ", dateStr + " timeStr " + timeStr + " RaStr " + RaStr + " DecStr" + DecStr)
             os.system("code/dopsetpy_v1.5 " + dopsetPar)
@@ -509,6 +511,15 @@ def main():
     coordinates = config.get('sources', source).replace(" ", "").split(",")
 
     logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getLogs()
+    f = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getAllfs_frequencys()
+    f = [float(fi) for fi in f]
+    f = list(set(f))
+    f.sort()
+    print ("q", f)
+    f1 =  f[-1]
+    f2 = f[-2]
+    fstart = (f1 + f2)/ 2.0
+    
     location = logs["location"]
     
     if location == "IRBENE":
@@ -537,7 +548,7 @@ def main():
     #Create App
     qApp = QApplication(sys.argv)
 
-    aw = Analyzer(source, iteration_number, filtering, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max, G_El, Tcal, k)
+    aw = Analyzer(source, iteration_number, filtering, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart)
     aw.show()
     sys.exit(qApp.exec_())
     

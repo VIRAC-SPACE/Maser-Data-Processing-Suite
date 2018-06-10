@@ -348,6 +348,9 @@ class ExperimentLogReader():
         
         return scanNamesForSource
     
+    def getAllfs_frequencys(self):
+        return self.fs_frequency_list
+    
     def __del__(self):
         del self.scan_names
         del self.sources
