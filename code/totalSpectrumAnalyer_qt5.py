@@ -598,7 +598,9 @@ def main():
     config.read(configFilePath)
     dataFilesPath =  config.get('paths', "dataFilePath")
     resultFilePath =  config.get('paths', "resultFilePath")
-    source = re.split("([A-Z, a-z]+)", datafile.split("/")[-1].split(".")[0])[1]
+    #source = re.split("([A-Z, a-z]+)", datafile.split("/")[-1].split(".")[0])[1]
+    source = datafile.split("/")[-1].split(".")[0].split("_")[0]
+    print ("source", source)
     source_velocities = config.get('velocities', source).split(",")
     
     #Create App

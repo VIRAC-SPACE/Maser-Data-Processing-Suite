@@ -8,6 +8,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QFont    
 import argparse
 import configparser
+import json
 import numpy as np
 import scipy.constants
 import pandas as pd
@@ -29,6 +30,7 @@ def parseArguments():
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-t", "--threshold", help="Set threshold for outlier filter", type=float, default=1.0)
     parser.add_argument("-f", "--filter", help="Set filter default is True if filter is False bad data points is no removed", type=str, default="False")
+    parser.add_argument("-m", "--manual", help="Set manual log data", action='store_true')
 
     # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
@@ -101,8 +103,8 @@ class Analyzer(QWidget):
         self.scanPairs = self.createScanPairs()
         self.datPairsCount = len(self.scanPairs)
         self.f0 = 6668519200
-        self.location = self.logs["location"]
-        self.expername = self.source + self.date + "_" + self.logs["location"]
+        self.location = self.logs["header"]["location"]
+        self.expername = self.source + self.date + "_" + self.logs["header"]["location"]
         self.DPFU_max = DPFU_max
         self.G_El = G_El
         self.Tcal = Tcal
@@ -480,7 +482,7 @@ class Analyzer(QWidget):
         self.grid.addWidget(self.plot_STON, 2, 0)
         
         totalResults = np.concatenate((velocitys_avg, y_u1_avg, y_u9_avg), axis=1)
-        output_file_name = self.dataFilesPath + self.source + self.date.replace(" ", "_") + "_" + self.logs["location"] + "_" + str(self.iteration_number) + ".dat"
+        output_file_name = self.dataFilesPath + self.source + "_" +self.date.replace(" ", "_") + "_" + self.logs["header"]["location"] + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
         np.savetxt(output_file_name, totalResults)    
                 
@@ -501,7 +503,7 @@ def main():
     threshold = float(args.__dict__["threshold"])
     filter = str(args.__dict__["filter"])
     configFilePath = str(args.__dict__["config"])
-    
+                
     config = configparser.RawConfigParser()
     config.read(configFilePath)
     dataFilesPath =  config.get('paths', "dataFilePath")
@@ -510,18 +512,27 @@ def main():
     resultPath = config.get('paths', "resultFilePath")
     badPointRange =  config.getint('parameters', "badPointRange")
     coordinates = config.get('sources', source).replace(" ", "").split(",")
+    
+    if args.manual:
+        with open(prettyLogsPath + source + "_" + str(iteration_number) + "log.dat") as data_file:    
+                logs  = json.load(data_file)
+        f = list()
+        
+        for scan in logs:
+            f.append(logs[scan]["fs_frequencyfs"])
+        
+    else:
+        logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getLogs()
+        f = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getAllfs_frequencys()
 
-    logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getLogs()
-    f = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getAllfs_frequencys()
     f = [float(fi) for fi in f]
     f = list(set(f))
     f.sort()
-    print ("q", f)
     f1 =  f[-1]
     f2 = f[-2]
     fstart = (f1 + f2)/ 2.0
     
-    location = logs["location"]
+    location = logs["header"]["location"]
     
     if location == "IRBENE":
         DPFU_max =  config.get('parameters', "DPFU_max").split(",")

@@ -7,6 +7,7 @@ import datetime
 import argparse
 import platform
 import configparser
+import json
 
 from scan import Scan
     
@@ -68,9 +69,10 @@ class ExperimentLogReader():
         else:
             self.single = False
         
-        try:
-            self.datafile = open(self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat", "w")
-            
+        try: 
+            with open(self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat") as data_file:    
+                self.datafile = json.load(data_file)
+
         except IOError as e:
             print ("IO Error",  e)
             sys.exit(1)
@@ -234,106 +236,28 @@ class ExperimentLogReader():
             
             #print(len(self.FreqStart), " ", len(self.scan_names), " ", len(self.FreqBBC1s), " ", len(self.FreqBBC2s))
             #self.logfile.close()
-   
-    def writeOutput(self):
-        self.datafile.write("Start;Header;")
-        self.datafile.write("\n")
-        self.datafile.write("Station;" + self.Location)
-        self.datafile.write("\n")
-        
-        if any(scan.getmanualyChangedSystemTemU1() or scan.getmanualyChangedSystemTemU9() or scan.getmanualyChangedBBC1() or scan.getmanualyChangedBBC2() for scan in self.scanList):
-            self.datafile.write("Manual Changes !!!" )
-            self.datafile.write("\n")
-        
-        for scan in self.scanList:
-            if scan.getmanualyChangedSystemTemU1():
-                self.datafile.write("For scan Number " + str(scan.getScanNumber()) + " Manually Changed System Temperature U1")
-                self.datafile.write("\n")
-                 
-            if scan.getmanualyChangedSystemTemU9():
-                self.datafile.write("For scan Number " + str(scan.getScanNumber()) + " Manually Changed System Temperature U9")
-                self.datafile.write("\n")
-                
-            if scan.getmanualyChangedBBC1():
-                self.datafile.write("For scan Number " + str(scan.getScanNumber()) + " Manually Changed BBC1")
-                self.datafile.write("\n")
-                
-            if scan.getmanualyChangedBBC2():
-                self.datafile.write("For scan Number " + str(scan.getScanNumber()) + " Manually Changed BBC2")
-                self.datafile.write("\n")
-        
-        self.datafile.write("End;Header;----------------------;")
-        self.datafile.write("\n")
-        for scan in range (0, len(self.scan_names)):
-            
-            self.datafile.write("Scan;" + self.scan_names[scan].zfill(2) + ";")
-            self.datafile.write("\n")
-        
-            self.datafile.write("Source;" + self.sources[scan] + ";")
-            self.datafile.write("\n")
-            
-            self.datafile.write("Date;" + self.dates + ";")
-            self.datafile.write("\n")
-            
-            self.datafile.write("TimeStart;" + self.timeStarts[scan] + ";" + "UT;")
-            self.datafile.write("\n")
-            self.datafile.write("TimeStop;" + self.timeStops[scan] + ";" + "UT;")
-            self.datafile.write("\n")
-            
-            self.datafile.write("Duration;" + str(self.DurationsMin[scan]) + ";sec;" + str(self.DurationsSec[scan]) + ";min")
-            self.datafile.write("\n")
-            
-            self.datafile.write("RA;" + " ".join(self.RAs[scan]) + ";")
-            self.datafile.write("\n")
-            
-            self.datafile.write("DEC;" + " ".join(self.DECs[scan]) + ";")
-            self.datafile.write("\n")
     
-            self.datafile.write("Epoch;" + str(self.Epochs[scan]) + ";")
-            self.datafile.write("\n")
-            
-            self.datafile.write("Systemtemperature1;1u;" + str(self.Systemtemperatures[scan][0]) + ";")
-            self.datafile.write("\n")
-            self.datafile.write("Systemtemperature2;9u;" + str(self.Systemtemperatures[scan][1]) + ";")
-            self.datafile.write("\n")
-            
-            self.datafile.write("FreqBBC1;" + str(self.FreqBBC1s[scan]) + ";MHz")
-            self.datafile.write("\n")
-            
-            self.datafile.write("FreqBBC2;" + str(self.FreqBBC2s[scan]) + ";MHz")
-            self.datafile.write("\n")
-            
-            self.datafile.write("FreqStart;" + str(self.FreqStart[scan]) + ";MHz")
-            self.datafile.write("\n")
-            
-            self.datafile.write("FreqStop;" + str(self.FreqStop[scan]) + ";MHz")
-            self.datafile.write("\n")
-            
-            self.datafile.write("ClockOffset;" + str(self.clocks[scan]))
-            self.datafile.write("\n")
-            
-            self.datafile.write("fs_frequencyfs;" + str(self.fs_frequency_list[scan]))
-            self.datafile.write("\n")
-            
-            self.datafile.write("elevation;" + str(self.elevation_list[scan]))
-            self.datafile.write("\n")
-            
-            self.datafile.write("End;" + self.scan_names[scan].zfill(2) + ";----------------------;")
-            self.datafile.write("\n")
-            
-        self.datafile.close()  
+    def __createLogs(self):
+        
+        self.datafile["header"] = {"location":self.Location,"Systemtemperature":self.header_SystemtemperaturesForScan, "Ra":self.header_ra , "Dec":self.header_dec, "dates":self.dates, "startTime":self.header_timeStart, "LO":float(self.header_loa), "BBC":self.header_freqBBC1, "FreqStart": float(self.header_freqBBC1) + float(self.header_loa), "sourceName":self.header_source, "source":self.header_sourceName, "stopTime": self.header_timeStop, "clockOffset": self.header_clock, "fs_frequencyfs":"0.0"}
+        
+        for i in range(0, len(self.scan_names)):
+            self.datafile[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates, "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sourceName_list[i], "stopTime": self.timeStops[i], "clockOffset": str(self.clocks[i]), "fs_frequencyfs":self.fs_frequency_list[i], "elevation":self.elevation_list[i]}
+
+        return self.datafile
+    
+    def writeOutput(self):
+        logs = self.__createLogs()
+         
+        self.log_data = open (self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat", "w")
+        
+        self.log_data.write(json.dumps(logs, indent=4))
+        self.log_data.close()
         print ("Created file " + "prettyLogs/" + self.logs.split(".")[0].split("/")[1] + "log.dat")
 
     def getLogs(self):
         self.writeOutput()
-        logs = dict()
-        logs["location"] = self.Location
-        
-        logs["header"] = {"Systemtemperature":self.header_SystemtemperaturesForScan, "Ra":self.header_ra , "Dec":self.header_dec, "dates":self.dates, "startTime":self.header_timeStart, "LO":float(self.header_loa), "BBC":self.header_freqBBC1, "FreqStart": float(self.header_freqBBC1) + float(self.header_loa), "sourceName":self.header_source, "source":self.header_sourceName, "stopTime": self.header_timeStop, "clockOffset": self.header_clock}
-        
-        for i in range(0, len(self.scan_names)):
-            logs[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates, "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sourceName_list[i], "source":self.sources, "stopTime": self.timeStops[i], "clockOffset": self.clocks[i], "fs_frequencyfs":self.fs_frequency_list[i], "elevation":self.elevation_list[i]}
-
+        logs = self.__createLogs()
         return logs
     
     def getAllScansNumbers(self):
