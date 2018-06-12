@@ -17,6 +17,7 @@ def parseArguments():
     
     # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
+    parser.add_argument("-m", "--manual", help="Set manual log data", action='store_true')
 
     # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 3.0')
@@ -73,18 +74,36 @@ def main():
         result = json.load(result_data)
     
     processed_iteration = list()
-      
+    
     for experiment in result:
         if experiment[-1]  in iterations:
             processed_iteration.append(experiment[-1])
     
-    for i in range(0, len(iterations)):
+    if args.manual:
+        for i in range(0, len(iterations)):
         
-        if i not in processed_iteration:
-            frequencyShiftingParametr = sourceName + " " + iterations[i] + " " + str(logfile_list[findLogFile(logfile_list, iterations[i])])
-            print ("Execute ",  "python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
-            os.system("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
-           
+            if i not in processed_iteration:
+                frequencyShiftingParametr = sourceName + " " + iterations[i] + " " + str(logfile_list[findLogFile(logfile_list, iterations[i])])
+                print ("Execute ",  "python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr + " -m")
+                os.system("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr  + " -m") 
+    else:
+        for i in range(0, len(iterations)):
+        
+            if i not in processed_iteration:
+                frequencyShiftingParametr = sourceName + " " + iterations[i] + " " + str(logfile_list[findLogFile(logfile_list, iterations[i])])
+                print ("Execute ",  "python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
+                os.system("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
+    
+    data_files = list()
+    for data in os.listdir(dataFilesPath):
+        if data.startswith(sourceName) and data.endswith(".dat"):
+            data_files.append(data)
+            
+    for d in data_files:
+        if d.split(".")[0][-1] not in processed_iteration:
+           print ("Execute ",  "python3  " + "code/totalSpectrumAnalyer_qt5.py " + d) 
+           os.system("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d)
+    
 if __name__=="__main__":
     main()
     
