@@ -70,8 +70,7 @@ class ExperimentLogReader():
             self.single = False
         
         try: 
-            with open(self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat") as data_file:    
-                self.datafile = json.load(data_file)
+            pass
 
         except IOError as e:
             print ("IO Error",  e)
@@ -239,18 +238,30 @@ class ExperimentLogReader():
     
     def __createLogs(self):
         
-        self.datafile["header"] = {"location":self.Location,"Systemtemperature":self.header_SystemtemperaturesForScan, "Ra":self.header_ra , "Dec":self.header_dec, "dates":self.dates, "startTime":self.header_timeStart, "LO":float(self.header_loa), "BBC":self.header_freqBBC1, "FreqStart": float(self.header_freqBBC1) + float(self.header_loa), "sourceName":self.header_source, "source":self.header_sourceName, "stopTime": self.header_timeStop, "clockOffset": self.header_clock, "fs_frequencyfs":"0.0"}
+        datafile = dict()
+        datafile["header"] = {"location":self.Location,"Systemtemperature":self.header_SystemtemperaturesForScan, "Ra":self.header_ra , "Dec":self.header_dec, "dates":self.dates, "startTime":self.header_timeStart, "LO":float(self.header_loa), "BBC":self.header_freqBBC1, "FreqStart": float(self.header_freqBBC1) + float(self.header_loa), "sourceName":self.header_source, "source":self.header_sourceName, "stopTime": self.header_timeStop, "clockOffset": self.header_clock, "fs_frequencyfs":"0.0"}
         
         for i in range(0, len(self.scan_names)):
-            self.datafile[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates, "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sourceName_list[i], "stopTime": self.timeStops[i], "clockOffset": str(self.clocks[i]), "fs_frequencyfs":self.fs_frequency_list[i], "elevation":self.elevation_list[i]}
+            datafile[self.scan_names[i]] = {"Systemtemperature":self.Systemtemperatures[i], "Ra":self.RAs[i] , "Dec":self.DECs[i], "dates":self.dates, "startTime":self.timeStarts[i], "FreqStart": self.FreqStart[i], "sourceName":self.sourceName_list[i], "stopTime": self.timeStops[i], "clockOffset": str(self.clocks[i]), "fs_frequencyfs":self.fs_frequency_list[i], "elevation":self.elevation_list[i]}
 
-        return self.datafile
+        return datafile
     
     def writeOutput(self):
         logs = self.__createLogs()
-         
-        self.log_data = open (self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat", "w")
         
+        if os.path.isfile(self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat"):
+                pass
+        else:
+            os.system("touch " + self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat")
+            
+            self.log_data = open (self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat", "w")
+            self.log_data.write("{ \n" + "\n}")
+            self.log_data.close()
+            
+        with open(self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat") as data_file:
+            self.datafile = json.load(data_file)
+                
+        self.log_data = open (self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat", "w")
         self.log_data.write(json.dumps(logs, indent=4))
         self.log_data.close()
         print ("Created file " + "prettyLogs/" + self.logs.split(".")[0].split("/")[1] + "log.dat")
