@@ -350,6 +350,92 @@ class Analyzer(QWidget):
         if index == self.datPairsCount -1:
             self.nextPairButton.setText('Move to total results')
             self.nextPairButton.clicked.connect(self.plotTotalResults)
+            self.grid.removeWidget(self.skipAllButton)
+            self.skipAllButton.hide()
+            self.skipAllButton.close()
+            del self.skipAllButton
+    
+    def __PAIR(self, index, totalResults_u1, totalResults_u9, STON_list_u1, STON_list_u9, STON_list_AVG):
+        pair = self.scanPairs[index]
+            
+        scanNUmber1 = self.dataFileDir + "/" + pair[0]
+        scanNUmber2 = self.dataFileDir + "/" + pair[1]
+            
+        scan_number_1 = pair[0].split(".")[0].split("_")[-1][2:].lstrip("0")
+        scan_number_2 = pair[1].split(".")[0].split("_")[-1][2:].lstrip("0")
+            
+        scan_1 = self.logs[str(scan_number_2)]
+        scan_2 = self.logs[str(scan_number_1)]
+            
+        # get system temperature
+        tsys_u1_1 = scan_1['Systemtemperature'][0]
+        tsys_u1_2 = tsys_u1_1
+        tsys_u9_1 = scan_1['Systemtemperature'][1]
+        tsys_u9_2 = tsys_u9_1
+            
+        elevation = (float(scan_1["elevation"]) + float(scan_2["elevation"])) /2
+            
+        if float(tsys_u1_1) == 0:
+            newT, ok = QInputDialog.getDouble(self, 'tsys error', 'Enter valid tsys:', 0, 1, 300)
+            tsys_u1_1 = newT
+            
+        if float(tsys_u9_1) == 0:
+            newT, ok = QInputDialog.getDouble(self, 'tsys error', 'Enter valid tsys:', 0, 1, 300)
+            tsys_u9_1 = newT
+            
+        data_1 = np.fromfile(scanNUmber1, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber1),9))
+        data_2 = np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),9))
+                
+        #Delete first row
+        data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
+        data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
+                  
+        xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
+            
+        #Calibration  
+        data_u1 = self.calibration(xdata, ydata_1_u1, ydata_2_u1, float(tsys_u1_1), float(tsys_u1_2), elevation) 
+        data_u9 = self.calibration(xdata, ydata_1_u9, ydata_2_u9, float(tsys_u9_1), float(tsys_u9_2), elevation)
+           
+        xdata = np.array(xdata)
+                
+        self.x = xdata
+        f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1)
+        f_shift = np.max(self.x) / 4.0
+        n_shift = int(f_shift/f_step)
+        total_u1 = data_u1[(n_shift+1):(self.dataPoints - n_shift - 1)]
+        total_u9 = data_u9[(n_shift+1):(self.dataPoints - n_shift - 1)]
+            
+        self.x = self.x[(n_shift+1):(self.dataPoints - n_shift - 1)] 
+            
+        totalResults_u1.append(total_u1)
+        totalResults_u9.append(total_u9)
+            
+        ston_u1 = STON(total_u1)
+        ston_u9 = STON(total_u9)
+        stone_AVG = STON(((total_u1 + total_u9)/2))
+            
+        STON_list_u1.append(ston_u1)
+        STON_list_u9.append(ston_u9)
+        STON_list_AVG.append(stone_AVG)
+            
+    def skipAll(self):
+        totalResults_u1= list()
+        totalResults_u9= list()
+        
+        STON_list_u1= list()
+        STON_list_u9= list()
+        STON_list_AVG= list()
+        
+        for index in range(0, len(self.scanPairs)):
+            self.__PAIR(index, totalResults_u1, totalResults_u9, STON_list_u1, STON_list_u9, STON_list_AVG)
+        
+        self.totalResults_u1 = totalResults_u1
+        self.totalResults_u9 = totalResults_u9
+        self.STON_list_u1 = STON_list_u1
+        self.STON_list_u9 = STON_list_u9
+        self.STON_list_AVG = STON_list_AVG
+        
+        self.plotTotalResults()
             
     def plotTotalResults(self):
        
@@ -492,7 +578,10 @@ class Analyzer(QWidget):
             self.nextPairButton = QPushButton("Next pair", self)
             self.nextPairButton.clicked.connect(self.nextPair)
             self.grid.addWidget(self.nextPairButton, 5, 3)
-            
+        
+        self.skipAllButton = QPushButton("Skip all", self)
+        self.skipAllButton.clicked.connect(self.skipAll)
+        self.grid.addWidget(self.skipAllButton, 6, 3)   
         self.plotingPairs(self.index)
         
 def main():
