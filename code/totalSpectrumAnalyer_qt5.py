@@ -19,6 +19,7 @@ from PyQt5.QtGui import QColor
 import re
 
 from ploting_qt5 import  Plot
+from dicom.test.test_filereader import deflate_name
 
 def parseArguments():
     # Create argument parser
@@ -273,9 +274,9 @@ class Analyzer(QWidget):
         del self.plot_1
         del self.plot_2
         
-        self.plotPolinomialButton = QPushButton("Plot polynomials", self)
+        self.plotPolinomialButton = QPushButton("Create shorter specter", self)
         self.grid.addWidget(self.plotPolinomialButton, 4, 3)
-        self.plotPolinomialButton.clicked.connect(self.plotPlonomials)
+        self.plotPolinomialButton.clicked.connect(self.plotShortSpectr)
         self.plotPolinomialButton.setStyleSheet("background-color: green")
         
         g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
@@ -324,32 +325,32 @@ class Analyzer(QWidget):
         self.m_slider.valueChanged[int].connect(self.change_M)
         self.n_slider.valueChanged[int].connect(self.change_N)
         
-        m_lcd = QLCDNumber(self)
-        n_lcd = QLCDNumber(self)
+        self.m_lcd = QLCDNumber(self)
+        self.n_lcd = QLCDNumber(self)
         
-        m_lcd.setSegmentStyle(QLCDNumber.Flat)
-        n_lcd.setSegmentStyle(QLCDNumber.Flat)
-        mpalette = m_lcd.palette()
-        npalette = n_lcd.palette()
+        self.m_lcd.setSegmentStyle(QLCDNumber.Flat)
+        self.n_lcd.setSegmentStyle(QLCDNumber.Flat)
+        mpalette = self.m_lcd.palette()
+        npalette = self.n_lcd.palette()
         mpalette.setColor(mpalette.Dark, QColor(0, 255, 0))
         npalette.setColor(npalette.Dark, QColor(0, 255, 0))
-        m_lcd.setPalette(mpalette)
-        n_lcd.setPalette(npalette)
+        self.m_lcd.setPalette(mpalette)
+        self.n_lcd.setPalette(npalette)
         
-        mLabel = QLabel('M', self)
-        nLabel = QLabel('N', self)
+        self.mLabel = QLabel('M', self)
+        self.nLabel = QLabel('N', self)
         
-        self.grid.addWidget(mLabel, 2,3)
-        self.grid.addWidget(nLabel, 3,3)
+        self.grid.addWidget(self.mLabel, 2,3)
+        self.grid.addWidget(self.nLabel, 3,3)
         
         self.grid.addWidget(self.m_slider, 2,4)
         self.grid.addWidget(self.n_slider, 3,4)
         
-        self.grid.addWidget(m_lcd, 2,5)
-        self.grid.addWidget(n_lcd, 3,5)
+        self.grid.addWidget(self.m_lcd, 2,5)
+        self.grid.addWidget(self.n_lcd, 3,5)
         
-        self.m_slider.valueChanged.connect(m_lcd.display)
-        self.n_slider.valueChanged.connect(n_lcd.display)
+        self.m_slider.valueChanged.connect(self.m_lcd.display)
+        self.n_slider.valueChanged.connect(self.n_lcd.display)
         
         self.m = self.m_slider.value()
         self.n = self.n_slider.value()
@@ -395,9 +396,9 @@ class Analyzer(QWidget):
         self.plot_4.canvasShow()
         
         self.previousN = value
-        
-    def plotPlonomials(self):
-        self.setWindowTitle("Polynomial and Data points")
+    
+    def plotShortSpectr(self):
+        self.setWindowTitle("Short Spectr")
         self.m = self.m_slider.value()
         self.n = self.n_slider.value()
         
@@ -427,6 +428,57 @@ class Analyzer(QWidget):
         self.plotPolinomialButton.close()
         self.grid.removeWidget(self.plotPolinomialButton)
         del self.plotPolinomialButton
+        
+        self.m_lcd.hide()
+        self.n_lcd.hide()
+        self.m_lcd.close()
+        self.n_lcd.close()
+        self.grid.removeWidget(self.m_lcd)
+        self.grid.removeWidget(self.n_lcd)
+        del self.m_lcd
+        del self.n_lcd
+        
+        self.mLabel.hide()
+        self.mLabel.close()
+        self.grid.removeWidget(self.mLabel)
+        del self.mLabel
+        
+        #u1 plot
+        self.plot_10 = Plot()
+        self.plot_10.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0))
+        self.plot_10.plot(self.xarray[self.m:self.n], self.z1[self.m:self.n], 'ko', label='Data Points',  markersize=1)
+        
+        #u9 plot
+        self.plot_11 = Plot()
+        self.plot_11.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1))
+        self.plot_11.plot(self.xarray[self.m:self.n], self.z2[self.m:self.n], 'ko', label='Data Points',  markersize=1)
+        
+        self.grid.addWidget(self.plot_10, 0, 0)
+        self.grid.addWidget(self.plot_11, 0, 1)
+        
+        self.plotPoly = QPushButton("Plot polynomial", self)
+        self.grid.addWidget(self.plotPoly, 3, 3)
+        self.plotPoly.clicked.connect(self.plotPlonomials)
+        self.plotPoly.setStyleSheet("background-color: green")
+        
+    def plotPlonomials(self):
+        self.setWindowTitle("Polynomial and Data points")
+        
+        self.plot_10.hide()
+        self.plot_11.close()
+        self.plot_10.hide()
+        self.plot_11.close()
+        self.grid.removeWidget(self.plot_10)
+        self.grid.removeWidget(self.plot_11)
+        self.plot_10.removePolt()
+        self.plot_11.removePolt()
+        del self.plot_10
+        del self.plot_11
+        
+        self.plotPoly.hide()
+        self.plotPoly.close()
+        self.grid.removeWidget(self.plotPoly)
+        del self.plotPoly
         
         self.plotLocalMaximumButton = QPushButton("Plot local maximums", self)
         self.grid.addWidget(self.plotLocalMaximumButton, 3, 3)
