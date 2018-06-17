@@ -10,11 +10,12 @@ from astropy.modeling.polynomial import Chebyshev1D
 from scipy.interpolate import UnivariateSpline
 import peakutils
 import json
-from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QMessageBox, QLabel, QLineEdit, QSlider, QDesktopWidget)
+from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QMessageBox, QLabel, QLineEdit, QSlider, QDesktopWidget, QLCDNumber)
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QColor
 import re
 
 from ploting_qt5 import  Plot
@@ -311,18 +312,44 @@ class Analyzer(QWidget):
         self.n_slider = QSlider(Qt.Horizontal, self)
         self.m_slider.setFocusPolicy(Qt.NoFocus)
         self.n_slider.setFocusPolicy(Qt.NoFocus)
+        self.m_slider.setTickInterval(20)
+        self.m_slider.setSingleStep(20)
         self.m_slider.setMinimum(self.m) 
         self.m_slider.setMaximum(self.a-1)
         self.n_slider.setMinimum(self.b-1)
         self.n_slider.setMaximum(self.n)
         self.n_slider.setValue(self.n)
-        self.m_slider.setMinimumSize(200, 0)
-        self.m_slider.setMinimumSize(200, 0)
+        self.m_slider.setMinimumSize(500, 0)
+        self.m_slider.setMinimumSize(500, 0)
         self.m_slider.valueChanged[int].connect(self.change_M)
         self.n_slider.valueChanged[int].connect(self.change_N)
         
-        self.grid.addWidget(self.m_slider, 2,3)
-        self.grid.addWidget(self.n_slider, 3,3)
+        m_lcd = QLCDNumber(self)
+        n_lcd = QLCDNumber(self)
+        
+        m_lcd.setSegmentStyle(QLCDNumber.Flat)
+        n_lcd.setSegmentStyle(QLCDNumber.Flat)
+        mpalette = m_lcd.palette()
+        npalette = n_lcd.palette()
+        mpalette.setColor(mpalette.Dark, QColor(0, 255, 0))
+        npalette.setColor(npalette.Dark, QColor(0, 255, 0))
+        m_lcd.setPalette(mpalette)
+        n_lcd.setPalette(npalette)
+        
+        mLabel = QLabel('M', self)
+        nLabel = QLabel('N', self)
+        
+        self.grid.addWidget(mLabel, 2,3)
+        self.grid.addWidget(nLabel, 3,3)
+        
+        self.grid.addWidget(self.m_slider, 2,4)
+        self.grid.addWidget(self.n_slider, 3,4)
+        
+        self.grid.addWidget(m_lcd, 2,5)
+        self.grid.addWidget(n_lcd, 3,5)
+        
+        self.m_slider.valueChanged.connect(m_lcd.display)
+        self.n_slider.valueChanged.connect(n_lcd.display)
         
         self.m = self.m_slider.value()
         self.n = self.n_slider.value()
@@ -608,6 +635,7 @@ def main():
 
     aw = Analyzer(dataFilesPath + datafile, resultFilePath, source_velocities)
     aw.show()
+    aw.showMaximized() 
     sys.exit(qApp.exec_())
     
     sys.exit(0)
