@@ -229,8 +229,8 @@ class Analyzer(QWidget):
         for value in self.infoSet_2:
             newValues.append(value.text())
             
-        self.FWHMconstant = int(newValues[0])
-        self.polynomialOrder = int(newValues[1])
+        self.FWHMconstant = float(newValues[0])
+        self.polynomialOrder = float(newValues[1])
         
         QMessageBox.information(self, "Info", "Data was changed")
             
@@ -567,10 +567,13 @@ class Analyzer(QWidget):
         self.monitoringButton.clicked.connect(self.createResult)
         self.monitoringButton.setStyleSheet("background-color: green")
         
-        thres=0.1
-        
         y1values = self.z1[self.m:self.n] - self.p_u1(self.xarray[self.m:self.n])
         y2values = self.z2[self.m:self.n] - self.p_u9(self.xarray[self.m:self.n])
+        
+        smart_thres =  (  (y1values +  y2values)/2  - np.average(((y1values +  y2values)/2)) ) /  (np.std(((y1values +  y2values)/2)))
+        thres=0.1
+        
+        print ("smart_thres ", smart_thres)
           
         #indexsu apreikinasana
         indexes_for_ceb = peakutils.indexes(y1values, thres=thres, min_dist=10)
