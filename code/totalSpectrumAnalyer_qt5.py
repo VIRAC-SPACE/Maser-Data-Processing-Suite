@@ -511,28 +511,34 @@ class Analyzer(QWidget):
         self.a_u9, self.b_u9 = FWHM(self.xarray, self.z2, self.FWHMconstant)
          
         # Fit the data using a Chebyshev astro py
-        ceb = Chebyshev1D(self.polynomialOrder, domain=None, window=[-1, 1], n_models=None, model_set_axis=None, name=None, meta=None)
-        fit_ceb = fitting.LevMarLSQFitter()
+        #ceb = Chebyshev1D(self.polynomialOrder, domain=None, window=[-1, 1], n_models=None, model_set_axis=None, name=None, meta=None)
+        #fit_ceb = fitting.LevMarLSQFitter()
         
         ### u1
-        self.ceb_1 = fit_ceb(ceb, np.append(self.xarray[self.m:self.a_u1], self.xarray[self.b_u1:self.n]),  np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]))
+        #self.ceb_1 = fit_ceb(ceb, np.append(self.xarray[self.m:self.a_u1], self.xarray[self.b_u1:self.n]),  np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]))
        
         ### u9
-        self.ceb_2 = fit_ceb(ceb, np.append(self.xarray[self.m:self.a_u9], self.xarray[self.b_u9:self.n]),  np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]))
+        #self.ceb_2 = fit_ceb(ceb, np.append(self.xarray[self.m:self.a_u9], self.xarray[self.b_u9:self.n]),  np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]))
+        
+        z_u1 = np.polyfit(np.append(self.xarray[self.m:self.a_u1], self.xarray[self.b_u1:self.n]), np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]), self.polynomialOrder)
+        self.p_u1 = np.poly1d(z_u1)
+        
+        z_u9 = np.polyfit(np.append(self.xarray[self.m:self.a_u9], self.xarray[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), self.polynomialOrder)
+        self.p_u9 = np.poly1d(z_u9)
         
         #u1 plot
         self.plot_5 = Plot()
         self.plot_5.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0))
         self.plot_5.plot(np.append(self.xarray[self.m:self.a_u1], self.xarray[self.b_u1:self.n]), np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]), 'ko', label='Data Points',  markersize=1)
-        self.plot_5.plot(self.xarray[self.m:self.n], self.ceb_1(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
-        #self.plot_5.plot(self.x_u1[self.m:self.n], p_u1(self.x_u1[self.m:self.n]), 'b', label='Numpy polyfit', markersize=1)
+        #self.plot_5.plot(self.xarray[self.m:self.n], self.ceb_1(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
+        self.plot_5.plot(self.xarray, self.p_u1(self.xarray), 'b', label='Numpy polyfit', markersize=1)
         
         #u9 plot
         self.plot_6 = Plot()
         self.plot_6.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1))
         self.plot_6.plot(np.append(self.xarray[self.m:self.a_u9], self.xarray[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), 'ko', label='Data Points',  markersize=1)
-        self.plot_6.plot(self.xarray[self.m:self.n], self.ceb_2(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
-        #self.plot_6.plot(self.x_u9[self.m:self.n], p_u9(self.x_u9[self.m:self.n]), 'b', label='Numpy polyfit', markersize=1)
+        #self.plot_6.plot(self.xarray[self.m:self.n], self.ceb_2(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
+        self.plot_6.plot(self.xarray, self.p_u9(self.xarray), 'b', label='Numpy polyfit', markersize=1)
         
         self.grid.addWidget(self.plot_5, 0, 0)
         self.grid.addWidget(self.plot_6, 0, 1)
@@ -563,8 +569,8 @@ class Analyzer(QWidget):
         
         thres=0.1
         
-        y1values = self.z1[self.m:self.n] - self.ceb_1(self.xarray[self.m:self.n])
-        y2values = self.z2[self.m:self.n] - self.ceb_2(self.xarray[self.m:self.n])
+        y1values = self.z1[self.m:self.n] - self.p_u1(self.xarray[self.m:self.n])
+        y2values = self.z2[self.m:self.n] - self.p_u9(self.xarray[self.m:self.n])
           
         #indexsu apreikinasana
         indexes_for_ceb = peakutils.indexes(y1values, thres=thres, min_dist=10)
