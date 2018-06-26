@@ -648,6 +648,7 @@ class Analyzer(QWidget):
               
         result[self.expername]["location"] = self.location
         result[self.expername]["Date"] = self.date
+        print ("self.date", self.date)
         result[self.expername]["Iteration_number"] = self.iteration_number
                 
         result[self.expername]["polarizationU1"] = self.maxU1
