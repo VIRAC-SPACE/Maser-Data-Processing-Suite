@@ -5,8 +5,6 @@ import argparse
 import configparser
 import numpy as np
 from astropy.convolution import Gaussian1DKernel, convolve
-from astropy.modeling import fitting
-from astropy.modeling.polynomial import Chebyshev1D
 from scipy.interpolate import UnivariateSpline
 import peakutils
 import json
@@ -19,7 +17,6 @@ from PyQt5.QtGui import QColor
 import re
 
 from ploting_qt5 import  Plot
-from dicom.test.test_filereader import deflate_name
 
 def parseArguments():
     # Create argument parser
@@ -72,7 +69,7 @@ class Analyzer(QWidget):
         self.source = re.split("([A-Z, a-z]+)", datafile.split("/")[-1].split(".")[0])[1]
         self.expername = datafile.split("/")[-1].split(".")[0]
         self.location = datafile.split("/")[-1].split(".")[0].split("_")[-2]
-        self.date = datafile.split("/")[-1].split(".")[0][len(self.source):][:len(self.location)+3]
+        self.date = datafile.split("/")[-1].split(".")[0][len(self.source) + 1:][:len(self.location)+3]
         self.iteration_number = datafile.split("/")[-1].split(".")[0].split("_")[-1]
         self.resultFilePath = resultFilePath
         self.source_velocities = source_velocities
@@ -662,7 +659,7 @@ class Analyzer(QWidget):
         #result[self.expername][self.scanNumber]["index_for_polarizationAVG"] =  self.maxavg_index
         
         resultFile = open (self.resultFilePath +  resultFileName, "w")
-        resultFile.write(json.dumps(result, indent=2))
+        resultFile.write(json.dumps(result, indent=2, sort_keys=True))
         resultFile.close()
         
         self._quit()

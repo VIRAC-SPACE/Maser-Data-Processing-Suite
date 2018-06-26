@@ -68,7 +68,8 @@ def main():
             amplitudes_for_uAVG = scanData["polarizationAVG"] # Got poitns for all experiments for polarization uAVG
             iter_number = scanData["Iteration_number"]
             
-            label = "Station is " + location + "\n" + "Date is " + " ".join(date.split("_")) + "\n " + iter_number
+            label = "Station is " + location + "\n" + "Date is " + " ".join(date.split("_")) + "\n " + "iteration number " + iter_number
+            print("label", label)
             labels.append(label)
             
             dates = date.split("_")
@@ -81,7 +82,8 @@ def main():
             result = Result(location, date, amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number)
             
             result_list.append(dict(result))
-            
+    
+    print (labels)        
     result_list = sorted(result_list, key=itemgetter('iteration_number'), reverse=False)
     
     for erperiment in result_list:
@@ -112,6 +114,8 @@ def main():
     
     Symbols =  ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
     
+    print ("len x", len(x))
+    print ()
     fig = plt.figure()
     #fig, ax = plt.subplots()
     graph = fig.add_subplot(111)
