@@ -2,10 +2,15 @@
 import sys
 import matplotlib.pyplot  as plt
 from matplotlib.dates import date2num
+from matplotlib import rcParams
 from datetime import datetime
 import json
 import argparse
 import configparser
+
+rcParams['font.family'] = 'sans-serif'
+rcParams['font.sans-serif'] = ['Time New Roman']
+rcParams['font.size'] = 12
 
 def parseArguments():
     # Create argument parser
@@ -47,36 +52,37 @@ def main():
     dateList = list()  
     for experiment in result:
         for scan in result[experiment]:
-            scanData = result[experiment][scan]
-            amplitudes_for_u1 = scanData["polarizationU1"] # Got poitns for all experiments for polarization u1
-            amplitudes_for_u9 = scanData["polarizationU9"] # Got poitns for all experiments for polarization u9
-            amplitudes_for_uAVG = scanData["polarizationAVG"] # Got poitns for all experiments for polarization uAVG
-            
-            v_list_u1 = list()
-            for v in amplitudes_for_u1:
-                v_list_u1.append(v[1])
-            velocitys_U1.append(v_list_u1)
-            
-            v_list_u9 = list()
-            for v in amplitudes_for_u9:
-                v_list_u9.append(v[1])
-            velocitys_U9.append(v_list_u9)
-            
-            v_list_AVG = list()
-            for v in amplitudes_for_uAVG:
-                v_list_AVG.append(v[1])
-            velocitys_AVG.append(v_list_AVG)
-            
-            time = scanData["startTime"]
-            date = scanData["Date"]
-            dates = date.split(" ")
-            monthsNumber = months[dates[1]]
-            dates[1] = monthsNumber
-            date = " ".join(dates)
-            key_u1 = date + " " + time
-            dateNumber = datetime.strptime(key_u1, '%d %m %Y %H:%M:%S')
-            dateList.append(dateNumber)
-    
+            if type(result[experiment][scan]) == dict:
+                scanData = result[experiment][scan]
+                amplitudes_for_u1 = scanData["polarizationU1"] # Got poitns for all experiments for polarization u1
+                amplitudes_for_u9 = scanData["polarizationU9"] # Got poitns for all experiments for polarization u9
+                amplitudes_for_uAVG = scanData["polarizationAVG"] # Got poitns for all experiments for polarization uAVG
+                
+                v_list_u1 = list()
+                for v in amplitudes_for_u1:
+                    v_list_u1.append(v[1])
+                velocitys_U1.append(v_list_u1)
+                
+                v_list_u9 = list()
+                for v in amplitudes_for_u9:
+                    v_list_u9.append(v[1])
+                velocitys_U9.append(v_list_u9)
+                
+                v_list_AVG = list()
+                for v in amplitudes_for_uAVG:
+                    v_list_AVG.append(v[1])
+                velocitys_AVG.append(v_list_AVG)
+                
+                time = scanData["startTime"]
+                date = scanData["Date"]
+                dates = date.split(" ")
+                monthsNumber = months[dates[1]]
+                dates[1] = monthsNumber
+                date = " ".join(dates)
+                key_u1 = date + " " + time
+                dateNumber = datetime.strptime(key_u1, '%d %m %Y %H:%M:%S')
+                dateList.append(dateNumber)
+        
     y_u1 = list()
     velocityCount = len(velocitys_U1[0])
     dummy = 0
@@ -118,7 +124,7 @@ def main():
         graph.plot(x, y_avg[i], Symbols[i]+"b", label="polarizationUAVG " + "Velocity " + str(i))
     graph.set_xticks(x)
     graph.set_xticklabels([date.strftime("%d %m %Y %H:%M:%S") for date in  dateList])
-    plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3, ncol=2, mode="expand", borderaxespad=0)
+    plt.legend()
     plt.show()
     
     sys.exit(0)

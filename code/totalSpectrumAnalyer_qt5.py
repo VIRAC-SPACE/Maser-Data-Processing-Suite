@@ -10,14 +10,16 @@ from astropy.modeling.polynomial import Chebyshev1D
 from scipy.interpolate import UnivariateSpline
 import peakutils
 import json
-from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QMessageBox, QLabel, QLineEdit, QSlider, QDesktopWidget)
+from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QMessageBox, QLabel, QLineEdit, QSlider, QDesktopWidget, QLCDNumber)
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QColor
 import re
 
 from ploting_qt5 import  Plot
+from dicom.test.test_filereader import deflate_name
 
 def parseArguments():
     # Create argument parser
@@ -227,8 +229,8 @@ class Analyzer(QWidget):
         for value in self.infoSet_2:
             newValues.append(value.text())
             
-        self.FWHMconstant = int(newValues[0])
-        self.polynomialOrder = int(newValues[1])
+        self.FWHMconstant = float(newValues[0])
+        self.polynomialOrder = float(newValues[1])
         
         QMessageBox.information(self, "Info", "Data was changed")
             
@@ -272,9 +274,9 @@ class Analyzer(QWidget):
         del self.plot_1
         del self.plot_2
         
-        self.plotPolinomialButton = QPushButton("Plot polynomials", self)
+        self.plotPolinomialButton = QPushButton("Create shorter specter", self)
         self.grid.addWidget(self.plotPolinomialButton, 4, 3)
-        self.plotPolinomialButton.clicked.connect(self.plotPlonomials)
+        self.plotPolinomialButton.clicked.connect(self.plotShortSpectr)
         self.plotPolinomialButton.setStyleSheet("background-color: green")
         
         g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
@@ -311,18 +313,44 @@ class Analyzer(QWidget):
         self.n_slider = QSlider(Qt.Horizontal, self)
         self.m_slider.setFocusPolicy(Qt.NoFocus)
         self.n_slider.setFocusPolicy(Qt.NoFocus)
+        self.m_slider.setTickInterval(20)
+        self.m_slider.setSingleStep(20)
         self.m_slider.setMinimum(self.m) 
         self.m_slider.setMaximum(self.a-1)
         self.n_slider.setMinimum(self.b-1)
         self.n_slider.setMaximum(self.n)
         self.n_slider.setValue(self.n)
-        self.m_slider.setMinimumSize(200, 0)
-        self.m_slider.setMinimumSize(200, 0)
+        self.m_slider.setMinimumSize(500, 0)
+        self.m_slider.setMinimumSize(500, 0)
         self.m_slider.valueChanged[int].connect(self.change_M)
         self.n_slider.valueChanged[int].connect(self.change_N)
         
-        self.grid.addWidget(self.m_slider, 2,3)
-        self.grid.addWidget(self.n_slider, 3,3)
+        self.m_lcd = QLCDNumber(self)
+        self.n_lcd = QLCDNumber(self)
+        
+        self.m_lcd.setSegmentStyle(QLCDNumber.Flat)
+        self.n_lcd.setSegmentStyle(QLCDNumber.Flat)
+        mpalette = self.m_lcd.palette()
+        npalette = self.n_lcd.palette()
+        mpalette.setColor(mpalette.Dark, QColor(0, 255, 0))
+        npalette.setColor(npalette.Dark, QColor(0, 255, 0))
+        self.m_lcd.setPalette(mpalette)
+        self.n_lcd.setPalette(npalette)
+        
+        self.mLabel = QLabel('M', self)
+        self.nLabel = QLabel('N', self)
+        
+        self.grid.addWidget(self.mLabel, 2,3)
+        self.grid.addWidget(self.nLabel, 3,3)
+        
+        self.grid.addWidget(self.m_slider, 2,4)
+        self.grid.addWidget(self.n_slider, 3,4)
+        
+        self.grid.addWidget(self.m_lcd, 2,5)
+        self.grid.addWidget(self.n_lcd, 3,5)
+        
+        self.m_slider.valueChanged.connect(self.m_lcd.display)
+        self.n_slider.valueChanged.connect(self.n_lcd.display)
         
         self.m = self.m_slider.value()
         self.n = self.n_slider.value()
@@ -368,9 +396,9 @@ class Analyzer(QWidget):
         self.plot_4.canvasShow()
         
         self.previousN = value
-        
-    def plotPlonomials(self):
-        self.setWindowTitle("Polynomial and Data points")
+    
+    def plotShortSpectr(self):
+        self.setWindowTitle("Short Spectr")
         self.m = self.m_slider.value()
         self.n = self.n_slider.value()
         
@@ -400,6 +428,57 @@ class Analyzer(QWidget):
         self.plotPolinomialButton.close()
         self.grid.removeWidget(self.plotPolinomialButton)
         del self.plotPolinomialButton
+        
+        self.m_lcd.hide()
+        self.n_lcd.hide()
+        self.m_lcd.close()
+        self.n_lcd.close()
+        self.grid.removeWidget(self.m_lcd)
+        self.grid.removeWidget(self.n_lcd)
+        del self.m_lcd
+        del self.n_lcd
+        
+        self.mLabel.hide()
+        self.mLabel.close()
+        self.grid.removeWidget(self.mLabel)
+        del self.mLabel
+        
+        #u1 plot
+        self.plot_10 = Plot()
+        self.plot_10.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0))
+        self.plot_10.plot(self.xarray[self.m:self.n], self.z1[self.m:self.n], 'ko', label='Data Points',  markersize=1)
+        
+        #u9 plot
+        self.plot_11 = Plot()
+        self.plot_11.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1))
+        self.plot_11.plot(self.xarray[self.m:self.n], self.z2[self.m:self.n], 'ko', label='Data Points',  markersize=1)
+        
+        self.grid.addWidget(self.plot_10, 0, 0)
+        self.grid.addWidget(self.plot_11, 0, 1)
+        
+        self.plotPoly = QPushButton("Plot polynomial", self)
+        self.grid.addWidget(self.plotPoly, 3, 3)
+        self.plotPoly.clicked.connect(self.plotPlonomials)
+        self.plotPoly.setStyleSheet("background-color: green")
+        
+    def plotPlonomials(self):
+        self.setWindowTitle("Polynomial and Data points")
+        
+        self.plot_10.hide()
+        self.plot_11.close()
+        self.plot_10.hide()
+        self.plot_11.close()
+        self.grid.removeWidget(self.plot_10)
+        self.grid.removeWidget(self.plot_11)
+        self.plot_10.removePolt()
+        self.plot_11.removePolt()
+        del self.plot_10
+        del self.plot_11
+        
+        self.plotPoly.hide()
+        self.plotPoly.close()
+        self.grid.removeWidget(self.plotPoly)
+        del self.plotPoly
         
         self.plotLocalMaximumButton = QPushButton("Plot local maximums", self)
         self.grid.addWidget(self.plotLocalMaximumButton, 3, 3)
@@ -432,28 +511,34 @@ class Analyzer(QWidget):
         self.a_u9, self.b_u9 = FWHM(self.xarray, self.z2, self.FWHMconstant)
          
         # Fit the data using a Chebyshev astro py
-        ceb = Chebyshev1D(self.polynomialOrder, domain=None, window=[-1, 1], n_models=None, model_set_axis=None, name=None, meta=None)
-        fit_ceb = fitting.LevMarLSQFitter()
+        #ceb = Chebyshev1D(self.polynomialOrder, domain=None, window=[-1, 1], n_models=None, model_set_axis=None, name=None, meta=None)
+        #fit_ceb = fitting.LevMarLSQFitter()
         
         ### u1
-        self.ceb_1 = fit_ceb(ceb, np.append(self.xarray[self.m:self.a_u1], self.xarray[self.b_u1:self.n]),  np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]))
+        #self.ceb_1 = fit_ceb(ceb, np.append(self.xarray[self.m:self.a_u1], self.xarray[self.b_u1:self.n]),  np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]))
        
         ### u9
-        self.ceb_2 = fit_ceb(ceb, np.append(self.xarray[self.m:self.a_u9], self.xarray[self.b_u9:self.n]),  np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]))
+        #self.ceb_2 = fit_ceb(ceb, np.append(self.xarray[self.m:self.a_u9], self.xarray[self.b_u9:self.n]),  np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]))
+        
+        z_u1 = np.polyfit(np.append(self.xarray[self.m:self.a_u1], self.xarray[self.b_u1:self.n]), np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]), self.polynomialOrder)
+        self.p_u1 = np.poly1d(z_u1)
+        
+        z_u9 = np.polyfit(np.append(self.xarray[self.m:self.a_u9], self.xarray[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), self.polynomialOrder)
+        self.p_u9 = np.poly1d(z_u9)
         
         #u1 plot
         self.plot_5 = Plot()
         self.plot_5.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0))
         self.plot_5.plot(np.append(self.xarray[self.m:self.a_u1], self.xarray[self.b_u1:self.n]), np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]), 'ko', label='Data Points',  markersize=1)
-        self.plot_5.plot(self.xarray[self.m:self.n], self.ceb_1(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
-        #self.plot_5.plot(self.x_u1[self.m:self.n], p_u1(self.x_u1[self.m:self.n]), 'b', label='Numpy polyfit', markersize=1)
+        #self.plot_5.plot(self.xarray[self.m:self.n], self.ceb_1(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
+        self.plot_5.plot(self.xarray, self.p_u1(self.xarray), 'b', label='Numpy polyfit', markersize=1)
         
         #u9 plot
         self.plot_6 = Plot()
         self.plot_6.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1))
         self.plot_6.plot(np.append(self.xarray[self.m:self.a_u9], self.xarray[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), 'ko', label='Data Points',  markersize=1)
-        self.plot_6.plot(self.xarray[self.m:self.n], self.ceb_2(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
-        #self.plot_6.plot(self.x_u9[self.m:self.n], p_u9(self.x_u9[self.m:self.n]), 'b', label='Numpy polyfit', markersize=1)
+        #self.plot_6.plot(self.xarray[self.m:self.n], self.ceb_2(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
+        self.plot_6.plot(self.xarray, self.p_u9(self.xarray), 'b', label='Numpy polyfit', markersize=1)
         
         self.grid.addWidget(self.plot_5, 0, 0)
         self.grid.addWidget(self.plot_6, 0, 1)
@@ -482,10 +567,13 @@ class Analyzer(QWidget):
         self.monitoringButton.clicked.connect(self.createResult)
         self.monitoringButton.setStyleSheet("background-color: green")
         
+        y1values = self.z1[self.m:self.n] - self.p_u1(self.xarray[self.m:self.n])
+        y2values = self.z2[self.m:self.n] - self.p_u9(self.xarray[self.m:self.n])
+        
+        smart_thres =  (  (y1values +  y2values)/2  - np.average(((y1values +  y2values)/2)) ) /  (np.std(((y1values +  y2values)/2)))
         thres=0.1
         
-        y1values = self.z1[self.m:self.n] - self.ceb_1(self.xarray[self.m:self.n])
-        y2values = self.z2[self.m:self.n] - self.ceb_2(self.xarray[self.m:self.n])
+        print ("smart_thres ", smart_thres)
           
         #indexsu apreikinasana
         indexes_for_ceb = peakutils.indexes(y1values, thres=thres, min_dist=10)
@@ -598,7 +686,9 @@ def main():
     config.read(configFilePath)
     dataFilesPath =  config.get('paths', "dataFilePath")
     resultFilePath =  config.get('paths', "resultFilePath")
-    source = re.split("([A-Z, a-z]+)", datafile.split("/")[-1].split(".")[0])[1]
+    #source = re.split("([A-Z, a-z]+)", datafile.split("/")[-1].split(".")[0])[1]
+    source = datafile.split("/")[-1].split(".")[0].split("_")[0]
+    print ("source", source)
     source_velocities = config.get('velocities', source).split(",")
     
     #Create App
@@ -606,6 +696,7 @@ def main():
 
     aw = Analyzer(dataFilesPath + datafile, resultFilePath, source_velocities)
     aw.show()
+    aw.showMaximized() 
     sys.exit(qApp.exec_())
     
     sys.exit(0)

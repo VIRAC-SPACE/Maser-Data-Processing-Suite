@@ -8,6 +8,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QFont    
 import argparse
 import configparser
+import json
 import numpy as np
 import scipy.constants
 import pandas as pd
@@ -29,6 +30,7 @@ def parseArguments():
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-t", "--threshold", help="Set threshold for outlier filter", type=float, default=1.0)
     parser.add_argument("-f", "--filter", help="Set filter default is True if filter is False bad data points is no removed", type=str, default="False")
+    parser.add_argument("-m", "--manual", help="Set manual log data", action='store_true')
 
     # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
@@ -76,7 +78,7 @@ def STON(array):
     return ston
 
 class Analyzer(QWidget):
-    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, f_shift, DPFU_max, G_El, Tcal, k):
+    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart):
         super().__init__()
        
         self.setWindowIcon(QIcon('viraclogo.png'))
@@ -101,13 +103,13 @@ class Analyzer(QWidget):
         self.scanPairs = self.createScanPairs()
         self.datPairsCount = len(self.scanPairs)
         self.f0 = 6668519200
-        self.location = self.logs["location"]
-        self.expername = self.source + self.date + "_" + self.logs["location"]
-        self.f_shift = f_shift
+        self.location = self.logs["header"]["location"]
+        self.expername = self.source + self.date + "_" + self.logs["header"]["location"]
         self.DPFU_max = DPFU_max
         self.G_El = G_El
         self.Tcal = Tcal
         self.k = k
+        self.fstart = fstart
         
         self.setWindowTitle("Analyze for " + self.source + " " + self.date)
         self.grid = QGridLayout()
@@ -222,9 +224,10 @@ class Analyzer(QWidget):
             
         Ta_sig = float(tsys_1)*(-P_sig + P_ref)/P_ref #only non-cal phase for dbbc possible...
         Ta_ref = float(tsys_2)*(P_ref - P_sig)/P_sig
-            
+        
+        f_shift = np.max(array_x) /4.0
         f_step = (array_x[self.dataPoints-1]-array_x[0])/(self.dataPoints-1); 
-        n_shift = int(self.f_shift/f_step);
+        n_shift = int(f_shift/f_step);
             
         Ta_sig = np.roll(Ta_sig, -n_shift); # pos
         Ta_ref = np.roll(Ta_ref, -n_shift); # neg
@@ -272,6 +275,8 @@ class Analyzer(QWidget):
         tsys_u9_2 = tsys_u9_1
             
         elevation = (float(scan_1["elevation"]) + float(scan_2["elevation"])) /2
+        
+        print ("elevation", elevation)
             
         print ("tsys", tsys_u1_1, tsys_u9_1)
         
@@ -312,8 +317,9 @@ class Analyzer(QWidget):
         xdata = np.array(xdata)
             
         self.x = xdata
-        f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1) 
-        n_shift = int(self.f_shift/f_step)
+        f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1)
+        f_shift = np.max(self.x) / 4.0
+        n_shift = int(f_shift/f_step)
         total_u1 = data_u1[(n_shift+1):(self.dataPoints - n_shift - 1)]
         total_u9 = data_u9[(n_shift+1):(self.dataPoints - n_shift - 1)]
         
@@ -344,6 +350,92 @@ class Analyzer(QWidget):
         if index == self.datPairsCount -1:
             self.nextPairButton.setText('Move to total results')
             self.nextPairButton.clicked.connect(self.plotTotalResults)
+            self.grid.removeWidget(self.skipAllButton)
+            self.skipAllButton.hide()
+            self.skipAllButton.close()
+            del self.skipAllButton
+    
+    def __PAIR(self, index, totalResults_u1, totalResults_u9, STON_list_u1, STON_list_u9, STON_list_AVG):
+        pair = self.scanPairs[index]
+            
+        scanNUmber1 = self.dataFileDir + "/" + pair[0]
+        scanNUmber2 = self.dataFileDir + "/" + pair[1]
+            
+        scan_number_1 = pair[0].split(".")[0].split("_")[-1][2:].lstrip("0")
+        scan_number_2 = pair[1].split(".")[0].split("_")[-1][2:].lstrip("0")
+            
+        scan_1 = self.logs[str(scan_number_2)]
+        scan_2 = self.logs[str(scan_number_1)]
+            
+        # get system temperature
+        tsys_u1_1 = scan_1['Systemtemperature'][0]
+        tsys_u1_2 = tsys_u1_1
+        tsys_u9_1 = scan_1['Systemtemperature'][1]
+        tsys_u9_2 = tsys_u9_1
+            
+        elevation = (float(scan_1["elevation"]) + float(scan_2["elevation"])) /2
+            
+        if float(tsys_u1_1) == 0:
+            newT, ok = QInputDialog.getDouble(self, 'tsys error', 'Enter valid tsys:', 0, 1, 300)
+            tsys_u1_1 = newT
+            
+        if float(tsys_u9_1) == 0:
+            newT, ok = QInputDialog.getDouble(self, 'tsys error', 'Enter valid tsys:', 0, 1, 300)
+            tsys_u9_1 = newT
+            
+        data_1 = np.fromfile(scanNUmber1, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber1),9))
+        data_2 = np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),9))
+                
+        #Delete first row
+        data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
+        data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
+                  
+        xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
+            
+        #Calibration  
+        data_u1 = self.calibration(xdata, ydata_1_u1, ydata_2_u1, float(tsys_u1_1), float(tsys_u1_2), elevation) 
+        data_u9 = self.calibration(xdata, ydata_1_u9, ydata_2_u9, float(tsys_u9_1), float(tsys_u9_2), elevation)
+           
+        xdata = np.array(xdata)
+                
+        self.x = xdata
+        f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1)
+        f_shift = np.max(self.x) / 4.0
+        n_shift = int(f_shift/f_step)
+        total_u1 = data_u1[(n_shift+1):(self.dataPoints - n_shift - 1)]
+        total_u9 = data_u9[(n_shift+1):(self.dataPoints - n_shift - 1)]
+            
+        self.x = self.x[(n_shift+1):(self.dataPoints - n_shift - 1)] 
+            
+        totalResults_u1.append(total_u1)
+        totalResults_u9.append(total_u9)
+            
+        ston_u1 = STON(total_u1)
+        ston_u9 = STON(total_u9)
+        stone_AVG = STON(((total_u1 + total_u9)/2))
+            
+        STON_list_u1.append(ston_u1)
+        STON_list_u9.append(ston_u9)
+        STON_list_AVG.append(stone_AVG)
+            
+    def skipAll(self):
+        totalResults_u1= list()
+        totalResults_u9= list()
+        
+        STON_list_u1= list()
+        STON_list_u9= list()
+        STON_list_AVG= list()
+        
+        for index in range(0, len(self.scanPairs)):
+            self.__PAIR(index, totalResults_u1, totalResults_u9, STON_list_u1, STON_list_u9, STON_list_AVG)
+        
+        self.totalResults_u1 = totalResults_u1
+        self.totalResults_u9 = totalResults_u9
+        self.STON_list_u1 = STON_list_u1
+        self.STON_list_u9 = STON_list_u9
+        self.STON_list_AVG = STON_list_AVG
+        
+        self.plotTotalResults()
             
     def plotTotalResults(self):
        
@@ -384,6 +476,8 @@ class Analyzer(QWidget):
         y_u1_avg = np.zeros(self.totalResults_u1[0].shape)
         y_u9_avg = np.zeros(self.totalResults_u9[0].shape)
         
+        FreqStart = self.fstart +  float(self.logs["header"]["BBC"])
+        print ("FreqStart", FreqStart, "BBC", float(self.logs["header"]["BBC"]))                                
         for p in range(0,  self.datPairsCount):
             scan_number_1 = self.scanPairs[p][0].split("_")[-1][2:].lstrip("0").split(".")[0]
             scan_number_2 = self.scanPairs[p][1].split("_")[-1][2:].lstrip("0").split(".")[0]
@@ -398,8 +492,6 @@ class Analyzer(QWidget):
             dateStr = str(dateStrList[2]) + " " + str(dateStrList[1]) + " " + str(dateStrList[0])
             RaStr = " ".join(scan_1["Ra"])
             DecStr = " ".join(scan_1["Dec"])
-            FreqStart = (float(scan_1["fs_frequencyfs"])  +   float(scan_2["fs_frequencyfs"]))/2  + float(self.logs["header"]["BBC"])
-            print ("FreqStart", FreqStart, "log frecq ", float(scan_1["fs_frequencyfs"]), float(scan_2["fs_frequencyfs"]), "BBC", float(self.logs["header"]["BBC"]))
             dopsetPar = dateStr + " " + timeStr + " " + RaStr + " " + DecStr
             print ("dopsetPar", dopsetPar,  " dateStr ", dateStr + " timeStr " + timeStr + " RaStr " + RaStr + " DecStr" + DecStr)
             os.system("code/dopsetpy_v1.5 " + dopsetPar)
@@ -476,7 +568,7 @@ class Analyzer(QWidget):
         self.grid.addWidget(self.plot_STON, 2, 0)
         
         totalResults = np.concatenate((velocitys_avg, y_u1_avg, y_u9_avg), axis=1)
-        output_file_name = self.dataFilesPath + self.source + self.date.replace(" ", "_") + "_" + self.logs["location"] + "_" + str(self.iteration_number) + ".dat"
+        output_file_name = self.dataFilesPath + self.source + "_" +self.date.replace(" ", "_") + "_" + self.logs["header"]["location"] + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
         np.savetxt(output_file_name, totalResults)    
                 
@@ -486,7 +578,10 @@ class Analyzer(QWidget):
             self.nextPairButton = QPushButton("Next pair", self)
             self.nextPairButton.clicked.connect(self.nextPair)
             self.grid.addWidget(self.nextPairButton, 5, 3)
-            
+        
+        self.skipAllButton = QPushButton("Skip all", self)
+        self.skipAllButton.clicked.connect(self.skipAll)
+        self.grid.addWidget(self.skipAllButton, 6, 3)   
         self.plotingPairs(self.index)
         
 def main():
@@ -497,7 +592,7 @@ def main():
     threshold = float(args.__dict__["threshold"])
     filter = str(args.__dict__["filter"])
     configFilePath = str(args.__dict__["config"])
-    
+                
     config = configparser.RawConfigParser()
     config.read(configFilePath)
     dataFilesPath =  config.get('paths', "dataFilePath")
@@ -505,11 +600,28 @@ def main():
     logPath = config.get('paths', "logPath")
     resultPath = config.get('paths', "resultFilePath")
     badPointRange =  config.getint('parameters', "badPointRange")
-    f_shift =  config.getfloat('parameters', "f_shift")
     coordinates = config.get('sources', source).replace(" ", "").split(",")
+    
+    if args.manual:
+        with open(prettyLogsPath + source + "_" + str(iteration_number) + "log.dat") as data_file:    
+                logs  = json.load(data_file)
+        f = list()
+        
+        for scan in logs:
+            f.append(logs[scan]["fs_frequencyfs"])
+        
+    else:
+        logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getLogs()
+        f = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getAllfs_frequencys()
 
-    logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getLogs()
-    location = logs["location"]
+    f = [float(fi) for fi in f]
+    f = list(set(f))
+    f.sort()
+    f1 =  f[-1]
+    f2 = f[-2]
+    fstart = (f1 + f2)/ 2.0
+    
+    location = logs["header"]["location"]
     
     if location == "IRBENE":
         DPFU_max =  config.get('parameters', "DPFU_max").split(",")
@@ -537,7 +649,7 @@ def main():
     #Create App
     qApp = QApplication(sys.argv)
 
-    aw = Analyzer(source, iteration_number, filtering, threshold, badPointRange, dataFilesPath, resultPath, logs, f_shift, DPFU_max, G_El, Tcal, k)
+    aw = Analyzer(source, iteration_number, filtering, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart)
     aw.show()
     sys.exit(qApp.exec_())
     
