@@ -68,7 +68,7 @@ def main():
             amplitudes_for_uAVG = scanData["polarizationAVG"] # Got poitns for all experiments for polarization uAVG
             iter_number = scanData["Iteration_number"]
             
-            label = "Station is " + location + "\n" + "Date is " + " ".join(date.split("_")) + "\n " + "iteration number " + iter_number
+            label = "Station is " + location + "\n" + "Date is " + " ".join(date.split("_")) + "\n " + "iteration number " + str(iter_number)
             print("label", label)
             labels.append(label)
             
@@ -82,9 +82,10 @@ def main():
             result = Result(location, date, amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number)
             
             result_list.append(dict(result))
-    
-    print (labels)        
+          
     result_list = sorted(result_list, key=itemgetter('iteration_number'), reverse=False)
+    
+    print (result_list)
     
     for erperiment in result_list:
         u1 = erperiment["polarizationU1"]
@@ -110,7 +111,7 @@ def main():
    
     x = list()
     for a in range(0, len(date_list)):
-        x.append("Date " + date_list[a] + " Iteration number " + iteration_list[a])
+        x.append("Iteration number " + str(iteration_list[a]))
     
     Symbols =  ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
     
@@ -131,20 +132,6 @@ def main():
    
     plt.show()
     
-    date_list_2 = list()
-    
-    for d in date_list:
-        date_list_2.append(datetime.strptime(d, '%d %m %Y'))
-    
-    '''
-    fig, ax = plt.subplots()
-    for i in range(0, len(source_velocities)):
-        im = ax.imshow(np.array([date_list_2, velocitie_dict["avg"][source_velocities[i]]]), cmap=plt.cm.Greys)
-    '''
-        
-    df = pd.DataFrame(result_list)
-    #df.plot.(x='date', y='polarizationUAVG[0]', C='polarizationUAVG[1]', reduce_C_function=np.max, gridsize=25)
-       
     sys.exit(0)
     
 if __name__=="__main__":

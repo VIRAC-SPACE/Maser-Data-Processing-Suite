@@ -69,7 +69,7 @@ class Analyzer(QWidget):
         self.source = re.split("([A-Z, a-z]+)", datafile.split("/")[-1].split(".")[0])[1]
         self.expername = datafile.split("/")[-1].split(".")[0]
         self.location = datafile.split("/")[-1].split(".")[0].split("_")[-2]
-        self.date = datafile.split("/")[-1].split(".")[0][len(self.source) + 1:][:len(self.location)+3]
+        self.date = "_".join([datafile.split("/")[-1].split(".")[0].split("_")[1], datafile.split("/")[-1].split(".")[0].split("_")[2], datafile.split("/")[-1].split(".")[0].split("_")[3]])
         self.iteration_number = datafile.split("/")[-1].split(".")[0].split("_")[-1]
         self.resultFilePath = resultFilePath
         self.source_velocities = source_velocities
@@ -648,8 +648,7 @@ class Analyzer(QWidget):
               
         result[self.expername]["location"] = self.location
         result[self.expername]["Date"] = self.date
-        print ("self.date", self.date)
-        result[self.expername]["Iteration_number"] = self.iteration_number
+        result[self.expername]["Iteration_number"] = int(self.iteration_number)
                 
         result[self.expername]["polarizationU1"] = self.maxU1
         result[self.expername]["polarizationU9"] = self.maxU9
@@ -659,8 +658,9 @@ class Analyzer(QWidget):
         #result[self.expername][self.scanNumber]["index_for_polarizationU9"] =  self.maxu9_index
         #result[self.expername][self.scanNumber]["index_for_polarizationAVG"] =  self.maxavg_index
         
+        #result =  sorted(result, key = lambda i: result[i]['Iteration_number'])
         resultFile = open (self.resultFilePath +  resultFileName, "w")
-        resultFile.write(json.dumps(result, indent=2, sort_keys=True))
+        resultFile.write(json.dumps(result, indent=2))
         resultFile.close()
         
         self._quit()
