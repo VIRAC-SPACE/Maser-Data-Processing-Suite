@@ -68,25 +68,17 @@ def main():
             amplitudes_for_uAVG = scanData["polarizationAVG"] # Got poitns for all experiments for polarization uAVG
             iter_number = scanData["Iteration_number"]
             
-            label = "Station is " + location + "\n" + "Date is " + " ".join(date.split("_")) + "\n " + "iteration number " + str(iter_number)
-            print("label", label)
-            labels.append(label)
-            
             dates = date.split("_")
             monthsNumber = dates[1]
             dates[1] = months[monthsNumber]
             date = " ".join(dates)
-            key_u1 = date #+ " " + time
-            #dateNumber = datetime.strptime(key_u1.strip(),  '%d %m %Y')
-            
-            result = Result(location, date, amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number)
+        
+            result = Result(location, datetime.strptime(date, '%d %m %Y'), amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number)
             
             result_list.append(dict(result))
           
-    result_list = sorted(result_list, key=itemgetter('iteration_number'), reverse=False)
-    
-    print (result_list)
-    
+    result_list = sorted(result_list, key=itemgetter('date'), reverse=False)
+     
     for erperiment in result_list:
         u1 = erperiment["polarizationU1"]
         u9 = erperiment["polarizationU9"]
@@ -108,15 +100,18 @@ def main():
             for vel in source_velocities:
                 if float(vel) - velocities_range <= k[0] <= float(vel) + velocities_range:
                     velocitie_dict["avg"][vel].append(k[1]) 
+                    
+        label = "Station is " + location + "\n" + "Date is " + erperiment["date"].strftime('%d %m %Y') + "\n " + "iteration number " + str(erperiment["iteration_number"])
+
+        labels.append(label)
    
     x = list()
     for a in range(0, len(date_list)):
-        x.append("Iteration number " + str(iteration_list[a]))
+        #.strftime('%d %m %Y')
+        x.append("Date " + str(date_list[a]) + "\n" + "Iteratiron number " + str(iteration_list[a]))
     
     Symbols =  ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
-    
-    print ("len x", len(x))
-    print ()
+   
     fig = plt.figure()
     #fig, ax = plt.subplots()
     graph = fig.add_subplot(111)
