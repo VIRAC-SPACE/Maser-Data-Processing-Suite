@@ -213,10 +213,13 @@ class ExperimentLogReader():
                 tmp_fs_frequency.append(self.header_fs_frequency)
                 tmp_fs_frequency.extend(self.fs_frequency_list)
                 self.fs_frequency_list = tmp_fs_frequency
-                
+            
                 tmpSystemperatures = list()
                 tmpSystemperatures.append(self.header_SystemtemperaturesForScan)
                 tmpSystemperatures.extend(self.Systemtemperatures)
+                
+                self.Systemtemperatures = list()
+                
                 self.Systemtemperatures = tmpSystemperatures
                        
             for y in range(0, len(self.scan_names)):
