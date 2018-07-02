@@ -38,7 +38,7 @@ def main():
     sourceName = str(args.__dict__["source"])
     configFilePath = str(args.__dict__["config"])
     
-    #Creating config parametrs
+    # Creating config parametrs
     config = configparser.RawConfigParser()
     config.read(configFilePath)
     dataFilesPath = config.get('paths', "dataFilePath")
@@ -47,20 +47,25 @@ def main():
     
     path = dataFilesPath + sourceName + "/"
     iterations = list()
-     
+    
+    # Creating iteration list
     for iteration in os.listdir(path):
         iterations.append(iteration)
             
     iterations.sort(key=int, reverse=False)
+    
+    print ("iterations", iterations)
      
     logfile_list = list()
     
+    # Creating log file list 
     for log in os.listdir(logPath):
         if log.startswith(sourceName):
             logfile_list.append(log)
             
     resultFileName = sourceName + ".json"
-        
+    
+    # Create result file if not exits   
     if os.path.isfile(resultPath + resultFileName):
         pass
     else:
@@ -69,41 +74,46 @@ def main():
         resultFile = open (resultPath +  resultFileName, "w")
         resultFile.write("{ \n" + "\n}")
         resultFile.close()
-        
+    
+    # Open result file   
     with open(resultPath + resultFileName) as result_data:    
         result = json.load(result_data)
     
     processed_iteration = list()
     
+    # Create processed observation list
     for experiment in result:
-        if experiment[-1]  in iterations:
-            processed_iteration.append(experiment[-1])
+        if experiment.split("_")[-1]  in iterations:
+            processed_iteration.append(experiment.split("_")[-1])
+            
+    print ("processed_iteration", processed_iteration)
     
     if args.manual:
-        for i in range(0, len(iterations)):
-        
+        for i in iterations:
             if i not in processed_iteration:
-                frequencyShiftingParametr = sourceName + " " + iterations[i] + " " + str(logfile_list[findLogFile(logfile_list, iterations[i])])
+                frequencyShiftingParametr = sourceName + " " + i + " " + str(logfile_list[findLogFile(logfile_list, i)])
                 print ("Execute ",  "python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr + " -m")
                 os.system("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr  + " -m") 
     else:
-        for i in range(0, len(iterations)):
-        
+        for i in iterations:
             if i not in processed_iteration:
-                frequencyShiftingParametr = sourceName + " " + iterations[i] + " " + str(logfile_list[findLogFile(logfile_list, iterations[i])])
+                frequencyShiftingParametr = sourceName + " " + i + " " + str(logfile_list[findLogFile(logfile_list, i)])
                 print ("Execute ",  "python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
                 os.system("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
     
+    # Creating data file list
     data_files = list()
     for data in os.listdir(dataFilesPath):
         if data.startswith(sourceName) and data.endswith(".dat"):
             data_files.append(data)
             
     for d in data_files:
-        if d.split(".")[0][-1] not in processed_iteration:
-           print ("Execute ",  "python3  " + "code/totalSpectrumAnalyer_qt5.py " + d) 
-           os.system("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d)
+        if d.split(".")[0].split("_")[-1] not in processed_iteration:
+            print ("Execute ",  "python3  " + "code/totalSpectrumAnalyer_qt5.py " + d) 
+            os.system("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d)
     
 if __name__=="__main__":
     main()
+    sys.exit(0)
+    
     
