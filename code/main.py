@@ -92,13 +92,13 @@ def main():
         for i in iterations:
             if i not in processed_iteration:
                 frequencyShiftingParametr = sourceName + " " + i + " " + str(logfile_list[findLogFile(logfile_list, i)])
-                print ("Execute ",  "python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr + " -m")
+                print ("\033[1;32;39mExecute ",  "python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr + " -m\033[0;29;39m")
                 os.system("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr  + " -m") 
     else:
         for i in iterations:
             if i not in processed_iteration:
                 frequencyShiftingParametr = sourceName + " " + i + " " + str(logfile_list[findLogFile(logfile_list, i)])
-                print ("Execute ",  "python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
+                print ("\033[1;31;47mExecute ",  "python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr +  " \033[0;29;39m")
                 os.system("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
     
     # Creating data file list
@@ -109,7 +109,7 @@ def main():
             
     for d in data_files:
         if d.split(".")[0].split("_")[-1] not in processed_iteration:
-            print ("Execute ",  "python3  " + "code/totalSpectrumAnalyer_qt5.py " + d) 
+            print ("\033[1;31;47mExecute ",  "python3  " + "code/totalSpectrumAnalyer_qt5.py " + d  +  " \033[0;29;39m") 
             os.system("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d)
     
 if __name__=="__main__":
