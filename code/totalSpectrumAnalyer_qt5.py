@@ -1,5 +1,4 @@
 #! /usr/bin/python3
-
 import sys
 import os
 import argparse
@@ -13,7 +12,7 @@ from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QM
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
-
+from PyQt5.QtGui import QFont
 from PyQt5.QtGui import QColor
 import re
 
@@ -188,12 +187,12 @@ class Analyzer(QWidget):
         self.changeDataButton = QPushButton("Change Data", self)
         self.changeDataButton.clicked.connect(self.changeData)
         self.changeDataButton.setStyleSheet("background-color: blue")
-        self.grid.addWidget(self.changeDataButton, 5, 3)
+        self.grid.addWidget(self.changeDataButton, 4, 3)
         
-        self.plotSmoothDataButton = QPushButton("Create Shorter specter", self)
-        self.plotSmoothDataButton.clicked.connect(self.plotShortSpectr)
+        self.plotSmoothDataButton = QPushButton("Smooth Data", self)
+        self.plotSmoothDataButton.clicked.connect(self.plotSmoothData)
         self.plotSmoothDataButton.setStyleSheet("background-color: green")
-        self.grid.addWidget(self.plotSmoothDataButton, 5, 4)
+        self.grid.addWidget(self.plotSmoothDataButton, 4, 4)
          
         self.plot_1 = Plot()
         self.plot_1.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "u1 Polarization", (1, 0))
@@ -212,17 +211,97 @@ class Analyzer(QWidget):
         for i in range(0, len(infoPanelLabelsText)):
             
             self.infoLabel = QLabel(infoPanelLabelsText[i])
-            self.grid.addWidget(self.infoLabel, i +  3, 3)
+            self.grid.addWidget(self.infoLabel, i +  1, 3)
             self.infoSet.add(self.infoLabel)
             
             if  infoPanelEntryText[i]["addEntry"]:
                 self.infoInputField = QLineEdit()
                 self.infoInputField.setText(str(infoPanelEntryText[i]["defaultValue"]))
-                self.grid.addWidget(self.infoInputField, i + 3, 4)
+                self.grid.addWidget(self.infoInputField, i + 1, 4)
                 self.infoSet_2.append(self.infoInputField)
+            
+    def changeData (self):
+        newValues = list()
         
-        self.a, self.b = FWHM(self.xarray, (self.y2array + self.y1array)/2, self.FWHMconstant)
-               
+        for value in self.infoSet_2:
+            newValues.append(value.text())
+            
+        self.FWHMconstant = float(newValues[0])
+        self.polynomialOrder = float(newValues[1])
+        
+        QMessageBox.information(self, "Info", "Data was changed")
+            
+    def plotSmoothData(self):
+        self.setWindowTitle("Smooth Data")
+        
+        while len(self.infoSet) != 0:
+            info_item = self.infoSet.pop()
+            info_item.hide()
+            info_item.close()
+            self.grid.removeWidget(info_item)
+            del info_item 
+            
+        while len(self.infoSet_2) != 0:   
+            info_item = self.infoSet_2.pop()
+            info_item.hide()
+            info_item.close()
+            self.grid.removeWidget(info_item)
+            del info_item 
+            
+        del self.infoSet
+        del self.infoSet_2
+        
+        self.changeDataButton.hide()
+        self.plotSmoothDataButton.hide()
+        self.changeDataButton.close()
+        self.plotSmoothDataButton.close()
+        self.grid.removeWidget(self.plotSmoothDataButton)
+        self.grid.removeWidget(self.changeDataButton)
+        del self.plotSmoothDataButton
+        del self.changeDataButton
+        
+        self.plot_1.hide()
+        self.plot_2.hide()
+        self.plot_1.close()
+        self.plot_2.close()
+        self.grid.removeWidget(self.plot_1)
+        self.grid.removeWidget(self.plot_2)
+        self.plot_1.removePolt()
+        self.plot_2.removePolt()
+        del self.plot_1
+        del self.plot_2
+        
+        self.plotPolinomialButton = QPushButton("Create shorter specter", self)
+        self.grid.addWidget(self.plotPolinomialButton, 4, 3)
+        self.plotPolinomialButton.clicked.connect(self.plotShortSpectr)
+        self.plotPolinomialButton.setStyleSheet("background-color: green")
+        
+        g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
+        g2 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
+    
+        self.z1 = convolve(self.y1array, g1, boundary='extend')
+        self.z2 = convolve(self.y2array, g2, boundary='extend')
+        
+        self.points_1u = list()
+        self.points_9u = list()
+        
+        self.plot_3 = Plot()
+        self.plot_3.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization", (1, 0))
+        self.plot_3.plot(self.xarray, self.z1, 'ko', label='Data Points', markersize=1, picker=5)
+        self.plot_3.addPickEvent(self.onpickU1)
+        self.plot_3.addSecondAxis("x", "Data points", 0, self.dataPoints + 512, 512)
+        
+        self.plot_4 = Plot()
+        self.plot_4.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization", (1, 1))
+        self.plot_4.plot(self.xarray, self.z2, 'ko', label='Data Points', markersize=1, picker=5)
+        self.plot_4.addPickEvent(self.onpickU9)
+        self.plot_4.addSecondAxis("x", "Data points", 0, self.dataPoints + 512, 512)
+        
+        self.grid.addWidget(self.plot_3, 0, 0)
+        self.grid.addWidget(self.plot_4, 0, 1)
+        
+        self.a, self.b = FWHM(self.xarray, (self.z1 + self.z2)/2, self.FWHMconstant)
+        
         #sliders
         self.previousM = self.m
         self.previousN = self.n -1
@@ -258,132 +337,80 @@ class Analyzer(QWidget):
         self.mLabel = QLabel('M', self)
         self.nLabel = QLabel('N', self)
         
-        self.grid.addWidget(self.mLabel, 1,3)
-        self.grid.addWidget(self.nLabel, 2,3)
+        self.grid.addWidget(self.mLabel, 2,3)
+        self.grid.addWidget(self.nLabel, 3,3)
         
-        self.grid.addWidget(self.m_slider, 1,4)
-        self.grid.addWidget(self.n_slider, 2,4)
+        self.grid.addWidget(self.m_slider, 2,4)
+        self.grid.addWidget(self.n_slider, 3,4)
         
-        self.grid.addWidget(self.m_lcd, 1,5)
-        self.grid.addWidget(self.n_lcd, 2,5)
+        self.grid.addWidget(self.m_lcd, 2,5)
+        self.grid.addWidget(self.n_lcd, 3,5)
         
         self.m_slider.valueChanged.connect(self.m_lcd.display)
         self.n_slider.valueChanged.connect(self.n_lcd.display)
         
         self.m = self.m_slider.value()
         self.n = self.n_slider.value()
-            
-    def changeData (self):
-        newValues = list()
-        
-        for value in self.infoSet_2:
-            newValues.append(value.text())
-            
-        self.FWHMconstant = float(newValues[0])
-        self.polynomialOrder = float(newValues[1])
-        
-        QMessageBox.information(self, "Info", "Data was changed")
-            
-    def plotSmoothData(self):
-        self.setWindowTitle("Smooth Data")
-         
-        self.plot_10.hide()
-        self.plot_11.hide()
-        self.plot_10.close()
-        self.plot_11.close()
-        self.grid.removeWidget(self.plot_10)
-        self.grid.removeWidget(self.plot_11)
-        self.plot_10.removePolt()
-        self.plot_11.removePolt()
-        del self.plot_10
-        del self.plot_11
-        
-        self.plotPolinomialButton = QPushButton("Plot polinomial", self)
-        self.grid.addWidget(self.plotPolinomialButton, 4, 3)
-        self.plotPolinomialButton.clicked.connect(self.plotShortSpectr)
-        self.plotPolinomialButton.setStyleSheet("background-color: green")
-        
-        g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
-        g2 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
-    
-        self.z1 = convolve(self.y1array, g1, boundary='extend')
-        self.z2 = convolve(self.y2array, g2, boundary='extend')
-        
-        self.points_1u = list()
-        self.points_9u = list()
-        
-        self.plot_3 = Plot()
-        self.plot_3.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization", (1, 0))
-        self.plot_3.plot(self.xarray, self.z1, 'ko', label='Data Points', markersize=1, picker=5)
-        self.plot_3.addPickEvent(self.onpickU1)
-        self.plot_3.addSecondAxis("x", "Data points", 0, self.dataPoints + 512, 512)
-        
-        self.plot_4 = Plot()
-        self.plot_4.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization", (1, 1))
-        self.plot_4.plot(self.xarray, self.z2, 'ko', label='Data Points', markersize=1, picker=5)
-        self.plot_4.addPickEvent(self.onpickU9)
-        self.plot_4.addSecondAxis("x", "Data points", 0, self.dataPoints + 512, 512)
-        
-        self.grid.addWidget(self.plot_3, 0, 0)
-        self.grid.addWidget(self.plot_4, 0, 1)
         
     def change_M(self, value):
-        self.plot_1.plot(self.xarray[int(self.previousM)], self.y1array[int(self.previousM)], 'ko', markersize=1)
-        self.plot_2.plot(self.xarray[int(self.previousM)], self.y2array[int(self.previousM)], 'ko', markersize=1)
+        self.plot_3.plot(self.xarray[int(self.previousM)], self.z1[int(self.previousM)], 'ko', markersize=1)
+        self.plot_4.plot(self.xarray[int(self.previousM)], self.z2[int(self.previousM)], 'ko', markersize=1)
         
-        self.plot_1.annotation(self.xarray[int(self.previousM)], self.y1array[int(self.previousM)], " ")
-        self.plot_2.annotation(self.xarray[int(self.previousM)], self.y2array[int(self.previousM)], " ")
+        self.plot_3.annotation(self.xarray[int(self.previousM)], self.z1[int(self.previousM)], " ")
+        self.plot_4.annotation(self.xarray[int(self.previousM)], self.z2[int(self.previousM)], " ")
         
-        self.plot_1.remannotation()
-        self.plot_2.remannotation()
+        self.plot_3.remannotation()
+        self.plot_4.remannotation()
 
-        self.plot_1.annotation(self.xarray[int(value)], self.y1array[int(value)], "M")
-        self.plot_2.annotation(self.xarray[int(value)], self.y2array[int(value)], "M")
+        self.plot_3.annotation(self.xarray[int(value)], self.z1[int(value)], "M")
+        self.plot_4.annotation(self.xarray[int(value)], self.z2[int(value)], "M")
         
-        self.plot_1.plot(self.xarray[int(value)], self.y1array[int(value)], 'ro', markersize=1)
-        self.plot_2.plot(self.xarray[int(value)], self.y2array[int(value)], 'ro', markersize=1)
+        self.plot_3.plot(self.xarray[int(value)], self.z1[int(value)], 'ro', markersize=1)
+        self.plot_4.plot(self.xarray[int(value)], self.z2[int(value)], 'ro', markersize=1)
          
-        self.plot_1.canvasShow()
-        self.plot_2.canvasShow()
+        self.plot_3.canvasShow()
+        self.plot_4.canvasShow()
  
         self.previousM = value
     
     def change_N(self, value):
-        self.plot_1.plot(self.xarray[int(self.previousN-1)], self.y1array[int(self.previousN-1)], 'ko', markersize=1)
-        self.plot_2.plot(self.xarray[int(self.previousN-1)], self.y2array[int(self.previousN-1)], 'ko', markersize=1)
+        self.plot_3.plot(self.xarray[int(self.previousN-1)], self.z1[int(self.previousN-1)], 'ko', markersize=1)
+        self.plot_4.plot(self.xarray[int(self.previousN-1)], self.z2[int(self.previousN-1)], 'ko', markersize=1)
         
-        self.plot_1.annotation(self.xarray[int(self.previousN-1)], self.y1array[int(self.previousN-1)], " ")
-        self.plot_2.annotation(self.xarray[int(self.previousN-1)], self.y2array[int(self.previousN-1)], " ")
+        self.plot_3.annotation(self.xarray[int(self.previousN-1)], self.z1[int(self.previousN-1)], " ")
+        self.plot_4.annotation(self.xarray[int(self.previousN-1)], self.z2[int(self.previousN-1)], " ")
 
-        self.plot_1.remannotation()
-        self.plot_2.remannotation()
+        self.plot_3.remannotation()
+        self.plot_4.remannotation()
         
-        self.plot_1.annotation(self.xarray[int(value-1)], self.y1array[int(value-1)], "N")
-        self.plot_2.annotation(self.xarray[int(value-1)], self.y2array[int(value-1)], "N")
+        self.plot_3.annotation(self.xarray[int(value-1)], self.z1[int(value-1)], "N")
+        self.plot_4.annotation(self.xarray[int(value-1)], self.z2[int(value-1)], "N")
         
-        self.plot_1.plot(self.xarray[int(value-1)], self.y1array[int(value-1)], 'ro', markersize=1)
-        self.plot_2.plot(self.xarray[int(value-1)], self.y2array[int(value-1)], 'ro', markersize=1)
+        self.plot_3.plot(self.xarray[int(value-1)], self.z1[int(value-1)], 'ro', markersize=1)
+        self.plot_4.plot(self.xarray[int(value-1)], self.z2[int(value-1)], 'ro', markersize=1)
         
-        self.plot_1.canvasShow()
-        self.plot_2.canvasShow()
+        self.plot_3.canvasShow()
+        self.plot_4.canvasShow()
         
         self.previousN = value
     
     def plotShortSpectr(self):
-        self.setWindowTitle("Short Specter")
+        self.setWindowTitle("Short Spectr")
         self.m = self.m_slider.value()
         self.n = self.n_slider.value()
         
-        self.plot_1.hide()
-        self.plot_2.close()
-        self.plot_1.hide()
-        self.plot_2.close()
-        self.grid.removeWidget(self.plot_1)
-        self.grid.removeWidget(self.plot_2)
-        self.plot_1.removePolt()
-        self.plot_2.removePolt()
-        del self.plot_1
-        del self.plot_2
+        self.plot_3.removePickEvent()
+        self.plot_4.removePickEvent()
+        self.plot_3.hide()
+        self.plot_3.close()
+        self.plot_4.hide()
+        self.plot_4.close()
+        self.grid.removeWidget(self.plot_3)
+        self.grid.removeWidget(self.plot_4)
+        self.plot_3.removePolt()
+        self.plot_4.removePolt()
+        del self.plot_3
+        del self.plot_4
         
         self.m_slider.hide()
         self.m_slider.close()
@@ -394,10 +421,10 @@ class Analyzer(QWidget):
         del self.m_slider
         del self.n_slider
         
-        self.plotSmoothDataButton.hide()
-        self.plotSmoothDataButton.close()
-        self.grid.removeWidget(self.plotSmoothDataButton)
-        del self.plotSmoothDataButton
+        self.plotPolinomialButton.hide()
+        self.plotPolinomialButton.close()
+        self.grid.removeWidget(self.plotPolinomialButton)
+        del self.plotPolinomialButton
         
         self.m_lcd.hide()
         self.n_lcd.hide()
@@ -413,48 +440,22 @@ class Analyzer(QWidget):
         self.grid.removeWidget(self.mLabel)
         del self.mLabel
         
-        while len(self.infoSet) != 0:
-            info_item = self.infoSet.pop()
-            info_item.hide()
-            info_item.close()
-            self.grid.removeWidget(info_item)
-            del info_item 
-            
-        while len(self.infoSet_2) != 0:   
-            info_item = self.infoSet_2.pop()
-            info_item.hide()
-            info_item.close()
-            self.grid.removeWidget(info_item)
-            del info_item 
-            
-        del self.infoSet
-        del self.infoSet_2
-        
-        self.changeDataButton.hide()
-        self.changeDataButton.close()
-        self.grid.removeWidget(self.changeDataButton)
-        del self.changeDataButton
-        
-        self.xarray = self.xarray[self.m:self.n]
-        self.y1array = self.y1array[self.m:self.n]
-        self.y2array = self.y2array[self.m:self.n]
-        
         #u1 plot
         self.plot_10 = Plot()
         self.plot_10.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0))
-        self.plot_10.plot(self.xarray, self.y1array, 'ko', label='Data Points',  markersize=1)
+        self.plot_10.plot(self.xarray[self.m:self.n], self.z1[self.m:self.n], 'ko', label='Data Points',  markersize=1)
         
         #u9 plot
         self.plot_11 = Plot()
         self.plot_11.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1))
-        self.plot_11.plot(self.xarray, self.y2array, 'ko', label='Data Points',  markersize=1)
+        self.plot_11.plot(self.xarray[self.m:self.n], self.z2[self.m:self.n], 'ko', label='Data Points',  markersize=1)
         
         self.grid.addWidget(self.plot_10, 0, 0)
         self.grid.addWidget(self.plot_11, 0, 1)
         
-        self.plotPoly = QPushButton("Smooth Data", self)
+        self.plotPoly = QPushButton("Plot polynomial", self)
         self.grid.addWidget(self.plotPoly, 3, 3)
-        self.plotPoly.clicked.connect(self.plotSmoothData)
+        self.plotPoly.clicked.connect(self.plotPlonomials)
         self.plotPoly.setStyleSheet("background-color: green")
         
     def plotPlonomials(self):
