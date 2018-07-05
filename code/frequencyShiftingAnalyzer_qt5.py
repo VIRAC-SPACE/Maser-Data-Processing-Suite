@@ -4,15 +4,14 @@
 import sys
 import os
 from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QDesktopWidget, QPushButton, QInputDialog)
-from PyQt5.QtGui import QIcon
-from PyQt5.QtGui import QFont    
+from PyQt5.QtGui import QIcon  
 import argparse
 import configparser
 import json
 import numpy as np
 import scipy.constants
-import pandas as pd
-from pandas.stats.moments import rolling_mean
+#import pandas as pd
+#from pandas.stats.moments import rolling_mean
 
 from experimentsLogReader import ExperimentLogReader
 from ploting_qt5 import  Plot
@@ -144,6 +143,7 @@ class Analyzer(QWidget):
         
     def __getDataForPolarization__(self, data1, data2, filter):
         if filter == True:
+            '''
             outliersMask_1 = is_outlier(data1, self.threshold)
             outliersMask_2 = is_outlier(data2, self.threshold)
                 
@@ -202,6 +202,9 @@ class Analyzer(QWidget):
             self.dataPoints = len(xdata)
                 
             return (xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9)
+            '''
+            sys.exit(3)
+            pass
             
         else:
             xdata = data1[:, [0]]
