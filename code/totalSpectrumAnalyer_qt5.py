@@ -59,7 +59,7 @@ def FWHM(x, y, constant):
     return (index_1, index_2)
 
 class Analyzer(QWidget):
-    def __init__(self, datafile, resultFilePath, source_velocities, cuts):
+    def __init__(self, datafile, resultFilePath, source_velocities, cuts, output):
         super().__init__()
        
         self.setWindowIcon(QIcon('viraclogo.png'))
@@ -75,6 +75,7 @@ class Analyzer(QWidget):
         self.resultFilePath = resultFilePath
         self.source_velocities = source_velocities
         self.cuts = cuts
+        self.output = output
         
         self.infoSet = set()
         self.infoSet_2 = list()
@@ -511,7 +512,6 @@ class Analyzer(QWidget):
         self.plotPoly.clicked.connect(self.plotLocalMaximum)
         self.plotPoly.setStyleSheet("background-color: green")
     
-        
     def plotLocalMaximum(self):
         self.setWindowTitle("Local maximums")
         
@@ -568,16 +568,16 @@ class Analyzer(QWidget):
         self.plot_8.annotations(self.xarray[indexes_for_ceb2], self.z2[indexes_for_ceb2])
         
         #mid plot
-        avg_y = (self.z1 + self.z2) / 2
+        self.avg_y = (self.z1 + self.z2) / 2
         
-        indexes_for_avg = peakutils.indexes(avg_y, thres=thres, min_dist=10)
+        indexes_for_avg = peakutils.indexes(self.avg_y, thres=thres, min_dist=10)
         
         self.plot_9 = Plot()
         self.plot_9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Average Polarization", (1, 2))
-        self.plot_9.plot(self.xarray, avg_y, 'b', label='Signal - polynomial', markersize=1)
-        self.plot_9.plot(self.xarray[indexes_for_avg], avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
+        self.plot_9.plot(self.xarray, self.avg_y, 'b', label='Signal - polynomial', markersize=1)
+        self.plot_9.plot(self.xarray[indexes_for_avg], self.avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
         self.plot_9.addPickEvent(self.onpick_maxAVG)
-        self.plot_9.annotations(self.xarray[indexes_for_avg], avg_y[indexes_for_avg])
+        self.plot_9.annotations(self.xarray[indexes_for_avg], self.avg_y[indexes_for_avg])
         
         self.grid.addWidget(self.plot_7, 0, 0)
         self.grid.addWidget(self.plot_8, 0, 1)
@@ -640,6 +640,15 @@ class Analyzer(QWidget):
         resultFile.write(json.dumps(result, indent=2))
         resultFile.close()
         
+        '''
+        print ("DIM", self.xarray.size, self.z1.size, self.z2.size, self.avg_y.size)
+        totalResults = np.concatenate((np.transpose(self.xarray),  np.transpose(self.z1),  np.transpose(self.z2),  np.transpose(self.avg_y)), axis=1)
+        output_file_name = self.output + self.source + "_" +self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
+        output_file_name = output_file_name.replace(" ", "")
+        np.savetxt(output_file_name, totalResults) 
+        
+        '''
+        
         self._quit()
     
     @QtCore.pyqtSlot()   
@@ -661,6 +670,7 @@ def main():
     config.read(configFilePath)
     dataFilesPath =  config.get('paths', "dataFilePath")
     resultFilePath =  config.get('paths', "resultFilePath")
+    output =  config.get('paths', "output")
     source = datafile.split("/")[-1].split(".")[0].split("_")[0]
     cuts = config.get('cuts', source).split(";")
     cuts = [c.split(",") for c in  cuts]
@@ -670,7 +680,7 @@ def main():
     #Create App
     qApp = QApplication(sys.argv)
 
-    aw = Analyzer(dataFilesPath + datafile, resultFilePath, source_velocities, cuts)
+    aw = Analyzer(dataFilesPath + datafile, resultFilePath, source_velocities, cuts, output)
     aw.show()
     aw.showMaximized() 
     sys.exit(qApp.exec_())
