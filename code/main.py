@@ -29,7 +29,7 @@ def parseArguments():
 
 def findLogFile(logList, iteration):
     for l in range(0, len(logList)):
-        if logList[l].split("/")[-1].split(".")[0].split("_")[-1].endswith(iteration):
+        if logList[l].split("/")[-1].split(".")[0].split("_")[-1] == iteration:
             return l
         
 def main():
