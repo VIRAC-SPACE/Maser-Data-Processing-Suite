@@ -640,14 +640,11 @@ class Analyzer(QWidget):
         resultFile.write(json.dumps(result, indent=2))
         resultFile.close()
         
-        '''
-        print ("DIM", self.xarray.size, self.z1.size, self.z2.size, self.avg_y.size)
-        totalResults = np.concatenate((np.transpose(self.xarray),  np.transpose(self.z1),  np.transpose(self.z2),  np.transpose(self.avg_y)), axis=1)
+        totalResults = [self.xarray,  self.z1,  self.z2,  self.avg_y]
+        
         output_file_name = self.output + self.source + "_" +self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
-        np.savetxt(output_file_name, totalResults) 
-        
-        '''
+        np.savetxt(output_file_name, np.transpose(totalResults)) 
         
         self._quit()
     
