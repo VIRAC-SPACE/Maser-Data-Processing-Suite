@@ -32,6 +32,7 @@ local.properties
 .cproject
 build/
 dist/
+output/
 libpython2.7.so.1.0
 plotAmplitudeFrequencies.spec
 results/

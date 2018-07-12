@@ -15,7 +15,6 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 
 from PyQt5.QtGui import QColor
-import re
 
 from ploting_qt5 import  Plot
 
@@ -67,7 +66,7 @@ class Analyzer(QWidget):
         
         self.FWHMconstant = 1
         self.polynomialOrder = 3
-        self.source = re.split("([A-Z, a-z]+)", datafile.split("/")[-1].split(".")[0])[1]
+        self.source = datafile.split("/")[-1].split(".")[0].split("_")[0]
         self.expername = datafile.split("/")[-1].split(".")[0]
         self.location = datafile.split("/")[-1].split(".")[0].split("_")[-2]
         self.date = "_".join([datafile.split("/")[-1].split(".")[0].split("_")[1], datafile.split("/")[-1].split(".")[0].split("_")[2], datafile.split("/")[-1].split(".")[0].split("_")[3]])
@@ -643,6 +642,7 @@ class Analyzer(QWidget):
         totalResults = [self.xarray,  self.z1,  self.z2,  self.avg_y]
         
         output_file_name = self.output + self.source + "_" +self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
+        print ("self.source ", self.source)
         output_file_name = output_file_name.replace(" ", "")
         np.savetxt(output_file_name, np.transpose(totalResults)) 
         
