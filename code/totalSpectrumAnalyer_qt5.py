@@ -48,15 +48,6 @@ def indexies(array, value):
             indexs.append(i)
     return indexs
 
-def FWHM(x, y, constant):
-    spline = UnivariateSpline(x, y-np.max(y)/2, k=3, s=20)
-    spline.set_smoothing_factor(0.5)
-    root1 = spline.roots()[0] - constant
-    root2 = spline.roots()[-1] + constant
-    index_1 =  (np.abs(x-root1)).argmin()
-    index_2 =  (np.abs(x-root2)).argmin()
-    return (index_1, index_2)
-
 class Analyzer(QWidget):
     def __init__(self, datafile, resultFilePath, source_velocities, cuts, output):
         super().__init__()
@@ -207,8 +198,8 @@ class Analyzer(QWidget):
         self.grid.addWidget(self.plot_1, 0, 0)
         self.grid.addWidget(self.plot_2, 0, 1)
         
-        infoPanelLabelsText = ["FWHM constant", "Polynomial order"]
-        infoPanelEntryText = [ {"defaultValue":str(self.FWHMconstant), "addEntry":True}, {"defaultValue":str(self.polynomialOrder), "addEntry":True}]
+        infoPanelLabelsText = ["Polynomial order"]
+        infoPanelEntryText = [{"defaultValue":str(self.polynomialOrder), "addEntry":True}]
         
         for i in range(0, len(infoPanelLabelsText)):
             
@@ -222,7 +213,10 @@ class Analyzer(QWidget):
                 self.grid.addWidget(self.infoInputField, i + 3, 4)
                 self.infoSet_2.append(self.infoInputField)
         
-        self.a, self.b = FWHM(self.xarray, (self.y2array + self.y1array)/2, self.FWHMconstant)
+        self.a = ((np.abs(self.xarray-float(self.cuts[0][0]))).argmin())
+        self.b = ((np.abs(self.xarray-float(self.cuts[-1][1]))).argmin())
+        
+        print ("self.a, self.b", self.a, self.b)
                
         #sliders
         self.previousM = self.m
