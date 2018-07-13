@@ -76,6 +76,7 @@ class Scan():
                         root.withdraw()
                         newT = simpledialog.askfloat("System temperature error", "Got " + t + " Expected number between 0 and 300", minvalue = 0, maxvalue = 300)
                         self.manualyChangedSystemTemU1 = True
+                        print ("self.manualyChangedSystemTemU1 0", self.manualyChangedSystemTemU1)
                         t = newT
                         root.destroy()
                         if t == "" or t == None:
@@ -86,6 +87,7 @@ class Scan():
                         root.withdraw()
                         newT = simpledialog.askfloat("System temperature error", "Got " + t + " Expected number between 0 and 300", minvalue = 0, maxvalue = 300)
                         self.manualyChangedSystemTemU1 = True
+                        print ("self.manualyChangedSystemTemU1 1", self.manualyChangedSystemTemU1)
                         t = newT
                         root.destroy()
                         if t == "" or t == None:
@@ -102,6 +104,7 @@ class Scan():
                         root.withdraw()
                         newT = simpledialog.askfloat("System temperature error", "Got " + t + " Expected number", minvalue = 0, maxvalue = 300)
                         self.manualyChangedSystemTemU9 = True
+                        print ("self.manualyChangedSystemTemU9 0", self.manualyChangedSystemTemU9)
                         t = newT
                         root.destroy()
                         if t == "" or t == None:
@@ -112,6 +115,7 @@ class Scan():
                         root.withdraw()
                         newT = simpledialog.askfloat("System temperature error", "Got " + t + "Expected number", minvalue = 0, maxvalue = 300)
                         self.manualyChangedSystemTemU9 = True
+                        print ("self.manualyChangedSystemTemU9 1", self.manualyChangedSystemTemU9)
                         t = newT
                         root.destroy()
                         if t == "" or t == None:

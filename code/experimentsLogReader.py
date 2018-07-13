@@ -218,7 +218,7 @@ class ExperimentLogReader():
                 tmpSystemperatures.append(self.header_SystemtemperaturesForScan)
                 tmpSystemperatures.extend(self.Systemtemperatures)
                 
-                self.Systemtemperatures = list()
+                #self.Systemtemperatures = list()
                 
                 self.Systemtemperatures = tmpSystemperatures
                        
@@ -242,6 +242,30 @@ class ExperimentLogReader():
     def __createLogs(self):
         message = ""
         
+        if any(scan.getmanualyChangedSystemTemU1() or scan.getmanualyChangedSystemTemU9() or scan.getmanualyChangedBBC1() or scan.getmanualyChangedBBC2() for scan in self.scanList):
+            message = message + "Manual Changes !!!" + "\n"
+            
+            print ("Yes changes ")
+            
+            for scan in self.scanList:
+                if scan.getmanualyChangedSystemTemU1():
+                    message = message + "For scan Number " + str(scan.getScanNumber()) + " Manually Changed System Temperature U1" + "\n"
+                    
+                if scan.getmanualyChangedSystemTemU9():
+                    message = message + "For scan Number " + str(scan.getScanNumber()) + " Manually Changed System Temperature U9" + "\n"
+                    
+                if scan.getmanualyChangedBBC1():
+                    message = message + "For scan Number " + str(scan.getScanNumber()) + " Manually Changed BBC1"  + "\n"
+                    
+                if scan.getmanualyChangedBBC2():
+                    message = message + "For scan Number " + str(scan.getScanNumber()) + " Manually Changed BBC2" + "\n"
+        
+        '''   
+        else :
+            print ("No changes ")
+            message = "No Manual Changes"
+        '''
+            
         datafile = dict()
         datafile["header"] = {"location":self.Location,"Systemtemperature":self.header_SystemtemperaturesForScan, "Ra":self.header_ra , "Dec":self.header_dec, "dates":self.dates, "startTime":self.header_timeStart, "LO":float(self.header_loa), "BBC":self.header_freqBBC1, "FreqStart": float(self.header_freqBBC1) + float(self.header_loa), "sourceName":self.header_source, "source":self.header_sourceName, "stopTime": self.header_timeStop, "clockOffset": self.header_clock, "fs_frequencyfs":"0.0", "message":message}
         
