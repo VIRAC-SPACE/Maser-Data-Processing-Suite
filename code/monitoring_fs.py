@@ -1,16 +1,22 @@
 #! /usr/bin/python
+
 import sys
 import matplotlib.pyplot  as plt
-from matplotlib.dates import date2num
+from matplotlib.widgets import CheckButtons
 import mplcursors
-import numpy as np
-import pandas as pd
 from datetime import datetime
 import json
 import argparse
 import configparser
 from operator import itemgetter
 
+from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QMessageBox, QLabel, QLineEdit, QSlider, QDesktopWidget, QLCDNumber)
+from PyQt5 import QtCore
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QColor
+
+#from ploting_qt5 import  Plot
 from result import  Result
 
 def parseArguments():
@@ -20,7 +26,6 @@ def parseArguments():
 
     # Positional mandatory arguments
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
-    parser.add_argument("source", help="Source to monitor", type=str)
 
     # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 2.0')
@@ -30,17 +35,7 @@ def parseArguments():
 
     return args
 
-def main():
-    # Parse the arguments
-    args = parseArguments()
-    configFilePath = str(args.__dict__["config"])
-    source = str(args.__dict__["source"])
-     
-    #Creating config parametrs
-    config = configparser.RawConfigParser()
-    config.read(configFilePath)
-    resultDir = config.get('paths', "resultFilePath")
-    source_velocities = config.get('velocities', source).split(",")
+def plotMonitoring(resultDir, source_velocities, source):
     velocities_range = 0.06
     result_list = list()
     velocitie_dict = {"u1":dict(), "u9":dict(), "avg":dict()}
@@ -111,24 +106,101 @@ def main():
         x.append(date_list[a])
     
     Symbols =  ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
-   
+    
+    lines = list()
+    
     fig = plt.figure()
-    #fig, ax = plt.subplots()
     graph = fig.add_subplot(111)
     for i in range(0, len(source_velocities)):
-        graph.plot(x, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + source_velocities[i])
-        graph.plot(x, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+"g", label="polarization U9 " + "Velocity " + source_velocities[i])
-        graph.plot(x, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+"b", label="polarization AVG " + "Velocity " + source_velocities[i])
+        l1, = graph.plot(x, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + source_velocities[i], visible=True)
+        l2, = graph.plot(x, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+"g", label="polarization U9 " + "Velocity " + source_velocities[i], visible=True)
+        l3, = graph.plot(x, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+"b", label="polarization AVG " + "Velocity " + source_velocities[i], visible=True)
+        
+        lines.append(l1)
+        lines.append(l2)
+        lines.append(l3)
         
     graph.set_xticks(x)
     graph.set_xticklabels([date.strftime("%d  %m %Y") for date in  date_list])
     
     plt.legend()
     
-    cursor =  mplcursors.cursor(hover = True, highlight=True)
+    cursor =  mplcursors.cursor(hover=True, highlight=True)
     cursor.connect("add", lambda sel: sel.annotation.set_text(labels[sel.target.index]))
+    
+    #lines = [l1, l2, l3]
+    
+    labels = [str(line.get_label()) for line in lines]
+    visibility = [line.get_visible() for line in lines]
+    
+    check = CheckButtons(plt.axes([0.0005, 0.4, 0.1, 0.15]), labels, visibility)
+    
+    def func(label):
+        index = labels.index(label)
+        lines[index].set_visible(not lines[index].get_visible())
+        plt.draw()
+        
+    check.on_clicked(func)
    
     plt.show()
+    
+
+class Monitoring(QWidget):
+    def __init__(self, configFilePath):
+        super().__init__()
+        self.setWindowIcon(QIcon('viraclogo.png'))
+        self.center()
+        
+        self.configFilePath = configFilePath
+        
+        self.grid = QGridLayout()
+        self.setLayout(self.grid)
+        self.grid.setSpacing(10)
+        
+        self.chooseSource()
+        
+    def center(self):
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+        
+    def  chooseSource(self):
+        self.setWindowTitle("Choose Source")
+        
+        self.chooseLabel = QLabel("Choose source")
+        self.grid.addWidget(self.chooseLabel, 0, 0)
+        
+        self.sourceInput = QLineEdit()
+        self.grid.addWidget(self.sourceInput, 1, 0)
+        
+        self.chooseSource = QPushButton("Ok", self)
+        self.chooseSource.clicked.connect(self.plot)
+        self.chooseSource.setStyleSheet("background-color: green")
+        self.grid.addWidget(self.chooseSource, 1, 1)
+        
+    def plot(self):
+        #Creating config parametrs
+        config = configparser.RawConfigParser()
+        config.read(self.configFilePath)
+        resultDir = config.get('paths', "resultFilePath")
+        self.source = self.sourceInput.text()
+        source_velocities = config.get('velocities', self.source).split(",")#Creating config parametrs
+        
+        plotMonitoring(resultDir, source_velocities, self.source)
+        
+def main():
+    # Parse the arguments
+    args = parseArguments()
+    configFilePath = str(args.__dict__["config"])
+     
+    #Create App
+    qApp = QApplication(sys.argv)
+    aw = Monitoring(configFilePath)
+    aw.show()
+    sys.exit(qApp.exec_())
+    
+    sys.exit(0)
     
     sys.exit(0)
     

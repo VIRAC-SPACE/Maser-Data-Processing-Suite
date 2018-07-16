@@ -1,10 +1,8 @@
 from __future__ import unicode_literals
-import sys
-import os
 import matplotlib
 
 matplotlib.use('Qt5Agg')
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.backends.backend_qt5agg as qt5agg
 from matplotlib.widgets import Slider
@@ -81,7 +79,7 @@ class Plot(FigureCanvas):
         Axes = self.figure.add_axes(cords, axisbg=axcolor)
         slider=Slider(Axes, label,  start, stop, valinit=init)
         slider.on_changed(callback)
-    
+        
     def removePolt(self):
         self.fig.clf()
         del self.graph
