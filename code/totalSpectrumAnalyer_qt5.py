@@ -539,7 +539,7 @@ class Analyzer(QWidget):
         self.z1 = convolve(self.localMax_Array_u1, g1, boundary='extend')
         self.z2 = convolve(self.localMax_Array_u9, g2, boundary='extend')
          
-        thres=0.1
+        thres=0.3
            
         #indexsu apreikinasana
         indexes_for_ceb = peakutils.indexes(self.z1, thres=thres, min_dist=10)

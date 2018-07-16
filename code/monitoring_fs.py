@@ -79,12 +79,12 @@ def main():
           
     result_list = sorted(result_list, key=itemgetter('date'), reverse=False)
      
-    for erperiment in result_list:
-        u1 = erperiment["polarizationU1"]
-        u9 = erperiment["polarizationU9"]
-        avg = erperiment["polarizationUAVG"]
-        iteration_list.append(erperiment["iteration_number"])
-        date_list.append(erperiment["date"])
+    for experiment in result_list:
+        u1 = experiment["polarizationU1"]
+        u9 = experiment["polarizationU9"]
+        avg = experiment["polarizationUAVG"]
+        iteration_list.append(experiment["iteration_number"])
+        date_list.append(experiment["date"])
         
         for i in u1:
             for vel in source_velocities:
@@ -101,14 +101,14 @@ def main():
                 if float(vel) - velocities_range <= k[0] <= float(vel) + velocities_range:
                     velocitie_dict["avg"][vel].append(k[1]) 
                     
-        label = "Station is " + location + "\n" + "Date is " + erperiment["date"].strftime('%d %m %Y') + "\n " + "iteration number " + str(erperiment["iteration_number"])
+        label = "Station is " + location + "\n" + "Date is " + experiment["date"].strftime('%d %m %Y') + "\n " + "iteration number " + str(experiment["iteration_number"])
 
         labels.append(label)
    
     x = list()
     for a in range(0, len(date_list)):
         #.strftime('%d %m %Y')
-        x.append("Date " + str(date_list[a]) + "\n" + "Iteratiron number " + str(iteration_list[a]))
+        x.append(date_list[a])
     
     Symbols =  ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
    
@@ -119,6 +119,9 @@ def main():
         graph.plot(x, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + source_velocities[i])
         graph.plot(x, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+"g", label="polarization U9 " + "Velocity " + source_velocities[i])
         graph.plot(x, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+"b", label="polarization AVG " + "Velocity " + source_velocities[i])
+        
+    graph.set_xticks(x)
+    graph.set_xticklabels([date.strftime("%d  %m %Y") for date in  date_list])
     
     plt.legend()
     
