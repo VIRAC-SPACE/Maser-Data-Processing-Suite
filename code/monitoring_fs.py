@@ -102,14 +102,13 @@ def plotMonitoring(resultDir, source_velocities, source):
    
     x = list()
     for a in range(0, len(date_list)):
-        #.strftime('%d %m %Y')
         x.append(date_list[a])
     
     Symbols =  ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
     
     lines = list()
     
-    fig = plt.figure()
+    fig = plt.figure("Monitoring for " + source)
     graph = fig.add_subplot(111)
     for i in range(0, len(source_velocities)):
         l1, = graph.plot(x, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + source_velocities[i], visible=False)
@@ -128,12 +127,10 @@ def plotMonitoring(resultDir, source_velocities, source):
     cursor =  mplcursors.cursor(hover=True, highlight=True)
     cursor.connect("add", lambda sel: sel.annotation.set_text(labels[sel.target.index]))
     
-    #lines = [l1, l2, l3]
-    
     labels = [str(line.get_label()) for line in lines]
     visibility = [line.get_visible() for line in lines]
     
-    check = CheckButtons(plt.axes([0.0005, 0.4, 0.1, 0.15]), labels, visibility)
+    check = CheckButtons(plt.axes([0.0005, 0.4, 0.1, 0.15]),  labels, visibility)
     
     def func(label):
         index = labels.index(label)
