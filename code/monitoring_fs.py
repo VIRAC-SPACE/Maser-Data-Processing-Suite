@@ -80,13 +80,11 @@ class Monitoring(QWidget):
         index = [ind][0]
         polarization = thisline.get_label().split()[1]
         date = xdata[index][0].strftime("%d  %m %Y").split()
-        month = datetime.date(1900, int(date[1]) , 1).strftime('%B')[0:3].title().replace("ū", "u")
-        
+        month = datetime.date(1900, int(date[1]) , 1).strftime('%B')[0:3].title().replace("ū", "u").replace("i", "y").replace("k", "c")
         date[1] = month
         date = "_".join(date)
         iteration = self.iteration_list[int(index)]
         location = self.location_list[int(index)]
-        
         spectraFileName = self.source + "_" + date + "_" + location + "_"  + str(iteration) + ".dat"
         self.plotSpecter(spectraFileName, polarization)
         
@@ -137,12 +135,10 @@ class Monitoring(QWidget):
                 scanData = results[experiment]
                 date = scanData["Date"]
                 location = scanData["location"]
-                self.location_list.append(location)
                 amplitudes_for_u1 = scanData["polarizationU1"] # Got poitns for all experiments for polarization u1
                 amplitudes_for_u9 = scanData["polarizationU9"] # Got poitns for all experiments for polarization u9
                 amplitudes_for_uAVG = scanData["polarizationAVG"] # Got poitns for all experiments for polarization uAVG
                 iter_number = scanData["Iteration_number"]
-                
                 dates = date.split("_")
                 monthsNumber = dates[1]
                 dates[1] = months[monthsNumber]
@@ -160,6 +156,9 @@ class Monitoring(QWidget):
             avg = experiment["polarizationUAVG"]
             iteration_list.append(experiment["iteration_number"])
             date_list.append(experiment["date"])
+            location = experiment["location"]
+            
+            self.location_list.append(location)
             
             for i in u1:
                 for vel in source_velocities:
