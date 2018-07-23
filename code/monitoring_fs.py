@@ -101,11 +101,12 @@ class Monitoring(QWidget):
         spectraFileName = self.output_path + spectraFileName
         
         data = np.fromfile(spectraFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(spectraFileName),4))
+        plot_name =  " ".join(spectraFileName.split("/")[-1].split("_")[0:-2])
         
         x = data[:, [0]]
         y = data[:, [amplitude_colon]]
         
-        fig = plt.figure("spectrum  " + spectraFileName.replace("_", " "))
+        fig = plt.figure("spectrum  for " + plot_name + " Polarization " + polarization)
         graph = fig.add_subplot(111)
         
         graph.plot(x,y)
