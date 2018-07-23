@@ -2,6 +2,7 @@
 import tkinter
 from tkinter import simpledialog
 from decimal import Decimal
+import datetime
 
 class Scan():
     def __init__(self, logLines):
@@ -13,6 +14,7 @@ class Scan():
         self.Epoch = 0
         self.timeStart = "None"
         self.timeStop = "None"
+        self.date = "None"
         self.freqBBC1 = 0.0
         self.freqBBC2 = 0.0
         self.loa = 0.0
@@ -63,7 +65,15 @@ class Scan():
             
             elif "disk_record=on" in line:
                 self.timeStart =  line.split(".")[2]
-                 
+                year = line.split(".")[0]
+                dayNumber = line.split(".")[1]
+                date = datetime.datetime(int(year), 1, 1) + datetime.timedelta(int(dayNumber) - 1)
+                day = date.day
+                monthNr = date.month
+                month = datetime.date(1900, int(monthNr) , 1).strftime('%B')[0:3]
+                            
+                self.date = str(day).zfill(2) + " " + month + " " + str(year)
+                
             elif "disk_record=of" in line:
                 self.timeStop =  line.split(".")[2]
                 
@@ -237,7 +247,7 @@ class Scan():
                 self.elevation = line.split()[3]
                               
     def returnParametrs(self):
-        return (self.source, self.sourceName, self.Epoch, self.ra, self.dec, self.timeStart, self.timeStop, self.SystemtemperaturesForScan, self.freqBBC1, self.freqBBC2, self.loa, self.loc, self.clock, self.fs_frequency, self.elevation)
+        return (self.date, self.source, self.sourceName, self.Epoch, self.ra, self.dec, self.timeStart, self.timeStop, self.SystemtemperaturesForScan, self.freqBBC1, self.freqBBC2, self.loa, self.loc, self.clock, self.fs_frequency, self.elevation)
     
     def getmanualyChangedSystemTemU1(self):
         return  self.manualyChangedSystemTemU1
