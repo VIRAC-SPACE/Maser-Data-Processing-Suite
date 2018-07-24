@@ -13,6 +13,7 @@ import numpy as np
 
 from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QLabel, QLineEdit, QDesktopWidget)
 from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import Qt
 
 #from ploting_qt5 import  Plot
 from result import  Result
@@ -73,6 +74,12 @@ class Monitoring(QWidget):
         self.chooseSource.setStyleSheet("background-color: green")
         self.grid.addWidget(self.chooseSource, 1, 1)
         
+    def keyPressEvent(self, e):
+        
+        if e.key() == Qt.Key_Return:
+            if len (self.sourceInput.text()) > 1:
+                self.plot()
+            
     def chooseSpectrum(self, event):
         thisline = event.artist
         xdata = thisline.get_xdata()
