@@ -191,8 +191,8 @@ class Monitoring(QWidget):
         fig = plt.figure("Monitoring for " + source)
         graph = fig.add_subplot(111)
         for i in range(0, len(source_velocities)):
-            l1, = graph.plot(x, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + source_velocities[i], visible=False, picker=5)
-            l2, = graph.plot(x, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+"g", label="polarization U9 " + "Velocity " + source_velocities[i], visible=False, picker=5)
+            l1, = graph.plot(x, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + source_velocities[i], visible=False, picker=False)
+            l2, = graph.plot(x, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+"g", label="polarization U9 " + "Velocity " + source_velocities[i], visible=False, picker=False)
             l3, = graph.plot(x, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+"b", label="polarization AVG " + "Velocity " + source_velocities[i], visible=True, picker=5)
             
             lines.append(l1)
@@ -211,11 +211,12 @@ class Monitoring(QWidget):
         labels = [str(line.get_label()) for line in lines]
         visibility = [line.get_visible() for line in lines]
         
-        check = CheckButtons(plt.axes([0.0005, 0.4, 0.1, 0.15]),  labels, visibility)
+        check = CheckButtons(plt.axes([0.8, 0.1, 0.1, 0.7]),  labels, visibility)
         
         def func(label):
             index = labels.index(label)
             lines[index].set_visible(not lines[index].get_visible())
+            lines[index].set_picker = 5
             plt.draw()
             
         check.on_clicked(func)
