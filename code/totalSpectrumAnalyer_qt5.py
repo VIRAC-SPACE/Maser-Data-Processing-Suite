@@ -1,12 +1,11 @@
 #! /usr/bin/python3
-
+# -*- coding: utf-8 -*-
 import sys
 import os
 import argparse
 import configparser
 import numpy as np
 from astropy.convolution import Gaussian1DKernel, convolve
-from scipy.interpolate import UnivariateSpline
 import peakutils
 import json
 from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QMessageBox, QLabel, QLineEdit, QSlider, QDesktopWidget, QLCDNumber)

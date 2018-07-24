@@ -96,14 +96,14 @@ class Analyzer(QWidget):
         self.STON_list_u9 = list()
         self.STON_list_AVG = list()
         self.iteration_number = iteration_number
-        self.logs = logs
+        self.logs = logs 
         self.date = self.logs["header"]["dates"]
         self.dataFileDir = dataPath + self.source + "/" + str(self.iteration_number) + "/"
         self.scanPairs = self.createScanPairs()
         self.datPairsCount = len(self.scanPairs)
         self.f0 = 6668519200
         self.location = self.logs["header"]["location"]
-        self.expername = self.source + self.date + "_" + self.logs["header"]["location"]
+        self.expername = self.source + self.date + "_" + self.location
         self.DPFU_max = DPFU_max
         self.G_El = G_El
         self.Tcal = Tcal
@@ -291,72 +291,79 @@ class Analyzer(QWidget):
             newT, ok = QInputDialog.getDouble(self, 'tsys error', 'Enter valid tsys:', 0, 1, 300)
             tsys_u9_1 = newT
             
-        data_1 = np.fromfile(scanNUmber1, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber1),9))
-        data_2 = np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),9))
+        try:    
+            data_1 = np.fromfile(scanNUmber1, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber1),9))
+            data_2 = np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),9))
             
-        #Delete first row
-        data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
-        data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
-              
-        xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
-               
-        self.plot_start_u1 = Plot()
-        self.plot_start_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u1 Polarization", (1, 0))
-        self.plot_start_u1.plot(xdata, ydata_1_u1, 'b', label=pair[0])
-        self.plot_start_u1.plot(xdata, ydata_2_u1, 'r', label=pair[1])
+        except IOError as e:
+            print ("IO Error",  e)
+            sys.exit(1)
             
-        self.plot_start_u9 = Plot()
-        self.plot_start_u9.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u9 Polarization", (1, 1))
-        self.plot_start_u9.plot(xdata, ydata_1_u9, 'b', label=pair[0])
-        self.plot_start_u9.plot(xdata, ydata_2_u9, 'r', label=pair[1])
+        else:
             
-        self.grid.addWidget(self.plot_start_u1, 0, 0)
-        self.grid.addWidget(self.plot_start_u9, 0, 1)
-        
-        #Calibration  
-        data_u1 = self.calibration(xdata, ydata_1_u1, ydata_2_u1, float(tsys_u1_1), float(tsys_u1_2), elevation) 
-        data_u9 = self.calibration(xdata, ydata_1_u9, ydata_2_u9, float(tsys_u9_1), float(tsys_u9_2), elevation)
-       
-        xdata = np.array(xdata)
+            #Delete first row
+            data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
+            data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
+                  
+            xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
+                   
+            self.plot_start_u1 = Plot()
+            self.plot_start_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u1 Polarization", (1, 0))
+            self.plot_start_u1.plot(xdata, ydata_1_u1, 'b', label=pair[0])
+            self.plot_start_u1.plot(xdata, ydata_2_u1, 'r', label=pair[1])
+                
+            self.plot_start_u9 = Plot()
+            self.plot_start_u9.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u9 Polarization", (1, 1))
+            self.plot_start_u9.plot(xdata, ydata_1_u9, 'b', label=pair[0])
+            self.plot_start_u9.plot(xdata, ydata_2_u9, 'r', label=pair[1])
+                
+            self.grid.addWidget(self.plot_start_u1, 0, 0)
+            self.grid.addWidget(self.plot_start_u9, 0, 1)
             
-        self.x = xdata
-        f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1)
-        f_shift = np.max(self.x) / 4.0
-        n_shift = int(f_shift/f_step)
-        total_u1 = data_u1[(n_shift+1):(self.dataPoints - n_shift - 1)]
-        total_u9 = data_u9[(n_shift+1):(self.dataPoints - n_shift - 1)]
-        
-        self.x = self.x[(n_shift+1):(self.dataPoints - n_shift - 1)] 
-        
-        self.totalResults_u1.append(total_u1)
-        self.totalResults_u9.append(total_u9)
-        
-        self.plot_total_u1 = Plot()
-        self.plot_total_u1.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (5, 0))
-        self.plot_total_u1.plot(self.x, total_u1, 'b')
-        
-        self.plot_total_u9 = Plot()
-        self.plot_total_u9.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (5, 1))
-        self.plot_total_u9.plot(self.x, total_u9, 'b')
-        
-        self.grid.addWidget(self.plot_total_u1, 4, 0)
-        self.grid.addWidget(self.plot_total_u9, 4, 1)
-        
-        ston_u1 = STON(total_u1)
-        ston_u9 = STON(total_u9)
-        stone_AVG = STON(((total_u1 + total_u9)/2))
-        
-        self.STON_list_u1.append(ston_u1)
-        self.STON_list_u9.append(ston_u9)
-        self.STON_list_AVG.append(stone_AVG)
-        
-        if index == self.datPairsCount -1:
-            self.nextPairButton.setText('Move to total results')
-            self.nextPairButton.clicked.connect(self.plotTotalResults)
-            self.grid.removeWidget(self.skipAllButton)
-            self.skipAllButton.hide()
-            self.skipAllButton.close()
-            del self.skipAllButton
+            #Calibration  
+            data_u1 = self.calibration(xdata, ydata_1_u1, ydata_2_u1, float(tsys_u1_1), float(tsys_u1_2), elevation) 
+            data_u9 = self.calibration(xdata, ydata_1_u9, ydata_2_u9, float(tsys_u9_1), float(tsys_u9_2), elevation)
+           
+            xdata = np.array(xdata)
+                
+            self.x = xdata
+            f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1)
+            f_shift = np.max(self.x) / 4.0
+            n_shift = int(f_shift/f_step)
+            total_u1 = data_u1[(n_shift+1):(self.dataPoints - n_shift - 1)]
+            total_u9 = data_u9[(n_shift+1):(self.dataPoints - n_shift - 1)]
+            
+            self.x = self.x[(n_shift+1):(self.dataPoints - n_shift - 1)] 
+            
+            self.totalResults_u1.append(total_u1)
+            self.totalResults_u9.append(total_u9)
+            
+            self.plot_total_u1 = Plot()
+            self.plot_total_u1.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (5, 0))
+            self.plot_total_u1.plot(self.x, total_u1, 'b')
+            
+            self.plot_total_u9 = Plot()
+            self.plot_total_u9.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (5, 1))
+            self.plot_total_u9.plot(self.x, total_u9, 'b')
+            
+            self.grid.addWidget(self.plot_total_u1, 4, 0)
+            self.grid.addWidget(self.plot_total_u9, 4, 1)
+            
+            ston_u1 = STON(total_u1)
+            ston_u9 = STON(total_u9)
+            stone_AVG = STON(((total_u1 + total_u9)/2))
+            
+            self.STON_list_u1.append(ston_u1)
+            self.STON_list_u9.append(ston_u9)
+            self.STON_list_AVG.append(stone_AVG)
+            
+            if index == self.datPairsCount -1:
+                self.nextPairButton.setText('Move to total results')
+                self.nextPairButton.clicked.connect(self.plotTotalResults)
+                self.grid.removeWidget(self.skipAllButton)
+                self.skipAllButton.hide()
+                self.skipAllButton.close()
+                del self.skipAllButton
     
     def __PAIR(self, index, totalResults_u1, totalResults_u9, STON_list_u1, STON_list_u9, STON_list_AVG):
         pair = self.scanPairs[index]
@@ -385,41 +392,55 @@ class Analyzer(QWidget):
         if float(tsys_u9_1) == 0:
             newT, ok = QInputDialog.getDouble(self, 'tsys error', 'Enter valid tsys:', 0, 1, 300)
             tsys_u9_1 = newT
+        
+        try:  
+            data_1 = np.fromfile(scanNUmber1, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber1),9))
+            data_2 = np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),9))
+        except IOError as e:
+            print ("IO Error",  e)
+            sys.exit(1)
+        
+        except IndexError as e:
+            print ("Index Error",  e)
+            sys.exit(1)
             
-        data_1 = np.fromfile(scanNUmber1, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber1),9))
-        data_2 = np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),9))
+        except:
+            print("Unexpected error:", sys.exc_info()[0])
+            sys.exit(1)
+            
+        else:
                 
-        #Delete first row
-        data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
-        data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
-                  
-        xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
-            
-        #Calibration  
-        data_u1 = self.calibration(xdata, ydata_1_u1, ydata_2_u1, float(tsys_u1_1), float(tsys_u1_2), elevation) 
-        data_u9 = self.calibration(xdata, ydata_1_u9, ydata_2_u9, float(tsys_u9_1), float(tsys_u9_2), elevation)
-           
-        xdata = np.array(xdata)
+            #Delete first row
+            data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
+            data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
+                      
+            xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
                 
-        self.x = xdata
-        f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1)
-        f_shift = np.max(self.x) / 4.0
-        n_shift = int(f_shift/f_step)
-        total_u1 = data_u1[(n_shift+1):(self.dataPoints - n_shift - 1)]
-        total_u9 = data_u9[(n_shift+1):(self.dataPoints - n_shift - 1)]
-            
-        self.x = self.x[(n_shift+1):(self.dataPoints - n_shift - 1)] 
-            
-        totalResults_u1.append(total_u1)
-        totalResults_u9.append(total_u9)
-            
-        ston_u1 = STON(total_u1)
-        ston_u9 = STON(total_u9)
-        stone_AVG = STON(((total_u1 + total_u9)/2))
-            
-        STON_list_u1.append(ston_u1)
-        STON_list_u9.append(ston_u9)
-        STON_list_AVG.append(stone_AVG)
+            #Calibration  
+            data_u1 = self.calibration(xdata, ydata_1_u1, ydata_2_u1, float(tsys_u1_1), float(tsys_u1_2), elevation) 
+            data_u9 = self.calibration(xdata, ydata_1_u9, ydata_2_u9, float(tsys_u9_1), float(tsys_u9_2), elevation)
+               
+            xdata = np.array(xdata)
+                    
+            self.x = xdata
+            f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1)
+            f_shift = np.max(self.x) / 4.0
+            n_shift = int(f_shift/f_step)
+            total_u1 = data_u1[(n_shift+1):(self.dataPoints - n_shift - 1)]
+            total_u9 = data_u9[(n_shift+1):(self.dataPoints - n_shift - 1)]
+                
+            self.x = self.x[(n_shift+1):(self.dataPoints - n_shift - 1)] 
+                
+            totalResults_u1.append(total_u1)
+            totalResults_u9.append(total_u9)
+                
+            ston_u1 = STON(total_u1)
+            ston_u9 = STON(total_u9)
+            stone_AVG = STON(((total_u1 + total_u9)/2))
+                
+            STON_list_u1.append(ston_u1)
+            STON_list_u9.append(ston_u9)
+            STON_list_AVG.append(stone_AVG)
             
     def skipAll(self):
         totalResults_u1= list()
