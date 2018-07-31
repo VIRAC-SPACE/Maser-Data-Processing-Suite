@@ -48,13 +48,12 @@ def indexies(array, value):
     return indexs
 
 class Analyzer(QWidget):
-    def __init__(self, datafile, resultFilePath, source_velocities, cuts, output):
+    def __init__(self, datafile, resultFilePath, source_velocities, cuts, output, index_range_for_local_maxima):
         super().__init__()
        
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.center()
         
-        self.FWHMconstant = 1
         self.polynomialOrder = 3
         self.source = datafile.split("/")[-1].split(".")[0].split("_")[0]
         self.expername = datafile.split("/")[-1].split(".")[0]
@@ -65,6 +64,7 @@ class Analyzer(QWidget):
         self.source_velocities = source_velocities
         self.cuts = cuts
         self.output = output
+        self.index_range_for_local_maxima = index_range_for_local_maxima
         
         self.infoSet = set()
         self.infoSet_2 = list()
@@ -136,43 +136,7 @@ class Analyzer(QWidget):
         self.points_9u.append(p[0])
         #self.points_1u.append(p[0])
         self.plot_4.canvasShow()
-        
-    def onpick_maxU1(self, event):
-        thisline = event.artist
-        xdata = thisline.get_xdata()
-        ydata = thisline.get_ydata()
-        ind = event.ind
-        self.maxu1_index.append(ind[0])
-        p = tuple(zip(xdata[ind], ydata[ind]))
-        self.plot_7.plot(p[0][0], p[0][1], 'gd', markersize=2, picker=5)
-        if  self.maxU1.count(p[0]) == 0:
-            self.maxU1.append(p[0])
-        self.plot_7.canvasShow()
-        
-    def onpick_maxU9(self, event):
-        thisline = event.artist
-        xdata = thisline.get_xdata()
-        ydata = thisline.get_ydata()
-        ind = event.ind
-        self.maxu9_index.append(ind[0])
-        p = tuple(zip(xdata[ind], ydata[ind]))
-        self.plot_8.plot(p[0][0], p[0][1], 'gd', markersize=2, picker=5)
-        if  self.maxU9.count(p[0]) == 0:
-            self.maxU9.append(p[0])
-        self.plot_8.canvasShow()
-        
-    def onpick_maxAVG(self, event):
-        thisline = event.artist
-        xdata = thisline.get_xdata()
-        ydata = thisline.get_ydata()
-        ind = event.ind
-        self.maxavg_index.append(ind[0])
-        p = tuple(zip(xdata[ind], ydata[ind]))
-        self.plot_9.plot(p[0][0], p[0][1], 'gd', markersize=2, picker=5)
-        if  self.avgMax.count(p[0]) == 0:
-            self.avgMax.append(p[0])
-        self.plot_9.canvasShow()
-            
+                
     def plotInitData(self):
         self.setWindowTitle("Info")
         
@@ -273,8 +237,7 @@ class Analyzer(QWidget):
         for value in self.infoSet_2:
             newValues.append(value.text())
             
-        self.FWHMconstant = float(newValues[0])
-        self.polynomialOrder = float(newValues[1])
+        self.polynomialOrder = float(newValues[0])
         
         QMessageBox.information(self, "Info", "Data was changed")
         
@@ -547,16 +510,14 @@ class Analyzer(QWidget):
         self.plot_7 = Plot()
         self.plot_7.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0))
         self.plot_7.plot(self.xarray, self.z1, 'b', label='Signal - polynomial', markersize=1)
-        self.plot_7.plot(self.xarray[indexes_for_ceb], self.z1[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
-        self.plot_7.addPickEvent(self.onpick_maxU1)
+        self.plot_7.plot(self.xarray[indexes_for_ceb], self.z1[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2)
         self.plot_7.annotations(self.xarray[indexes_for_ceb], self.z1[indexes_for_ceb])
         
         #u9
         self.plot_8 = Plot()
         self.plot_8.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1))
         self.plot_8.plot(self.xarray, self.z2, 'b', label='Signal - polynomial', markersize=1)
-        self.plot_8.plot(self.xarray[indexes_for_ceb2], self.z2[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
-        self.plot_8.addPickEvent(self.onpick_maxU9)
+        self.plot_8.plot(self.xarray[indexes_for_ceb2], self.z2[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2)
         self.plot_8.annotations(self.xarray[indexes_for_ceb2], self.z2[indexes_for_ceb2])
         
         #mid plot
@@ -567,8 +528,7 @@ class Analyzer(QWidget):
         self.plot_9 = Plot()
         self.plot_9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Average Polarization", (1, 2))
         self.plot_9.plot(self.xarray, self.avg_y, 'b', label='Signal - polynomial', markersize=1)
-        self.plot_9.plot(self.xarray[indexes_for_avg], self.avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
-        self.plot_9.addPickEvent(self.onpick_maxAVG)
+        self.plot_9.plot(self.xarray[indexes_for_avg], self.avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2)
         self.plot_9.annotations(self.xarray[indexes_for_avg], self.avg_y[indexes_for_avg])
         
         self.grid.addWidget(self.plot_7, 0, 0)
@@ -599,43 +559,51 @@ class Analyzer(QWidget):
         
         if self.expername not in result:
             result[self.expername] = dict()
-            
-        for source_vel in self.source_velocities:
-            if all (np.abs(item[0] - float(source_vel)) >= 0.09 for item in self.maxU1):
+        
+        indexies_for_source_velocities = [0] * len(self.source_velocities)
+        
+        for index in range (0, len(self.source_velocities)):
+            indexies_for_source_velocities[index] =  (np.abs(self.xarray-float(self.source_velocities[index]))).argmin()
+        
+        max_amplitude_list_u1 = list()
+        max_amplitude_list_u9 = list()
+        max_amplitude_list_uavg = list()
+        for index in indexies_for_source_velocities:
+            max_amplitude_list_tmp_u1 = list()
+            max_amplitude_list_tmp_u9 = list()
+            max_amplitude_list_tmp_uavg = list()
+            for i in range (index - self.index_range_for_local_maxima, index + self.index_range_for_local_maxima):
+                max_amplitude_list_tmp_u1.append(self.z1[i])
+                max_amplitude_list_tmp_u9.append(self.z2[i])
+                max_amplitude_list_tmp_uavg.append(self.avg_y[i])
                 
-                self.maxU1.append([float(source_vel), 0])
-                
-            if all (np.abs(item[0] - float(source_vel)) >= 0.09 for item in self.maxU9):
-                self.maxU9.append([float(source_vel), 0])
-            
-            if all (np.abs(item[0] - float(source_vel)) >= 0.09 for item in self.avgMax):
-                self.avgMax.append([float(source_vel), 0]) 
-                
-        self.maxU1.sort(key=lambda tup: tup[0], reverse=True)
-        self.maxU9.sort(key=lambda tup: tup[0], reverse=True)
-        self.avgMax.sort(key=lambda tup: tup[0], reverse=True)
-              
+            max_amplitude_list_u1.append(max_amplitude_list_tmp_u1)
+            max_amplitude_list_u9.append(max_amplitude_list_tmp_u9)
+            max_amplitude_list_uavg.append(max_amplitude_list_tmp_uavg)
+        
+        max_apmlitudes_u1 = [np.max(value) for value  in max_amplitude_list_u1]
+        max_apmlitudes_u9 = [np.max(value) for value  in max_amplitude_list_u9]
+        max_apmlitudes_uavg = [np.max(value) for value  in max_amplitude_list_uavg]
+        
+        for max in range(0,len(max_apmlitudes_u1)):
+            max_apmlitudes_u1[max] = [self.source_velocities[max], max_apmlitudes_u1[max]]
+            max_apmlitudes_u9[max] = [self.source_velocities[max], max_apmlitudes_u9[max]]
+            max_apmlitudes_uavg[max] = [self.source_velocities[max], max_apmlitudes_uavg[max]]
+                        
         result[self.expername]["location"] = self.location
         result[self.expername]["Date"] = self.date
         result[self.expername]["Iteration_number"] = int(self.iteration_number)
                 
-        result[self.expername]["polarizationU1"] = self.maxU1
-        result[self.expername]["polarizationU9"] = self.maxU9
-        result[self.expername]["polarizationAVG"] = self.avgMax
+        result[self.expername]["polarizationU1"] =  max_apmlitudes_u1
+        result[self.expername]["polarizationU9"] = max_apmlitudes_u9
+        result[self.expername]["polarizationAVG"] = max_apmlitudes_uavg
                 
-        #result[self.expername][self.scanNumber]["index_for_polarizationU1"] =  self.maxu1_index
-        #result[self.expername][self.scanNumber]["index_for_polarizationU9"] =  self.maxu9_index
-        #result[self.expername][self.scanNumber]["index_for_polarizationAVG"] =  self.maxavg_index
-        
-        #result =  sorted(result, key = lambda i: result[i]['Iteration_number'])
         resultFile = open (self.resultFilePath +  resultFileName, "w")
         resultFile.write(json.dumps(result, indent=2))
         resultFile.close()
         
         totalResults = [self.xarray,  self.z1,  self.z2,  self.avg_y]
-        
         output_file_name = self.output + self.source + "_" +self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
-        print ("self.source ", self.source)
         output_file_name = output_file_name.replace(" ", "")
         np.savetxt(output_file_name, np.transpose(totalResults)) 
         
@@ -666,11 +634,12 @@ def main():
     cuts = [c.split(",") for c in  cuts]
     print ("source", source)
     source_velocities = config.get('velocities', source).replace(" ", "").split(",")
+    index_range_for_local_maxima = int(config.get('parameters', "index_range_for_local_maxima"))
     
     #Create App
     qApp = QApplication(sys.argv)
 
-    aw = Analyzer(dataFilesPath + datafile, resultFilePath, source_velocities, cuts, output)
+    aw = Analyzer(dataFilesPath + datafile, resultFilePath, source_velocities, cuts, output, index_range_for_local_maxima)
     aw.show()
     aw.showMaximized() 
     sys.exit(qApp.exec_())

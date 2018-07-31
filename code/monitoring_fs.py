@@ -119,7 +119,6 @@ class Monitoring(QWidget):
         plt.show()
 
     def plotMonitoring(self, resultDir, source_velocities, source):
-        velocities_range = 0.06
         result_list = list()
         velocitie_dict = {"u1":dict(), "u9":dict(), "avg":dict()}
         iteration_list = list()
@@ -169,19 +168,19 @@ class Monitoring(QWidget):
             
             for i in u1:
                 for vel in source_velocities:
-                    if float(vel) - velocities_range <= i[0] <= float(vel) + velocities_range:
+                    if float(vel) == float(i[0]):
                         velocitie_dict["u1"][vel].append(i[1]) 
             
             for j in u9:
                 for vel in source_velocities:
-                    if float(vel) - velocities_range <= j[0] <= float(vel) + velocities_range:
+                    if float(vel) == float(j[0]):
                         velocitie_dict["u9"][vel].append(j[1]) 
                         
             for k in avg:
                 for vel in source_velocities:
-                    if float(vel) - velocities_range <= k[0] <= float(vel) + velocities_range:
+                    if float(vel) == float(k[0]):
                         velocitie_dict["avg"][vel].append(k[1]) 
-                        
+                         
             label = "Station is " + location + "\n" + "Date is " + experiment["date"].strftime('%d %m %Y') + "\n " + "iteration number " + str(experiment["iteration_number"])
             labels2.append(label)
             
