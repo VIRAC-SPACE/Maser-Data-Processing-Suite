@@ -69,15 +69,42 @@ def indexies(array, value):
             indexs.append(i)
     return indexs
 
-def STON(array):
-    std = np.std(array) 
-    max = np.max(array)
+def STON(xarray, yarray, cuts):
+    cutsIndex = list()
+    cutsIndex.append(0)
+
+    for cut in cuts:
+        cutsIndex.append((np.abs(xarray-float(cut[0]))).argmin()) 
+        cutsIndex.append((np.abs(xarray-float(cut[1]))).argmin())
+            
+    cutsIndex.append(-1)
+        
+    y_array = list()
+     
+    i = 0
+    j = 1
+        
+    while i != len(cutsIndex):
+        y_array.append(yarray[cutsIndex[i] : cutsIndex[j]])
+        i = i + 2 
+        j = j + 2
+    
+    y = list()
+             
+    for p in y_array:
+        for p1 in p:
+            y.append(p1)
+        
+    y = np.array(y)
+    
+    std = np.std(y) 
+    max = np.max(yarray)
     
     ston = max/(std*3)
     return ston
 
 class Analyzer(QWidget):
-    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart):
+    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts):
         super().__init__()
        
         self.setWindowIcon(QIcon('viraclogo.png'))
@@ -109,6 +136,7 @@ class Analyzer(QWidget):
         self.Tcal = Tcal
         self.k = k
         self.fstart = fstart
+        self.cuts = cuts
         
         self.setWindowTitle("Analyze for " + self.source + " " + self.date)
         self.grid = QGridLayout()
@@ -348,10 +376,10 @@ class Analyzer(QWidget):
             
             self.grid.addWidget(self.plot_total_u1, 4, 0)
             self.grid.addWidget(self.plot_total_u9, 4, 1)
-            
-            ston_u1 = STON(total_u1)
-            ston_u9 = STON(total_u9)
-            stone_AVG = STON(((total_u1 + total_u9)/2))
+                
+            ston_u1 = STON(self.x, total_u1, self.cuts)
+            ston_u9 = STON(self.x, total_u9, self.cuts)
+            stone_AVG = STON(self.x, ((total_u1 + total_u9)/2), self.cuts)
             
             self.STON_list_u1.append(ston_u1)
             self.STON_list_u9.append(ston_u9)
@@ -434,9 +462,9 @@ class Analyzer(QWidget):
             totalResults_u1.append(total_u1)
             totalResults_u9.append(total_u9)
                 
-            ston_u1 = STON(total_u1)
-            ston_u9 = STON(total_u9)
-            stone_AVG = STON(((total_u1 + total_u9)/2))
+            ston_u1 = STON(self.x, total_u1, self.cuts)
+            ston_u9 = STON(self.x, total_u9, self.cuts)
+            stone_AVG = STON(self.x, ((total_u1 + total_u9)/2), self.cuts)
                 
             STON_list_u1.append(ston_u1)
             STON_list_u9.append(ston_u9)
@@ -625,6 +653,8 @@ def main():
     resultPath = config.get('paths', "resultFilePath")
     badPointRange =  config.getint('parameters', "badPointRange")
     coordinates = config.get('sources', source).replace(" ", "").split(",")
+    cuts = config.get('cuts', source).split(";")
+    cuts = [c.split(",") for c in  cuts]
     
     if args.manual:
         with open(prettyLogsPath + source + "_" + str(iteration_number) + "log.dat") as data_file:    
@@ -673,7 +703,7 @@ def main():
     #Create App
     qApp = QApplication(sys.argv)
 
-    aw = Analyzer(source, iteration_number, filtering, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart)
+    aw = Analyzer(source, iteration_number, filtering, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts)
     aw.show()
     sys.exit(qApp.exec_())
     
