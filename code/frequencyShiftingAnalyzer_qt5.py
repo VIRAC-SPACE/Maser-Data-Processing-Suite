@@ -104,7 +104,7 @@ def STON(xarray, yarray, cuts):
     return ston
 
 class Analyzer(QWidget):
-    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts):
+    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime):
         super().__init__()
        
         self.setWindowIcon(QIcon('viraclogo.png'))
@@ -137,6 +137,7 @@ class Analyzer(QWidget):
         self.k = k
         self.fstart = fstart
         self.cuts = cuts
+        self.firstScanStartTime = firstScanStartTime
         
         self.setWindowTitle("Analyze for " + self.source + " " + self.date)
         self.grid = QGridLayout()
@@ -620,7 +621,7 @@ class Analyzer(QWidget):
         self.grid.addWidget(self.plot_STON, 2, 0)
         
         totalResults = np.concatenate((velocitys_avg, y_u1_avg, y_u9_avg), axis=1)
-        output_file_name = self.dataFilesPath + self.source + "_" +self.date.replace(" ", "_") + "_" + self.logs["header"]["location"] + "_" + str(self.iteration_number) + ".dat"
+        output_file_name = self.dataFilesPath + self.source + "_" +self.date.replace(" ", "_") + "_" + self.firstScanStartTime + "_" + self.logs["header"]["location"] + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
         np.savetxt(output_file_name, totalResults)    
                 
@@ -667,6 +668,7 @@ def main():
     else:
         logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getLogs()
         f = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getAllfs_frequencys()
+        firstScanStartTime = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getFirstScanStartTime()
 
     f = [float(fi) for fi in f]
     f = list(set(f))
@@ -703,7 +705,7 @@ def main():
     #Create App
     qApp = QApplication(sys.argv)
 
-    aw = Analyzer(source, iteration_number, filtering, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts)
+    aw = Analyzer(source, iteration_number, filtering, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime)
     aw.show()
     sys.exit(qApp.exec_())
     

@@ -59,6 +59,7 @@ class Analyzer(QWidget):
         self.expername = datafile.split("/")[-1].split(".")[0]
         self.location = datafile.split("/")[-1].split(".")[0].split("_")[-2]
         self.date = "_".join([datafile.split("/")[-1].split(".")[0].split("_")[1], datafile.split("/")[-1].split(".")[0].split("_")[2], datafile.split("/")[-1].split(".")[0].split("_")[3]])
+        self.time = datafile.split("/")[-1].split(".")[0].split("_")[-3]
         self.iteration_number = datafile.split("/")[-1].split(".")[0].split("_")[-1]
         self.resultFilePath = resultFilePath
         self.source_velocities = source_velocities
@@ -593,6 +594,7 @@ class Analyzer(QWidget):
         result[self.expername]["location"] = self.location
         result[self.expername]["Date"] = self.date
         result[self.expername]["Iteration_number"] = int(self.iteration_number)
+        result[self.expername]["time"] = self.time
                 
         result[self.expername]["polarizationU1"] =  max_apmlitudes_u1
         result[self.expername]["polarizationU9"] = max_apmlitudes_u9

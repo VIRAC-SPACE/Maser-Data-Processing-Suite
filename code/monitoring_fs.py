@@ -60,7 +60,7 @@ class Monitoring(QWidget):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
         
-    def  chooseSource(self):
+    def chooseSource(self):
         self.setWindowTitle("Choose Source")
         
         self.chooseLabel = QLabel("Choose source")
@@ -148,9 +148,9 @@ class Monitoring(QWidget):
                 dates = date.split("_")
                 monthsNumber = dates[1]
                 dates[1] = months[monthsNumber]
-                date = " ".join(dates)
+                date = scanData["time"].replace(":", " ") + " " +  " ".join(dates) 
             
-                result = Result(location, datetime.datetime.strptime(date, '%d %m %Y'), amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number)
+                result = Result(location, datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number)
                 
                 result_list.append(dict(result))
               
@@ -206,7 +206,7 @@ class Monitoring(QWidget):
             lines.append(l3)
             
         graph.set_xticks(x)
-        graph.set_xticklabels([date.strftime("%d  %m %Y") for date in  date_list])
+        graph.set_xticklabels([date.strftime("%H %M %S %d %m %Y") for date in  date_list])
         
         plt.legend()
         

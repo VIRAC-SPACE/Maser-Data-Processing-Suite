@@ -308,6 +308,9 @@ class ExperimentLogReader():
     def getAllfs_frequencys(self):
         return self.fs_frequency_list
     
+    def getFirstScanStartTime(self):
+        return self.timeStarts[0]
+    
     def __del__(self):
         del self.scan_names
         del self.sources
