@@ -204,9 +204,8 @@ class Monitoring(QWidget):
             lines.append(l1)
             lines.append(l2)
             lines.append(l3)
-            
-        graph.set_xticks(x)
-        graph.set_xticklabels([date.strftime("%H %M %S %d %m %Y") for date in  date_list])
+        
+        plt.xticks(x, [date.strftime("%H %M %S %d %m %Y") for date in  date_list], rotation='30')
         
         plt.legend()
         
