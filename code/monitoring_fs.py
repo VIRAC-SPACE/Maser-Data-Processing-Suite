@@ -86,9 +86,9 @@ class Monitoring(QWidget):
         ind = event.ind
         index = [ind][0]
         polarization = thisline.get_label().split()[1]
-        date = xdata[index][0].strftime("%d  %m %Y").split()
-        month = datetime.date(1900, int(date[1]) , 1).strftime('%B')[0:3].title().replace("ū", "u").replace("i", "y").replace("k", "c")
-        date[1] = month
+        date = xdata[index][0].strftime("%H %M %S %d %m %Y").split()
+        month = datetime.date(1900, int(date[-2]) , 1).strftime('%B')[0:3].title().replace("ū", "u").replace("i", "y").replace("k", "c")
+        date[-2] = month
         date = "_".join(date)
         iteration = self.iteration_list[int(index)]
         location = self.location_list[int(index)]
