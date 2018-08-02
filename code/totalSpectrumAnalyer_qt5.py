@@ -110,7 +110,7 @@ class Analyzer(QWidget):
             self.setLayout(self.grid)
             self.grid.setSpacing(10)
             
-            self.plotInitData()
+            self.plotShortSpectr()
             
     def center(self):
         qr = self.frameGeometry()
@@ -287,78 +287,10 @@ class Analyzer(QWidget):
         self.previousN = value
     
     def plotShortSpectr(self):
-        self.setWindowTitle("Short Specter")
-        self.m = self.m_slider.value()
-        self.n = self.n_slider.value()
+        self.setWindowTitle("Spectrum")
         
-        if self.m < 0:
-            self.m = 0
-        
-        self.plot_1.hide()
-        self.plot_2.close()
-        self.plot_1.hide()
-        self.plot_2.close()
-        self.grid.removeWidget(self.plot_1)
-        self.grid.removeWidget(self.plot_2)
-        self.plot_1.removePolt()
-        self.plot_2.removePolt()
-        del self.plot_1
-        del self.plot_2
-        
-        self.m_slider.hide()
-        self.m_slider.close()
-        self.n_slider.hide()
-        self.n_slider.close()
-        self.grid.removeWidget(self.m_slider)
-        self.grid.removeWidget(self.n_slider)
-        del self.m_slider
-        del self.n_slider
-        
-        self.plotSmoothDataButton.hide()
-        self.plotSmoothDataButton.close()
-        self.grid.removeWidget(self.plotSmoothDataButton)
-        del self.plotSmoothDataButton
-        
-        self.m_lcd.hide()
-        self.n_lcd.hide()
-        self.m_lcd.close()
-        self.n_lcd.close()
-        self.grid.removeWidget(self.m_lcd)
-        self.grid.removeWidget(self.n_lcd)
-        del self.m_lcd
-        del self.n_lcd
-        
-        self.mLabel.hide()
-        self.mLabel.close()
-        self.grid.removeWidget(self.mLabel)
-        del self.mLabel
-        
-        self.nLabel.hide()
-        self.nLabel.close()
-        self.grid.removeWidget(self.nLabel)
-        del self.nLabel
-        
-        while len(self.infoSet) != 0:
-            info_item = self.infoSet.pop()
-            info_item.hide()
-            info_item.close()
-            self.grid.removeWidget(info_item)
-            del info_item 
-            
-        while len(self.infoSet_2) != 0:   
-            info_item = self.infoSet_2.pop()
-            info_item.hide()
-            info_item.close()
-            self.grid.removeWidget(info_item)
-            del info_item 
-            
-        del self.infoSet
-        del self.infoSet_2
-        
-        self.changeDataButton.hide()
-        self.changeDataButton.close()
-        self.grid.removeWidget(self.changeDataButton)
-        del self.changeDataButton
+        self.m = 0
+        self.n = self.dataPoints
         
         self.xarray = self.xarray[self.m:self.n]
         self.y1array = self.y1array[self.m:self.n]
@@ -593,8 +525,8 @@ class Analyzer(QWidget):
             max_apmlitudes_u9[max] = [self.source_velocities[max], max_apmlitudes_u9[max]]
             max_apmlitudes_uavg[max] = [self.source_velocities[max], max_apmlitudes_uavg[max]]
             
-        time = self.time + self.date.replace(" ", "_")
-        time=datetime.strptime(time, "%H:%M:%S%d_%b_%Y").isoformat()
+        time = self.time + self.date.replace(" ", "_")  
+        time=datetime.strptime(time, "%H:%M:%S%d_%b_%Y" ).isoformat()
         t=Time(time, format='isot')
         MJD = t.mjd
                         
