@@ -72,6 +72,8 @@ class Analyzer(QWidget):
         self.infoSet = set()
         self.infoSet_2 = list()
         
+        self.changeParms = False
+        
         try:
             data = np.fromfile(datafile, dtype="float64", count=-1, sep=" ") .reshape((file_len(datafile),3))
         
@@ -141,7 +143,19 @@ class Analyzer(QWidget):
         self.plot_4.canvasShow()
                 
     def plotInitData(self):
-        self.setWindowTitle("Info")
+        self.setWindowTitle("Change params")
+        
+        self.changeParms = True
+        
+        self.changeParams.hide()
+        self.changeParams.close()
+        self.grid.removeWidget(self.changeParams)
+        del self.changeParams
+        
+        self.plotPoly.hide()
+        self.plotPoly.close()
+        self.grid.removeWidget(self.plotPoly)
+        del self.plotPoly
         
         self.changeDataButton = QPushButton("Change Data", self)
         self.changeDataButton.clicked.connect(self.changeData)
@@ -289,9 +303,86 @@ class Analyzer(QWidget):
     def plotShortSpectr(self):
         self.setWindowTitle("Spectrum")
         
-        self.m = 0
-        self.n = self.dataPoints
-        
+        if self.changeParms:
+            self.m = self.m_slider.value()
+            self.n = self.n_slider.value()
+            
+            self.plot_1.hide()
+            self.plot_2.close()
+            self.plot_1.hide()
+            self.plot_2.close()
+            self.grid.removeWidget(self.plot_1)
+            self.grid.removeWidget(self.plot_2)
+            self.plot_1.removePolt()
+            self.plot_2.removePolt()
+            del self.plot_1
+            del self.plot_2
+            
+            self.m_slider.hide()
+            self.m_slider.close()
+            self.n_slider.hide()
+            self.n_slider.close()
+            self.grid.removeWidget(self.m_slider)
+            self.grid.removeWidget(self.n_slider)
+            del self.m_slider
+            del self.n_slider
+            
+            self.plotSmoothDataButton.hide()
+            self.plotSmoothDataButton.close()
+            self.grid.removeWidget(self.plotSmoothDataButton)
+            del self.plotSmoothDataButton
+            
+            self.m_lcd.hide()
+            self.n_lcd.hide()
+            self.m_lcd.close()
+            self.n_lcd.close()
+            self.grid.removeWidget(self.m_lcd)
+            self.grid.removeWidget(self.n_lcd)
+            del self.m_lcd
+            del self.n_lcd
+            
+            self.mLabel.hide()
+            self.mLabel.close()
+            self.grid.removeWidget(self.mLabel)
+            del self.mLabel
+            
+            self.nLabel.hide()
+            self.nLabel.close()
+            self.grid.removeWidget(self.nLabel)
+            del self.nLabel
+            
+            while len(self.infoSet) != 0:
+                info_item = self.infoSet.pop()
+                info_item.hide()
+                info_item.close()
+                self.grid.removeWidget(info_item)
+                del info_item 
+                
+            while len(self.infoSet_2) != 0:   
+                info_item = self.infoSet_2.pop()
+                info_item.hide()
+                info_item.close()
+                self.grid.removeWidget(info_item)
+                del info_item 
+                
+            del self.infoSet
+            del self.infoSet_2
+            
+            self.changeDataButton.hide()
+            self.changeDataButton.close()
+            self.grid.removeWidget(self.changeDataButton)
+            del self.changeDataButton
+                    
+            if self.m < 0:
+                self.m = 0
+        else:
+            self.m = 0
+            self.n = self.dataPoints
+            self.changeParams = QPushButton("Change Params", self)
+            self.grid.addWidget(self.changeParams, 4, 3)
+            self.changeParams.clicked.connect(self.plotInitData)
+            self.changeParams.setStyleSheet("background-color: blue")
+            
         self.xarray = self.xarray[self.m:self.n]
         self.y1array = self.y1array[self.m:self.n]
         self.y2array = self.y2array[self.m:self.n]
@@ -315,6 +406,12 @@ class Analyzer(QWidget):
         self.plotPoly.setStyleSheet("background-color: green")
         
     def removeCuts(self):
+        if not self.changeParms:
+            self.changeParams.hide()
+            self.changeParams.close()
+            self.grid.removeWidget(self.changeParams)
+            del self.changeParams
+        
         cutsIndex = list()
         cutsIndex.append(0)
 
