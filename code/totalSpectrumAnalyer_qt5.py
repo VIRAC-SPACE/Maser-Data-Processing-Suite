@@ -622,16 +622,22 @@ class Analyzer(QWidget):
             max_apmlitudes_u9[max] = [self.source_velocities[max], max_apmlitudes_u9[max]]
             max_apmlitudes_uavg[max] = [self.source_velocities[max], max_apmlitudes_uavg[max]]
             
-        time = self.time + self.date.replace(" ", "_")  
-        time=datetime.strptime(time, "%H:%M:%S%d_%b_%Y" ).isoformat()
-        t=Time(time, format='isot')
-        MJD = t.mjd
-                        
+        time = self.time + self.date.replace(" ", "_")
+        
+        try:
+            time=datetime.strptime(time, "%H:%M:%S%d_%b_%Y" ).isoformat()
+            t=Time(time, format='isot')
+            MJD = t.mjd
+            result[self.expername]["modifiedJulianDays"] = MJD
+        except ValueError as e:
+            print ("Cannot crate modified Julian Days",  e)
+        except:
+            print("Unexpected error:", sys.exc_info()[0])
+            
         result[self.expername]["location"] = self.location
         result[self.expername]["Date"] = self.date
         result[self.expername]["Iteration_number"] = int(self.iteration_number)
         result[self.expername]["time"] = self.time
-        result[self.expername]["modifiedJulianDays"] = MJD
                 
         result[self.expername]["polarizationU1"] =  max_apmlitudes_u1
         result[self.expername]["polarizationU9"] = max_apmlitudes_u9
