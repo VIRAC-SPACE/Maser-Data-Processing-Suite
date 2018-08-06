@@ -532,13 +532,25 @@ class Analyzer(QWidget):
     
         self.z1 = convolve(self.localMax_Array_u1, g1, boundary='extend')
         self.z2 = convolve(self.localMax_Array_u9, g2, boundary='extend')
-         
+        
+        three_sigma_u1 = 3 * np.std(self.polyu1)
+        three_sigma_u9 = 3 * np.std(self.polyu9)
+        polyuAVG = (self.polyu1 + self.polyu9)/2
+        self.avg_y = (self.z1 + self.z2) / 2
+        three_sigma_uAVG = 3 * np.std(polyuAVG)
+        
+        smart_tres_u1=2.5*three_sigma_u1/np.max(self.z1)
+        smart_tres_u9=2.5*three_sigma_u9/np.max(self.z2)
+        smart_tres_uAVG=2.5*three_sigma_uAVG/np.max(self.avg_y)
+        
         thres=0.3
            
         #indexsu apreikinasana
-        indexes_for_ceb = peakutils.indexes(self.z1, thres=thres, min_dist=10)
-        indexes_for_ceb2 = peakutils.indexes(self.z2, thres=thres, min_dist=10)
+        indexes_for_ceb = peakutils.indexes(self.z1, thres=smart_tres_u1, min_dist=3)
+        indexes_for_ceb2 = peakutils.indexes(self.z2, thres=smart_tres_u9, min_dist=3)
+        indexes_for_avg = peakutils.indexes(self.avg_y, thres=smart_tres_uAVG, min_dist=3)
         
+        #u1
         self.plot_7 = Plot()
         self.plot_7.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0))
         self.plot_7.plot(self.xarray, self.z1, 'b', label='Signal - polynomial', markersize=1)
@@ -552,11 +564,7 @@ class Analyzer(QWidget):
         self.plot_8.plot(self.xarray[indexes_for_ceb2], self.z2[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2)
         self.plot_8.annotations(self.xarray[indexes_for_ceb2], self.z2[indexes_for_ceb2])
         
-        #mid plot
-        self.avg_y = (self.z1 + self.z2) / 2
-        
-        indexes_for_avg = peakutils.indexes(self.avg_y, thres=thres, min_dist=10)
-        
+        #uAVG
         self.plot_9 = Plot()
         self.plot_9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Average Polarization", (1, 2))
         self.plot_9.plot(self.xarray, self.avg_y, 'b', label='Signal - polynomial', markersize=1)
