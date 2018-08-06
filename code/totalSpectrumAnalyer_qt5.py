@@ -632,7 +632,7 @@ class Analyzer(QWidget):
         except ValueError as e:
             print ("Cannot crate modified Julian Days",  e)
         except:
-            print("Unexpected error:", sys.exc_info()[0])
+            print("Unexpected error:", sys.exc_info()[0])                                       
             
         result[self.expername]["location"] = self.location
         result[self.expername]["Date"] = self.date

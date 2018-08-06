@@ -120,7 +120,9 @@ def main():
     except IndexError as e:
         print ("Index Error",  e)
         sys.exit(1)
-            
+        
+    except ValueError as e:
+            print ("Cannot crate modified Julian Days",  e)   
     except:
         print("Unexpected error:", sys.exc_info()[0])
         sys.exit(1)
