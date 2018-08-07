@@ -83,9 +83,11 @@ def main():
     
     # Create processed observation list
     for experiment in result:
-        if experiment.split("_")[-1]  in iterations:
+        if experiment.split("_")[-1]  in iterations and experiment.split("_")[-1] not in processed_iteration:
             processed_iteration.append(experiment.split("_")[-1])
             
+    
+    processed_iteration.sort(key=int, reverse=False)        
     print ("processed_iteration", processed_iteration)
     
     try:
