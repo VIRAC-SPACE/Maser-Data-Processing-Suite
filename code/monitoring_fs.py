@@ -54,6 +54,8 @@ class Monitoring(QWidget):
         
         self.chooseSource()
         
+        self.new_spectre = True
+        
     def center(self):
         qr = self.frameGeometry()
         cp = QDesktopWidget().availableGeometry().center()
@@ -79,7 +81,7 @@ class Monitoring(QWidget):
         if e.key() == Qt.Key_Return:
             if len (self.sourceInput.text()) > 1:
                 self.plot()
-            
+                    
     def chooseSpectrum(self, event):
         thisline = event.artist
         xdata = thisline.get_xdata()
@@ -111,12 +113,22 @@ class Monitoring(QWidget):
         x = data[:, [0]]
         y = data[:, [amplitude_colon]]
         
-        fig = plt.figure("spectrum  for " + plot_name + " Polarization " + polarization)
-        graph = fig.add_subplot(111)
+        #fig = plt.figure("spectrum  for " + plot_name + " Polarization " + polarization)
+        #graph = fig.add_subplot(111)
         
-        graph.plot(x,y)
+        if self.new_spectre:
+            self.fig_spectre = plt.figure()
+            self.graph__spectre = self.fig_spectre.add_subplot(111)
+            self.new_spectre = False
+        
+        self.graph__spectre.plot(x,y, label=plot_name)
+        self.graph__spectre.legend()
         
         plt.show()
+        
+    def newSpectrum(self, event):
+        if event.key == "shift":
+            self.new_spectre = True
 
     def plotMonitoring(self, resultDir, source_velocities, source):
         result_list = list()
@@ -226,7 +238,8 @@ class Monitoring(QWidget):
             
         check.on_clicked(func)
         
-        cid = fig.canvas.mpl_connect('pick_event', self.chooseSpectrum)
+        fig.canvas.mpl_connect('pick_event', self.chooseSpectrum)
+        fig.canvas.mpl_connect('key_press_event', self.newSpectrum)
        
         plt.show()
         
