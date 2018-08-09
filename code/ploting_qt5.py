@@ -1,8 +1,6 @@
 from __future__ import unicode_literals
 import matplotlib
-
 matplotlib.use('Qt5Agg')
-from PyQt5 import QtWidgets
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.backends.backend_qt5agg as qt5agg
 from matplotlib.widgets import Slider
@@ -11,6 +9,8 @@ from matplotlib import rcParams
 rcParams['font.family'] = 'sans-serif'
 rcParams['font.sans-serif'] = ['Time New Roman']
 rcParams['font.size'] = 12
+import mplcursors
+from PyQt5 import QtWidgets
 
 class Plot(FigureCanvas):
     
@@ -23,8 +23,9 @@ class Plot(FigureCanvas):
         FigureCanvas.updateGeometry(self)
     
     def plot(self, x, y, line, **options):
-        self.graph.plot(x,y, line, **options)
+        line = self.graph.plot(x,y, line, **options)
         self.graph.legend()
+        return line
         
     def creatPlot(self, grid, x_label, y_label, title,toolbarpos):
         self.graph = self.fig.add_subplot(111)
@@ -45,10 +46,24 @@ class Plot(FigureCanvas):
         self.graph.set_xlabel(x_label)
         self.graph.set_ylabel(y_label)
         
+    def get_label(self):
+        return self.graph.get_label()
+    
+    def get_visible(self):
+        return self.graph.get_visible()
+        
+    def setXtics(self, x, y, rotation, **options):
+        self.graph.set_xticks(x, y, **options)
+        self.graph.set_xticklabels(x, rotation=rotation, **options)
+       
     def annotations(self, xvalues, yvalues):
         ax = self.figure.add_subplot(111)
         for xy in zip(xvalues, yvalues):                        
             ax.annotate('(%.2f, %.1f)' % xy, xy=xy, textcoords='data')
+            
+    def addCursor(self, labels):
+        cursor =  mplcursors.cursor(self.graph, hover=True, highlight=True)
+        cursor.connect("add", lambda sel: sel.annotation.set_text(labels[sel.target.index]))
             
     def annotation(self, xvalue, yvalue, text):
         self.ax = self.figure.add_subplot(111)

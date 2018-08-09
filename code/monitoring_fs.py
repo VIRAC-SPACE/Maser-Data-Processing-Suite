@@ -1,6 +1,9 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
 import sys
+import matplotlib
+
+matplotlib.use('Qt5Agg')
 import matplotlib.pyplot  as plt
 from matplotlib.widgets import CheckButtons
 import mplcursors
@@ -15,7 +18,7 @@ from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QL
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 
-#from ploting_qt5 import  Plot
+from ploting_qt5 import  Plot
 from result import  Result
 
 def parseArguments():
@@ -40,6 +43,19 @@ def file_len(fname):
             pass
     return i + 1
 
+class Monitoring_View(QWidget):
+        def __init__(self):
+            super().__init__()
+            self.grid = QGridLayout()
+            self.setLayout(self.grid)
+            self.grid.setSpacing(10)
+            
+        def _addWidget(self, widget, row, collon):
+            self.grid.addWidget(widget, row, collon)
+            
+        def getGrid(self):
+            return self.grid
+            
 class Monitoring(QWidget):
     def __init__(self, configFilePath):
         super().__init__()
@@ -206,28 +222,30 @@ class Monitoring(QWidget):
         
         lines = list()
         
-        fig = plt.figure("Monitoring for " + source)
-        graph = fig.add_subplot(111)
+        self.Monitoring_View = Monitoring_View()
+        self.monitoringPlot = Plot()
+        self.monitoringPlot.creatPlot(self.Monitoring_View.getGrid(), "Time", "Amplitude", "Monitoring", (1,0))
+        
         for i in range(0, len(source_velocities)):
-            l1, = graph.plot(x, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + source_velocities[i], visible=False, picker=False)
-            l2, = graph.plot(x, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+"g", label="polarization U9 " + "Velocity " + source_velocities[i], visible=False, picker=False)
-            l3, = graph.plot(x, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+"b", label="polarization AVG " + "Velocity " + source_velocities[i], visible=True, picker=5)
+            l1, = self.monitoringPlot.plot(x, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + source_velocities[i], visible=False, picker=False)
+            l2, = self.monitoringPlot.plot(x, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+"g", label="polarization U9 " + "Velocity " + source_velocities[i], visible=False, picker=False)
+            l3, = self.monitoringPlot.plot(x, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+"b", label="polarization AVG " + "Velocity " + source_velocities[i], visible=True, picker=5)
             
             lines.append(l1)
             lines.append(l2)
             lines.append(l3)
         
-        plt.xticks(x, [date.strftime("%H %M %S %d %m %Y") for date in  date_list], rotation='30')
+        self.Monitoring_View._addWidget(self.monitoringPlot, 0, 0)
+        self.monitoringPlot.setXtics(x, [date.strftime("%H %M %S %d %m %Y") for date in  date_list], '30')
         
-        plt.legend()
-        
-        cursor =  mplcursors.cursor(hover=True, highlight=True)
-        cursor.connect("add", lambda sel: sel.annotation.set_text(labels2[sel.target.index]))
-        
-        labels = list()
+        self.monitoringPlot.addCursor(labels2)
+           
         labels = [str(line.get_label()) for line in lines]
         visibility = [line.get_visible() for line in lines]
         
+        print (labels, visibility)
+        
+        '''
         check = CheckButtons(plt.axes([0.8, 0.1, 0.1, 0.7]),  labels, visibility)
         
         def func(label):
@@ -242,6 +260,8 @@ class Monitoring(QWidget):
         fig.canvas.mpl_connect('key_press_event', self.newSpectrum)
        
         plt.show()
+        '''
+        self.Monitoring_View.show()
         
     def plot(self):
         #Creating config parametrs
@@ -266,9 +286,7 @@ def main():
     sys.exit(qApp.exec_())
     
     sys.exit(0)
-    
-    sys.exit(0)
-    
+        
 if __name__=="__main__":
     main()
     
