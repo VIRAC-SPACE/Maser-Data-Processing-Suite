@@ -14,7 +14,7 @@ import configparser
 from operator import itemgetter
 import numpy as np
 
-from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QLabel, QLineEdit, QDesktopWidget)
+from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QLabel, QLineEdit, QDesktopWidget, QComboBox)
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 
@@ -50,11 +50,31 @@ class Monitoring_View(QWidget):
             self.setLayout(self.grid)
             self.grid.setSpacing(10)
             
+            comboBox = QComboBox(self)
+            comboBox.addItem("polarization U1")
+            comboBox.addItem("polarization U9")
+            comboBox.addItem("polarization AVG")
+            self.grid.addWidget(comboBox, 1, 1)
+            comboBox.activated[str].connect(self.getPolarization)
+            
+            self.polarization = "polarization AVG"
+            
         def _addWidget(self, widget, row, collon):
             self.grid.addWidget(widget, row, collon)
             
         def getGrid(self):
             return self.grid
+        
+        def setPolarization(self, polarization):
+            self.polarization = polarization
+        
+        def getIndexiesOfPolarization(self, labels):
+            for label in labels:
+                if self.polarization in label:
+                    print (label)
+        
+        def getPolarization(self, polarization):
+            self.setPolarization(polarization)
             
 class Monitoring(QWidget):
     def __init__(self, configFilePath):
@@ -128,9 +148,6 @@ class Monitoring(QWidget):
         
         x = data[:, [0]]
         y = data[:, [amplitude_colon]]
-        
-        #fig = plt.figure("spectrum  for " + plot_name + " Polarization " + polarization)
-        #graph = fig.add_subplot(111)
         
         if self.new_spectre:
             self.fig_spectre = plt.figure()
@@ -243,7 +260,7 @@ class Monitoring(QWidget):
         labels = [str(line.get_label()) for line in lines]
         visibility = [line.get_visible() for line in lines]
         
-        print (labels, visibility)
+        self.Monitoring_View.getIndexiesOfPolarization(labels)
         
         '''
         check = CheckButtons(plt.axes([0.8, 0.1, 0.1, 0.7]),  labels, visibility)
