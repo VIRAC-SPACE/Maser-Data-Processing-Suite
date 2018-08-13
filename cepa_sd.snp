@@ -1,0 +1,151 @@
+"Spectral line frequency switching schedule for cepa with DBBC and Spectrum Analyzer
+scan_name=dummy
+antenna=t cepa
+antenna=e 2 2
+ready_disk
+"Rest freq = 6668.518, IF0 = 568.518, BW = 2, Vel = 0 
+setup01
+sy=exec python /usr2/oper/bin/sa/sa_setup.py -f 568.518 -s 2
+"Modify this time for at least 5min in the future:
+!2018.073.13:18:00
+rxc=sg=*f*r*e*q 6099.5 *m*hz 
+"Turning AGC on:
+setup01
+!+5s
+"Tsys cal. & Turning AGC off
+preob 
+scan_name=no0001,cepa,ib
+!+1s 
+disk_record=on
+disk_record
+data_valid=on
+sy=exec python /usr2/oper/bin/sa/sa_start.py
+midob
+"Integration on source 30 seconds
+!+30s 
+data_valid=off
+disk_record=off
+"Writing data to file cepa_0001.DAT 
+sy=exec python /usr2/oper/bin/sa/sa_get.py -o maser_sa_test/cepa_0001.DAT
+postob
+!+1s 
+antenna=t cepa
+checkmk5
+rxc=sg=*f*r*e*q 6100.5 *m*hz 
+"Turning AGC on:
+setup01
+!+5s
+"Tsys cal. & Turning AGC off
+preob 
+scan_name=no0002,cepa,ib
+!+1s 
+disk_record=on
+disk_record
+data_valid=on
+sy=exec python /usr2/oper/bin/sa/sa_start.py
+midob
+"Integration on source 30 seconds
+!+30s 
+data_valid=off
+disk_record=off
+"Writing data to file cepa_0002.DAT 
+sy=exec python /usr2/oper/bin/sa/sa_get.py -o maser_sa_test/cepa_0002.DAT
+postob
+!+1s 
+antenna=t cepa
+checkmk5
+rxc=sg=*f*r*e*q 6099.5 *m*hz 
+"Turning AGC on:
+setup01
+!+5s
+"Tsys cal. & Turning AGC off
+preob 
+scan_name=no0003,cepa,ib
+!+1s 
+disk_record=on
+disk_record
+data_valid=on
+sy=exec python /usr2/oper/bin/sa/sa_start.py
+midob
+"Integration on source 30 seconds
+!+30s 
+data_valid=off
+disk_record=off
+"Writing data to file cepa_0003.DAT 
+sy=exec python /usr2/oper/bin/sa/sa_get.py -o maser_sa_test/cepa_0003.DAT
+postob
+!+1s 
+antenna=t cepa
+checkmk5
+rxc=sg=*f*r*e*q 6100.5 *m*hz 
+"Turning AGC on:
+setup01
+!+5s
+"Tsys cal. & Turning AGC off
+preob 
+scan_name=no0004,cepa,ib
+!+1s 
+disk_record=on
+disk_record
+data_valid=on
+sy=exec python /usr2/oper/bin/sa/sa_start.py
+midob
+"Integration on source 30 seconds
+!+30s 
+data_valid=off
+disk_record=off
+"Writing data to file cepa_0004.DAT 
+sy=exec python /usr2/oper/bin/sa/sa_get.py -o maser_sa_test/cepa_0004.DAT
+postob
+!+1s 
+antenna=t cepa
+checkmk5
+rxc=sg=*f*r*e*q 6099.5 *m*hz 
+"Turning AGC on:
+setup01
+!+5s
+"Tsys cal. & Turning AGC off
+preob 
+scan_name=no0005,cepa,ib
+!+1s 
+disk_record=on
+disk_record
+data_valid=on
+sy=exec python /usr2/oper/bin/sa/sa_start.py
+midob
+"Integration on source 30 seconds
+!+30s 
+data_valid=off
+disk_record=off
+"Writing data to file cepa_0005.DAT 
+sy=exec python /usr2/oper/bin/sa/sa_get.py -o maser_sa_test/cepa_0005.DAT
+postob
+!+1s 
+antenna=t cepa
+checkmk5
+rxc=sg=*f*r*e*q 6100.5 *m*hz 
+"Turning AGC on:
+setup01
+!+5s
+"Tsys cal. & Turning AGC off
+preob 
+scan_name=no0006,cepa,ib
+!+1s 
+disk_record=on
+disk_record
+data_valid=on
+sy=exec python /usr2/oper/bin/sa/sa_start.py
+midob
+"Integration on source 30 seconds
+!+30s 
+data_valid=off
+disk_record=off
+"Writing data to file cepa_0006.DAT 
+sy=exec python /usr2/oper/bin/sa/sa_get.py -o maser_sa_test/cepa_0006.DAT
+postob
+!+1s 
+antenna=t cepa
+checkmk5
+rxc=fg=6100.0 
+rxc=fg?
+sched_end 
