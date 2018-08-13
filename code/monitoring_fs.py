@@ -5,8 +5,6 @@ import matplotlib
 
 matplotlib.use('Qt5Agg')
 import matplotlib.pyplot  as plt
-from matplotlib.widgets import CheckButtons
-import mplcursors
 import datetime
 import json
 import argparse
@@ -51,13 +49,16 @@ class Monitoring_View(QWidget):
             self.grid.setSpacing(10)
             
             comboBox = QComboBox(self)
+            comboBox.addItem("polarization AVG")
             comboBox.addItem("polarization U1")
             comboBox.addItem("polarization U9")
-            comboBox.addItem("polarization AVG")
+            comboBox.addItem("ALL")
             self.grid.addWidget(comboBox, 1, 1)
             comboBox.activated[str].connect(self.getPolarization)
             
             self.polarization = "polarization AVG"
+            self.labels = list()
+            self.lines = list()
             
         def _addWidget(self, widget, row, collon):
             self.grid.addWidget(widget, row, collon)
@@ -67,14 +68,34 @@ class Monitoring_View(QWidget):
         
         def setPolarization(self, polarization):
             self.polarization = polarization
+            
+        def setLabels(self, labels):
+            self.labels = labels
+             
+        def setLines(self, lines):
+            self.lines = lines
         
         def getIndexiesOfPolarization(self, labels):
-            for label in labels:
-                if self.polarization in label:
-                    print (label)
-        
+            if self.polarization == "ALL":
+                all(i.set_visible(True) for i in self.lines)
+                all(i.set_picker(5) for i in self.lines)
+                
+            else:
+            
+                for label in labels:
+                    if self.polarization in label:
+                        index = labels.index(label)
+                        self.lines[index].set_visible(True)
+                        self.lines[index].set_picker(5)
+                    elif self.polarization not in label:
+                        index = labels.index(label)
+                        self.lines[index].set_visible(False)
+                        self.lines[index].set_picker(False)
+                        
         def getPolarization(self, polarization):
             self.setPolarization(polarization)
+            self.getIndexiesOfPolarization(self.labels)
+            
             
 class Monitoring(QWidget):
     def __init__(self, configFilePath):
@@ -260,19 +281,11 @@ class Monitoring(QWidget):
         labels = [str(line.get_label()) for line in lines]
         visibility = [line.get_visible() for line in lines]
         
-        self.Monitoring_View.getIndexiesOfPolarization(labels)
+        self.Monitoring_View.setLabels(labels)
+        #self.Monitoring_View.setVisibilitys(visibility)
+        self.Monitoring_View.setLines(lines)
         
         '''
-        check = CheckButtons(plt.axes([0.8, 0.1, 0.1, 0.7]),  labels, visibility)
-        
-        def func(label):
-            index = labels.index(label)
-            lines[index].set_visible(not lines[index].get_visible())
-            lines[index].set_picker = 5
-            plt.draw()
-            
-        check.on_clicked(func)
-        
         fig.canvas.mpl_connect('pick_event', self.chooseSpectrum)
         fig.canvas.mpl_connect('key_press_event', self.newSpectrum)
        
