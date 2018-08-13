@@ -8,7 +8,7 @@ from matplotlib.figure import Figure
 from matplotlib import rcParams
 rcParams['font.family'] = 'sans-serif'
 rcParams['font.sans-serif'] = ['Time New Roman']
-rcParams['font.size'] = 12
+rcParams['font.size'] = 10
 import mplcursors
 from PyQt5 import QtWidgets
 
@@ -77,10 +77,16 @@ class Plot(FigureCanvas):
         FigureCanvas.draw(self)
     
     def addPickEvent(self, callback):
-        self.cid = FigureCanvas.mpl_connect(self, 'pick_event', callback)
+        self.cidPick = FigureCanvas.mpl_connect(self, 'pick_event', callback)
     
     def removePickEvent(self):
-        FigureCanvas.mpl_disconnect(self, self.cid)
+        FigureCanvas.mpl_disconnect(self, self.cidPick)
+        
+    def addKeyPressEvent(self, callback):
+        self.cidKeyPress = FigureCanvas.mpl_connect(self, 'key_press_event', callback)
+    
+    def removeKeyPressEvent(self):
+        FigureCanvas.mpl_disconnect(self, self.cidKeyPress)
         
     def addSecondAxis(self, axiss, label, start, stop, step):
         self.second_x_axis = self.graph.twiny()
@@ -102,7 +108,6 @@ class Plot(FigureCanvas):
         self.toolbar.hide()
         self.toolbar.close()
         self.toolbar.destroy()
-        #self.canvas.destroy()
         
     def __del__(self):
         del self.fig

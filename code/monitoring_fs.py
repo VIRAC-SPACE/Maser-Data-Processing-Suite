@@ -42,7 +42,7 @@ def file_len(fname):
     return i + 1
 
 class Monitoring_View(QWidget):
-        def __init__(self):
+        def __init__(self, iteration_list, location_list, source, output_path):
             super().__init__()
             self.grid = QGridLayout()
             self.setLayout(self.grid)
@@ -59,6 +59,12 @@ class Monitoring_View(QWidget):
             self.polarization = "polarization AVG"
             self.labels = list()
             self.lines = list()
+            self.iteration_list = iteration_list
+            self.location_list = location_list
+            self.source = source
+            self.output_path = output_path
+            self.new_spectre = True
+            self.spectrumSet = set()
             
         def _addWidget(self, widget, row, collon):
             self.grid.addWidget(widget, row, collon)
@@ -96,6 +102,65 @@ class Monitoring_View(QWidget):
             self.setPolarization(polarization)
             self.getIndexiesOfPolarization(self.labels)
             
+        def keyPressEvent(self, e):
+            if e.key() == Qt.Key_Shift:
+                self.new_spectre = True
+                
+        def chooseSpectrum(self, event):
+            thisline = event.artist
+            xdata = thisline.get_xdata()
+            ind = event.ind
+            index = [ind][0]
+            polarization = thisline.get_label().split()[1]
+            date = xdata[index][0].strftime("%H %M %S %d %m %Y").split()
+            month = datetime.date(1900, int(date[-2]) , 1).strftime('%B')[0:3].title().replace("ū", "u").replace("i", "y").replace("k", "c")
+            date[-2] = month
+            date = "_".join(date)
+            iteration = self.iteration_list[int(index)]
+            location = self.location_list[int(index)]
+            spectraFileName = self.source + "_" + date + "_" + location + "_"  + str(iteration) + ".dat"
+            self.plotSpecter(spectraFileName, polarization)
+        
+        def plotSpecter(self, spectraFileName, polarization):
+            if polarization == "U1":
+                amplitude_colon = 1
+            elif polarization == "U9":
+                amplitude_colon = 2
+            elif polarization == "AVG":
+                amplitude_colon = 3
+                
+            spectraFileName = self.output_path + spectraFileName
+            
+            data = np.fromfile(spectraFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(spectraFileName),4))
+            plot_name =  " ".join(spectraFileName.split("/")[-1].split("_")[1:-2])
+            
+            x = data[:, [0]]
+            y = data[:, [amplitude_colon]]
+            
+            if self.new_spectre:
+                self.Spectre_View = Spectre_View()
+                self.spectrumSet.add(self.Spectre_View)
+                self.spectrPlot = Plot()
+                self.spectrPlot.creatPlot(self.Spectre_View.getGrid(), "Velocity (km sec$^{-1}$)", "Flux density (Jy)", "Spectrum", (1,0))
+                self.Spectre_View._addWidget(self.spectrPlot, 0, 0)
+                self.Spectre_View.show()
+                self.new_spectre = False
+            
+            self.spectrPlot.plot(x,y, "-", label=plot_name)
+            self.spectrPlot.canvasShow()
+            
+class Spectre_View(QWidget):
+        def __init__(self):
+            super().__init__()
+            self.grid = QGridLayout()
+            self.setLayout(self.grid)
+            self.grid.setSpacing(10)
+            
+        def _addWidget(self, widget, row, collon):
+            self.grid.addWidget(widget, row, collon)
+            
+        def getGrid(self):
+            return self.grid         
             
 class Monitoring(QWidget):
     def __init__(self, configFilePath):
@@ -134,7 +199,6 @@ class Monitoring(QWidget):
         self.grid.addWidget(self.chooseSource, 1, 1)
         
     def keyPressEvent(self, e):
-        
         if e.key() == Qt.Key_Return:
             if len (self.sourceInput.text()) > 1:
                 self.plot()
@@ -171,16 +235,18 @@ class Monitoring(QWidget):
         y = data[:, [amplitude_colon]]
         
         if self.new_spectre:
-            self.fig_spectre = plt.figure()
-            self.graph__spectre = self.fig_spectre.add_subplot(111)
+            self.Spectre_View = Spectre_View()
+            self.spectrPlot = Plot()
+            self.spectrPlot.creatPlot(self.Spectre_View.getGrid(), "Velocity (km sec$^{-1}$)", "Flux density (Jy)", "Spectrum", (1,0))
+            self.Spectre_View._addWidget(self.spectrPlot, 0, 0)
+            self.Spectre_View.show()
             self.new_spectre = False
         
-        self.graph__spectre.plot(x,y, label=plot_name)
-        self.graph__spectre.legend()
-        
-        plt.show()
+        self.spectrPlot.plot(x,y, "-", label=plot_name)
+        self.spectrPlot.canvasShow()
         
     def newSpectrum(self, event):
+        print("qwerty")
         if event.key == "shift":
             self.new_spectre = True
 
@@ -260,9 +326,9 @@ class Monitoring(QWidget):
         
         lines = list()
         
-        self.Monitoring_View = Monitoring_View()
+        self.Monitoring_View = Monitoring_View(self.iteration_list, self.location_list, self.source, self.output_path)
         self.monitoringPlot = Plot()
-        self.monitoringPlot.creatPlot(self.Monitoring_View.getGrid(), "Time", "Amplitude", "Monitoring", (1,0))
+        self.monitoringPlot.creatPlot(self.Monitoring_View.getGrid(), "Time", "Flux density (Jy)", None, (1,0))
         
         for i in range(0, len(source_velocities)):
             l1, = self.monitoringPlot.plot(x, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + source_velocities[i], visible=False, picker=False)
@@ -274,23 +340,19 @@ class Monitoring(QWidget):
             lines.append(l3)
         
         self.Monitoring_View._addWidget(self.monitoringPlot, 0, 0)
-        self.monitoringPlot.setXtics(x, [date.strftime("%H %M %S %d %m %Y") for date in  date_list], '30')
+        self.monitoringPlot.setXtics(x, [date.strftime("%H %M %d %m %Y") for date in  date_list], '30')
         
         self.monitoringPlot.addCursor(labels2)
            
         labels = [str(line.get_label()) for line in lines]
-        visibility = [line.get_visible() for line in lines]
         
         self.Monitoring_View.setLabels(labels)
-        #self.Monitoring_View.setVisibilitys(visibility)
         self.Monitoring_View.setLines(lines)
         
-        '''
-        fig.canvas.mpl_connect('pick_event', self.chooseSpectrum)
-        fig.canvas.mpl_connect('key_press_event', self.newSpectrum)
-       
-        plt.show()
-        '''
+        self.monitoringPlot.addPickEvent(self.Monitoring_View.chooseSpectrum)
+        self.monitoringPlot.addKeyPressEvent(self.newSpectrum)
+        
+        self.Monitoring_View.showMaximized()
         self.Monitoring_View.show()
         
     def plot(self):
