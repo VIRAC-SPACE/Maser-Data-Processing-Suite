@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import matplotlib
-
 matplotlib.use('Qt5Agg')
-import matplotlib.pyplot  as plt
 import datetime
 import json
 import argparse
@@ -18,6 +16,8 @@ from PyQt5.QtCore import Qt
 
 from ploting_qt5 import  Plot
 from result import  Result
+
+months = {"Jan":"1", "Feb":"2", "Mar":"3", "Apr":"4", "May":"5", "Jun":"6", "Jul":"7", "Aug":"8", "Sep":"9", "Oct":"10", "Nov":"11", "Dec":"12"}
 
 def parseArguments():
     # Create argument parser
@@ -66,6 +66,8 @@ class Monitoring_View(QWidget):
             self.new_spectre = True
             self.spectrumSet = set()
             self.plotList = list()
+            
+            self.setWindowTitle("Monitoring")
             
         def _addWidget(self, widget, row, collon):
             self.grid.addWidget(widget, row, collon)
@@ -133,7 +135,9 @@ class Monitoring_View(QWidget):
             spectraFileName = self.output_path + spectraFileName
             
             data = np.fromfile(spectraFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(spectraFileName),4))
-            plot_name =  " ".join(spectraFileName.split("/")[-1].split("_")[1:-2])
+            tmpDate = spectraFileName.split("/")[-1].split("_")
+            tmpDate[-4] = months[tmpDate[-4]]
+            plot_name = datetime.datetime.strptime( " ".join(tmpDate[1:-2]), "%H %M %S %d %m %Y") 
             
             x = data[:, [0]]
             y = data[:, [amplitude_colon]]
@@ -142,7 +146,7 @@ class Monitoring_View(QWidget):
                 self.Spectre_View = Spectre_View()
                 self.spectrumSet.add(self.Spectre_View)
                 self.spectrPlot = Plot()
-                self.spectrPlot.creatPlot(self.Spectre_View.getGrid(), "Velocity (km sec$^{-1}$)", "Flux density (Jy)", "Spectrum", (1,0))
+                self.spectrPlot.creatPlot(self.Spectre_View.getGrid(), "Velocity (km sec$^{-1}$)", "Flux density (Jy)", spectraFileName.split("/")[-1].split("_")[0], (1,0))
                 self.Spectre_View._addWidget(self.spectrPlot, 0, 0)
                 self.Spectre_View.show()
                 self.new_spectre = False
@@ -159,6 +163,8 @@ class Spectre_View(QWidget):
             self.grid = QGridLayout()
             self.setLayout(self.grid)
             self.grid.setSpacing(10)
+            
+            self.setWindowTitle(" ")
             
         def _addWidget(self, widget, row, collon):
             self.grid.addWidget(widget, row, collon)
@@ -219,8 +225,6 @@ class Monitoring(QWidget):
                                 
         resultFileName = source + ".json"
         
-        months = {"Jan":"1", "Feb":"2", "Mar":"3", "Apr":"4", "May":"5", "Jun":"6", "Jul":"7", "Aug":"8", "Sep":"9", "Oct":"10", "Nov":"11", "Dec":"12"}
-        
         with open(resultDir + resultFileName) as result_data:    
                 results = json.load(result_data)
         
@@ -270,7 +274,7 @@ class Monitoring(QWidget):
                     if float(vel) == float(k[0]):
                         velocitie_dict["avg"][vel].append(k[1]) 
                          
-            label = "Station is " + location + "\n" + "Date is " + experiment["date"].strftime('%d %m %Y') + "\n " + "iteration number " + str(experiment["iteration_number"])
+            label = "Station is " + location + "\n" + "Date is " + experiment["date"].strftime('%d %m %Y') + "\n " + "Iteration number " + str(experiment["iteration_number"])
             labels2.append(label)
             
         self.iteration_list = iteration_list
