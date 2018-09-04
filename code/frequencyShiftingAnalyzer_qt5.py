@@ -8,6 +8,7 @@ from PyQt5.QtGui import QIcon
 import argparse
 import configparser
 import json
+import pickle
 import numpy as np
 import scipy.constants
 #import pandas as pd
@@ -102,6 +103,17 @@ def STON(xarray, yarray, cuts):
     
     ston = max/(std*3)
     return ston
+
+class Result():
+    def __init__(self, matrix, specie):
+        self.matrix = matrix
+        self.specie = specie
+        
+    def getMatrix(self):
+        return self.matrix
+    
+    def getSpecie(self):
+        return self.specie
 
 class Analyzer(QWidget):
     def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime, base_frequencies):
@@ -586,7 +598,6 @@ class Analyzer(QWidget):
                     elif vards == "VelTotal":
                         VelTotal = float(Header[1])
                         print ("VelTotal: \t", VelTotal)
-                        
                     #Header +=1
                     
             Vobs = float(Vobs)
@@ -603,6 +614,12 @@ class Analyzer(QWidget):
             
             print ("base freqcvencie", self.freq_0_u1, self.freq_0_u9)
             
+            for key, value in self.base_frequencies.items():
+                if float(value) == self.freq_0_u1:
+                    specie = key
+                    
+            print ("specie", specie)
+                    
             velocitys = dopler((self.x + FreqStart) * (10 ** 6), VelTotal, self.freq_0_u1)
             y_u1_avg =  y_u1_avg + self.totalResults_u1[p]
             y_u9_avg =  y_u9_avg + self.totalResults_u9[p]
@@ -640,7 +657,10 @@ class Analyzer(QWidget):
         totalResults = np.concatenate((velocitys_avg, y_u1_avg, y_u9_avg), axis=1)
         output_file_name = self.dataFilesPath + self.source + "_" +self.date.replace(" ", "_") + "_" + self.firstScanStartTime + "_" + self.logs["header"]["location"] + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
-        np.savetxt(output_file_name, totalResults)    
+        #np.savetxt(output_file_name, totalResults)
+        
+        result = Result(totalResults, specie)
+        pickle.dump(result, open(output_file_name, 'wb'))
                 
     def __UI__(self):
         
@@ -687,7 +707,7 @@ def main():
         logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getLogs()
         f = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getAllfs_frequencys()
         firstScanStartTime = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getFirstScanStartTime()
-
+        
     f = [float(fi) for fi in f]
     f = list(set(f))
     f.sort()

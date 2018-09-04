@@ -287,6 +287,11 @@ class ExperimentLogReader():
         self.log_data.write(json.dumps(logs, indent=4))
         self.log_data.close()
         print ("Created file " + "prettyLogs/" + self.logs.split(".")[0].split("/")[1] + "log.dat")
+        
+    def updateLogs(self, logs):
+        self.log_data = open (self.prettyLogs + self.logs.split(".")[0].split("/")[1] + "log.dat", "w")
+        self.log_data.write(logs)
+        self.log_data.close()
 
     def getLogs(self):
         self.writeOutput()

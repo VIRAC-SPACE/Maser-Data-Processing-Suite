@@ -10,6 +10,7 @@ from astropy.time import Time
 from datetime import datetime
 import peakutils
 import json
+import pickle
 from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QMessageBox, QLabel, QLineEdit, QSlider, QDesktopWidget, QLCDNumber)
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
@@ -49,6 +50,17 @@ def indexies(array, value):
             indexs.append(i)
     return indexs
 
+class Result():
+    def __init__(self, matrix, specie):
+        self.matrix = matrix
+        self.specie = specie
+        
+    def getMatrix(self):
+        return self.matrix
+    
+    def getSpecie(self):
+        return self.specie
+
 class Analyzer(QWidget):
     def __init__(self, datafile, resultFilePath, source_velocities, cuts, output, index_range_for_local_maxima):
         super().__init__()
@@ -75,10 +87,21 @@ class Analyzer(QWidget):
         self.changeParms = False
         
         try:
-            data = np.fromfile(datafile, dtype="float64", count=-1, sep=" ") .reshape((file_len(datafile),3))
+            #data = np.fromfile(datafile, dtype="float64", count=-1, sep=" ") .reshape((file_len(datafile),3))
+            result = pickle.load(open(datafile, "rb"))
+            self.specie = result.getSpecie()
+            data = result.getMatrix()
         
         except IOError as e:
             print ("IO Error",  e)
+            sys.exit(1)
+            
+        except TypeError as e:
+            print ("TypeError",  e)
+            sys.exit(1)
+            
+        except AttributeError as e:
+            print ("AttributeError",  e)
             sys.exit(1)
                 
         except:
@@ -646,7 +669,8 @@ class Analyzer(QWidget):
         result[self.expername]["Date"] = self.date
         result[self.expername]["Iteration_number"] = int(self.iteration_number)
         result[self.expername]["time"] = self.time
-                
+        result[self.expername]["specie"] = self.specie
+        
         result[self.expername]["polarizationU1"] =  max_apmlitudes_u1
         result[self.expername]["polarizationU9"] = max_apmlitudes_u9
         result[self.expername]["polarizationAVG"] = max_apmlitudes_uavg
