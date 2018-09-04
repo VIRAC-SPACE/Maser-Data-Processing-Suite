@@ -104,7 +104,7 @@ def STON(xarray, yarray, cuts):
     return ston
 
 class Analyzer(QWidget):
-    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime):
+    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime, base_frequencies):
         super().__init__()
        
         self.setWindowIcon(QIcon('viraclogo.png'))
@@ -138,6 +138,11 @@ class Analyzer(QWidget):
         self.fstart = fstart
         self.cuts = cuts
         self.firstScanStartTime = firstScanStartTime
+        self.base_frequencies = base_frequencies
+        self.base_frequencies_list = list()
+        
+        for value in self.base_frequencies:
+            self.base_frequencies_list.append(float(self.base_frequencies[value]))
         
         self.setWindowTitle("Analyze for " + self.source + " " + self.date)
         self.grid = QGridLayout()
@@ -581,12 +586,25 @@ class Analyzer(QWidget):
                     elif vards == "VelTotal":
                         VelTotal = float(Header[1])
                         print ("VelTotal: \t", VelTotal)
+                        
+                        print ("111")
                     #Header +=1
                     
             Vobs = float(Vobs)
             lsrCorr = float(lsrShift)*1.e6 # for MHz 
             
-            velocitys = dopler((self.x + FreqStart) * (10 ** 6), VelTotal, self.f0)
+            self.max_yu1_index =  self.totalResults_u1[p].argmax(axis=0)
+            self.max_yu9_index =  self.totalResults_u9[p].argmax(axis=0)
+            
+            self.freq_0_u1_index = ((np.abs(self.base_frequencies_list - (self.x[self.max_yu1_index] + FreqStart) * (10 ** 6) ).argmin()))
+            self.freq_0_u9_index = ((np.abs(self.base_frequencies_list - (self.x[self.max_yu9_index] + FreqStart) * (10 ** 6) ).argmin()))
+            
+            self.freq_0_u1 = self.base_frequencies_list[self.freq_0_u1_index]
+            self.freq_0_u9 = self.base_frequencies_list[self.freq_0_u9_index]
+            
+            print ("base freqcvencie", self.freq_0_u1, self.freq_0_u9)
+            
+            velocitys = dopler((self.x + FreqStart) * (10 ** 6), VelTotal, self.freq_0_u1)
             y_u1_avg =  y_u1_avg + self.totalResults_u1[p]
             y_u9_avg =  y_u9_avg + self.totalResults_u9[p]
             velocitys_avg = velocitys_avg + velocitys
@@ -656,6 +674,7 @@ def main():
     coordinates = config.get('sources', source).replace(" ", "").split(",")
     cuts = config.get('cuts', source).split(";")
     cuts = [c.split(",") for c in  cuts]
+    base_frequencies = dict(config.items('base_frequencies'))
     
     if args.manual:
         with open(prettyLogsPath + source + "_" + str(iteration_number) + "log.dat") as data_file:    
@@ -705,7 +724,7 @@ def main():
     #Create App
     qApp = QApplication(sys.argv)
 
-    aw = Analyzer(source, iteration_number, filtering, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime)
+    aw = Analyzer(source, iteration_number, filtering, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime, base_frequencies)
     aw.show()
     sys.exit(qApp.exec_())
     
