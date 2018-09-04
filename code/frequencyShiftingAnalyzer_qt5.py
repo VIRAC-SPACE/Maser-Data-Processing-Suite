@@ -587,7 +587,6 @@ class Analyzer(QWidget):
                         VelTotal = float(Header[1])
                         print ("VelTotal: \t", VelTotal)
                         
-                        print ("111")
                     #Header +=1
                     
             Vobs = float(Vobs)
