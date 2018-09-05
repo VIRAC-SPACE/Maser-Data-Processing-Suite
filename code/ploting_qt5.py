@@ -11,6 +11,7 @@ rcParams['font.sans-serif'] = ['Time New Roman']
 rcParams['font.size'] = 10
 import mplcursors
 from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import (QPushButton)
 
 class Plot(FigureCanvas):
     

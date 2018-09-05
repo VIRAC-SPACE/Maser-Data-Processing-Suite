@@ -104,6 +104,9 @@ def STON(xarray, yarray, cuts):
     ston = max/(std*3)
     return ston
 
+def func():
+    pass
+
 class Result():
     def __init__(self, matrix, specie):
         self.matrix = matrix
