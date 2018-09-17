@@ -274,14 +274,14 @@ class Analyzer(QWidget):
         P_sig = data_1 # Get Amplitudes
         P_ref = data_2 # Get Amplitudes
             
-        Ta_sig = float(tsys_1)*(-P_sig + P_ref)/P_ref #only non-cal phase for dbbc possible...
+        Ta_sig = float(tsys_1)*(P_sig - P_ref)/P_ref #only non-cal phase for dbbc possible...
         Ta_ref = float(tsys_2)*(P_ref - P_sig)/P_sig
         
         f_shift = np.max(array_x) /4.0
         f_step = (array_x[self.dataPoints-1]-array_x[0])/(self.dataPoints-1); 
         n_shift = int(f_shift/f_step);
             
-        Ta_sig = np.roll(Ta_sig, -n_shift); # pos
+        Ta_sig = np.roll(Ta_sig, n_shift); # pos
         Ta_ref = np.roll(Ta_ref, -n_shift); # neg
             
         #avg shifted spectrums
