@@ -29,6 +29,8 @@ def parseArguments():
 
     # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
+    parser.add_argument("-r", "--rawdata", help="Use raw data, skip smoothing", action='store_true')
+
 
     # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
@@ -62,9 +64,10 @@ class Result():
         return self.specie
 
 class Analyzer(QWidget):
-    def __init__(self, datafile, resultFilePath, source_velocities, cuts, output, index_range_for_local_maxima):
+    def __init__(self, datafile, resultFilePath, source_velocities, cuts, output, index_range_for_local_maxima, skipsmooth):
         super().__init__()
-       
+        self.skipsmoothing = skipsmooth;
+
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.center()
         
@@ -550,22 +553,26 @@ class Analyzer(QWidget):
         self.localMax_Array_u9 = self.y2array - self.p_u9(self.xarray)
         
         # Smoohting
-        g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
-        g2 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
-    
-        self.z1 = convolve(self.localMax_Array_u1, g1, boundary='extend')
-        self.z2 = convolve(self.localMax_Array_u9, g2, boundary='extend')
-        
+        if self.skipsmoothing:
+            self.z1 = self.localMax_Array_u1
+            self.z2 = self.localMax_Array_u9
+        else:
+            g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
+            g2 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
+
+            self.z1 = convolve(self.localMax_Array_u1, g1, boundary='extend')
+            self.z2 = convolve(self.localMax_Array_u9, g2, boundary='extend')
+
         three_sigma_u1 = 3 * np.std(self.polyu1)
         three_sigma_u9 = 3 * np.std(self.polyu9)
         polyuAVG = (self.polyu1 + self.polyu9)/2
         self.avg_y = (self.z1 + self.z2) / 2
         three_sigma_uAVG = 3 * np.std(polyuAVG)
-        
+
         smart_tres_u1=2.5*three_sigma_u1/np.max(self.z1)
         smart_tres_u9=2.5*three_sigma_u9/np.max(self.z2)
         smart_tres_uAVG=2.5*three_sigma_uAVG/np.max(self.avg_y)
-        
+
         thres=0.3
            
         #indexsu apreikinasana
@@ -700,6 +707,11 @@ def main():
    
     datafile = str(args.__dict__["datafile"])
     configFilePath = str(args.__dict__["config"])
+
+    if args.rawdata:
+        skipsmooth = True
+    else:
+        skipsmooth = False
     
     config = configparser.RawConfigParser()
     config.read(configFilePath)
@@ -716,7 +728,7 @@ def main():
     #Create App
     qApp = QApplication(sys.argv)
 
-    aw = Analyzer(dataFilesPath + datafile, resultFilePath, source_velocities, cuts, output, index_range_for_local_maxima)
+    aw = Analyzer(dataFilesPath + datafile, resultFilePath, source_velocities, cuts, output, index_range_for_local_maxima, skipsmooth)
     aw.show()
     aw.showMaximized() 
     sys.exit(qApp.exec_())
