@@ -11,7 +11,8 @@ import json
 import pickle
 import numpy as np
 import scipy.constants
-#import pandas as pd
+import pandas as pd
+from pandas import Series
 #from pandas.stats.moments import rolling_mean
 
 from experimentsLogReader import ExperimentLogReader
@@ -54,7 +55,7 @@ def is_outlier(points, threshold):
     med_abs_deviation = np.median(diff)
 
     modified_z_score = 0.6745 * diff / med_abs_deviation
-
+    #print(modified_z_score)
     return modified_z_score < threshold
 
 def dopler(ObservedFrequency, velocityReceiver, f0):
@@ -191,67 +192,84 @@ class Analyzer(QWidget):
         return scanPairs
         
     def __getDataForPolarization__(self, data1, data2, filter):
+
         if filter == True:
-            '''
-            outliersMask_1 = is_outlier(data1, self.threshold)
-            outliersMask_2 = is_outlier(data2, self.threshold)
-                
-            bad_point_index_1 = indexies(outliersMask_1, False)
-            bad_point_index_2 = indexies(outliersMask_2, False)
-                 
-            xdata = data1[:, [0]].tolist()
-            ydata_1_u1 = data1[:, [1]].tolist()
-            ydata_2_u1 = data2[:, [1]].tolist()
-            ydata_1_u9 = data1[:, [2]].tolist()
-            ydata_2_u9 = data2[:, [2]].tolist()
-                
-            df_y1_u1 = pd.DataFrame(data=ydata_1_u1)
-            df_y1_u9 = pd.DataFrame(data=ydata_1_u9)
-            df_y2_u1 = pd.DataFrame(data=ydata_2_u1)
-            df_y2_u9 = pd.DataFrame(data=ydata_2_u9)
-                
-            mean_y1_u1 = np.nan_to_num(df_y1_u1.rolling(window=self.badPointRange, center=True).mean())
-            mean_y1_u9 = np.nan_to_num(df_y1_u9.rolling(window=self.badPointRange, center=True).mean())
-            mean_y2_u1 = np.nan_to_num(df_y2_u1.rolling(window=self.badPointRange, center=True).mean())
-            mean_y2_u9 = np.nan_to_num(df_y2_u9.rolling(window=self.badPointRange, center=True).mean())
-                
-            mean_y1_u1_2 = np.mean(ydata_1_u1)
-            mean_y1_u9_2 = np.mean(ydata_1_u9)
-            mean_y2_u1_2 = np.mean(ydata_2_u1)
-            mean_y2_u9_2 = np.mean(ydata_2_u9)
-                    
-            for badPoint in bad_point_index_1:
-                ydata_1_u1[badPoint][0] = mean_y1_u1[badPoint]
-                    
-            for badPoint in bad_point_index_1:
-                ydata_1_u9[badPoint][0] = mean_y1_u9[badPoint]
-                    
-            for badPoint in bad_point_index_2:
-                ydata_2_u1[badPoint][0] =   mean_y2_u1[badPoint]
-                
-            for badPoint in bad_point_index_2:
-                ydata_2_u9[badPoint][0] = mean_y2_u9[badPoint]
-                                  
-            for nunNumber in range(0,  len(ydata_1_u1)):
-                if  ydata_1_u1[nunNumber][0] == 0:
-                    ydata_1_u1[nunNumber][0] = mean_y1_u1_2
-                if  ydata_1_u9[nunNumber][0] == 0:
-                    ydata_1_u9[nunNumber][0] = mean_y1_u9_2
-                if  ydata_2_u1[nunNumber][0] == 0:
-                    ydata_2_u1[nunNumber][0] = mean_y2_u1_2
-                if  ydata_2_u9[nunNumber][0] == 0:
-                    ydata_2_u9[nunNumber][0] = mean_y2_u9_2
-               
-            xdata = np.array(xdata)
-            ydata_1_u1 = np.array(ydata_1_u1)
-            ydata_2_u1 = np.array(ydata_2_u1)
-            ydata_1_u9 = np.array(ydata_1_u9)
-            ydata_2_u9 = np.array(ydata_2_u9)
-                
-            self.dataPoints = len(xdata)
-                
+            ndata1 = data1
+            ndata2 = data2
+            for x in range(20):
+                outliersMask_1 = is_outlier(ndata1, self.threshold)
+                outliersMask_2 = is_outlier(ndata2, self.threshold)
+
+                bad_point_index_1 = indexies(outliersMask_1, False)
+                bad_point_index_2 = indexies(outliersMask_2, False)
+
+                xdata = ndata1[:, [0]].tolist()
+                ydata_1_u1 = ndata1[:, [1]].tolist()
+                ydata_2_u1 = ndata2[:, [1]].tolist()
+                ydata_1_u9 = ndata1[:, [2]].tolist()
+                ydata_2_u9 = ndata2[:, [2]].tolist()
+
+                df_y1_u1 = pd.DataFrame(data=ydata_1_u1)
+                df_y1_u9 = pd.DataFrame(data=ydata_1_u9)
+                df_y2_u1 = pd.DataFrame(data=ydata_2_u1)
+                df_y2_u9 = pd.DataFrame(data=ydata_2_u9)
+
+
+                mean_y1_u1 = np.nan_to_num(df_y1_u1.rolling(window=self.badPointRange, center=True).mean())
+                mean_y1_u9 = np.nan_to_num(df_y1_u9.rolling(window=self.badPointRange, center=True).mean())
+                mean_y2_u1 = np.nan_to_num(df_y2_u1.rolling(window=self.badPointRange, center=True).mean())
+                mean_y2_u9 = np.nan_to_num(df_y2_u9.rolling(window=self.badPointRange, center=True).mean())
+
+
+                """
+                mean_y1_u1_2 = np.mean(ydata_1_u1)
+                mean_y1_u9_2 = np.mean(ydata_1_u9)
+                mean_y2_u1_2 = np.mean(ydata_2_u1)
+                mean_y2_u9_2 = np.mean(ydata_2_u9)
+                """
+
+                for badPoint in bad_point_index_1:
+                    if mean_y1_u1[badPoint]!=0: #badpoint==0 galos
+                        ydata_1_u1[badPoint][0] = mean_y1_u1[badPoint]
+
+                for badPoint in bad_point_index_1:
+                    if mean_y1_u9[badPoint]!=0:
+                        ydata_1_u9[badPoint][0] = mean_y1_u9[badPoint]
+
+                for badPoint in bad_point_index_2:
+                    if mean_y2_u1[badPoint]!=0:
+                        ydata_2_u1[badPoint][0] =   mean_y2_u1[badPoint]
+
+                for badPoint in bad_point_index_2:
+                    if mean_y2_u9[badPoint]!=0:
+                        ydata_2_u9[badPoint][0] = mean_y2_u9[badPoint]
+                """
+                for nunNumber in range(0,  len(ydata_1_u1)):
+                    if  ydata_1_u1[nunNumber][0] == 0:  #ta ka visas 0 ignore, tas nav jaaizvieto ar nepareizu mainigo
+                        ydata_1_u1[nunNumber][0] = mean_y1_u1_2
+                    if  ydata_1_u9[nunNumber][0] == 0:
+                        ydata_1_u9[nunNumber][0] = mean_y1_u9_2
+                    if  ydata_2_u1[nunNumber][0] == 0:
+                        ydata_2_u1[nunNumber][0] = mean_y2_u1_2
+                    if  ydata_2_u9[nunNumber][0] == 0:
+                        ydata_2_u9[nunNumber][0] = mean_y2_u9_2
+                """
+                xdata = np.array(xdata)
+                ydata_1_u1 = np.array(ydata_1_u1)
+                ydata_2_u1 = np.array(ydata_2_u1)
+                ydata_1_u9 = np.array(ydata_1_u9)
+                ydata_2_u9 = np.array(ydata_2_u9)
+
+                ndata1[:,[1]] = ydata_1_u1
+                ndata2[:,[1]] = ydata_2_u1
+                ndata1[:,[2]] = ydata_1_u9
+                ndata2[:,[2]] = ydata_2_u9
+
+
+                self.dataPoints = len(xdata)
+
             return (xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9)
-            '''
+
             sys.exit(3)
             pass
             
