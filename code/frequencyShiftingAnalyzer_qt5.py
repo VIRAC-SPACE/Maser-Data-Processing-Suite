@@ -196,7 +196,7 @@ class Analyzer(QWidget):
         if filter == True:
             ndata1 = data1
             ndata2 = data2
-            for x in range(20):
+            for x in range(5):
                 outliersMask_1 = is_outlier(ndata1, self.threshold)
                 outliersMask_2 = is_outlier(ndata2, self.threshold)
 
@@ -213,7 +213,6 @@ class Analyzer(QWidget):
                 df_y1_u9 = pd.DataFrame(data=ydata_1_u9)
                 df_y2_u1 = pd.DataFrame(data=ydata_2_u1)
                 df_y2_u9 = pd.DataFrame(data=ydata_2_u9)
-
 
                 mean_y1_u1 = np.nan_to_num(df_y1_u1.rolling(window=self.badPointRange, center=True).mean())
                 mean_y1_u9 = np.nan_to_num(df_y1_u9.rolling(window=self.badPointRange, center=True).mean())
