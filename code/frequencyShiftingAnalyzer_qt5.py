@@ -54,7 +54,7 @@ def is_outlier(points, threshold):
     diff = np.sqrt(diff)
     med_abs_deviation = np.median(diff)
 
-    modified_z_score = 0.6745 * diff / med_abs_deviation
+    modified_z_score =  0.6745 * diff / med_abs_deviation
     #print(modified_z_score)
     return modified_z_score < threshold
 
@@ -194,20 +194,61 @@ class Analyzer(QWidget):
     def __getDataForPolarization__(self, data1, data2, filter):
 
         if filter == True:
-            ndata1 = data1
-            ndata2 = data2
+            print("Calculate start")
+            ndata1 = np.array(data1)
+            ndata2 = np.array(data2)
             for x in range(5):
+                #print(ndata1[65],"///",data1[65])
                 outliersMask_1 = is_outlier(ndata1, self.threshold)
                 outliersMask_2 = is_outlier(ndata2, self.threshold)
 
                 bad_point_index_1 = indexies(outliersMask_1, False)
                 bad_point_index_2 = indexies(outliersMask_2, False)
 
+
+                print(len(outliersMask_1))
+                print(len(outliersMask_2))
+
                 xdata = ndata1[:, [0]].tolist()
                 ydata_1_u1 = ndata1[:, [1]].tolist()
                 ydata_2_u1 = ndata2[:, [1]].tolist()
                 ydata_1_u9 = ndata1[:, [2]].tolist()
                 ydata_2_u9 = ndata2[:, [2]].tolist()
+
+                if x==0:
+                    self.y_bad_point_1_u1 = []
+                    self.x_bad_point_1_u1 = []
+
+                    for idx, point in enumerate(outliersMask_1):
+                        if point == False:
+                            self.x_bad_point_1_u1.append(data1[idx, [0]][0])
+                            self.y_bad_point_1_u1.append(data1[idx, [1]][0])
+
+                    self.y_bad_point_2_u1 = []
+                    self.x_bad_point_2_u1 = []
+
+                    for idx, point in enumerate(outliersMask_2):
+                        if point == False:
+                            self.x_bad_point_2_u1.append(data2[idx, [0]][0])
+                            self.y_bad_point_2_u1.append(data2[idx, [1]][0])
+
+                    self.y_bad_point_1_u9 = []
+                    self.x_bad_point_1_u9 = []
+
+                    for idx, point in enumerate(outliersMask_1):
+                        if point == False:
+                            self.x_bad_point_1_u9.append(data1[idx, [0]][0])
+                            self.y_bad_point_1_u9.append(data1[idx, [2]][0])
+
+                    self.y_bad_point_2_u9 = []
+                    self.x_bad_point_2_u9 = []
+
+                    for idx, point in enumerate(outliersMask_2):
+                        if point == False:
+                            self.x_bad_point_2_u9.append(data2[idx, [0]][0])
+                            self.y_bad_point_2_u9.append(data2[idx, [2]][0])
+
+
 
                 df_y1_u1 = pd.DataFrame(data=ydata_1_u1)
                 df_y1_u9 = pd.DataFrame(data=ydata_1_u9)
@@ -218,6 +259,15 @@ class Analyzer(QWidget):
                 mean_y1_u9 = np.nan_to_num(df_y1_u9.rolling(window=self.badPointRange, center=True).mean())
                 mean_y2_u1 = np.nan_to_num(df_y2_u1.rolling(window=self.badPointRange, center=True).mean())
                 mean_y2_u9 = np.nan_to_num(df_y2_u9.rolling(window=self.badPointRange, center=True).mean())
+
+                """
+                TODO
+                
+                Plotot nevis jaunos grafikus, bet gan originalo data,
+                n-tās pakāpes polinomu aizvieto nevis ar mediānu,
+                ar roku izdzēst punktus.
+                
+                """
 
 
                 """
@@ -237,7 +287,7 @@ class Analyzer(QWidget):
 
                 for badPoint in bad_point_index_2:
                     if mean_y2_u1[badPoint]!=0:
-                        ydata_2_u1[badPoint][0] =   mean_y2_u1[badPoint]
+                        ydata_2_u1[badPoint][0] = mean_y2_u1[badPoint]
 
                 for badPoint in bad_point_index_2:
                     if mean_y2_u9[badPoint]!=0:
@@ -264,6 +314,75 @@ class Analyzer(QWidget):
                 ndata1[:,[2]] = ydata_1_u9
                 ndata2[:,[2]] = ydata_2_u9
 
+                if x==5-1:
+                    xlist = xdata.tolist()
+
+                    tempx = []
+                    tempy = []
+
+                    for idx, point in enumerate(self.x_bad_point_1_u1):
+                        index = xlist.index(point)
+                        if (self.y_bad_point_1_u1[idx] / ydata_1_u1[index][0] > 1.10 or
+                                self.y_bad_point_1_u1[idx] / ydata_1_u1[index][0] < 0.90):
+                            print("TESTESTSETSETSETSETSET")
+                            tempx.append(self.x_bad_point_1_u1[idx])
+                            tempy.append(self.y_bad_point_1_u1[idx])
+                        else:
+                            ydata_1_u1[index][0] = data1[index, [1]][0]
+
+                    self.x_bad_point_1_u1 = tempx
+                    self.y_bad_point_1_u1 = tempy
+
+                    tempx = []
+                    tempy = []
+
+                    for idx, point in enumerate(self.x_bad_point_2_u1):
+                        index = xlist.index(point)
+                        if (self.y_bad_point_2_u1[idx] / ydata_2_u1[index][0] > 1.10 or
+                                self.y_bad_point_2_u1[idx] / ydata_2_u1[index][0] < 0.90):
+                            print("TESTESTSETSETSETSETSET")
+                            tempx.append(self.x_bad_point_2_u1[idx])
+                            tempy.append(self.y_bad_point_2_u1[idx])
+                        else:
+                            ydata_2_u1[index][0] = data2[index, [1]][0]
+
+
+                    self.x_bad_point_2_u1 = tempx
+                    self.y_bad_point_2_u1 = tempy
+
+                    tempx = []
+                    tempy = []
+
+                    for idx, point in enumerate(self.x_bad_point_1_u9):
+                        index = xlist.index(point)
+                        if (self.y_bad_point_1_u9[idx] / ydata_1_u9[index][0] > 1.10 or
+                                self.y_bad_point_1_u9[idx] / ydata_1_u9[index][0] < 0.90):
+                            print("TESTESTSETSETSETSETSET")
+                            tempx.append(self.x_bad_point_1_u9[idx])
+                            tempy.append(self.y_bad_point_1_u9[idx])
+                        else:
+                            ydata_1_u9[index][0] = data1[index, [2]][0]
+
+                    self.x_bad_point_1_u9 = tempx
+                    self.y_bad_point_1_u9 = tempy
+
+                    tempx = []
+                    tempy = []
+
+                    for idx, point in enumerate(self.x_bad_point_2_u9):
+                        index = xlist.index(point)
+                        if (self.y_bad_point_2_u9[idx] / ydata_2_u9[index][0]  > 1.10 or
+                                self.y_bad_point_2_u9[idx] / ydata_2_u9[index][0]  < 0.90):
+                            print("TESTESTSETSETSETSETSET")
+                            tempx.append(self.x_bad_point_2_u9[idx])
+                            tempy.append(self.y_bad_point_2_u9[idx])
+                        else:
+                            ydata_2_u9[index][0] = data2[index, [2]][0]
+
+                    self.x_bad_point_2_u9 = tempx
+                    self.y_bad_point_2_u9 = tempy
+
+
 
                 self.dataPoints = len(xdata)
 
@@ -271,33 +390,33 @@ class Analyzer(QWidget):
 
             sys.exit(3)
             pass
-            
+
         else:
             xdata = data1[:, [0]]
             ydata_1_u1 = data1[:, [1]]
             ydata_2_u1 = data2[:, [1]]
             ydata_1_u9 = data1[:, [2]]
             ydata_2_u9 = data2[:, [2]]
-                
+
             self.dataPoints = len(xdata)
-                
+
             return (xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9)
-        
+
     def calibration(self, array_x, data_1, data_2, tsys_1, tsys_2, elevation):
         #from AGN cal sessions (FS /usr2/control/rxg_files/c3.rxg):
-        
+
         DPFU = np.mean(self.DPFU_max)*np.polyval(self.G_El, elevation)
-            
+
         P_sig = data_1 # Get Amplitudes
         P_ref = data_2 # Get Amplitudes
-            
+
         Ta_sig = float(tsys_1)*(P_sig - P_ref)/P_ref #only non-cal phase for dbbc possible...
         Ta_ref = float(tsys_2)*(P_ref - P_sig)/P_sig
-        
+
         f_shift = np.max(array_x) /4.0
-        f_step = (array_x[self.dataPoints-1]-array_x[0])/(self.dataPoints-1); 
+        f_step = (array_x[self.dataPoints-1]-array_x[0])/(self.dataPoints-1);
         n_shift = int(f_shift/f_step);
-            
+
         Ta_sig = np.roll(Ta_sig, n_shift); # pos
         Ta_ref = np.roll(Ta_ref, -n_shift); # neg
             
@@ -372,17 +491,27 @@ class Analyzer(QWidget):
             data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
                   
             xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
-                   
+
             self.plot_start_u1 = Plot()
             self.plot_start_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u1 Polarization", (1, 0))
             self.plot_start_u1.plot(xdata, ydata_1_u1, 'b', label=pair[0])
             self.plot_start_u1.plot(xdata, ydata_2_u1, 'r', label=pair[1])
-                
+
+            if (self.filter):
+                self.plot_start_u1.plot(self.x_bad_point_1_u1, self.y_bad_point_1_u1, 'x')
+                self.plot_start_u1.plot(self.x_bad_point_2_u1, self.y_bad_point_2_u1, 'x')
+
             self.plot_start_u9 = Plot()
             self.plot_start_u9.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u9 Polarization", (1, 1))
             self.plot_start_u9.plot(xdata, ydata_1_u9, 'b', label=pair[0])
             self.plot_start_u9.plot(xdata, ydata_2_u9, 'r', label=pair[1])
-                
+
+            if (self.filter):
+                self.plot_start_u9.plot(self.x_bad_point_1_u9, self.y_bad_point_1_u9, 'x')
+                self.plot_start_u9.plot(self.x_bad_point_2_u9, self.y_bad_point_2_u9, 'x')
+
+
+
             self.grid.addWidget(self.plot_start_u1, 0, 0)
             self.grid.addWidget(self.plot_start_u9, 0, 1)
             
