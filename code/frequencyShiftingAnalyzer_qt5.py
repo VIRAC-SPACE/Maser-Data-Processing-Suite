@@ -30,7 +30,8 @@ def parseArguments():
     # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-t", "--threshold", help="Set threshold for outlier filter", type=float, default=1.0)
-    parser.add_argument("-f", "--filter", help="Set filter default is True if filter is False bad data points is no removed", type=str, default="False")
+    parser.add_argument("-f", "--filter", help="Set the amount of times to filter data to remove noise spikes, higher than 5 makes little difference", type=int, default=0,
+                        choices=range(0,11),metavar="[0-10]")
     parser.add_argument("-m", "--manual", help="Set manual log data", action='store_true')
 
     # Print version
@@ -193,12 +194,10 @@ class Analyzer(QWidget):
         
     def __getDataForPolarization__(self, data1, data2, filter):
 
-        if filter == True:
-            print("Calculate start")
+        if filter > 0:
             ndata1 = np.array(data1)
             ndata2 = np.array(data2)
-            for x in range(5):
-                #print(ndata1[65],"///",data1[65])
+            for x in range(filter+1):
                 outliersMask_1 = is_outlier(ndata1, self.threshold)
                 outliersMask_2 = is_outlier(ndata2, self.threshold)
 
@@ -269,14 +268,6 @@ class Analyzer(QWidget):
                 
                 """
 
-
-                """
-                mean_y1_u1_2 = np.mean(ydata_1_u1)
-                mean_y1_u9_2 = np.mean(ydata_1_u9)
-                mean_y2_u1_2 = np.mean(ydata_2_u1)
-                mean_y2_u9_2 = np.mean(ydata_2_u9)
-                """
-
                 for badPoint in bad_point_index_1:
                     if mean_y1_u1[badPoint]!=0: #badpoint==0 galos
                         ydata_1_u1[badPoint][0] = mean_y1_u1[badPoint]
@@ -292,17 +283,6 @@ class Analyzer(QWidget):
                 for badPoint in bad_point_index_2:
                     if mean_y2_u9[badPoint]!=0:
                         ydata_2_u9[badPoint][0] = mean_y2_u9[badPoint]
-                """
-                for nunNumber in range(0,  len(ydata_1_u1)):
-                    if  ydata_1_u1[nunNumber][0] == 0:  #ta ka visas 0 ignore, tas nav jaaizvieto ar nepareizu mainigo
-                        ydata_1_u1[nunNumber][0] = mean_y1_u1_2
-                    if  ydata_1_u9[nunNumber][0] == 0:
-                        ydata_1_u9[nunNumber][0] = mean_y1_u9_2
-                    if  ydata_2_u1[nunNumber][0] == 0:
-                        ydata_2_u1[nunNumber][0] = mean_y2_u1_2
-                    if  ydata_2_u9[nunNumber][0] == 0:
-                        ydata_2_u9[nunNumber][0] = mean_y2_u9_2
-                """
                 xdata = np.array(xdata)
                 ydata_1_u1 = np.array(ydata_1_u1)
                 ydata_2_u1 = np.array(ydata_2_u1)
@@ -314,8 +294,8 @@ class Analyzer(QWidget):
                 ndata1[:,[2]] = ydata_1_u9
                 ndata2[:,[2]] = ydata_2_u9
 
-                if x==5-1:
-                    xlist = xdata.tolist()
+                if x==filter:
+                    xlist = xdata.tolist()  #need list because np array has no .index() function
 
                     tempx = []
                     tempy = []
@@ -324,7 +304,6 @@ class Analyzer(QWidget):
                         index = xlist.index(point)
                         if (self.y_bad_point_1_u1[idx] / ydata_1_u1[index][0] > 1.10 or
                                 self.y_bad_point_1_u1[idx] / ydata_1_u1[index][0] < 0.90):
-                            print("TESTESTSETSETSETSETSET")
                             tempx.append(self.x_bad_point_1_u1[idx])
                             tempy.append(self.y_bad_point_1_u1[idx])
                         else:
@@ -340,7 +319,6 @@ class Analyzer(QWidget):
                         index = xlist.index(point)
                         if (self.y_bad_point_2_u1[idx] / ydata_2_u1[index][0] > 1.10 or
                                 self.y_bad_point_2_u1[idx] / ydata_2_u1[index][0] < 0.90):
-                            print("TESTESTSETSETSETSETSET")
                             tempx.append(self.x_bad_point_2_u1[idx])
                             tempy.append(self.y_bad_point_2_u1[idx])
                         else:
@@ -357,7 +335,6 @@ class Analyzer(QWidget):
                         index = xlist.index(point)
                         if (self.y_bad_point_1_u9[idx] / ydata_1_u9[index][0] > 1.10 or
                                 self.y_bad_point_1_u9[idx] / ydata_1_u9[index][0] < 0.90):
-                            print("TESTESTSETSETSETSETSET")
                             tempx.append(self.x_bad_point_1_u9[idx])
                             tempy.append(self.y_bad_point_1_u9[idx])
                         else:
@@ -373,7 +350,6 @@ class Analyzer(QWidget):
                         index = xlist.index(point)
                         if (self.y_bad_point_2_u9[idx] / ydata_2_u9[index][0]  > 1.10 or
                                 self.y_bad_point_2_u9[idx] / ydata_2_u9[index][0]  < 0.90):
-                            print("TESTESTSETSETSETSETSET")
                             tempx.append(self.x_bad_point_2_u9[idx])
                             tempy.append(self.y_bad_point_2_u9[idx])
                         else:
@@ -496,8 +472,7 @@ class Analyzer(QWidget):
             self.plot_start_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u1 Polarization", (1, 0))
             self.plot_start_u1.plot(xdata, ydata_1_u1, 'b', label=pair[0])
             self.plot_start_u1.plot(xdata, ydata_2_u1, 'r', label=pair[1])
-
-            if (self.filter):
+            if (self.filter > 0):
                 self.plot_start_u1.plot(self.x_bad_point_1_u1, self.y_bad_point_1_u1, 'x')
                 self.plot_start_u1.plot(self.x_bad_point_2_u1, self.y_bad_point_2_u1, 'x')
 
@@ -506,7 +481,7 @@ class Analyzer(QWidget):
             self.plot_start_u9.plot(xdata, ydata_1_u9, 'b', label=pair[0])
             self.plot_start_u9.plot(xdata, ydata_2_u9, 'r', label=pair[1])
 
-            if (self.filter):
+            if (self.filter > 0):
                 self.plot_start_u9.plot(self.x_bad_point_1_u9, self.y_bad_point_1_u9, 'x')
                 self.plot_start_u9.plot(self.x_bad_point_2_u9, self.y_bad_point_2_u9, 'x')
 
@@ -829,7 +804,7 @@ def main():
     iteration_number = int(args.__dict__["iteration_number"])
     logFile = str(args.__dict__["logFile"])
     threshold = float(args.__dict__["threshold"])
-    filter = str(args.__dict__["filter"])
+    filter = int(args.__dict__["filter"])
     configFilePath = str(args.__dict__["config"])
                 
     config = configparser.RawConfigParser()
@@ -880,11 +855,7 @@ def main():
     
     DPFU_max = [float(i) for i in DPFU_max]
     G_El = [float(i) for i in G_El]
-        
-    if filter == "True" or filter == "true":
-        filtering = True
-    else:
-        filtering = False
+
     
     if threshold <= 0.0:
         raise Exception("Threshold cannot be negative or zero")   
@@ -892,7 +863,7 @@ def main():
     #Create App
     qApp = QApplication(sys.argv)
 
-    aw = Analyzer(source, iteration_number, filtering, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime, base_frequencies)
+    aw = Analyzer(source, iteration_number, filter, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime, base_frequencies)
     aw.show()
     sys.exit(qApp.exec_())
     
