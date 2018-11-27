@@ -4,10 +4,12 @@
 import sys
 import os
 from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QDesktopWidget, QPushButton, QInputDialog)
-from PyQt5.QtGui import QIcon  
+from PyQt5.QtGui import QIcon
+from PyQt5 import QtCore
 import argparse
 import configparser
 import json
+import matplotlib
 import pickle
 import numpy as np
 import scipy.constants
@@ -203,10 +205,6 @@ class Analyzer(QWidget):
 
                 bad_point_index_1 = indexies(outliersMask_1, False)
                 bad_point_index_2 = indexies(outliersMask_2, False)
-
-
-                print(len(outliersMask_1))
-                print(len(outliersMask_2))
 
                 xdata = ndata1[:, [0]].tolist()
                 ydata_1_u1 = ndata1[:, [1]].tolist()
@@ -468,23 +466,37 @@ class Analyzer(QWidget):
                   
             xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
 
+
+
             self.plot_start_u1 = Plot()
+
+            #self.plot_start_u1.fig.canvas.mpl_connect('button_press_event', lambda event: self._on_press_u1(event, xdata, ydata_1_u1, ydata_2_u1))
+
+            self.plot_start_u1.setFocusPolicy(QtCore.Qt.ClickFocus)
+            self.plot_start_u1.setFocus()
             self.plot_start_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u1 Polarization", (1, 0))
             self.plot_start_u1.plot(xdata, ydata_1_u1, 'b', label=pair[0])
             self.plot_start_u1.plot(xdata, ydata_2_u1, 'r', label=pair[1])
+
             if (self.filter > 0):
                 self.plot_start_u1.plot(self.x_bad_point_1_u1, self.y_bad_point_1_u1, 'x')
                 self.plot_start_u1.plot(self.x_bad_point_2_u1, self.y_bad_point_2_u1, 'x')
 
             self.plot_start_u9 = Plot()
+
+
+            self.plot_start_u9.setFocusPolicy(QtCore.Qt.ClickFocus)
+            self.plot_start_u9.setFocus()
             self.plot_start_u9.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u9 Polarization", (1, 1))
-            self.plot_start_u9.plot(xdata, ydata_1_u9, 'b', label=pair[0])
-            self.plot_start_u9.plot(xdata, ydata_2_u9, 'r', label=pair[1])
+            self.plot_start_u9.plot(xdata, ydata_1_u9, 'b', label=pair[0], picker=5)
+            self.plot_start_u9.plot(xdata, ydata_2_u9, 'r', label=pair[1], picker=5)
 
             if (self.filter > 0):
                 self.plot_start_u9.plot(self.x_bad_point_1_u9, self.y_bad_point_1_u9, 'x')
                 self.plot_start_u9.plot(self.x_bad_point_2_u9, self.y_bad_point_2_u9, 'x')
 
+            self.plot_start_u9.fig.canvas.mpl_connect('pick_event', lambda event: self._on_left_click(event, xdata, ydata_2_u9))
+            self.plot_start_u9.fig.canvas.mpl_connect('pick_event', lambda event: self._on_right_click(event, xdata, ydata_1_u9))
 
 
             self.grid.addWidget(self.plot_start_u1, 0, 0)
@@ -797,7 +809,63 @@ class Analyzer(QWidget):
         self.skipAllButton.clicked.connect(self.skipAll)
         self.grid.addWidget(self.skipAllButton, 6, 3)   
         self.plotingPairs(self.index)
-        
+
+    def _on_press_u1(self, event, xdata, ydata_1_u1, ydata_2_u1):
+        if event.button == 3:
+            # click x-value
+            xdata_click = event.xdata
+            # index of nearest x-value in a
+            xdata_nearest_index_a = (np.abs(xdata - xdata_click)).argmin()
+            # new scatter point x-value
+            new_xdata_point_b = xdata[xdata_nearest_index_a]
+            # new scatter point [x-value, y-value]
+            #new_xydata_point_b = xydata_a[new_xdata_point_b, :]
+            if new_xdata_point_b in xdata:
+                print(new_xdata_point_b)
+                print(xdata.tolist().index(new_xdata_point_b))
+                index = xdata.tolist().index(new_xdata_point_b)
+                np.delete()
+                event.canvas.draw()
+
+    def _on_left_click(self, event, xdata, ydata):
+        line = event.artist                            #Replace not remove points with polynom np.polyfit()
+        pointx, pointy = line.get_data()                 #Save old points in array
+        ind = event.ind
+        if (xdata[ind].size > 1):
+            print("Too many points selected")
+        else:
+            print("Selected point x -",pointx[ind][0]," y -",pointy[ind][0])
+            y1_list = ydata.tolist()
+            index = y1_list.index(pointy[ind].tolist())
+            print("Index ",index)
+            pf = np.polyfit(xdata[:,0], ydata[:,0], 20)
+            p = np.poly1d(pf)
+            print("Poly value ", p(xdata[index]))
+            ydata[index][0]=p(xdata[index])
+            event.artist.set_ydata(ydata[:,0])
+            event.canvas.draw()
+            event.canvas.flush_events()
+
+    def _on_right_click(self, event, xdata, ydata):
+        if event.mouseevent.button == 3:
+            line = event.artist  # Replace not remove points with polynom np.polyfit()
+            pointx, pointy = line.get_data()  # Save old points in array
+            ind = event.ind
+            if (xdata[ind].size > 1):
+                print("Too many points selected")
+            else:
+                print("Selected point x -", pointx[ind][0], " y -", pointy[ind][0])
+                y1_list = ydata.tolist()
+                index = y1_list.index(pointy[ind].tolist())
+                print("Index ", index)
+                pf = np.polyfit(xdata[:, 0], ydata[:, 0], 20)
+                p = np.poly1d(pf)
+                print("Poly value ", p(xdata[index]))
+                ydata[index][0] = p(xdata[index])
+                event.artist.set_ydata(ydata[:, 0])
+                event.canvas.draw()
+                event.canvas.flush_events()
+
 def main():
     args = parseArguments()
     source = str(args.__dict__["source"])
