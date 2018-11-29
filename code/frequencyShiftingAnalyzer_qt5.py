@@ -9,7 +9,6 @@ from PyQt5 import QtCore
 import argparse
 import configparser
 import json
-import matplotlib
 import pickle
 import numpy as np
 import scipy.constants
@@ -196,6 +195,18 @@ class Analyzer(QWidget):
         
     def __getDataForPolarization__(self, data1, data2, filter):
 
+        self.y_bad_point_1_u1 = []
+        self.x_bad_point_1_u1 = []
+
+        self.y_bad_point_2_u1 = []
+        self.x_bad_point_2_u1 = []
+
+        self.y_bad_point_1_u9 = []
+        self.x_bad_point_1_u9 = []
+
+        self.y_bad_point_2_u9 = []
+        self.x_bad_point_2_u9 = []
+
         if filter > 0:
             ndata1 = np.array(data1)
             ndata2 = np.array(data2)
@@ -213,32 +224,21 @@ class Analyzer(QWidget):
                 ydata_2_u9 = ndata2[:, [2]].tolist()
 
                 if x==0:
-                    self.y_bad_point_1_u1 = []
-                    self.x_bad_point_1_u1 = []
 
                     for idx, point in enumerate(outliersMask_1):
                         if point == False:
                             self.x_bad_point_1_u1.append(data1[idx, [0]][0])
                             self.y_bad_point_1_u1.append(data1[idx, [1]][0])
 
-                    self.y_bad_point_2_u1 = []
-                    self.x_bad_point_2_u1 = []
-
                     for idx, point in enumerate(outliersMask_2):
                         if point == False:
                             self.x_bad_point_2_u1.append(data2[idx, [0]][0])
                             self.y_bad_point_2_u1.append(data2[idx, [1]][0])
 
-                    self.y_bad_point_1_u9 = []
-                    self.x_bad_point_1_u9 = []
-
                     for idx, point in enumerate(outliersMask_1):
                         if point == False:
                             self.x_bad_point_1_u9.append(data1[idx, [0]][0])
                             self.y_bad_point_1_u9.append(data1[idx, [2]][0])
-
-                    self.y_bad_point_2_u9 = []
-                    self.x_bad_point_2_u9 = []
 
                     for idx, point in enumerate(outliersMask_2):
                         if point == False:
@@ -256,15 +256,6 @@ class Analyzer(QWidget):
                 mean_y1_u9 = np.nan_to_num(df_y1_u9.rolling(window=self.badPointRange, center=True).mean())
                 mean_y2_u1 = np.nan_to_num(df_y2_u1.rolling(window=self.badPointRange, center=True).mean())
                 mean_y2_u9 = np.nan_to_num(df_y2_u9.rolling(window=self.badPointRange, center=True).mean())
-
-                """
-                TODO
-                
-                Plotot nevis jaunos grafikus, bet gan originalo data,
-                n-tās pakāpes polinomu aizvieto nevis ar mediānu,
-                ar roku izdzēst punktus.
-                
-                """
 
                 for badPoint in bad_point_index_1:
                     if mean_y1_u1[badPoint]!=0: #badpoint==0 galos
@@ -298,12 +289,17 @@ class Analyzer(QWidget):
                     tempx = []
                     tempy = []
 
+                    pf = np.polyfit(xdata[:, 0], ydata_1_u1[:, 0], 10)
+                    p = np.poly1d(pf)
+
                     for idx, point in enumerate(self.x_bad_point_1_u1):
                         index = xlist.index(point)
                         if (self.y_bad_point_1_u1[idx] / ydata_1_u1[index][0] > 1.10 or
                                 self.y_bad_point_1_u1[idx] / ydata_1_u1[index][0] < 0.90):
                             tempx.append(self.x_bad_point_1_u1[idx])
+                            #tempy.append(self.y_bad_point_1_u1[idx])
                             tempy.append(self.y_bad_point_1_u1[idx])
+                            ydata_1_u1[index][0]=p(self.x_bad_point_1_u1[idx])
                         else:
                             ydata_1_u1[index][0] = data1[index, [1]][0]
 
@@ -313,12 +309,16 @@ class Analyzer(QWidget):
                     tempx = []
                     tempy = []
 
+                    pf = np.polyfit(xdata[:, 0], ydata_2_u1[:, 0], 10)
+                    p = np.poly1d(pf)
+
                     for idx, point in enumerate(self.x_bad_point_2_u1):
                         index = xlist.index(point)
                         if (self.y_bad_point_2_u1[idx] / ydata_2_u1[index][0] > 1.10 or
                                 self.y_bad_point_2_u1[idx] / ydata_2_u1[index][0] < 0.90):
                             tempx.append(self.x_bad_point_2_u1[idx])
                             tempy.append(self.y_bad_point_2_u1[idx])
+                            ydata_2_u1[index][0]=p(self.x_bad_point_2_u1[idx])
                         else:
                             ydata_2_u1[index][0] = data2[index, [1]][0]
 
@@ -329,12 +329,16 @@ class Analyzer(QWidget):
                     tempx = []
                     tempy = []
 
+                    pf = np.polyfit(xdata[:, 0], ydata_1_u9[:, 0], 10)
+                    p = np.poly1d(pf)
+
                     for idx, point in enumerate(self.x_bad_point_1_u9):
                         index = xlist.index(point)
                         if (self.y_bad_point_1_u9[idx] / ydata_1_u9[index][0] > 1.10 or
                                 self.y_bad_point_1_u9[idx] / ydata_1_u9[index][0] < 0.90):
                             tempx.append(self.x_bad_point_1_u9[idx])
                             tempy.append(self.y_bad_point_1_u9[idx])
+                            ydata_1_u9[index][0]=p(self.x_bad_point_1_u9[idx])
                         else:
                             ydata_1_u9[index][0] = data1[index, [2]][0]
 
@@ -344,12 +348,16 @@ class Analyzer(QWidget):
                     tempx = []
                     tempy = []
 
+                    pf = np.polyfit(xdata[:, 0], ydata_2_u9[:, 0], 10)
+                    p = np.poly1d(pf)
+
                     for idx, point in enumerate(self.x_bad_point_2_u9):
                         index = xlist.index(point)
                         if (self.y_bad_point_2_u9[idx] / ydata_2_u9[index][0]  > 1.10 or
                                 self.y_bad_point_2_u9[idx] / ydata_2_u9[index][0]  < 0.90):
                             tempx.append(self.x_bad_point_2_u9[idx])
                             tempy.append(self.y_bad_point_2_u9[idx])
+                            ydata_2_u9[index][0]=p(self.x_bad_point_2_u9[idx])
                         else:
                             ydata_2_u9[index][0] = data2[index, [2]][0]
 
@@ -464,7 +472,7 @@ class Analyzer(QWidget):
             data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
             data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
                   
-            xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
+            xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, self.ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
 
 
 
@@ -478,9 +486,9 @@ class Analyzer(QWidget):
             self.plot_start_u1.plot(xdata, ydata_1_u1, 'b', label=pair[0])
             self.plot_start_u1.plot(xdata, ydata_2_u1, 'r', label=pair[1])
 
-            if (self.filter > 0):
-                self.plot_start_u1.plot(self.x_bad_point_1_u1, self.y_bad_point_1_u1, 'x')
-                self.plot_start_u1.plot(self.x_bad_point_2_u1, self.y_bad_point_2_u1, 'x')
+            #if (self.filter > 0):
+            self.plot_start_u1.plot(self.x_bad_point_1_u1, self.y_bad_point_1_u1, 'x')
+            self.plot_start_u1.plot(self.x_bad_point_2_u1, self.y_bad_point_2_u1, 'x')
 
             self.plot_start_u9 = Plot()
 
@@ -488,14 +496,19 @@ class Analyzer(QWidget):
             self.plot_start_u9.setFocusPolicy(QtCore.Qt.ClickFocus)
             self.plot_start_u9.setFocus()
             self.plot_start_u9.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u9 Polarization", (1, 1))
-            self.plot_start_u9.plot(xdata, ydata_1_u9, 'b', label=pair[0], picker=5)
-            self.plot_start_u9.plot(xdata, ydata_2_u9, 'r', label=pair[1], picker=5)
+            self.line_1_u9 = self.plot_start_u9.plot(xdata, ydata_1_u9, 'b', label=pair[0], picker=1)
+            self.line_2_u9 = self.plot_start_u9.plot(xdata, self.ydata_2_u9, 'r', label=pair[1], picker=1)
 
-            if (self.filter > 0):
-                self.plot_start_u9.plot(self.x_bad_point_1_u9, self.y_bad_point_1_u9, 'x')
-                self.plot_start_u9.plot(self.x_bad_point_2_u9, self.y_bad_point_2_u9, 'x')
+            #if (self.filter > 0):
+            self.plot_start_u9.plot(self.x_bad_point_1_u9, self.y_bad_point_1_u9, 'x')
+            self.redbad = self.plot_start_u9.plot(self.x_bad_point_2_u9, self.y_bad_point_2_u9, 'x')
 
-            self.plot_start_u9.fig.canvas.mpl_connect('pick_event', lambda event: self._on_left_click(event, xdata, ydata_2_u9))
+            pf = np.polyfit(xdata[:, 0], self.ydata_2_u9[:, 0], 10)
+            p = np.poly1d(pf)
+            self.plot_start_u9.plot(xdata,p(xdata),'g--')
+
+
+            self.plot_start_u9.fig.canvas.mpl_connect('pick_event', lambda event: self._on_left_click(event, xdata, self.ydata_2_u9))
             self.plot_start_u9.fig.canvas.mpl_connect('pick_event', lambda event: self._on_right_click(event, xdata, ydata_1_u9))
 
 
@@ -504,7 +517,7 @@ class Analyzer(QWidget):
             
             #Calibration  
             data_u1 = self.calibration(xdata, ydata_1_u1, ydata_2_u1, float(tsys_u1_1), float(tsys_u1_2), elevation) 
-            data_u9 = self.calibration(xdata, ydata_1_u9, ydata_2_u9, float(tsys_u9_1), float(tsys_u9_2), elevation)
+            data_u9 = self.calibration(xdata, ydata_1_u9, self.ydata_2_u9, float(tsys_u9_1), float(tsys_u9_2), elevation)
            
             xdata = np.array(xdata)
                 
@@ -596,11 +609,11 @@ class Analyzer(QWidget):
             data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
             data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
                       
-            xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
+            xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, self.ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
                 
             #Calibration  
             data_u1 = self.calibration(xdata, ydata_1_u1, ydata_2_u1, float(tsys_u1_1), float(tsys_u1_2), elevation) 
-            data_u9 = self.calibration(xdata, ydata_1_u9, ydata_2_u9, float(tsys_u9_1), float(tsys_u9_2), elevation)
+            data_u9 = self.calibration(xdata, ydata_1_u9, self.ydata_2_u9, float(tsys_u9_1), float(tsys_u9_2), elevation)
                
             xdata = np.array(xdata)
                     
@@ -807,25 +820,13 @@ class Analyzer(QWidget):
         
         self.skipAllButton = QPushButton("Skip all", self)
         self.skipAllButton.clicked.connect(self.skipAll)
-        self.grid.addWidget(self.skipAllButton, 6, 3)   
-        self.plotingPairs(self.index)
+        self.grid.addWidget(self.skipAllButton, 6, 3)
 
-    def _on_press_u1(self, event, xdata, ydata_1_u1, ydata_2_u1):
-        if event.button == 3:
-            # click x-value
-            xdata_click = event.xdata
-            # index of nearest x-value in a
-            xdata_nearest_index_a = (np.abs(xdata - xdata_click)).argmin()
-            # new scatter point x-value
-            new_xdata_point_b = xdata[xdata_nearest_index_a]
-            # new scatter point [x-value, y-value]
-            #new_xydata_point_b = xydata_a[new_xdata_point_b, :]
-            if new_xdata_point_b in xdata:
-                print(new_xdata_point_b)
-                print(xdata.tolist().index(new_xdata_point_b))
-                index = xdata.tolist().index(new_xdata_point_b)
-                np.delete()
-                event.canvas.draw()
+        self.applyChangesButton = QPushButton("Apply changes", self)
+        self.applyChangesButton.clicked.connect(self.applyChanges)
+        self.grid.addWidget(self.applyChangesButton, 7, 3)
+
+        self.plotingPairs(self.index)
 
     def _on_left_click(self, event, xdata, ydata):
         line = event.artist                            #Replace not remove points with polynom np.polyfit()
@@ -834,21 +835,26 @@ class Analyzer(QWidget):
         if (xdata[ind].size > 1):
             print("Too many points selected")
         else:
-            print("Selected point x -",pointx[ind][0]," y -",pointy[ind][0])
             y1_list = ydata.tolist()
-            index = y1_list.index(pointy[ind].tolist())
-            print("Index ",index)
-            pf = np.polyfit(xdata[:,0], ydata[:,0], 20)
-            p = np.poly1d(pf)
-            print("Poly value ", p(xdata[index]))
-            ydata[index][0]=p(xdata[index])
-            event.artist.set_ydata(ydata[:,0])
-            event.canvas.draw()
-            event.canvas.flush_events()
+            print(pointx[ind])
+            print(pointx[ind].tolist())
+            index = y1_list.index(pointy[ind])
+            if xdata[index][0] not in self.x_bad_point_2_u9:
+                print("Selected point x -", pointx[ind][0], " y -", pointy[ind][0])
+                print("Index ", index)
+                pf = np.polyfit(xdata[:, 0], ydata[:, 0], 10)
+                p = np.poly1d(pf)
+                print("Poly value ", p(xdata[index]))
+                self.y_bad_point_2_u9.append(ydata[index][0])
+                self.x_bad_point_2_u9.append(xdata[index][0])
+                self.redbad[0].set_data(self.x_bad_point_2_u9, self.y_bad_point_2_u9)
+                ydata[index][0]=p(xdata[index])
+                event.canvas.draw()
+                event.canvas.flush_events()
 
     def _on_right_click(self, event, xdata, ydata):
         if event.mouseevent.button == 3:
-            line = event.artist  # Replace not remove points with polynom np.polyfit()
+            line = event.artist
             pointx, pointy = line.get_data()  # Save old points in array
             ind = event.ind
             if (xdata[ind].size > 1):
@@ -865,6 +871,12 @@ class Analyzer(QWidget):
                 event.artist.set_ydata(ydata[:, 0])
                 event.canvas.draw()
                 event.canvas.flush_events()
+
+    def applyChanges(self):
+        self.line_2_u9[0].set_ydata(self.ydata_2_u9[:,0])
+        self.plot_start_u9.fig.canvas.draw()
+        self.plot_start_u9.fig.canvas.flush_events()
+
 
 def main():
     args = parseArguments()
