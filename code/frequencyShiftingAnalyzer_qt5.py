@@ -592,9 +592,8 @@ class Analyzer(QWidget):
         STON_list_AVG= list()
 
         for index in range(0, len(self.scanPairs)):
-            print("Starting ",index+1," from ",len(self.scanPairs))
             self.__PAIR(index, self.totalResults_u1, self.totalResults_u9, STON_list_u1, STON_list_u9, STON_list_AVG)
-            print("Done with ",index+1," from ",len(self.scanPairs))
+            print(index+1,"/",len(self.scanPairs)," done")
 
         self.totalResults_u1 = self.totalResults_u1
         self.totalResults_u9 = self.totalResults_u9
