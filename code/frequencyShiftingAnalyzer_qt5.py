@@ -141,7 +141,7 @@ class Analyzer(QWidget):
         self.STON_list_u9 = list()
         self.STON_list_AVG = list()
         self.iteration_number = iteration_number
-        self.logs = logs 
+        self.logs = logs
         self.date = self.logs["header"]["dates"]
         self.dataFileDir = dataPath + self.source + "/" + str(self.iteration_number) + "/"
         self.scanPairs = self.createScanPairs()
@@ -158,41 +158,41 @@ class Analyzer(QWidget):
         self.firstScanStartTime = firstScanStartTime
         self.base_frequencies = base_frequencies
         self.base_frequencies_list = list()
-        
+
         for value in self.base_frequencies:
             self.base_frequencies_list.append(float(self.base_frequencies[value]))
-        
+
         self.setWindowTitle("Analyze for " + self.source + " " + self.date)
         self.grid = QGridLayout()
         self.setLayout(self.grid)
         self.grid.setSpacing(10)
-        
+
         self.__UI__()
-        
+
     def center(self):
         qr = self.frameGeometry()
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
-        
+
     def createScanPairs(self):
         dataFiles = list()
         for dataFile in os.listdir(self.dataFileDir):
             dataFiles.append(dataFile)
-            
+
         dataFiles.sort()
-        
+
         scanPairs = list()
         i = 0
         j = 1
-            
+
         for k in range(0, int(len(dataFiles) - len(dataFiles) /2)):
-            scanPairs.append((dataFiles[i], dataFiles[j])) 
+            scanPairs.append((dataFiles[i], dataFiles[j]))
             i = i + 2
             j = j + 2
-            
+
         return scanPairs
-        
+
     def __getDataForPolarization__(self, data1, data2, filter):
 
         self.y_bad_point_1_u1 = []
@@ -401,19 +401,19 @@ class Analyzer(QWidget):
 
         Ta_sig = np.roll(Ta_sig, n_shift); # pos
         Ta_ref = np.roll(Ta_ref, -n_shift); # neg
-            
+
         #avg shifted spectrums
         Ta = (Ta_sig + Ta_ref)/2 # Creting total spectr
-            
+
         #K->Jy
         Ta = Ta/DPFU/self.k
-  
+
         return Ta
-    
+
     def nextPair(self):
         if self.index == self.datPairsCount -1:
             pass
-        
+
         else:
             self.plot_start_u1.removePolt()
             self.plot_start_u9.removePolt()
@@ -421,58 +421,58 @@ class Analyzer(QWidget):
             self.plot_total_u9.removePolt()
             self.index = self.index + 1
             self.plotingPairs(self.index)
-        
+
     def plotingPairs(self, index):
         pair = self.scanPairs[index]
-            
+
         scanNUmber1 = self.dataFileDir + "/" + pair[0]
         scanNUmber2 = self.dataFileDir + "/" + pair[1]
-        
+
         print ("data files ", scanNUmber1, scanNUmber2)
-            
+
         scan_number_1 = pair[0].split(".")[0].split("_")[-1][2:].lstrip("0")
         scan_number_2 = pair[1].split(".")[0].split("_")[-1][2:].lstrip("0")
-            
+
         print ("scan number", scan_number_1, scan_number_2)
-            
+
         scan_1 = self.logs[str(scan_number_2)]
         scan_2 = self.logs[str(scan_number_1)]
-            
+
         # get system temperature
-        tsys_u1_1 = scan_1['Systemtemperature'][0]
-        tsys_u1_2 = tsys_u1_1
-        tsys_u9_1 = scan_1['Systemtemperature'][1]
-        tsys_u9_2 = tsys_u9_1
-            
-        elevation = (float(scan_1["elevation"]) + float(scan_2["elevation"])) /2
-        
-        print ("elevation", elevation)
-            
-        print ("tsys", tsys_u1_1, tsys_u9_1)
-        
-        if float(tsys_u1_1) == 0:
+        self.tsys_u1_1 = scan_1['Systemtemperature'][0]
+        self.tsys_u1_2 = self.tsys_u1_1
+        self.tsys_u9_1 = scan_1['Systemtemperature'][1]
+        self.tsys_u9_2 = self.tsys_u9_1
+
+        self.elevation = (float(scan_1["elevation"]) + float(scan_2["elevation"])) /2
+
+        print ("self.elevation", self.elevation)
+
+        print ("tsys", self.tsys_u1_1, self.tsys_u9_1)
+
+        if float(self.tsys_u1_1) == 0:
             newT, ok = QInputDialog.getDouble(self, 'tsys error', 'Enter valid tsys:', 0, 1, 300)
-            tsys_u1_1 = newT
-            
-        if float(tsys_u9_1) == 0:
+            self.tsys_u1_1 = newT
+
+        if float(self.tsys_u9_1) == 0:
             newT, ok = QInputDialog.getDouble(self, 'tsys error', 'Enter valid tsys:', 0, 1, 300)
-            tsys_u9_1 = newT
-            
-        try:    
+            self.tsys_u9_1 = newT
+
+        try:
             data_1 = np.fromfile(scanNUmber1, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber1),9))
             data_2 = np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),9))
-            
+
         except IOError as e:
             print ("IO Error",  e)
             sys.exit(1)
-            
+
         else:
-            
+
             #Delete first row
             data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
             data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
-                  
-            xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, self.ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
+
+            self.xdata, self.ydata_1_u1, self.ydata_2_u1, self.ydata_1_u9, self.ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
 
 
 
@@ -483,12 +483,15 @@ class Analyzer(QWidget):
             self.plot_start_u1.setFocusPolicy(QtCore.Qt.ClickFocus)
             self.plot_start_u1.setFocus()
             self.plot_start_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u1 Polarization", (1, 0))
-            self.plot_start_u1.plot(xdata, ydata_1_u1, 'b', label=pair[0])
-            self.plot_start_u1.plot(xdata, ydata_2_u1, 'r', label=pair[1])
+            self.line_1_u1 = self.plot_start_u1.plot(self.xdata, self.ydata_1_u1, 'b', label=pair[0], picker=3)
+            self.line_2_u1 = self.plot_start_u1.plot(self.xdata, self.ydata_2_u1, 'r', label=pair[1], picker=3)
 
             #if (self.filter > 0):
-            self.plot_start_u1.plot(self.x_bad_point_1_u1, self.y_bad_point_1_u1, 'x')
-            self.plot_start_u1.plot(self.x_bad_point_2_u1, self.y_bad_point_2_u1, 'x')
+            self.badplot_1_u1 = self.plot_start_u1.plot(self.x_bad_point_1_u1, self.y_bad_point_1_u1, 'x')
+            self.badplot_2_u1 = self.plot_start_u1.plot(self.x_bad_point_2_u1, self.y_bad_point_2_u1, 'x')
+
+            self.plot_start_u1.fig.canvas.mpl_connect('pick_event',self._on_left_click_u1)
+            self.plot_start_u1.fig.canvas.mpl_connect('pick_event',self._on_right_click_u1)
 
             self.plot_start_u9 = Plot()
 
@@ -496,62 +499,57 @@ class Analyzer(QWidget):
             self.plot_start_u9.setFocusPolicy(QtCore.Qt.ClickFocus)
             self.plot_start_u9.setFocus()
             self.plot_start_u9.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u9 Polarization", (1, 1))
-            self.line_1_u9 = self.plot_start_u9.plot(xdata, ydata_1_u9, 'b', label=pair[0], picker=1)
-            self.line_2_u9 = self.plot_start_u9.plot(xdata, self.ydata_2_u9, 'r', label=pair[1], picker=1)
+            self.line_1_u9 = self.plot_start_u9.plot(self.xdata, self.ydata_1_u9, 'b', label=pair[0], picker=3)
+            self.line_2_u9 = self.plot_start_u9.plot(self.xdata, self.ydata_2_u9, 'r', label=pair[1], picker=3)
 
             #if (self.filter > 0):
-            self.plot_start_u9.plot(self.x_bad_point_1_u9, self.y_bad_point_1_u9, 'x')
-            self.redbad = self.plot_start_u9.plot(self.x_bad_point_2_u9, self.y_bad_point_2_u9, 'x')
+            self.badplot_1_u9 = self.plot_start_u9.plot(self.x_bad_point_1_u9, self.y_bad_point_1_u9, 'x')
+            self.badplot_2_u9 = self.plot_start_u9.plot(self.x_bad_point_2_u9, self.y_bad_point_2_u9, 'x')
 
-            pf = np.polyfit(xdata[:, 0], self.ydata_2_u9[:, 0], 10)
-            p = np.poly1d(pf)
-            self.plot_start_u9.plot(xdata,p(xdata),'g--')
-
-
-            self.plot_start_u9.fig.canvas.mpl_connect('pick_event', lambda event: self._on_left_click(event, xdata, self.ydata_2_u9))
-            self.plot_start_u9.fig.canvas.mpl_connect('pick_event', lambda event: self._on_right_click(event, xdata, ydata_1_u9))
+            self.plot_start_u9.fig.canvas.mpl_connect('pick_event', self._on_left_click_u9)
+            self.plot_start_u9.fig.canvas.mpl_connect('pick_event', self._on_right_click_u9)
 
 
             self.grid.addWidget(self.plot_start_u1, 0, 0)
             self.grid.addWidget(self.plot_start_u9, 0, 1)
-            
-            #Calibration  
-            data_u1 = self.calibration(xdata, ydata_1_u1, ydata_2_u1, float(tsys_u1_1), float(tsys_u1_2), elevation) 
-            data_u9 = self.calibration(xdata, ydata_1_u9, self.ydata_2_u9, float(tsys_u9_1), float(tsys_u9_2), elevation)
-           
-            xdata = np.array(xdata)
-                
-            self.x = xdata
-            f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1)
-            f_shift = np.max(self.x) / 4.0
-            n_shift = int(f_shift/f_step)
-            total_u1 = data_u1[(n_shift+1):(self.dataPoints - n_shift - 1)]
-            total_u9 = data_u9[(n_shift+1):(self.dataPoints - n_shift - 1)]
-            
-            self.x = self.x[(n_shift+1):(self.dataPoints - n_shift - 1)] 
-            
-            self.totalResults_u1.append(total_u1)
-            self.totalResults_u9.append(total_u9)
-            
+
+            #Calibration
+            self.data_u1 = self.calibration(self.xdata, self.ydata_1_u1, self.ydata_2_u1, float(self.tsys_u1_1), float(self.tsys_u1_2), self.elevation)
+            self.data_u9 = self.calibration(self.xdata, self.ydata_1_u9, self.ydata_2_u9, float(self.tsys_u9_1), float(self.tsys_u9_2), self.elevation)
+
+            self.xdata = np.array(self.xdata)
+
+            self.x = self.xdata
+            self.f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1)
+            self.f_shift = np.max(self.x) / 4.0
+            self.n_shift = int(self.f_shift/self.f_step)
+            self.total_u1 = self.data_u1[(self.n_shift+1):(self.dataPoints - self.n_shift - 1)]
+            self.total_u9 = self.data_u9[(self.n_shift+1):(self.dataPoints - self.n_shift - 1)]
+
+            self.x = self.x[(self.n_shift+1):(self.dataPoints - self.n_shift - 1)]
+
+            self.totalResults_u1.append(self.total_u1)
+            self.totalResults_u9.append(self.total_u9)
+
             self.plot_total_u1 = Plot()
             self.plot_total_u1.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (5, 0))
-            self.plot_total_u1.plot(self.x, total_u1, 'b')
-            
+            self.line_total_u1 = self.plot_total_u1.plot(self.x, self.total_u1, 'b')
+
             self.plot_total_u9 = Plot()
             self.plot_total_u9.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (5, 1))
-            self.plot_total_u9.plot(self.x, total_u9, 'b')
-            
+            self.line_total_u9 = self.plot_total_u9.plot(self.x, self.total_u9, 'b')
+
             self.grid.addWidget(self.plot_total_u1, 4, 0)
             self.grid.addWidget(self.plot_total_u9, 4, 1)
-                
-            ston_u1 = STON(self.x, total_u1, self.cuts)
-            ston_u9 = STON(self.x, total_u9, self.cuts)
-            stone_AVG = STON(self.x, ((total_u1 + total_u9)/2), self.cuts)
-            
+
+            ston_u1 = STON(self.x, self.total_u1, self.cuts)
+            ston_u9 = STON(self.x, self.total_u9, self.cuts)
+            stone_AVG = STON(self.x, ((self.total_u1 + self.total_u9)/2), self.cuts)
+
             self.STON_list_u1.append(ston_u1)
             self.STON_list_u9.append(ston_u9)
             self.STON_list_AVG.append(stone_AVG)
-            
+
             if index == self.datPairsCount -1:
                 self.nextPairButton.setText('Move to total results')
                 self.nextPairButton.clicked.connect(self.plotTotalResults)
@@ -559,151 +557,151 @@ class Analyzer(QWidget):
                 self.skipAllButton.hide()
                 self.skipAllButton.close()
                 del self.skipAllButton
-    
+
     def __PAIR(self, index, totalResults_u1, totalResults_u9, STON_list_u1, STON_list_u9, STON_list_AVG):
         pair = self.scanPairs[index]
-            
+
         scanNUmber1 = self.dataFileDir + "/" + pair[0]
         scanNUmber2 = self.dataFileDir + "/" + pair[1]
-            
+
         scan_number_1 = pair[0].split(".")[0].split("_")[-1][2:].lstrip("0")
         scan_number_2 = pair[1].split(".")[0].split("_")[-1][2:].lstrip("0")
-            
+
         scan_1 = self.logs[str(scan_number_2)]
         scan_2 = self.logs[str(scan_number_1)]
-            
+
         # get system temperature
-        tsys_u1_1 = scan_1['Systemtemperature'][0]
-        tsys_u1_2 = tsys_u1_1
-        tsys_u9_1 = scan_1['Systemtemperature'][1]
-        tsys_u9_2 = tsys_u9_1
-            
-        elevation = (float(scan_1["elevation"]) + float(scan_2["elevation"])) /2
-            
-        if float(tsys_u1_1) == 0:
+        self.tsys_u1_1 = scan_1['Systemtemperature'][0]
+        self.tsys_u1_2 = self.tsys_u1_1
+        self.tsys_u9_1 = scan_1['Systemtemperature'][1]
+        self.tsys_u9_2 = self.tsys_u9_1
+
+        self.elevation = (float(scan_1["self.elevation"]) + float(scan_2["self.elevation"])) /2
+
+        if float(self.tsys_u1_1) == 0:
             newT, ok = QInputDialog.getDouble(self, 'tsys error', 'Enter valid tsys:', 0, 1, 300)
-            tsys_u1_1 = newT
-            
-        if float(tsys_u9_1) == 0:
+            self.tsys_u1_1 = newT
+
+        if float(self.tsys_u9_1) == 0:
             newT, ok = QInputDialog.getDouble(self, 'tsys error', 'Enter valid tsys:', 0, 1, 300)
-            tsys_u9_1 = newT
-        
-        try:  
-            data_1 = np.fromfile(scanNUmber1, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber1),9))
-            data_2 = np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),9))
+            self.tsys_u9_1 = newT
+
+        try:
+            self.data_1 = np.fromfile(scanNUmber1, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber1),9))
+            self.data_2 = np.fromfile(scanNUmber2, dtype="float64", count=-1, sep=" ") .reshape((file_len(scanNUmber2),9))
         except IOError as e:
             print ("IO Error",  e)
             sys.exit(1)
-        
+
         except IndexError as e:
             print ("Index Error",  e)
             sys.exit(1)
-            
+
         except:
             print("Unexpected error:", sys.exc_info()[0])
             sys.exit(1)
-            
+
         else:
-                
+
             #Delete first row
-            data_1 = np.delete(data_1, (0), axis=0) #izdzes masiva primo elementu
-            data_2 = np.delete(data_2, (0), axis=0) #izdzes masiva primo elementu
-                      
-            xdata, ydata_1_u1, ydata_2_u1, ydata_1_u9, self.ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
-                
-            #Calibration  
-            data_u1 = self.calibration(xdata, ydata_1_u1, ydata_2_u1, float(tsys_u1_1), float(tsys_u1_2), elevation) 
-            data_u9 = self.calibration(xdata, ydata_1_u9, self.ydata_2_u9, float(tsys_u9_1), float(tsys_u9_2), elevation)
-               
-            xdata = np.array(xdata)
-                    
-            self.x = xdata
-            f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1)
-            f_shift = np.max(self.x) / 4.0
-            n_shift = int(f_shift/f_step)
-            total_u1 = data_u1[(n_shift+1):(self.dataPoints - n_shift - 1)]
-            total_u9 = data_u9[(n_shift+1):(self.dataPoints - n_shift - 1)]
-                
-            self.x = self.x[(n_shift+1):(self.dataPoints - n_shift - 1)] 
-                
-            totalResults_u1.append(total_u1)
-            totalResults_u9.append(total_u9)
-                
-            ston_u1 = STON(self.x, total_u1, self.cuts)
-            ston_u9 = STON(self.x, total_u9, self.cuts)
-            stone_AVG = STON(self.x, ((total_u1 + total_u9)/2), self.cuts)
-                
+            self.data_1 = np.delete(self.data_1, (0), axis=0) #izdzes masiva primo elementu
+            self.data_2 = np.delete(self.data_2, (0), axis=0) #izdzes masiva primo elementu
+
+            self.xdata, self.ydata_1_u1, self.ydata_2_u1, self.ydata_1_u9, self.ydata_2_u9 = self.__getDataForPolarization__(self.data_1, self.data_2, self.filter)
+
+            #Calibration
+            data_u1 = self.calibration(self.xdata, self.ydata_1_u1, self.ydata_2_u1, float(self.tsys_u1_1), float(self.tsys_u1_2), self.elevation)
+            data_u9 = self.calibration(self.xdata, self.ydata_1_u9, self.ydata_2_u9, float(self.tsys_u9_1), float(self.tsys_u9_2), self.elevation)
+
+            self.xdata = np.array(self.xdata)
+
+            self.x = self.xdata
+            self.f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1)
+            self.f_shift = np.max(self.x) / 4.0
+            self.n_shift = int(self.f_shift/self.f_step)
+            self.total_u1 = self.data_u1[(self.n_shift+1):(self.dataPoints - self.n_shift - 1)]
+            self.total_u9 = self.data_u9[(self.n_shift+1):(self.dataPoints - self.n_shift - 1)]
+
+            self.x = self.x[(self.n_shift+1):(self.dataPoints - self.n_shift - 1)]
+
+            self.totalResults_u1.append(self.total_u1)
+            self.totalResults_u9.append(self.total_u9)
+
+            ston_u1 = STON(self.x, self.total_u1, self.cuts)
+            ston_u9 = STON(self.x, self.total_u9, self.cuts)
+            stone_AVG = STON(self.x, ((self.total_u1 + self.total_u9)/2), self.cuts)
+
             STON_list_u1.append(ston_u1)
             STON_list_u9.append(ston_u9)
             STON_list_AVG.append(stone_AVG)
-            
+
     def skipAll(self):
         totalResults_u1= list()
         totalResults_u9= list()
-        
+
         STON_list_u1= list()
         STON_list_u9= list()
         STON_list_AVG= list()
-        
+
         for index in range(0, len(self.scanPairs)):
             self.__PAIR(index, totalResults_u1, totalResults_u9, STON_list_u1, STON_list_u9, STON_list_AVG)
-        
+
         self.totalResults_u1 = totalResults_u1
         self.totalResults_u9 = totalResults_u9
         self.STON_list_u1 = STON_list_u1
         self.STON_list_u9 = STON_list_u9
         self.STON_list_AVG = STON_list_AVG
-        
+
         self.plotTotalResults()
-            
+
     def plotTotalResults(self):
-       
+
         self.grid.removeWidget(self.plot_start_u1)
         self.grid.removeWidget(self.plot_start_u9)
         self.grid.removeWidget(self.plot_total_u1)
         self.grid.removeWidget(self.plot_total_u9)
-        
+
         self.plot_start_u1.hide()
         self.plot_start_u9.hide()
         self.plot_total_u1.hide()
         self.plot_total_u9.hide()
-        
+
         self.plot_start_u1.close()
         self.plot_start_u9.close()
         self.plot_total_u1.close()
         self.plot_total_u9.close()
-        
+
         self.plot_start_u1.removePolt()
         self.plot_start_u9.removePolt()
         self.plot_total_u1.removePolt()
         self.plot_total_u9.removePolt()
-        
+
         del self.plot_start_u1
         del self.plot_start_u9
         del self.plot_total_u1
         del self.plot_total_u9
-        
+
         self.grid.removeWidget(self.nextPairButton)
         self.nextPairButton.hide()
         self.nextPairButton.close()
-        del self.nextPairButton 
-        
-        for i in reversed(range(self.grid.count())): 
+        del self.nextPairButton
+
+        for i in reversed(range(self.grid.count())):
             self.grid.itemAt(i).widget().deleteLater()
-        
+
         velocitys_avg = np.zeros(self.totalResults_u1[0].shape)
         y_u1_avg = np.zeros(self.totalResults_u1[0].shape)
         y_u9_avg = np.zeros(self.totalResults_u9[0].shape)
-        
+
         FreqStart = self.fstart +  float(self.logs["header"]["BBC"])
-        print ("FreqStart", FreqStart, "BBC", float(self.logs["header"]["BBC"]))                                
+        print ("FreqStart", FreqStart, "BBC", float(self.logs["header"]["BBC"]))
         for p in range(0,  self.datPairsCount):
             scan_number_1 = self.scanPairs[p][0].split("_")[-1][2:].lstrip("0").split(".")[0]
             scan_number_2 = self.scanPairs[p][1].split("_")[-1][2:].lstrip("0").split(".")[0]
             print ("\npairs ", self.scanPairs[p])
             scan_1 = self.logs[str(scan_number_1)]
             scan_2 = self.logs[str(scan_number_2)]
-            
+
             timeStr = scan_1['startTime'].replace(":", " ")
             dateStrList = scan_1['dates'].split()
             months = {"Jan":"1", "Feb":"2", "Mar":"3", "Apr":"4", "May":"5", "Jun":"6", "Jul":"7", "Aug":"8", "Sep":"9", "Oct":"10", "Nov":"11", "Dec":"12"}
@@ -714,7 +712,7 @@ class Analyzer(QWidget):
             dopsetPar = dateStr + " " + timeStr + " " + RaStr + " " + DecStr
             print ("dopsetPar", dopsetPar,  " dateStr ", dateStr + " timeStr " + timeStr + " RaStr " + RaStr + " DecStr" + DecStr)
             os.system("code/dopsetpy_v1.5 " + dopsetPar)
-            
+
             # dopsetpy parametru nolasisana
             with open('lsrShift.dat') as openfileobject:
                 for line in openfileobject:
@@ -748,76 +746,76 @@ class Analyzer(QWidget):
                         VelTotal = float(Header[1])
                         print ("VelTotal: \t", VelTotal)
                     #Header +=1
-                    
+
             Vobs = float(Vobs)
-            lsrCorr = float(lsrShift)*1.e6 # for MHz 
-            
+            lsrCorr = float(lsrShift)*1.e6 # for MHz
+
             self.max_yu1_index =  self.totalResults_u1[p].argmax(axis=0)
             self.max_yu9_index =  self.totalResults_u9[p].argmax(axis=0)
-            
+
             self.freq_0_u1_index = ((np.abs(self.base_frequencies_list - (self.x[self.max_yu1_index] + FreqStart) * (10 ** 6) ).argmin()))
             self.freq_0_u9_index = ((np.abs(self.base_frequencies_list - (self.x[self.max_yu9_index] + FreqStart) * (10 ** 6) ).argmin()))
-            
+
             self.freq_0_u1 = self.base_frequencies_list[self.freq_0_u1_index]
             self.freq_0_u9 = self.base_frequencies_list[self.freq_0_u9_index]
-            
+
             print ("base freqcvencie", self.freq_0_u1, self.freq_0_u9)
-            
+
             for key, value in self.base_frequencies.items():
                 if float(value) == self.freq_0_u1:
                     specie = key
-                    
+
             print ("specie", specie)
-                    
+
             velocitys = dopler((self.x + FreqStart) * (10 ** 6), VelTotal, self.freq_0_u1)
             y_u1_avg =  y_u1_avg + self.totalResults_u1[p]
             y_u9_avg =  y_u9_avg + self.totalResults_u9[p]
             velocitys_avg = velocitys_avg + velocitys
-        
+
         velocitys_avg =  velocitys_avg/len(self.totalResults_u1)
         y_u1_avg = y_u1_avg/len(self.totalResults_u1)
         y_u9_avg = y_u9_avg/len(self.totalResults_u9)
-             
+
         self.plot_velocity_u1 = Plot()
         self.plot_velocity_u1.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization", (1,0))
         self.plot_velocity_u1.plot(velocitys_avg, y_u1_avg, 'b')
         #self.plot_velocity_u1.plot(x, y, 'r')
-        
+
         self.plot_velocity_u9 = Plot()
         self.plot_velocity_u9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization", (1,1))
         self.plot_velocity_u9.plot(velocitys_avg, y_u9_avg, 'b')
-        
+
         #self.plot_velocity_uAVG = Plot()
         #self.plot_velocity_uAVG.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization")
         #self.plot_velocity_uAVG.plot(velocitys_avg, (y_u9_avg +  y_u1_avg )/2 , 'b')
-        
+
         ston_x = np.arange(0, len(self.STON_list_u1))
         self.plot_STON = Plot()
         self.plot_STON.creatPlot(self.grid, 'Pair', 'Ratio', "Signal to Noise", (3,0))
         self.plot_STON.plot(ston_x, self.STON_list_u1, '*r', label="u1 Polarization")
         self.plot_STON.plot(ston_x, self.STON_list_u9, 'og', label="u9 Polarization")
         self.plot_STON.plot(ston_x, self.STON_list_AVG, 'vb', label="AVG Polarization")
-        
+
         self.grid.addWidget(self.plot_velocity_u1, 0, 0)
         self.grid.addWidget(self.plot_velocity_u9, 0, 1)
-        
+
         self.grid.addWidget(self.plot_STON, 2, 0)
-        
+
         totalResults = np.concatenate((velocitys_avg, y_u1_avg, y_u9_avg), axis=1)
         output_file_name = self.dataFilesPath + self.source + "_" +self.date.replace(" ", "_") + "_" + self.firstScanStartTime + "_" + self.logs["header"]["location"] + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
         #np.savetxt(output_file_name, totalResults)
-        
+
         result = Result(totalResults, specie)
         pickle.dump(result, open(output_file_name, 'wb'))
-                
+
     def __UI__(self):
-        
+
         if self.index != self.datPairsCount -1: # cheking if there is not one pair
             self.nextPairButton = QPushButton("Next pair", self)
             self.nextPairButton.clicked.connect(self.nextPair)
             self.grid.addWidget(self.nextPairButton, 5, 3)
-        
+
         self.skipAllButton = QPushButton("Skip all", self)
         self.skipAllButton.clicked.connect(self.skipAll)
         self.grid.addWidget(self.skipAllButton, 6, 3)
@@ -828,52 +826,140 @@ class Analyzer(QWidget):
 
         self.plotingPairs(self.index)
 
-    def _on_left_click(self, event, xdata, ydata):
-        line = event.artist                            #Replace not remove points with polynom np.polyfit()
-        pointx, pointy = line.get_data()                 #Save old points in array
-        ind = event.ind
-        if (xdata[ind].size > 1):
-            print("Too many points selected")
-        else:
-            y1_list = ydata.tolist()
-            print(pointx[ind])
-            print(pointx[ind].tolist())
-            index = y1_list.index(pointy[ind])
-            if xdata[index][0] not in self.x_bad_point_2_u9:
-                print("Selected point x -", pointx[ind][0], " y -", pointy[ind][0])
-                print("Index ", index)
-                pf = np.polyfit(xdata[:, 0], ydata[:, 0], 10)
-                p = np.poly1d(pf)
-                print("Poly value ", p(xdata[index]))
-                self.y_bad_point_2_u9.append(ydata[index][0])
-                self.x_bad_point_2_u9.append(xdata[index][0])
-                self.redbad[0].set_data(self.x_bad_point_2_u9, self.y_bad_point_2_u9)
-                ydata[index][0]=p(xdata[index])
-                event.canvas.draw()
-                event.canvas.flush_events()
-
-    def _on_right_click(self, event, xdata, ydata):
-        if event.mouseevent.button == 3:
-            line = event.artist
-            pointx, pointy = line.get_data()  # Save old points in array
+    def _on_left_click_u9(self, event):
+        if event.mouseevent.button == 1:
+            line = event.artist                            #Replace not remove points with polynom np.polyfit()
+            pointx, pointy = line.get_data()                 #Save old points in array
             ind = event.ind
-            if (xdata[ind].size > 1):
+            if (pointx[ind].size > 1):
                 print("Too many points selected")
             else:
-                print("Selected point x -", pointx[ind][0], " y -", pointy[ind][0])
-                y1_list = ydata.tolist()
-                index = y1_list.index(pointy[ind].tolist())
-                print("Index ", index)
-                pf = np.polyfit(xdata[:, 0], ydata[:, 0], 20)
-                p = np.poly1d(pf)
-                print("Poly value ", p(xdata[index]))
-                ydata[index][0] = p(xdata[index])
-                event.artist.set_ydata(ydata[:, 0])
-                event.canvas.draw()
-                event.canvas.flush_events()
+                y_list = self.ydata_2_u9.tolist()
+                print(pointx[ind])
+                print(pointx[ind].tolist())
+                index = y_list.index(pointy[ind])
+                if self.xdata[index][0] not in self.x_bad_point_2_u9:
+                    print("Selected point x -", pointx[ind][0], " y -", pointy[ind][0])
+                    print("Index ", index)
+                    pf = np.polyfit(self.xdata[:, 0], self.ydata_2_u9[:, 0], 10)
+                    p = np.poly1d(pf)
+                    print("Poly value ", p(self.xdata[index]))
+                    self.y_bad_point_2_u9.append(self.ydata_2_u9[index][0])
+                    self.x_bad_point_2_u9.append(self.xdata[index][0])
+                    self.badplot_2_u9[0].set_data(self.x_bad_point_2_u9, self.y_bad_point_2_u9)
+                    self.ydata_2_u9[index][0]=p(self.xdata[index])
+                    event.canvas.draw()
+                    event.canvas.flush_events()
+
+    def _on_right_click_u9(self, event):
+        if event.mouseevent.button == 3:
+            line = event.artist  # Replace not remove points with polynom np.polyfit()
+            pointx, pointy = line.get_data()  # Save old points in array
+            ind = event.ind
+            if (pointx[ind].size > 1):
+                print("Too many points selected")
+            else:
+                y_list = self.ydata_1_u9.tolist()
+                print(pointx[ind])
+                print(pointx[ind].tolist())
+                index = y_list.index(pointy[ind])
+                if self.xdata[index][0] not in self.x_bad_point_1_u9:
+                    print("Selected point x -", pointx[ind][0], " y -", pointy[ind][0])
+                    print("Index ", index)
+                    pf = np.polyfit(self.xdata[:, 0], self.ydata_1_u9[:, 0], 10)
+                    p = np.poly1d(pf)
+                    print("Poly value ", p(self.xdata[index]))
+                    self.y_bad_point_1_u9.append(self.ydata_1_u9[index][0])
+                    self.x_bad_point_1_u9.append(self.xdata[index][0])
+                    self.badplot_1_u9[0].set_data(self.x_bad_point_1_u9, self.y_bad_point_1_u9)
+                    self.ydata_1_u9[index][0] = p(self.xdata[index])
+                    event.canvas.draw()
+                    event.canvas.flush_events()
+
+    def _on_left_click_u1(self, event):
+        if event.mouseevent.button == 1:
+            line = event.artist                            #Replace not remove points with polynom np.polyfit()
+            pointx, pointy = line.get_data()                 #Save old points in array
+            ind = event.ind
+            if (pointx[ind].size > 1):
+                print("Too many points selected")
+            else:
+                y_list = self.ydata_2_u1.tolist()
+                print(pointx[ind])
+                print(pointx[ind].tolist())
+                index = y_list.index(pointy[ind])
+                if self.xdata[index][0] not in self.x_bad_point_2_u1:
+                    print("Selected point x -", pointx[ind][0], " y -", pointy[ind][0])
+                    print("Index ", index)
+                    pf = np.polyfit(self.xdata[:, 0], self.ydata_2_u1[:, 0], 10)
+                    p = np.poly1d(pf)
+                    print("Poly value ", p(self.xdata[index]))
+                    self.y_bad_point_2_u1.append(self.ydata_2_u1[index][0])
+                    self.x_bad_point_2_u1.append(self.xdata[index][0])
+                    self.badplot_2_u1[0].set_data(self.x_bad_point_2_u1, self.y_bad_point_2_u1)
+                    self.ydata_2_u1[index][0]=p(self.xdata[index])
+                    event.canvas.draw()
+                    event.canvas.flush_events()
+
+    def _on_right_click_u1(self, event):
+        if event.mouseevent.button == 3:
+            line = event.artist  # Replace not remove points with polynom np.polyfit()
+            pointx, pointy = line.get_data()  # Save old points in array
+            ind = event.ind
+            if (pointx[ind].size > 1):
+                print("Too many points selected")
+            else:
+                y_list = self.ydata_1_u1.tolist()
+                print(pointx[ind])
+                print(pointx[ind].tolist())
+                index = y_list.index(pointy[ind])
+                if self.xdata[index][0] not in self.x_bad_point_1_u1:
+                    print("Selected point x -", pointx[ind][0], " y -", pointy[ind][0])
+                    print("Index ", index)
+                    pf = np.polyfit(self.xdata[:, 0], self.ydata_1_u1[:, 0], 10)
+                    p = np.poly1d(pf)
+                    print("Poly value ", p(self.xdata[index]))
+                    self.y_bad_point_1_u1.append(self.ydata_1_u1[index][0])
+                    self.x_bad_point_1_u1.append(self.xdata[index][0])
+                    self.badplot_1_u1[0].set_data(self.x_bad_point_1_u1, self.y_bad_point_1_u1)
+                    self.ydata_1_u1[index][0] = p(self.xdata[index])
+                    event.canvas.draw()
+                    event.canvas.flush_events()
 
     def applyChanges(self):
+        #recalculate total graphs
+        self.data_u1 = self.calibration(self.xdata, self.ydata_1_u1, self.ydata_2_u1, float(self.tsys_u1_1),
+                                        float(self.tsys_u1_2), self.elevation)
+        self.data_u9 = self.calibration(self.xdata, self.ydata_1_u9, self.ydata_2_u9, float(self.tsys_u9_1),
+                                        float(self.tsys_u9_2), self.elevation)
+
+        self.x = self.xdata
+        self.f_step = (self.x[self.dataPoints - 1] - self.x[0]) / (self.dataPoints - 1)
+        self.f_shift = np.max(self.x) / 4.0
+        self.n_shift = int(self.f_shift / self.f_step)
+        self.total_u1 = self.data_u1[(self.n_shift + 1):(self.dataPoints - self.n_shift - 1)]
+        self.total_u9 = self.data_u9[(self.n_shift + 1):(self.dataPoints - self.n_shift - 1)]
+
+        #redraw plots with new data
+        self.line_1_u1[0].set_ydata(self.ydata_1_u1[:,0])
+        self.line_2_u1[0].set_ydata(self.ydata_2_u1[:,0])
+
+        self.line_1_u9[0].set_ydata(self.ydata_1_u9[:,0])
         self.line_2_u9[0].set_ydata(self.ydata_2_u9[:,0])
+
+        self.line_total_u1[0].set_ydata(self.total_u1)
+        self.plot_total_u1.fig.axes[0].relim()
+        self.plot_total_u1.fig.axes[0].autoscale_view()
+        self.plot_total_u1.fig.canvas.draw()
+
+        self.line_total_u9[0].set_ydata(self.total_u9)
+        self.plot_total_u9.fig.axes[0].relim()  #rescale to fit data
+        self.plot_total_u9.fig.axes[0].autoscale_view()
+        self.plot_total_u9.fig.canvas.draw()
+
+        self.plot_start_u1.fig.canvas.draw()
+        self.plot_start_u1.fig.canvas.flush_events()
+        
         self.plot_start_u9.fig.canvas.draw()
         self.plot_start_u9.fig.canvas.flush_events()
 
