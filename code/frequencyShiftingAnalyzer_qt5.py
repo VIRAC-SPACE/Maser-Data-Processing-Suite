@@ -13,6 +13,8 @@ import pickle
 import numpy as np
 import scipy.constants
 import pandas as pd
+from multiprocessing import Pool
+import time
 from pandas import Series
 #from pandas.stats.moments import rolling_mean
 
@@ -92,7 +94,7 @@ def STON(xarray, yarray, cuts):
         y_array.append(yarray[cutsIndex[i] : cutsIndex[j]])
         i = i + 2 
         j = j + 2
-    
+
     y = list()
              
     for p in y_array:
@@ -109,6 +111,27 @@ def STON(xarray, yarray, cuts):
 
 def func():
     pass
+
+
+def replaceBadPoints(xdata, ydata, x_bad_point, y_bad_point, data):
+    tempx = []
+    tempy = []
+
+    xlist=xdata.tolist()
+
+    pf = np.polyfit(xdata[:, 0], ydata[:, 0], 10)
+    p = np.poly1d(pf)
+
+    for idx, point in enumerate(x_bad_point):
+        index = xlist.index(point)
+        if (y_bad_point[idx] / ydata[index][0] > 1.10 or
+                y_bad_point[idx] / ydata[index][0] < 0.90):
+            tempx.append(x_bad_point[idx])
+            tempy.append(y_bad_point[idx])
+            ydata[index][0] = p(x_bad_point[idx])
+        else:
+            ydata[index][0] = data[index, [1]][0]
+    return tempx, tempy
 
 class Result():
     def __init__(self, matrix, specie):
@@ -210,7 +233,7 @@ class Analyzer(QWidget):
         if filter > 0:
             ndata1 = np.array(data1)
             ndata2 = np.array(data2)
-            for x in range(filter+1):
+            for x in range(filter):
                 outliersMask_1 = is_outlier(ndata1, self.threshold)
                 outliersMask_2 = is_outlier(ndata2, self.threshold)
 
@@ -283,88 +306,18 @@ class Analyzer(QWidget):
                 ndata1[:,[2]] = ydata_1_u9
                 ndata2[:,[2]] = ydata_2_u9
 
-                if x==filter:
-                    xlist = xdata.tolist()  #need list because np array has no .index() function
+                if x==filter-1:
 
-                    tempx = []
-                    tempy = []
+                    pool = Pool(processes=4)
+                    async_result1 = pool.apply_async(replaceBadPoints, (xdata, ydata_1_u1, self.x_bad_point_1_u1, self.y_bad_point_1_u1, data1))
+                    async_result2 = pool.apply_async(replaceBadPoints, (xdata, ydata_1_u9, self.x_bad_point_1_u9, self.y_bad_point_1_u9, data1))
+                    async_result3 = pool.apply_async(replaceBadPoints, (xdata, ydata_2_u1, self.x_bad_point_2_u1, self.y_bad_point_2_u1, data2))
+                    async_result4 = pool.apply_async(replaceBadPoints, (xdata, ydata_2_u9, self.x_bad_point_2_u9, self.y_bad_point_2_u9, data2))
 
-                    pf = np.polyfit(xdata[:, 0], ydata_1_u1[:, 0], 10)
-                    p = np.poly1d(pf)
-
-                    for idx, point in enumerate(self.x_bad_point_1_u1):
-                        index = xlist.index(point)
-                        if (self.y_bad_point_1_u1[idx] / ydata_1_u1[index][0] > 1.10 or
-                                self.y_bad_point_1_u1[idx] / ydata_1_u1[index][0] < 0.90):
-                            tempx.append(self.x_bad_point_1_u1[idx])
-                            #tempy.append(self.y_bad_point_1_u1[idx])
-                            tempy.append(self.y_bad_point_1_u1[idx])
-                            ydata_1_u1[index][0]=p(self.x_bad_point_1_u1[idx])
-                        else:
-                            ydata_1_u1[index][0] = data1[index, [1]][0]
-
-                    self.x_bad_point_1_u1 = tempx
-                    self.y_bad_point_1_u1 = tempy
-
-                    tempx = []
-                    tempy = []
-
-                    pf = np.polyfit(xdata[:, 0], ydata_2_u1[:, 0], 10)
-                    p = np.poly1d(pf)
-
-                    for idx, point in enumerate(self.x_bad_point_2_u1):
-                        index = xlist.index(point)
-                        if (self.y_bad_point_2_u1[idx] / ydata_2_u1[index][0] > 1.10 or
-                                self.y_bad_point_2_u1[idx] / ydata_2_u1[index][0] < 0.90):
-                            tempx.append(self.x_bad_point_2_u1[idx])
-                            tempy.append(self.y_bad_point_2_u1[idx])
-                            ydata_2_u1[index][0]=p(self.x_bad_point_2_u1[idx])
-                        else:
-                            ydata_2_u1[index][0] = data2[index, [1]][0]
-
-
-                    self.x_bad_point_2_u1 = tempx
-                    self.y_bad_point_2_u1 = tempy
-
-                    tempx = []
-                    tempy = []
-
-                    pf = np.polyfit(xdata[:, 0], ydata_1_u9[:, 0], 10)
-                    p = np.poly1d(pf)
-
-                    for idx, point in enumerate(self.x_bad_point_1_u9):
-                        index = xlist.index(point)
-                        if (self.y_bad_point_1_u9[idx] / ydata_1_u9[index][0] > 1.10 or
-                                self.y_bad_point_1_u9[idx] / ydata_1_u9[index][0] < 0.90):
-                            tempx.append(self.x_bad_point_1_u9[idx])
-                            tempy.append(self.y_bad_point_1_u9[idx])
-                            ydata_1_u9[index][0]=p(self.x_bad_point_1_u9[idx])
-                        else:
-                            ydata_1_u9[index][0] = data1[index, [2]][0]
-
-                    self.x_bad_point_1_u9 = tempx
-                    self.y_bad_point_1_u9 = tempy
-
-                    tempx = []
-                    tempy = []
-
-                    pf = np.polyfit(xdata[:, 0], ydata_2_u9[:, 0], 10)
-                    p = np.poly1d(pf)
-
-                    for idx, point in enumerate(self.x_bad_point_2_u9):
-                        index = xlist.index(point)
-                        if (self.y_bad_point_2_u9[idx] / ydata_2_u9[index][0]  > 1.10 or
-                                self.y_bad_point_2_u9[idx] / ydata_2_u9[index][0]  < 0.90):
-                            tempx.append(self.x_bad_point_2_u9[idx])
-                            tempy.append(self.y_bad_point_2_u9[idx])
-                            ydata_2_u9[index][0]=p(self.x_bad_point_2_u9[idx])
-                        else:
-                            ydata_2_u9[index][0] = data2[index, [2]][0]
-
-                    self.x_bad_point_2_u9 = tempx
-                    self.y_bad_point_2_u9 = tempy
-
-
+                    self.x_bad_point_1_u1, self.y_bad_point_1_u1 = async_result1.get()
+                    self.x_bad_point_1_u9, self.y_bad_point_1_u9 = async_result2.get()
+                    self.x_bad_point_2_u1, self.y_bad_point_2_u1 = async_result3.get()
+                    self.x_bad_point_2_u9, self.y_bad_point_2_u9 = async_result4.get()
 
                 self.dataPoints = len(xdata)
 
@@ -959,7 +912,7 @@ class Analyzer(QWidget):
 
         self.plot_start_u1.fig.canvas.draw()
         self.plot_start_u1.fig.canvas.flush_events()
-        
+
         self.plot_start_u9.fig.canvas.draw()
         self.plot_start_u9.fig.canvas.flush_events()
 
