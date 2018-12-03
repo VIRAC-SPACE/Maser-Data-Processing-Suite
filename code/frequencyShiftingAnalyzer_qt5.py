@@ -14,9 +14,7 @@ import numpy as np
 import scipy.constants
 import pandas as pd
 from multiprocessing import Pool
-import time
 from pandas import Series
-#from pandas.stats.moments import rolling_mean
 
 from experimentsLogReader import ExperimentLogReader
 from ploting_qt5 import  Plot
@@ -427,11 +425,7 @@ class Analyzer(QWidget):
 
             self.xdata, self.ydata_1_u1, self.ydata_2_u1, self.ydata_1_u9, self.ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
 
-
-
             self.plot_start_u1 = Plot()
-
-            #self.plot_start_u1.fig.canvas.mpl_connect('button_press_event', lambda event: self._on_press_u1(event, xdata, ydata_1_u1, ydata_2_u1))
 
             self.plot_start_u1.setFocusPolicy(QtCore.Qt.ClickFocus)
             self.plot_start_u1.setFocus()
@@ -446,8 +440,9 @@ class Analyzer(QWidget):
             self.plot_start_u1.fig.canvas.mpl_connect('pick_event',self._on_left_click_u1)
             self.plot_start_u1.fig.canvas.mpl_connect('pick_event',self._on_right_click_u1)
 
-            self.plot_start_u9 = Plot()
 
+
+            self.plot_start_u9 = Plot()
 
             self.plot_start_u9.setFocusPolicy(QtCore.Qt.ClickFocus)
             self.plot_start_u9.setFocus()
@@ -529,7 +524,7 @@ class Analyzer(QWidget):
         self.tsys_u9_1 = scan_1['Systemtemperature'][1]
         self.tsys_u9_2 = self.tsys_u9_1
 
-        self.elevation = (float(scan_1["self.elevation"]) + float(scan_2["self.elevation"])) /2
+        self.elevation = (float(scan_1["elevation"]) + float(scan_2["elevation"])) /2
 
         if float(self.tsys_u1_1) == 0:
             newT, ok = QInputDialog.getDouble(self, 'tsys error', 'Enter valid tsys:', 0, 1, 300)
@@ -563,8 +558,8 @@ class Analyzer(QWidget):
             self.xdata, self.ydata_1_u1, self.ydata_2_u1, self.ydata_1_u9, self.ydata_2_u9 = self.__getDataForPolarization__(self.data_1, self.data_2, self.filter)
 
             #Calibration
-            data_u1 = self.calibration(self.xdata, self.ydata_1_u1, self.ydata_2_u1, float(self.tsys_u1_1), float(self.tsys_u1_2), self.elevation)
-            data_u9 = self.calibration(self.xdata, self.ydata_1_u9, self.ydata_2_u9, float(self.tsys_u9_1), float(self.tsys_u9_2), self.elevation)
+            self.data_u1 = self.calibration(self.xdata, self.ydata_1_u1, self.ydata_2_u1, float(self.tsys_u1_1), float(self.tsys_u1_2), self.elevation)
+            self.data_u9 = self.calibration(self.xdata, self.ydata_1_u9, self.ydata_2_u9, float(self.tsys_u9_1), float(self.tsys_u9_2), self.elevation)
 
             self.xdata = np.array(self.xdata)
 
@@ -589,18 +584,20 @@ class Analyzer(QWidget):
             STON_list_AVG.append(stone_AVG)
 
     def skipAll(self):
-        totalResults_u1= list()
-        totalResults_u9= list()
+        self.totalResults_u1= list()
+        self.totalResults_u9= list()
 
         STON_list_u1= list()
         STON_list_u9= list()
         STON_list_AVG= list()
 
         for index in range(0, len(self.scanPairs)):
-            self.__PAIR(index, totalResults_u1, totalResults_u9, STON_list_u1, STON_list_u9, STON_list_AVG)
+            print("Starting ",index+1," from ",len(self.scanPairs))
+            self.__PAIR(index, self.totalResults_u1, self.totalResults_u9, STON_list_u1, STON_list_u9, STON_list_AVG)
+            print("Done with ",index+1," from ",len(self.scanPairs))
 
-        self.totalResults_u1 = totalResults_u1
-        self.totalResults_u9 = totalResults_u9
+        self.totalResults_u1 = self.totalResults_u1
+        self.totalResults_u9 = self.totalResults_u9
         self.STON_list_u1 = STON_list_u1
         self.STON_list_u9 = STON_list_u9
         self.STON_list_AVG = STON_list_AVG
@@ -781,15 +778,13 @@ class Analyzer(QWidget):
 
     def _on_left_click_u9(self, event):
         if event.mouseevent.button == 1:
-            line = event.artist                            #Replace not remove points with polynom np.polyfit()
-            pointx, pointy = line.get_data()                 #Save old points in array
+            line = event.artist
+            pointx, pointy = line.get_data()
             ind = event.ind
             if (pointx[ind].size > 1):
                 print("Too many points selected")
             else:
                 y_list = self.ydata_2_u9.tolist()
-                print(pointx[ind])
-                print(pointx[ind].tolist())
                 index = y_list.index(pointy[ind])
                 if self.xdata[index][0] not in self.x_bad_point_2_u9:
                     print("Selected point x -", pointx[ind][0], " y -", pointy[ind][0])
@@ -806,15 +801,13 @@ class Analyzer(QWidget):
 
     def _on_right_click_u9(self, event):
         if event.mouseevent.button == 3:
-            line = event.artist  # Replace not remove points with polynom np.polyfit()
-            pointx, pointy = line.get_data()  # Save old points in array
+            line = event.artist
+            pointx, pointy = line.get_data()
             ind = event.ind
             if (pointx[ind].size > 1):
                 print("Too many points selected")
             else:
                 y_list = self.ydata_1_u9.tolist()
-                print(pointx[ind])
-                print(pointx[ind].tolist())
                 index = y_list.index(pointy[ind])
                 if self.xdata[index][0] not in self.x_bad_point_1_u9:
                     print("Selected point x -", pointx[ind][0], " y -", pointy[ind][0])
@@ -831,15 +824,13 @@ class Analyzer(QWidget):
 
     def _on_left_click_u1(self, event):
         if event.mouseevent.button == 1:
-            line = event.artist                            #Replace not remove points with polynom np.polyfit()
-            pointx, pointy = line.get_data()                 #Save old points in array
+            line = event.artist
+            pointx, pointy = line.get_data()
             ind = event.ind
             if (pointx[ind].size > 1):
                 print("Too many points selected")
             else:
                 y_list = self.ydata_2_u1.tolist()
-                print(pointx[ind])
-                print(pointx[ind].tolist())
                 index = y_list.index(pointy[ind])
                 if self.xdata[index][0] not in self.x_bad_point_2_u1:
                     print("Selected point x -", pointx[ind][0], " y -", pointy[ind][0])
@@ -856,15 +847,13 @@ class Analyzer(QWidget):
 
     def _on_right_click_u1(self, event):
         if event.mouseevent.button == 3:
-            line = event.artist  # Replace not remove points with polynom np.polyfit()
-            pointx, pointy = line.get_data()  # Save old points in array
+            line = event.artist
+            pointx, pointy = line.get_data()
             ind = event.ind
             if (pointx[ind].size > 1):
                 print("Too many points selected")
             else:
                 y_list = self.ydata_1_u1.tolist()
-                print(pointx[ind])
-                print(pointx[ind].tolist())
                 index = y_list.index(pointy[ind])
                 if self.xdata[index][0] not in self.x_bad_point_1_u1:
                     print("Selected point x -", pointx[ind][0], " y -", pointy[ind][0])
