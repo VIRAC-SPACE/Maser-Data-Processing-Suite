@@ -307,6 +307,17 @@ class Analyzer(QWidget):
                 if x==filter-1:
 
                     pool = Pool(processes=4)
+                    xdata = np.array(xdata, dtype="float")
+                    self.x_bad_point_1_u1 = np.array(self.x_bad_point_1_u1, dtype="float")
+                    self.x_bad_point_1_u9 = np.array(self.x_bad_point_1_u9, dtype="float")
+                    self.x_bad_point_2_u1 = np.array(self.x_bad_point_2_u1, dtype="float")
+                    self.x_bad_point_2_u9 = np.array(self.x_bad_point_2_u9, dtype="float")
+
+                    ydata_1_u1 = np.array(ydata_1_u1, dtype="float")
+                    ydata_1_u9 = np.array(ydata_1_u9, dtype="float")
+                    ydata_2_u1 = np.array(ydata_2_u1, dtype="float")
+                    ydata_2_u9 = np.array(ydata_2_u9, dtype="float")
+
                     async_result1 = pool.apply_async(replaceBadPoints, (xdata, ydata_1_u1, self.x_bad_point_1_u1, self.y_bad_point_1_u1, data1))
                     async_result2 = pool.apply_async(replaceBadPoints, (xdata, ydata_1_u9, self.x_bad_point_1_u9, self.y_bad_point_1_u9, data1))
                     async_result3 = pool.apply_async(replaceBadPoints, (xdata, ydata_2_u1, self.x_bad_point_2_u1, self.y_bad_point_2_u1, data2))
@@ -498,6 +509,9 @@ class Analyzer(QWidget):
             self.STON_list_u9.append(ston_u9)
             self.STON_list_AVG.append(stone_AVG)
 
+            print("total_u1 ", self.total_u1.shape)
+            print("total_u9 ", self.total_u9.shape)
+
             if index == self.datPairsCount -1:
                 self.nextPairButton.setText('Move to total results')
                 self.nextPairButton.clicked.connect(self.plotTotalResults)
@@ -595,8 +609,8 @@ class Analyzer(QWidget):
             self.__PAIR(index, self.totalResults_u1, self.totalResults_u9, STON_list_u1, STON_list_u9, STON_list_AVG)
             print(index+1,"/",len(self.scanPairs)," done")
 
-        self.totalResults_u1 = self.totalResults_u1
-        self.totalResults_u9 = self.totalResults_u9
+        #self.totalResults_u1 = self.totalResults_u1
+        #self.totalResults_u9 = self.totalResults_u9
         self.STON_list_u1 = STON_list_u1
         self.STON_list_u9 = STON_list_u9
         self.STON_list_AVG = STON_list_AVG
@@ -719,7 +733,8 @@ class Analyzer(QWidget):
             velocitys = dopler((self.x + FreqStart) * (10 ** 6), VelTotal, self.freq_0_u1)
             y_u1_avg =  y_u1_avg + self.totalResults_u1[p]
             y_u9_avg =  y_u9_avg + self.totalResults_u9[p]
-            velocitys_avg = velocitys_avg + velocitys
+            print(velocitys_avg.shape,"/",velocitys.shape)
+            velocitys_avg =  velocitys_avg + velocitys
 
         velocitys_avg =  velocitys_avg/len(self.totalResults_u1)
         y_u1_avg = y_u1_avg/len(self.totalResults_u1)
@@ -874,9 +889,11 @@ class Analyzer(QWidget):
         self.data_u9 = self.calibration(self.xdata, self.ydata_1_u9, self.ydata_2_u9, float(self.tsys_u9_1),
                                         float(self.tsys_u9_2), self.elevation)
 
-        self.x = self.xdata
-        self.f_step = (self.x[self.dataPoints - 1] - self.x[0]) / (self.dataPoints - 1)
-        self.f_shift = np.max(self.x) / 4.0
+        print(self.x.shape)
+        #self.x = self.xdata
+        print(self.x.shape)
+        self.f_step = (self.xdata[self.dataPoints - 1] - self.xdata[0]) / (self.dataPoints - 1)
+        self.f_shift = np.max(self.xdata) / 4.0
         self.n_shift = int(self.f_shift / self.f_step)
         self.total_u1 = self.data_u1[(self.n_shift + 1):(self.dataPoints - self.n_shift - 1)]
         self.total_u9 = self.data_u9[(self.n_shift + 1):(self.dataPoints - self.n_shift - 1)]
@@ -903,6 +920,9 @@ class Analyzer(QWidget):
 
         self.plot_start_u9.fig.canvas.draw()
         self.plot_start_u9.fig.canvas.flush_events()
+        print("total_u1 ", self.total_u1.shape)
+        print("total_u9 ", self.total_u9.shape)
+
 
 
 def main():
