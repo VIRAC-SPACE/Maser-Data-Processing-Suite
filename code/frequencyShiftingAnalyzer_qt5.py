@@ -188,6 +188,7 @@ class Analyzer(QWidget):
         self.setLayout(self.grid)
         self.grid.setSpacing(10)
 
+
         self.__UI__()
 
     def center(self):
@@ -382,6 +383,27 @@ class Analyzer(QWidget):
             self.plot_total_u1.removePolt()
             self.plot_total_u9.removePolt()
             self.index = self.index + 1
+
+            ston_u1 = STON(self.x, self.total_u1, self.cuts)
+            ston_u9 = STON(self.x, self.total_u9, self.cuts)
+            stone_AVG = STON(self.x, ((self.total_u1 + self.total_u9) / 2), self.cuts)
+
+            self.STON_list_u1.append(ston_u1)
+            self.STON_list_u9.append(ston_u9)
+            self.STON_list_AVG.append(stone_AVG)
+
+            self.x = self.xdata
+            self.f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1)
+            self.f_shift = np.max(self.x) / 4.0
+            self.n_shift = int(self.f_shift/self.f_step)
+            self.total_u1 = self.data_u1[(self.n_shift+1):(self.dataPoints - self.n_shift - 1)]
+            self.total_u9 = self.data_u9[(self.n_shift+1):(self.dataPoints - self.n_shift - 1)]
+
+            self.x = self.x[(self.n_shift+1):(self.dataPoints - self.n_shift - 1)]
+
+            self.totalResults_u1.append(self.total_u1)
+            self.totalResults_u9.append(self.total_u9)
+
             self.plotingPairs(self.index)
 
     def plotingPairs(self, index):
@@ -598,22 +620,20 @@ class Analyzer(QWidget):
             STON_list_AVG.append(stone_AVG)
 
     def skipAll(self):
-        self.totalResults_u1= list()
-        self.totalResults_u9= list()
+        #self.totalResults_u1= list()
+        #self.totalResults_u9= list()
 
         STON_list_u1= list()
         STON_list_u9= list()
         STON_list_AVG= list()
 
-        for index in range(0, len(self.scanPairs)):
-            self.__PAIR(index, self.totalResults_u1, self.totalResults_u9, STON_list_u1, STON_list_u9, STON_list_AVG)
+        for index in range(self.index, len(self.scanPairs)):
+            self.__PAIR(index, self.totalResults_u1, self.totalResults_u9, self.STON_list_u1, self.STON_list_u9, self.STON_list_AVG)
             print(index+1,"/",len(self.scanPairs)," done")
 
-        #self.totalResults_u1 = self.totalResults_u1
-        #self.totalResults_u9 = self.totalResults_u9
-        self.STON_list_u1 = STON_list_u1
-        self.STON_list_u9 = STON_list_u9
-        self.STON_list_AVG = STON_list_AVG
+        #self.STON_list_u1 = STON_list_u1
+        #self.STON_list_u9 = STON_list_u9
+        #self.STON_list_AVG = STON_list_AVG
 
         self.plotTotalResults()
 
@@ -658,7 +678,7 @@ class Analyzer(QWidget):
 
         FreqStart = self.fstart +  float(self.logs["header"]["BBC"])
         print ("FreqStart", FreqStart, "BBC", float(self.logs["header"]["BBC"]))
-        for p in range(0,  self.datPairsCount):
+        for p in range(self.index,  self.datPairsCount):
             scan_number_1 = self.scanPairs[p][0].split("_")[-1][2:].lstrip("0").split(".")[0]
             scan_number_2 = self.scanPairs[p][1].split("_")[-1][2:].lstrip("0").split(".")[0]
             print ("\npairs ", self.scanPairs[p])
@@ -780,7 +800,7 @@ class Analyzer(QWidget):
             self.nextPairButton.clicked.connect(self.nextPair)
             self.grid.addWidget(self.nextPairButton, 5, 3)
 
-        self.skipAllButton = QPushButton("Skip all", self)
+        self.skipAllButton = QPushButton("Skip to end", self)
         self.skipAllButton.clicked.connect(self.skipAll)
         self.grid.addWidget(self.skipAllButton, 6, 3)
 
@@ -801,11 +821,8 @@ class Analyzer(QWidget):
                 y_list = self.ydata_2_u9.tolist()
                 index = y_list.index(pointy[ind])
                 if self.xdata[index][0] not in self.x_bad_point_2_u9:
-                    print("Selected point x -", pointx[ind][0], " y -", pointy[ind][0])
-                    print("Index ", index)
                     pf = np.polyfit(self.xdata[:, 0], self.ydata_2_u9[:, 0], 10)
                     p = np.poly1d(pf)
-                    print("Poly value ", p(self.xdata[index]))
                     self.y_bad_point_2_u9.append(self.ydata_2_u9[index][0])
                     self.x_bad_point_2_u9.append(self.xdata[index][0])
                     self.badplot_2_u9[0].set_data(self.x_bad_point_2_u9, self.y_bad_point_2_u9)
@@ -824,11 +841,8 @@ class Analyzer(QWidget):
                 y_list = self.ydata_1_u9.tolist()
                 index = y_list.index(pointy[ind])
                 if self.xdata[index][0] not in self.x_bad_point_1_u9:
-                    print("Selected point x -", pointx[ind][0], " y -", pointy[ind][0])
-                    print("Index ", index)
                     pf = np.polyfit(self.xdata[:, 0], self.ydata_1_u9[:, 0], 10)
                     p = np.poly1d(pf)
-                    print("Poly value ", p(self.xdata[index]))
                     self.y_bad_point_1_u9.append(self.ydata_1_u9[index][0])
                     self.x_bad_point_1_u9.append(self.xdata[index][0])
                     self.badplot_1_u9[0].set_data(self.x_bad_point_1_u9, self.y_bad_point_1_u9)
@@ -847,11 +861,8 @@ class Analyzer(QWidget):
                 y_list = self.ydata_2_u1.tolist()
                 index = y_list.index(pointy[ind])
                 if self.xdata[index][0] not in self.x_bad_point_2_u1:
-                    print("Selected point x -", pointx[ind][0], " y -", pointy[ind][0])
-                    print("Index ", index)
                     pf = np.polyfit(self.xdata[:, 0], self.ydata_2_u1[:, 0], 10)
                     p = np.poly1d(pf)
-                    print("Poly value ", p(self.xdata[index]))
                     self.y_bad_point_2_u1.append(self.ydata_2_u1[index][0])
                     self.x_bad_point_2_u1.append(self.xdata[index][0])
                     self.badplot_2_u1[0].set_data(self.x_bad_point_2_u1, self.y_bad_point_2_u1)
@@ -870,11 +881,8 @@ class Analyzer(QWidget):
                 y_list = self.ydata_1_u1.tolist()
                 index = y_list.index(pointy[ind])
                 if self.xdata[index][0] not in self.x_bad_point_1_u1:
-                    print("Selected point x -", pointx[ind][0], " y -", pointy[ind][0])
-                    print("Index ", index)
                     pf = np.polyfit(self.xdata[:, 0], self.ydata_1_u1[:, 0], 10)
                     p = np.poly1d(pf)
-                    print("Poly value ", p(self.xdata[index]))
                     self.y_bad_point_1_u1.append(self.ydata_1_u1[index][0])
                     self.x_bad_point_1_u1.append(self.xdata[index][0])
                     self.badplot_1_u1[0].set_data(self.x_bad_point_1_u1, self.y_bad_point_1_u1)
@@ -889,14 +897,28 @@ class Analyzer(QWidget):
         self.data_u9 = self.calibration(self.xdata, self.ydata_1_u9, self.ydata_2_u9, float(self.tsys_u9_1),
                                         float(self.tsys_u9_2), self.elevation)
 
-        print(self.x.shape)
-        #self.x = self.xdata
-        print(self.x.shape)
         self.f_step = (self.xdata[self.dataPoints - 1] - self.xdata[0]) / (self.dataPoints - 1)
         self.f_shift = np.max(self.xdata) / 4.0
         self.n_shift = int(self.f_shift / self.f_step)
         self.total_u1 = self.data_u1[(self.n_shift + 1):(self.dataPoints - self.n_shift - 1)]
         self.total_u9 = self.data_u9[(self.n_shift + 1):(self.dataPoints - self.n_shift - 1)]
+
+        self.totalResults_u1.pop()
+        self.totalResults_u9.pop()
+        self.totalResults_u1.append(self.total_u1)
+        self.totalResults_u9.append(self.total_u9)  #replace total results for total result calculation
+
+        ston_u1 = STON(self.x, self.total_u1, self.cuts)
+        ston_u9 = STON(self.x, self.total_u9, self.cuts)
+        stone_AVG = STON(self.x, ((self.total_u1 + self.total_u9) / 2), self.cuts)
+
+
+        self.STON_list_u1.pop()
+        self.STON_list_u9.pop()
+        self.STON_list_AVG.pop()
+        self.STON_list_u1.append(ston_u1)
+        self.STON_list_u9.append(ston_u9)
+        self.STON_list_AVG.append(stone_AVG)
 
         #redraw plots with new data
         self.line_1_u1[0].set_ydata(self.ydata_1_u1[:,0])
@@ -920,8 +942,6 @@ class Analyzer(QWidget):
 
         self.plot_start_u9.fig.canvas.draw()
         self.plot_start_u9.fig.canvas.flush_events()
-        print("total_u1 ", self.total_u1.shape)
-        print("total_u9 ", self.total_u9.shape)
 
 
 
@@ -989,6 +1009,7 @@ def main():
     
     #Create App
     qApp = QApplication(sys.argv)
+
 
     aw = Analyzer(source, iteration_number, filter, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime, base_frequencies)
     aw.show()
