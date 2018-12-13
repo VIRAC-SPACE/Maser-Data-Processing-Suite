@@ -383,27 +383,7 @@ class Analyzer(QWidget):
             self.plot_total_u1.removePolt()
             self.plot_total_u9.removePolt()
             self.index = self.index + 1
-
-            ston_u1 = STON(self.x, self.total_u1, self.cuts)
-            ston_u9 = STON(self.x, self.total_u9, self.cuts)
-            stone_AVG = STON(self.x, ((self.total_u1 + self.total_u9) / 2), self.cuts)
-
-            self.STON_list_u1.append(ston_u1)
-            self.STON_list_u9.append(ston_u9)
-            self.STON_list_AVG.append(stone_AVG)
-
-            self.x = self.xdata
-            self.f_step = (self.x[self.dataPoints-1]-self.x[0])/(self.dataPoints-1)
-            self.f_shift = np.max(self.x) / 4.0
-            self.n_shift = int(self.f_shift/self.f_step)
-            self.total_u1 = self.data_u1[(self.n_shift+1):(self.dataPoints - self.n_shift - 1)]
-            self.total_u9 = self.data_u9[(self.n_shift+1):(self.dataPoints - self.n_shift - 1)]
-
-            self.x = self.x[(self.n_shift+1):(self.dataPoints - self.n_shift - 1)]
-
-            self.totalResults_u1.append(self.total_u1)
-            self.totalResults_u9.append(self.total_u9)
-
+            
             self.plotingPairs(self.index)
 
     def plotingPairs(self, index):
@@ -512,6 +492,7 @@ class Analyzer(QWidget):
             self.totalResults_u1.append(self.total_u1)
             self.totalResults_u9.append(self.total_u9)
 
+
             self.plot_total_u1 = Plot()
             self.plot_total_u1.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (5, 0))
             self.line_total_u1 = self.plot_total_u1.plot(self.x, self.total_u1, 'b')
@@ -530,9 +511,6 @@ class Analyzer(QWidget):
             self.STON_list_u1.append(ston_u1)
             self.STON_list_u9.append(ston_u9)
             self.STON_list_AVG.append(stone_AVG)
-
-            print("total_u1 ", self.total_u1.shape)
-            print("total_u9 ", self.total_u9.shape)
 
             if index == self.datPairsCount -1:
                 self.nextPairButton.setText('Move to total results')
@@ -620,20 +598,14 @@ class Analyzer(QWidget):
             STON_list_AVG.append(stone_AVG)
 
     def skipAll(self):
-        #self.totalResults_u1= list()
-        #self.totalResults_u9= list()
 
         STON_list_u1= list()
         STON_list_u9= list()
         STON_list_AVG= list()
 
-        for index in range(self.index, len(self.scanPairs)):
+        for index in range(self.index+1, len(self.scanPairs)):
             self.__PAIR(index, self.totalResults_u1, self.totalResults_u9, self.STON_list_u1, self.STON_list_u9, self.STON_list_AVG)
             print(index+1,"/",len(self.scanPairs)," done")
-
-        #self.STON_list_u1 = STON_list_u1
-        #self.STON_list_u9 = STON_list_u9
-        #self.STON_list_AVG = STON_list_AVG
 
         self.plotTotalResults()
 
@@ -678,7 +650,7 @@ class Analyzer(QWidget):
 
         FreqStart = self.fstart +  float(self.logs["header"]["BBC"])
         print ("FreqStart", FreqStart, "BBC", float(self.logs["header"]["BBC"]))
-        for p in range(self.index,  self.datPairsCount):
+        for p in range(0,  self.datPairsCount):
             scan_number_1 = self.scanPairs[p][0].split("_")[-1][2:].lstrip("0").split(".")[0]
             scan_number_2 = self.scanPairs[p][1].split("_")[-1][2:].lstrip("0").split(".")[0]
             print ("\npairs ", self.scanPairs[p])
@@ -753,7 +725,6 @@ class Analyzer(QWidget):
             velocitys = dopler((self.x + FreqStart) * (10 ** 6), VelTotal, self.freq_0_u1)
             y_u1_avg =  y_u1_avg + self.totalResults_u1[p]
             y_u9_avg =  y_u9_avg + self.totalResults_u9[p]
-            print(velocitys_avg.shape,"/",velocitys.shape)
             velocitys_avg =  velocitys_avg + velocitys
 
         velocitys_avg =  velocitys_avg/len(self.totalResults_u1)
@@ -953,7 +924,6 @@ def main():
     threshold = float(args.__dict__["threshold"])
     filter = int(args.__dict__["filter"])
     configFilePath = str(args.__dict__["config"])
-                
     config = configparser.RawConfigParser()
     config.read(configFilePath)
     dataFilesPath =  config.get('paths', "dataFilePath")
