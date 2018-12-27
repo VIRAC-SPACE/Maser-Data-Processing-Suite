@@ -90,7 +90,7 @@ class Analyzer(QWidget):
         self.changeParms = False
         
         try:
-            #data = np.fromfile(datafile, dtype="float64", count=-1, sep=" ") .reshape((file_len(datafile),3))
+           
             result = pickle.load(open(datafile, "rb"))
             self.specie = result.getSpecie()
             data = result.getMatrix()
@@ -131,6 +131,7 @@ class Analyzer(QWidget):
                 self.y2array[i] = self.y_u9[i]
                 
             self.xarray =  np.flip(self.xarray,0)
+            print (self.xarray)
             self.y1array =  np.flip(self.y1array,0)
             self.y2array =  np.flip(self.y2array,0)
             
@@ -634,6 +635,7 @@ class Analyzer(QWidget):
         
         for index in range (0, len(self.source_velocities)):
             indexies_for_source_velocities[index] =  (np.abs(self.xarray-float(self.source_velocities[index]))).argmin()
+        print (indexies_for_source_velocities)
         
         max_amplitude_list_u1 = list()
         max_amplitude_list_u9 = list()
