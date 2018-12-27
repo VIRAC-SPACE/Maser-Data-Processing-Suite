@@ -8,6 +8,7 @@ from PyQt5.QtGui import QIcon
 import argparse
 import configparser
 import json
+import pickle
 import numpy as np
 import scipy.constants
 #import pandas as pd
@@ -103,8 +104,22 @@ def STON(xarray, yarray, cuts):
     ston = max/(std*3)
     return ston
 
+def func():
+    pass
+
+class Result():
+    def __init__(self, matrix, specie):
+        self.matrix = matrix
+        self.specie = specie
+        
+    def getMatrix(self):
+        return self.matrix
+    
+    def getSpecie(self):
+        return self.specie
+
 class Analyzer(QWidget):
-    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime):
+    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime, base_frequencies):
         super().__init__()
        
         self.setWindowIcon(QIcon('viraclogo.png'))
@@ -138,6 +153,11 @@ class Analyzer(QWidget):
         self.fstart = fstart
         self.cuts = cuts
         self.firstScanStartTime = firstScanStartTime
+        self.base_frequencies = base_frequencies
+        self.base_frequencies_list = list()
+        
+        for value in self.base_frequencies:
+            self.base_frequencies_list.append(float(self.base_frequencies[value]))
         
         self.setWindowTitle("Analyze for " + self.source + " " + self.date)
         self.grid = QGridLayout()
@@ -254,14 +274,14 @@ class Analyzer(QWidget):
         P_sig = data_1 # Get Amplitudes
         P_ref = data_2 # Get Amplitudes
             
-        Ta_sig = float(tsys_1)*(-P_sig + P_ref)/P_ref #only non-cal phase for dbbc possible...
+        Ta_sig = float(tsys_1)*(P_sig - P_ref)/P_ref #only non-cal phase for dbbc possible...
         Ta_ref = float(tsys_2)*(P_ref - P_sig)/P_sig
         
         f_shift = np.max(array_x) /4.0
         f_step = (array_x[self.dataPoints-1]-array_x[0])/(self.dataPoints-1); 
         n_shift = int(f_shift/f_step);
             
-        Ta_sig = np.roll(Ta_sig, -n_shift); # pos
+        Ta_sig = np.roll(Ta_sig, n_shift); # pos
         Ta_ref = np.roll(Ta_ref, -n_shift); # neg
             
         #avg shifted spectrums
@@ -586,7 +606,24 @@ class Analyzer(QWidget):
             Vobs = float(Vobs)
             lsrCorr = float(lsrShift)*1.e6 # for MHz 
             
-            velocitys = dopler((self.x + FreqStart) * (10 ** 6), VelTotal, self.f0)
+            self.max_yu1_index =  self.totalResults_u1[p].argmax(axis=0)
+            self.max_yu9_index =  self.totalResults_u9[p].argmax(axis=0)
+            
+            self.freq_0_u1_index = ((np.abs(self.base_frequencies_list - (self.x[self.max_yu1_index] + FreqStart) * (10 ** 6) ).argmin()))
+            self.freq_0_u9_index = ((np.abs(self.base_frequencies_list - (self.x[self.max_yu9_index] + FreqStart) * (10 ** 6) ).argmin()))
+            
+            self.freq_0_u1 = self.base_frequencies_list[self.freq_0_u1_index]
+            self.freq_0_u9 = self.base_frequencies_list[self.freq_0_u9_index]
+            
+            print ("base freqcvencie", self.freq_0_u1, self.freq_0_u9)
+            
+            for key, value in self.base_frequencies.items():
+                if float(value) == self.freq_0_u1:
+                    specie = key
+                    
+            print ("specie", specie)
+                    
+            velocitys = dopler((self.x + FreqStart) * (10 ** 6), VelTotal, self.freq_0_u1)
             y_u1_avg =  y_u1_avg + self.totalResults_u1[p]
             y_u9_avg =  y_u9_avg + self.totalResults_u9[p]
             velocitys_avg = velocitys_avg + velocitys
@@ -623,7 +660,10 @@ class Analyzer(QWidget):
         totalResults = np.concatenate((velocitys_avg, y_u1_avg, y_u9_avg), axis=1)
         output_file_name = self.dataFilesPath + self.source + "_" +self.date.replace(" ", "_") + "_" + self.firstScanStartTime + "_" + self.logs["header"]["location"] + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
-        np.savetxt(output_file_name, totalResults)    
+        #np.savetxt(output_file_name, totalResults)
+        
+        result = Result(totalResults, specie)
+        pickle.dump(result, open(output_file_name, 'wb'))
                 
     def __UI__(self):
         
@@ -656,6 +696,7 @@ def main():
     coordinates = config.get('sources', source).replace(" ", "").split(",")
     cuts = config.get('cuts', source).split(";")
     cuts = [c.split(",") for c in  cuts]
+    base_frequencies = dict(config.items('base_frequencies'))
     
     if args.manual:
         with open(prettyLogsPath + source + "_" + str(iteration_number) + "log.dat") as data_file:    
@@ -669,7 +710,7 @@ def main():
         logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getLogs()
         f = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getAllfs_frequencys()
         firstScanStartTime = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getFirstScanStartTime()
-
+        
     f = [float(fi) for fi in f]
     f = list(set(f))
     f.sort()
@@ -705,7 +746,7 @@ def main():
     #Create App
     qApp = QApplication(sys.argv)
 
-    aw = Analyzer(source, iteration_number, filtering, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime)
+    aw = Analyzer(source, iteration_number, filtering, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime, base_frequencies)
     aw.show()
     sys.exit(qApp.exec_())
     

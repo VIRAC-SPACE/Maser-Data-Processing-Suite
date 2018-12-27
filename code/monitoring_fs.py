@@ -238,12 +238,13 @@ class Monitoring(QWidget):
                 amplitudes_for_u9 = scanData["polarizationU9"] # Got poitns for all experiments for polarization u9
                 amplitudes_for_uAVG = scanData["polarizationAVG"] # Got poitns for all experiments for polarization uAVG
                 iter_number = scanData["Iteration_number"]
+                specie = scanData["specie"]
                 dates = date.split("_")
                 monthsNumber = dates[1]
                 dates[1] = months[monthsNumber]
                 date = scanData["time"].replace(":", " ") + " " +  " ".join(dates) 
             
-                result = Result(location, datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number)
+                result = Result(location, datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number, specie)
                 
                 result_list.append(dict(result))
               
@@ -256,6 +257,7 @@ class Monitoring(QWidget):
             iteration_list.append(experiment["iteration_number"])
             date_list.append(experiment["date"])
             location = experiment["location"]
+            specie = experiment["specie"]
             
             self.location_list.append(location)
             
@@ -274,7 +276,7 @@ class Monitoring(QWidget):
                     if float(vel) == float(k[0]):
                         velocitie_dict["avg"][vel].append(k[1]) 
                          
-            label = "Station is " + location + "\n" + "Date is " + experiment["date"].strftime('%d %m %Y') + "\n " + "Iteration number " + str(experiment["iteration_number"])
+            label = "Station is " + location + "\n" + "Date is " + experiment["date"].strftime('%d %m %Y') + "\n " + "Iteration number " + str(experiment["iteration_number"]) + "\n " + "Specie " + str(specie)
             labels2.append(label)
             
         self.iteration_list = iteration_list
