@@ -11,7 +11,6 @@ rcParams['font.sans-serif'] = ['Time New Roman']
 rcParams['font.size'] = 10
 import mplcursors
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import (QPushButton)
 
 class Plot(FigureCanvas):
     
@@ -22,12 +21,13 @@ class Plot(FigureCanvas):
         self.setParent(self.parent)
         FigureCanvas.setSizePolicy(self, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
-    
+
     def plot(self, x, y, line, **options):
         line = self.graph.plot(x,y, line, **options)
         self.graph.legend()
         return line
-        
+
+
     def creatPlot(self, grid, x_label, y_label, title,toolbarpos):
         self.graph = self.fig.add_subplot(111)
         self.grid = grid
