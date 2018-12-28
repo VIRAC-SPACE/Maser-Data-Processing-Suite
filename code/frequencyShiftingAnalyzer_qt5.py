@@ -31,8 +31,7 @@ def parseArguments():
     # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-t", "--threshold", help="Set threshold for outlier filter", type=float, default=1.0)
-    parser.add_argument("-f", "--filter", help="Set the amount of times to filter data to remove noise spikes, higher than 5 makes little difference", type=int, default=0,
-                        choices=range(0,11),metavar="[0-10]")
+    parser.add_argument("-f", "--filter", help="Set the amount of times to filter data to remove noise spikes, higher than 5 makes little difference", type=int, default=0, choices=range(0,11),metavar="[0-10]")
     parser.add_argument("-m", "--manual", help="Set manual log data", action='store_true')
 
     # Print version

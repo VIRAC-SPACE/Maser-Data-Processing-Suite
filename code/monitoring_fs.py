@@ -322,7 +322,7 @@ class Monitoring(QWidget):
         config = configparser.RawConfigParser()
         config.read(self.configFilePath)
         resultDir = config.get('paths', "resultFilePath")
-        self.output_path = config.get('paths', "output")
+        self.output_path = config.get('paths', "outputFilePath")
         self.source = self.sourceInput.text()
         source_velocities = config.get('velocities', self.source).split(",")
             

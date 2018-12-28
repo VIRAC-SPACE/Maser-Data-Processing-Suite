@@ -131,7 +131,6 @@ class Analyzer(QWidget):
                 self.y2array[i] = self.y_u9[i]
                 
             self.xarray =  np.flip(self.xarray,0)
-            print (self.xarray)
             self.y1array =  np.flip(self.y1array,0)
             self.y2array =  np.flip(self.y2array,0)
             
@@ -719,7 +718,7 @@ def main():
     config.read(configFilePath)
     dataFilesPath =  config.get('paths', "dataFilePath")
     resultFilePath =  config.get('paths', "resultFilePath")
-    output =  config.get('paths', "output")
+    output =  config.get('paths', "outputFilePath")
     source = datafile.split("/")[-1].split(".")[0].split("_")[0]
     cuts = config.get('cuts', source).split(";")
     cuts = [c.split(",") for c in  cuts]
