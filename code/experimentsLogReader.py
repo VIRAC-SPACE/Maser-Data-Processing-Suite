@@ -10,6 +10,7 @@ import configparser
 import json
 
 from scan import Scan
+from parsers._configparser import ConfigParser
     
 def parseArguments():
     # Create argument parser
@@ -348,20 +349,18 @@ def main():
         os.environ['TZ'] = 'UTC'
         pass
      
-    # Parse the arguments
     args = parseArguments()
     logFileName = str(args.__dict__["logFile"])
     configFilePath = str(args.__dict__["config"])
     singleSourceExperiment = str(args.__dict__["source"])
     
-    #Creating config parametrs
-    config = configparser.RawConfigParser()
-    config.read(configFilePath)
-    logPath = config.get('paths', "logPath")
-    prettyLogsPath =  config.get('paths', "prettyLogsPath")
+    config = ConfigParser.getInstance()
+    config.CreateConfig(configFilePath)
+    logPath = config.getConfig("paths", "logPath")
+    prettyLogsPath = config.getConfig("paths", "logPath")
     
     if len(singleSourceExperiment) != 0:
-        coordinates = config.get('sources', singleSourceExperiment).replace(" ", "").split(",")
+        coordinates = config.getConfig('sources', singleSourceExperiment).replace(" ", "").split(",")
     else:
         coordinates = []
         

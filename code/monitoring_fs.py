@@ -6,7 +6,6 @@ matplotlib.use('Qt5Agg')
 import datetime
 import json
 import argparse
-import configparser
 from operator import itemgetter
 import numpy as np
 
@@ -16,8 +15,9 @@ from PyQt5.QtCore import Qt
 
 from ploting_qt5 import  Plot
 from result import  Result
-
-months = {"Jan":"1", "Feb":"2", "Mar":"3", "Apr":"4", "May":"5", "Jun":"6", "Jul":"7", "Aug":"8", "Sep":"9", "Oct":"10", "Nov":"11", "Dec":"12"}
+from parsers._configparser import ConfigParser
+from help import *
+from monitor.months import Months
 
 def parseArguments():
     # Create argument parser
@@ -34,12 +34,6 @@ def parseArguments():
     args = parser.parse_args()
 
     return args
-
-def file_len(fname):
-    with open(fname) as f:
-        for i, l in enumerate(f):
-            pass
-    return i + 1
 
 class Monitoring_View(QWidget):
         def __init__(self, iteration_list, location_list, source, output_path):
@@ -68,6 +62,8 @@ class Monitoring_View(QWidget):
             self.plotList = list()
             
             self.setWindowTitle("Monitoring")
+            
+            self.months = Months()
             
         def _addWidget(self, widget, row, collon):
             self.grid.addWidget(widget, row, collon)
@@ -119,7 +115,7 @@ class Monitoring_View(QWidget):
             month = datetime.date(1900, int(date[-2]) , 1).strftime('%B')[0:3].title().replace("ū", "u").replace("i", "y").replace("k", "c")
             date[-2] = month
             date = "_".join(date)
-            iteration = self.iteration_list[int(index)]
+            iteration = self.iteration_list[int(index[0])]
             location = self.location_list[int(index)]
             spectraFileName = self.source + "_" + date + "_" + location + "_"  + str(iteration) + ".dat"
             self.plotSpecter(spectraFileName, polarization)
@@ -136,7 +132,7 @@ class Monitoring_View(QWidget):
             
             data = np.fromfile(spectraFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(spectraFileName),4))
             tmpDate = spectraFileName.split("/")[-1].split("_")
-            tmpDate[-4] = months[tmpDate[-4]]
+            tmpDate[-4] = self.months.getMonthNumber([tmpDate[-4]][0])
             plot_name = datetime.datetime.strptime( " ".join(tmpDate[1:-2]), "%H %M %S %d %m %Y") 
             
             x = data[:, [0]]
@@ -185,8 +181,9 @@ class Monitoring(QWidget):
         self.grid.setSpacing(10)
         
         self.chooseSource()
-        
         self.new_spectre = True
+        
+        self.months = Months()
         
     def center(self):
         qr = self.frameGeometry()
@@ -241,7 +238,7 @@ class Monitoring(QWidget):
                 specie = scanData["specie"]
                 dates = date.split("_")
                 monthsNumber = dates[1]
-                dates[1] = months[monthsNumber]
+                dates[1] = self.months.getMonthNumber([monthsNumber][0])
                 date = scanData["time"].replace(":", " ") + " " +  " ".join(dates) 
             
                 result = Result(location, datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number, specie)
@@ -318,13 +315,12 @@ class Monitoring(QWidget):
         self.Monitoring_View.show()
         
     def plot(self):
-        #Creating config parametrs
-        config = configparser.RawConfigParser()
-        config.read(self.configFilePath)
-        resultDir = config.get('paths', "resultFilePath")
-        self.output_path = config.get('paths', "outputFilePath")
+        config = ConfigParser.getInstance()
+        config.CreateConfig(self.configFilePath)
+        resultDir = config.getConfig('paths', "resultFilePath")
+        self.output_path = config.getConfig('paths', "outputFilePath")
         self.source = self.sourceInput.text()
-        source_velocities = config.get('velocities', self.source).split(",")
+        source_velocities = config.getConfig('velocities', self.source).split(",")
             
         self.plotMonitoring(resultDir, source_velocities, self.source)
         
