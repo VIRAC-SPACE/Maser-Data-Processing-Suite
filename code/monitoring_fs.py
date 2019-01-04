@@ -23,17 +23,9 @@ from monitor.monitoringViewHelper import MonitoringViewHelper
 matplotlib.use('Qt5Agg')
 
 def parseArguments():
-    # Create argument parser
-    parser = argparse.ArgumentParser(description='''Monitoring velocity amplitudes in time. ''',
-    epilog="""Monitor.""")
-
-    # Positional mandatory arguments
+    parser = argparse.ArgumentParser(description='''Monitoring velocity amplitudes in time. ''', epilog="""Monitor.""")
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
-
-    # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 2.0')
-
-    # Parse arguments
     args = parser.parse_args()
 
     return args

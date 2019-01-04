@@ -20,25 +20,17 @@ from experimentsLogReader import ExperimentLogReader
 from ploting_qt5 import  Plot
 
 def parseArguments():
-    # Create argument parser
     parser = argparse.ArgumentParser(description='''Creates input file for plotting tool. ''', epilog="""PRE PLOTTER.""")
-    
-    # Positional mandatory arguments
     parser.add_argument("source", help="Experiment source", type=str, default="")
     parser.add_argument("iteration_number", help="iteration number ", type=int)
     parser.add_argument("logFile", help="Experiment log file name", type=str)
-
-    # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-t", "--threshold", help="Set threshold for outlier filter", type=float, default=1.0)
     parser.add_argument("-f", "--filter", help="Set the amount of times to filter data to remove noise spikes, higher than 5 makes little difference", type=int, default=0, choices=range(0,11),metavar="[0-10]")
     parser.add_argument("-m", "--manual", help="Set manual log data", action='store_true')
-
-    # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
-
-    # Parse arguments
     args = parser.parse_args()
+    
     return args
 
 def file_len(fname):

@@ -8,21 +8,11 @@ import configparser
 import json
 
 def parseArguments():
-    # Create argument parser
-    parser = argparse.ArgumentParser(description='''automatically call frequencyShiftingAnalyzer and totalSpectrumAnalyer. ''',
-    epilog="""Main program.""")
-
-    # Positional mandatory arguments
+    parser = argparse.ArgumentParser(description='''automatically call frequencyShiftingAnalyzer and totalSpectrumAnalyer. ''', epilog="""Main program.""")
     parser.add_argument("source", help="Source Name", type=str)
-    
-    # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-m", "--manual", help="Set manual log data", action='store_true')
-
-    # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 3.0')
-
-    # Parse arguments
     args = parser.parse_args()
 
     return args

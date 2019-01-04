@@ -1,5 +1,6 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
+
 import os
 import sys
 import time
@@ -13,21 +14,11 @@ from scan import Scan
 from parsers._configparser import ConfigParser
     
 def parseArguments():
-    # Create argument parser
-    parser = argparse.ArgumentParser(description='''Reads log file and create pretty logs. ''',
-    epilog="""LOGGREADER.""")
-
-    # Positional mandatory arguments
+    parser = argparse.ArgumentParser(description='''Reads log file and create pretty logs. ''', epilog="""LOGGREADER.""")
     parser.add_argument("logFile", help="Experiment log file name", type=str)
-
-    # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-s", "--source", help="Source name", type=str, default="")
-
-    # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 3.0')
-
-    # Parse arguments
     args = parser.parse_args()
 
     return args

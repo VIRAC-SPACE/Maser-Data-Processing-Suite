@@ -1,5 +1,6 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
+
 import sys
 import os
 import argparse
@@ -15,28 +16,18 @@ from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QM
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
-
 from PyQt5.QtGui import QColor
 
 from ploting_qt5 import  Plot
 
 def parseArguments():
-    # Create argument parser
     parser = argparse.ArgumentParser(description='''plotting tool. ''', epilog="""PRE PLOTTER.""")
-    
-    # Positional mandatory arguments
     parser.add_argument("datafile", help="Experiment correlation file name", type=str)
-
-    # Optional arguments
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-r", "--rawdata", help="Use raw data, skip smoothing", action='store_true')
-
-
-    # Print version
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
-
-    # Parse arguments
     args = parser.parse_args()
+    
     return args
 
 def file_len(fname):
