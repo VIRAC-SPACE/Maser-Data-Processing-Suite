@@ -1,8 +1,8 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
+
 import sys
 import matplotlib
-matplotlib.use('Qt5Agg')
 import datetime
 import json
 import argparse
@@ -18,6 +18,8 @@ from result import  Result
 from parsers._configparser import ConfigParser
 from help import *
 from monitor.months import Months
+
+matplotlib.use('Qt5Agg')
 
 def parseArguments():
     # Create argument parser
@@ -79,6 +81,16 @@ class Monitoring_View(QWidget):
              
         def setLines(self, lines):
             self.lines = lines
+            
+        def __setVisible(self, label, labels):
+            index = labels.index(label)
+            self.lines[index].set_visible(True)
+            self.lines[index].set_picker(5)
+            
+        def __unSetVisibel(self, label, labels):
+            index = labels.index(label)
+            self.lines[index].set_visible(False)
+            self.lines[index].set_picker(False)
         
         def getIndexiesOfPolarization(self, labels):
             if self.polarization == "ALL":
@@ -86,16 +98,11 @@ class Monitoring_View(QWidget):
                 all(i.set_picker(5) for i in self.lines)
                 
             else:
-            
                 for label in labels:
                     if self.polarization in label:
-                        index = labels.index(label)
-                        self.lines[index].set_visible(True)
-                        self.lines[index].set_picker(5)
+                        self.__setVisible(label, labels)
                     elif self.polarization not in label:
-                        index = labels.index(label)
-                        self.lines[index].set_visible(False)
-                        self.lines[index].set_picker(False)
+                        self.__unSetVisibel(label, labels)
                         
         def getPolarization(self, polarization):
             self.setPolarization(polarization)
@@ -105,19 +112,28 @@ class Monitoring_View(QWidget):
             if e.key() == Qt.Key_Shift:
                 self.new_spectre = True
                 
+        def __formatDate(self, xdata, index):
+            date = xdata[index][0].strftime("%H %M %S %d %m %Y").split()
+            month = datetime.date(1900, int(date[-2]), 1).strftime('%B')[0:3].title().replace("ū", "u").replace("i", "y").replace("k", "c")
+            date[-2] = month
+            date = "_".join(date)
+            return date
+
+        def getIteration(self, index):
+            iteration = self.iteration_list[index]
+            return iteration
+
+        def getLocation(self, index):
+            location = self.location_list[index]
+            return location
+
         def chooseSpectrum(self, event):
             thisline = event.artist
             xdata = thisline.get_xdata()
             ind = event.ind
             index = [ind][0]
             polarization = thisline.get_label().split()[1]
-            date = xdata[index][0].strftime("%H %M %S %d %m %Y").split()
-            month = datetime.date(1900, int(date[-2]) , 1).strftime('%B')[0:3].title().replace("ū", "u").replace("i", "y").replace("k", "c")
-            date[-2] = month
-            date = "_".join(date)
-            iteration = self.iteration_list[int(index[0])]
-            location = self.location_list[int(index)]
-            spectraFileName = self.source + "_" + date + "_" + location + "_"  + str(iteration) + ".dat"
+            spectraFileName = self.source + "_" + self.__formatDate(xdata, index) + "_" + self.getLocation(int(index[0])) + "_"  + str(self.getIteration(int(index[0]))) + ".dat"
             self.plotSpecter(spectraFileName, polarization)
         
         def plotSpecter(self, spectraFileName, polarization):

@@ -18,6 +18,12 @@ class TestConfigParser(unittest.TestCase):
         self.assertEqual(month.getMonthNumber("Oct"), '10')
         self.assertEqual(month.getMonthNumber("Nov"), '11')
         self.assertEqual(month.getMonthNumber("Dec"), '12')
+       
+    def test_MonoState(self):
+        m1 = Months()
+        m2 = Months()
         
+        self.assertEqual(m1.getMonthNumber("Dec"), m2.getMonthNumber("Dec"))
+                
 if __name__ == '__main__':
     unittest.main()
