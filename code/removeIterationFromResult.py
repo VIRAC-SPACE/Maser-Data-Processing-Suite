@@ -1,4 +1,8 @@
+#! /usr/bin/python3
+# -*- coding: utf-8 -*-
+
 import sys
+import os
 import argparse
 import json
 
@@ -21,15 +25,18 @@ def getResult(resultFilePath, source):
     return result
 
 def deleteIteration(result, iteration):
-    tmpKey = ""
+    tmpKey = None
     for key in result.keys():
         if key.endswith("_" + str(iteration)):
             tmpKey = key
         
-    del result[tmpKey]        
+    if tmpKey:
+        del result[tmpKey]
+              
     return result
 
 def removeIterationFromResultJson(resultFilePath, source, updateResult):
+    os.system("cp  " + resultFilePath + source + ".json " + resultFilePath + "/oldresult")
     resultFile = open (resultFilePath + source + ".json", "w")
     resultFile.write(json.dumps(updateResult, indent=2))
     resultFile.close()
