@@ -6,7 +6,8 @@ import json
 import argparse
 import configparser
 import numpy as np
-from astropy.convolution import Gaussian1DKernel, convolve
+
+from help import *
 
 def parseArguments():
     # Create argument parser
@@ -26,12 +27,6 @@ def parseArguments():
     args = parser.parse_args()
 
     return args
-
-def file_len(fname):
-    with open(fname) as f:
-        for i, l in enumerate(f):
-            pass
-    return i + 1    
   
 def getLocalMax(outputfile, outputFilePath, source_velocities, index_range_for_local_maxima):
     data = np.fromfile(outputFilePath + outputfile, dtype="float64", count=-1, sep=" ") .reshape((file_len(outputFilePath + outputfile),4))
