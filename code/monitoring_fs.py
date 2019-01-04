@@ -18,6 +18,7 @@ from result import  Result
 from parsers._configparser import ConfigParser
 from help import *
 from monitor.months import Months
+from monitor.monitoringViewHelper import MonitoringViewHelper
 
 matplotlib.use('Qt5Agg')
 
@@ -66,7 +67,7 @@ class Monitoring_View(QWidget):
             self.setWindowTitle("Monitoring")
             
             self.months = Months()
-            
+                        
         def _addWidget(self, widget, row, collon):
             self.grid.addWidget(widget, row, collon)
             
@@ -112,28 +113,13 @@ class Monitoring_View(QWidget):
             if e.key() == Qt.Key_Shift:
                 self.new_spectre = True
                 
-        def __formatDate(self, xdata, index):
-            date = xdata[index][0].strftime("%H %M %S %d %m %Y").split()
-            month = datetime.date(1900, int(date[-2]), 1).strftime('%B')[0:3].title().replace("ū", "u").replace("i", "y").replace("k", "c")
-            date[-2] = month
-            date = "_".join(date)
-            return date
-
-        def getIteration(self, index):
-            iteration = self.iteration_list[index]
-            return iteration
-
-        def getLocation(self, index):
-            location = self.location_list[index]
-            return location
-
         def chooseSpectrum(self, event):
             thisline = event.artist
             xdata = thisline.get_xdata()
             ind = event.ind
             index = [ind][0]
             polarization = thisline.get_label().split()[1]
-            spectraFileName = self.source + "_" + self.__formatDate(xdata, index) + "_" + self.getLocation(int(index[0])) + "_"  + str(self.getIteration(int(index[0]))) + ".dat"
+            spectraFileName = self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.location_list, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.iteration_list, int(index[0])) + ".dat"
             self.plotSpecter(spectraFileName, polarization)
         
         def plotSpecter(self, spectraFileName, polarization):
