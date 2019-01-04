@@ -42,13 +42,13 @@ def file_len(fname):
 def is_outlier(points, threshold):
     if len(points.shape) == 1:
         points = points[:,None]
+        
     median = np.median(points, axis=0)
     diff = np.sum((points - median)**2, axis=-1)
     diff = np.sqrt(diff)
     med_abs_deviation = np.median(diff)
-
     modified_z_score =  0.6745 * diff / med_abs_deviation
-    #print(modified_z_score)
+    
     return modified_z_score < threshold
 
 def dopler(ObservedFrequency, velocityReceiver, f0):
