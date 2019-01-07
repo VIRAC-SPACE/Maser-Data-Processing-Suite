@@ -79,7 +79,7 @@ def chanegResultAmplitudes(outputfiles, resutlFile, outputFilePath, source_veloc
         max_apmlitudes_u1, max_apmlitudes_u9, max_apmlitudes_uavg = getLocalMax(outputfile, outputFilePath, source_velocities, index_range_for_local_maxima)
         
         for key in result_json.keys():
-            if key.endswith(itarration):
+            if key.endswith("_" + itarration):
                 result_json[key]["polarizationU1"] =  max_apmlitudes_u1
                 result_json[key]["polarizationU9"] = max_apmlitudes_u9
                 result_json[key]["polarizationAVG"] = max_apmlitudes_uavg

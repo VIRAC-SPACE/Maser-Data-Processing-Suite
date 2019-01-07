@@ -2,12 +2,16 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import numpy as np
 import matplotlib
+from astropy.stats import LombScargle
+import astropy.units as u
 import datetime
 import json
 import argparse
 from operator import itemgetter
-import numpy as np
+from astropy.time import Time
+import time
 
 from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QLabel, QLineEdit, QDesktopWidget, QComboBox)
 from PyQt5.QtGui import QIcon
@@ -42,7 +46,7 @@ class Monitoring_View(QWidget):
             comboBox.addItem("polarization U1")
             comboBox.addItem("polarization U9")
             comboBox.addItem("ALL")
-            self.grid.addWidget(comboBox, 1, 1)
+            self.grid.addWidget(comboBox, 1, 2)
             comboBox.activated[str].connect(self.getPolarization)
             
             self.polarization = "polarization AVG"
@@ -167,16 +171,12 @@ class Monitoring(QWidget):
         super().__init__()
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.center()
-        
         self.configFilePath = configFilePath
-        
         self.grid = QGridLayout()
         self.setLayout(self.grid)
         self.grid.setSpacing(10)
-        
         self.chooseSource()
         self.new_spectre = True
-        
         self.months = Months()
         
     def center(self):
@@ -187,13 +187,10 @@ class Monitoring(QWidget):
         
     def chooseSource(self):
         self.setWindowTitle("Choose Source")
-        
         self.chooseLabel = QLabel("Choose source")
         self.grid.addWidget(self.chooseLabel, 0, 0)
-        
         self.sourceInput = QLineEdit()
         self.grid.addWidget(self.sourceInput, 1, 0)
-        
         self.chooseSource = QPushButton("Ok", self)
         self.chooseSource.clicked.connect(self.plot)
         self.chooseSource.setStyleSheet("background-color: green")
@@ -302,8 +299,25 @@ class Monitoring(QWidget):
         
         self.Monitoring_View.setLabels(labels)
         self.Monitoring_View.setLines(lines)
-        
         self.monitoringPlot.addPickEvent(self.Monitoring_View.chooseSpectrum)
+        
+        def convertDatetimeObjectToMJD(time):
+            time=time.isoformat()
+            t=Time(time, format='isot')
+            return t.mjd
+        
+        #t = [time.mktime(i.timetuple()) for i in x]
+        t = np.array([convertDatetimeObjectToMJD(i) for i in x], dtype="float64")
+        y =  velocitie_dict["avg"][source_velocities[0]] * u.mag
+        ls  = LombScargle(t,  y)
+        frequency, power = ls.autopower(nyquist_factor=11, method='fastchi2', normalization='model')
+        print(power.max())
+        #print(ls.false_alarm_probability(power.max(),   method='bootstrap')) 
+         
+        self.periodPlot = Plot()
+        self.periodPlot.creatPlot(self.Monitoring_View.getGrid(), "Frequency", "Power", None, (1,1))
+        self.periodPlot.plot(frequency, power, "r*", label="polarization AVG " + "Velocity " + source_velocities[0])
+        self.Monitoring_View._addWidget(self.periodPlot, 0, 1)
         
         self.Monitoring_View.showMaximized()
         self.Monitoring_View.show()
