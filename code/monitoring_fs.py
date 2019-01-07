@@ -5,6 +5,7 @@ import sys
 import numpy as np
 import matplotlib
 from astropy.stats import LombScargle
+from gatspy.periodic import LombScargleFast
 import astropy.units as u
 import datetime
 import json
@@ -308,11 +309,15 @@ class Monitoring(QWidget):
         
         #t = [time.mktime(i.timetuple()) for i in x]
         t = np.array([convertDatetimeObjectToMJD(i) for i in x], dtype="float64")
-        y =  velocitie_dict["avg"][source_velocities[0]] * u.mag
+        t = t *u.day
+        y =  velocitie_dict["avg"][source_velocities[0]]
         ls  = LombScargle(t,  y)
-        frequency, power = ls.autopower(nyquist_factor=11, method='fastchi2', normalization='model')
+        frequency, power = ls.autopower(method='fastchi2', normalization='model')
         print(power.max())
         #print(ls.false_alarm_probability(power.max(),   method='bootstrap')) 
+        
+        #model = LombScargleFast().fit(t, y)
+        #periods, power = model.periodogram_auto(nyquist_factor=100)
          
         self.periodPlot = Plot()
         self.periodPlot.creatPlot(self.Monitoring_View.getGrid(), "Frequency", "Power", None, (1,1))
