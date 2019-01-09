@@ -282,17 +282,24 @@ class Monitoring(QWidget):
         self.monitoringPlot = Plot()
         self.monitoringPlot.creatPlot(self.Monitoring_View.getGrid(), "Time", "Flux density (Jy)", None, (1,0))
         
+        def convertDatetimeObjectToMJD(time):
+            time=time.isoformat()
+            t=Time(time, format='isot')
+            return t.mjd
+        
+        t = np.array([convertDatetimeObjectToMJD(i) for i in x], dtype="float64")
+        
         for i in range(0, len(source_velocities)):
-            l1, = self.monitoringPlot.plot(x, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + source_velocities[i], visible=False, picker=False)
-            l2, = self.monitoringPlot.plot(x, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+"g", label="polarization U9 " + "Velocity " + source_velocities[i], visible=False, picker=False)
-            l3, = self.monitoringPlot.plot(x, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+"b", label="polarization AVG " + "Velocity " + source_velocities[i], visible=True, picker=5)
+            l1, = self.monitoringPlot.plot(t, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + source_velocities[i], visible=False, picker=False)
+            l2, = self.monitoringPlot.plot(t, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+"g", label="polarization U9 " + "Velocity " + source_velocities[i], visible=False, picker=False)
+            l3, = self.monitoringPlot.plot(t, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+"b", label="polarization AVG " + "Velocity " + source_velocities[i], visible=True, picker=5)
             
             lines.append(l1)
             lines.append(l2)
             lines.append(l3)
         
         self.Monitoring_View._addWidget(self.monitoringPlot, 0, 0)
-        self.monitoringPlot.setXtics(x, [date.strftime("%H %M %d %m %Y") for date in  date_list], '30')
+        #self.monitoringPlot.setXtics(x, [date.strftime("%H %M %d %m %Y") for date in  date_list], '30')
         
         self.monitoringPlot.addCursor(labels2)
            
@@ -302,26 +309,32 @@ class Monitoring(QWidget):
         self.Monitoring_View.setLines(lines)
         self.monitoringPlot.addPickEvent(self.Monitoring_View.chooseSpectrum)
         
-        def convertDatetimeObjectToMJD(time):
-            time=time.isoformat()
-            t=Time(time, format='isot')
-            return t.mjd
-        
-        #t = [time.mktime(i.timetuple()) for i in x]
-        t = np.array([convertDatetimeObjectToMJD(i) for i in x], dtype="float64")
-        t = t *u.day
         y =  velocitie_dict["avg"][source_velocities[0]]
-        ls  = LombScargle(t,  y)
-        frequency, power = ls.autopower(method='fastchi2', normalization='model')
-        print(power.max())
-        #print(ls.false_alarm_probability(power.max(),   method='bootstrap')) 
+        error = (t -y)/y
+        ls  = LombScargle(t,  y, error, fit_mean=True)
         
-        #model = LombScargleFast().fit(t, y)
-        #periods, power = model.periodogram_auto(nyquist_factor=100)
-         
+        def dateDelta(d1, d2):
+            return abs(d1 -d2)
+        
+        def getMaxDateDelta():
+            
+            maxDelta = list()
+            for x in range(0, len(t) -1):
+                maxDelta.append(dateDelta(t[x], t[x + 1]))
+
+            return np.max(maxDelta)
+
+        nyquist_factor = 2 * getMaxDateDelta()
+        print ("nyquist_factor", nyquist_factor)
+        frequency, power = ls.autopower(method='fastchi2', normalization='model', nyquist_factor=nyquist_factor, minimum_frequency=1, samples_per_peak=20)
+        
+        period_days = 1. / frequency
+        best_period = period_days[np.argmax(power)]
+        print("Best period: {0:.2f} hours".format(24 * best_period))
+                 
         self.periodPlot = Plot()
-        self.periodPlot.creatPlot(self.Monitoring_View.getGrid(), "Frequency", "Power", None, (1,1))
-        self.periodPlot.plot(frequency, power, "r*", label="polarization AVG " + "Velocity " + source_velocities[0])
+        self.periodPlot.creatPlot(self.Monitoring_View.getGrid(), "Period (days)", "Power", None, (1,1))
+        self.periodPlot.plot(period_days, power, "r*", label="polarization AVG " + "Velocity " + source_velocities[0], rasterized=True)
         self.Monitoring_View._addWidget(self.periodPlot, 0, 1)
         
         self.Monitoring_View.showMaximized()
