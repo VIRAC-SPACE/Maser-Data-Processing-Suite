@@ -302,7 +302,6 @@ class Monitoring(QWidget):
         #self.monitoringPlot.setXtics(x, [date.strftime("%H %M %d %m %Y") for date in  date_list], '30')
         
         self.monitoringPlot.addCursor(labels2)
-           
         labels = [str(line.get_label()) for line in lines]
         
         self.Monitoring_View.setLabels(labels)
@@ -312,6 +311,7 @@ class Monitoring(QWidget):
         y =  velocitie_dict["avg"][source_velocities[0]]
         error = (t -y)/y
         ls  = LombScargle(t,  y, error, fit_mean=True)
+        #ls  = LombScargle(t,  y, fit_mean=True)
         
         def dateDelta(d1, d2):
             return abs(d1 -d2)
@@ -327,6 +327,7 @@ class Monitoring(QWidget):
         nyquist_factor = 2 * getMaxDateDelta()
         print ("nyquist_factor", nyquist_factor)
         frequency, power = ls.autopower(method='fastchi2', normalization='model', nyquist_factor=nyquist_factor, minimum_frequency=1, samples_per_peak=20)
+        #frequency, power = ls.autopower()
         
         period_days = 1. / frequency
         best_period = period_days[np.argmax(power)]
