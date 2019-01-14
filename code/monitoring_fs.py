@@ -24,6 +24,7 @@ from parsers._configparser import ConfigParser
 from help import *
 from monitor.months import Months
 from monitor.monitoringViewHelper import MonitoringViewHelper
+from jsonschema._validators import maximum
 
 matplotlib.use('Qt5Agg')
 
@@ -285,21 +286,21 @@ class Monitoring(QWidget):
         def convertDatetimeObjectToMJD(time):
             time=time.isoformat()
             t=Time(time, format='isot')
-            return t.mjd
-        
-        t = np.array([convertDatetimeObjectToMJD(i) for i in x], dtype="float64")
+            return t.mjd 
         
         for i in range(0, len(source_velocities)):
-            l1, = self.monitoringPlot.plot(t, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + source_velocities[i], visible=False, picker=False)
-            l2, = self.monitoringPlot.plot(t, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+"g", label="polarization U9 " + "Velocity " + source_velocities[i], visible=False, picker=False)
-            l3, = self.monitoringPlot.plot(t, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+"b", label="polarization AVG " + "Velocity " + source_velocities[i], visible=True, picker=5)
+            l1, = self.monitoringPlot.plot(x, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + source_velocities[i], visible=False, picker=False)
+            l2, = self.monitoringPlot.plot(x, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+"g", label="polarization U9 " + "Velocity " + source_velocities[i], visible=False, picker=False)
+            l3, = self.monitoringPlot.plot(x, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+"b", label="polarization AVG " + "Velocity " + source_velocities[i], visible=True, picker=5)
             
             lines.append(l1)
             lines.append(l2)
             lines.append(l3)
+            
+        t = np.array([convertDatetimeObjectToMJD(i) for i in x], dtype="float64")
         
         self.Monitoring_View._addWidget(self.monitoringPlot, 0, 0)
-        #self.monitoringPlot.setXtics(x, [date.strftime("%H %M %d %m %Y") for date in  date_list], '30')
+        self.monitoringPlot.setXtics(x, [date.strftime("%H %M %d %m %Y") for date in  date_list], '30')
         
         self.monitoringPlot.addCursor(labels2)
         labels = [str(line.get_label()) for line in lines]
@@ -308,10 +309,10 @@ class Monitoring(QWidget):
         self.Monitoring_View.setLines(lines)
         self.monitoringPlot.addPickEvent(self.Monitoring_View.chooseSpectrum)
         
-        y =  velocitie_dict["avg"][source_velocities[0]]
-        error = (t -y)/y
+        y =  velocitie_dict["avg"][source_velocities[1]]
+
+        error = np.array(y) * 0.1
         ls  = LombScargle(t,  y, error, fit_mean=True)
-        #ls  = LombScargle(t,  y, fit_mean=True)
         
         def dateDelta(d1, d2):
             return abs(d1 -d2)
@@ -323,11 +324,23 @@ class Monitoring(QWidget):
                 maxDelta.append(dateDelta(t[x], t[x + 1]))
 
             return np.max(maxDelta)
+        
+        def getMinDateDelta():
+            
+            minDelta = list()
+            for x in range(0, len(t) -1):
+                minDelta.append(dateDelta(t[x], t[x + 1]))
+
+            return np.min(minDelta)
 
         nyquist_factor = 2 * getMaxDateDelta()
+        maximum_frequency = 2  * getMinDateDelta()
+        minimum_frequency = 1/dateDelta(t[0], t[-1])
+        
         print ("nyquist_factor", nyquist_factor)
-        frequency, power = ls.autopower(method='fastchi2', normalization='model', nyquist_factor=nyquist_factor, minimum_frequency=1, samples_per_peak=20)
-        #frequency, power = ls.autopower()
+        print ("minimum_frequency", minimum_frequency)
+        print ("maximum_frequency", maximum_frequency)
+        frequency, power = ls.autopower(method='fastchi2', normalization='model', nyquist_factor=nyquist_factor, minimum_frequency=minimum_frequency, maximum_frequency=maximum_frequency, samples_per_peak=20)
         
         period_days = 1. / frequency
         best_period = period_days[np.argmax(power)]
@@ -335,7 +348,7 @@ class Monitoring(QWidget):
                  
         self.periodPlot = Plot()
         self.periodPlot.creatPlot(self.Monitoring_View.getGrid(), "Period (days)", "Power", None, (1,1))
-        self.periodPlot.plot(period_days, power, "r*", label="polarization AVG " + "Velocity " + source_velocities[0], rasterized=True)
+        self.periodPlot.plot(period_days, power, "r*", label="polarization AVG " + "Velocity " + source_velocities[1], rasterized=True)
         self.Monitoring_View._addWidget(self.periodPlot, 0, 1)
         
         self.Monitoring_View.showMaximized()
