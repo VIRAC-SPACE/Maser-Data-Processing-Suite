@@ -5,16 +5,13 @@ import sys
 import numpy as np
 import matplotlib
 from astropy.stats import LombScargle
-from gatspy.periodic import LombScargleFast
-import astropy.units as u
 import datetime
 import json
 import argparse
 from operator import itemgetter
 from astropy.time import Time
-import time
 
-from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QLabel, QLineEdit, QDesktopWidget, QComboBox)
+from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QLabel, QLineEdit, QDesktopWidget, QComboBox, QGroupBox)
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 
@@ -24,7 +21,6 @@ from parsers._configparser import ConfigParser
 from help import *
 from monitor.months import Months
 from monitor.monitoringViewHelper import MonitoringViewHelper
-from jsonschema._validators import maximum
 
 matplotlib.use('Qt5Agg')
 
@@ -40,16 +36,34 @@ class Monitoring_View(QWidget):
         def __init__(self, iteration_list, location_list, source, output_path):
             super().__init__()
             self.grid = QGridLayout()
-            self.setLayout(self.grid)
             self.grid.setSpacing(10)
+            self.setLayout(self.grid)
             
-            comboBox = QComboBox(self)
-            comboBox.addItem("polarization AVG")
-            comboBox.addItem("polarization U1")
-            comboBox.addItem("polarization U9")
-            comboBox.addItem("ALL")
-            self.grid.addWidget(comboBox, 1, 2)
-            comboBox.activated[str].connect(self.getPolarization)
+            def test():
+                print("qwerty")
+            
+            def createControlGroup():
+                groupBox = QGroupBox("")
+                
+                comboBox = QComboBox(self)
+                comboBox.addItem("polarization AVG")
+                comboBox.addItem("polarization U1")
+                comboBox.addItem("polarization U9")
+                comboBox.addItem("ALL")
+                comboBox.activated[str].connect(self.getPolarization)
+                
+                controlGrid = QGridLayout()
+                controlGrid.addWidget(comboBox, 2, 0)
+                plotPeriodsbutton = QPushButton('Plot periods', self)
+                plotPeriodsbutton.clicked.connect(test)
+                controlGrid.addWidget(plotPeriodsbutton, 1, 0)
+                componentInput = QLineEdit()
+                controlGrid.addWidget(componentInput, 0, 0)
+                groupBox.setLayout(controlGrid)
+                
+                return groupBox
+            
+            self.grid.addWidget(createControlGroup(), 1, 2)
             
             self.polarization = "polarization AVG"
             self.labels = list()
