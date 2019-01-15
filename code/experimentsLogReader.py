@@ -7,7 +7,6 @@ import time
 import datetime
 import argparse
 import platform
-import configparser
 import json
 
 from scan import Scan

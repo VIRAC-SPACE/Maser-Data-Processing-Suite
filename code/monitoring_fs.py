@@ -2,23 +2,21 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import _thread
+import argparse
+import json
 import numpy as np
 import matplotlib
-from astropy.stats import LombScargle
 import datetime
-import json
-import argparse
 from operator import itemgetter
-from astropy.time import Time
 
 from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QLabel, QLineEdit, QDesktopWidget, QComboBox, QGroupBox)
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 
 from ploting_qt5 import  Plot
-from result import  Result
 from parsers._configparser import ConfigParser
-from help import *
+from result import  Result
 from monitor.months import Months
 from monitor.monitoringViewHelper import MonitoringViewHelper
 
@@ -29,170 +27,94 @@ def parseArguments():
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 2.0')
     args = parser.parse_args()
-
     return args
 
-class Monitoring_View(QWidget):
-        def __init__(self, iteration_list, location_list, source, output_path):
-            super().__init__()
-            self.grid = QGridLayout()
-            self.grid.setSpacing(10)
-            self.setLayout(self.grid)
-            
-            def test():
-                print("qwerty")
-            
-            def createControlGroup():
-                groupBox = QGroupBox("")
-                
-                comboBox = QComboBox(self)
-                comboBox.addItem("polarization AVG")
-                comboBox.addItem("polarization U1")
-                comboBox.addItem("polarization U9")
-                comboBox.addItem("ALL")
-                comboBox.activated[str].connect(self.getPolarization)
-                
-                controlGrid = QGridLayout()
-                controlGrid.addWidget(comboBox, 2, 0)
-                plotPeriodsbutton = QPushButton('Plot periods', self)
-                plotPeriodsbutton.clicked.connect(test)
-                controlGrid.addWidget(plotPeriodsbutton, 1, 0)
-                componentInput = QLineEdit()
-                controlGrid.addWidget(componentInput, 0, 0)
-                groupBox.setLayout(controlGrid)
-                
-                return groupBox
-            
-            self.grid.addWidget(createControlGroup(), 1, 2)
-            
-            self.polarization = "polarization AVG"
-            self.labels = list()
-            self.lines = list()
-            self.iteration_list = iteration_list
-            self.location_list = location_list
-            self.source = source
-            self.output_path = output_path
-            self.new_spectre = True
-            self.spectrumSet = set()
-            self.plotList = list()
-            
-            self.setWindowTitle("Monitoring")
-            
-            self.months = Months()
-                        
-        def _addWidget(self, widget, row, collon):
-            self.grid.addWidget(widget, row, collon)
-            
-        def getGrid(self):
-            return self.grid
+class PlotingView(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.grid = QGridLayout()
+        self.grid.setSpacing(10)
+        self.setLayout(self.grid)
+        self.show()
         
-        def setPolarization(self, polarization):
-            self.polarization = polarization
+    def _addWidget(self, widget, row, collon):
+        self.grid.addWidget(widget, row, collon)
             
-        def setLabels(self, labels):
-            self.labels = labels
-             
-        def setLines(self, lines):
-            self.lines = lines
-            
-        def __setVisible(self, label, labels):
-            index = labels.index(label)
-            self.lines[index].set_visible(True)
-            self.lines[index].set_picker(5)
-            
-        def __unSetVisibel(self, label, labels):
-            index = labels.index(label)
-            self.lines[index].set_visible(False)
-            self.lines[index].set_picker(False)
+    def getGrid(self):
+        return self.grid
+
+class TimeView(PlotingView):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Monitoring")
+        self.showMaximized()
         
-        def getIndexiesOfPolarization(self, labels):
-            if self.polarization == "ALL":
-                all(i.set_visible(True) for i in self.lines)
-                all(i.set_picker(5) for i in self.lines)
+        def createPeriodView():
+            #self.Period_View = Period_View()
+            #self.Period_View.PlotPeriods()
+            print("qwerty")
+        
+        def createControlGroup():
+            groupBox = QGroupBox("")
                 
-            else:
-                for label in labels:
-                    if self.polarization in label:
-                        self.__setVisible(label, labels)
-                    elif self.polarization not in label:
-                        self.__unSetVisibel(label, labels)
-                        
-        def getPolarization(self, polarization):
+            comboBox = QComboBox(self)
+            comboBox.addItem("polarization AVG")
+            comboBox.addItem("polarization U1")
+            comboBox.addItem("polarization U9")
+            comboBox.addItem("ALL")
+            comboBox.activated[str].connect(self.getPolarization)
+                
+            controlGrid = QGridLayout()
+            controlGrid.addWidget(comboBox, 2, 0)
+            plotPeriodsbutton = QPushButton('Plot periods', self)
+            plotPeriodsbutton.clicked.connect(createPeriodView)
+            controlGrid.addWidget(plotPeriodsbutton, 1, 0)
+            componentInput = QLineEdit()
+            controlGrid.addWidget(componentInput, 0, 0)
+            groupBox.setLayout(controlGrid)
+                
+            return groupBox
+        
+        self._addWidget(createControlGroup(), 1, 2)
+        
+    def getPolarization(self, polarization):
             self.setPolarization(polarization)
             self.getIndexiesOfPolarization(self.labels)
-            
-        def keyPressEvent(self, e):
-            if e.key() == Qt.Key_Shift:
-                self.new_spectre = True
-                
-        def chooseSpectrum(self, event):
-            thisline = event.artist
-            xdata = thisline.get_xdata()
-            ind = event.ind
-            index = [ind][0]
-            polarization = thisline.get_label().split()[1]
-            spectraFileName = self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.location_list, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.iteration_list, int(index[0])) + ".dat"
-            self.plotSpecter(spectraFileName, polarization)
         
-        def plotSpecter(self, spectraFileName, polarization):
-            if polarization == "U1":
-                amplitude_colon = 1
-            elif polarization == "U9":
-                amplitude_colon = 2
-            elif polarization == "AVG":
-                amplitude_colon = 3
-                
-            spectraFileName = self.output_path + spectraFileName
+    def createPlot(self, x, source_velocities, velocitie_dict, cursorLabels):
+        lines = list()
+        Symbols =  ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
+        monitoringPlot = Plot()
+        monitoringPlot.creatPlot(self.getGrid(), "Time", "Flux density (Jy)", None, (1,0))
+       
+        for i in range(0, len(source_velocities)):
+            l1, = monitoringPlot.plot(x, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + source_velocities[i], visible=False, picker=False)
+            l2, = monitoringPlot.plot(x, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+"g", label="polarization U9 " + "Velocity " + source_velocities[i], visible=False, picker=False)
+            l3, = monitoringPlot.plot(x, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+"b", label="polarization AVG " + "Velocity " + source_velocities[i], visible=True, picker=5)
             
-            data = np.fromfile(spectraFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(spectraFileName),4))
-            tmpDate = spectraFileName.split("/")[-1].split("_")
-            tmpDate[-4] = self.months.getMonthNumber([tmpDate[-4]][0])
-            plot_name = datetime.datetime.strptime( " ".join(tmpDate[1:-2]), "%H %M %S %d %m %Y") 
+            lines.append(l1)
+            lines.append(l2)
+            lines.append(l3)
             
-            x = data[:, [0]]
-            y = data[:, [amplitude_colon]]
-            
-            if self.new_spectre:
-                self.Spectre_View = Spectre_View()
-                self.spectrumSet.add(self.Spectre_View)
-                self.spectrPlot = Plot()
-                self.spectrPlot.creatPlot(self.Spectre_View.getGrid(), "Velocity (km sec$^{-1}$)", "Flux density (Jy)", spectraFileName.split("/")[-1].split("_")[0], (1,0))
-                self.Spectre_View._addWidget(self.spectrPlot, 0, 0)
-                self.Spectre_View.show()
-                self.new_spectre = False
-                self.plotList.clear()
-            
-            if plot_name not in self.plotList:
-                self.plotList.append(plot_name)
-                self.spectrPlot.plot(x,y, "-", label=plot_name)
-                self.spectrPlot.canvasShow()
-            
-class Spectre_View(QWidget):
-        def __init__(self):
-            super().__init__()
-            self.grid = QGridLayout()
-            self.setLayout(self.grid)
-            self.grid.setSpacing(10)
-            
-            self.setWindowTitle(" ")
-            
-        def _addWidget(self, widget, row, collon):
-            self.grid.addWidget(widget, row, collon)
-            
-        def getGrid(self):
-            return self.grid         
-            
-class Monitoring(QWidget):
+        monitoringPlot.setXtics(x, [date.strftime("%H %M %d %m %Y") for date in  x], '30')
+        monitoringPlot.addCursor(cursorLabels)
+        self._addWidget(monitoringPlot, 0, 0)
+                    
+class SpectralView(PlotingView):
+    def __init__(self):
+        super().__init__()
+
+class MonitoringApp(QWidget):
     def __init__(self, configFilePath):
         super().__init__()
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.center()
-        self.configFilePath = configFilePath
         self.grid = QGridLayout()
         self.setLayout(self.grid)
         self.grid.setSpacing(10)
+        self.configFilePath = configFilePath
         self.chooseSource()
-        self.new_spectre = True
+        self.source = ""
         self.months = Months()
         
     def center(self):
@@ -201,41 +123,59 @@ class Monitoring(QWidget):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
         
+    def __addWidget(self, widget, row, colomn):
+        self.grid.addWidget(widget, row, colomn)
+
     def chooseSource(self):
         self.setWindowTitle("Choose Source")
-        self.chooseLabel = QLabel("Choose source")
-        self.grid.addWidget(self.chooseLabel, 0, 0)
+        chooseLabel = QLabel("Choose source")
+        self.__addWidget(chooseLabel, 0, 0)
         self.sourceInput = QLineEdit()
-        self.grid.addWidget(self.sourceInput, 1, 0)
-        self.chooseSource = QPushButton("Ok", self)
-        self.chooseSource.clicked.connect(self.plot)
-        self.chooseSource.setStyleSheet("background-color: green")
-        self.grid.addWidget(self.chooseSource, 1, 1)
+        self.__addWidget(self.sourceInput, 1, 0)
+        chooseSourceButton = QPushButton("Ok", self)
+        chooseSourceButton.clicked.connect(self.plotTimes)
+        chooseSourceButton.setStyleSheet("background-color: green")
+        self.__addWidget(chooseSourceButton, 1, 1)
         
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Return:
             if len (self.sourceInput.text()) > 1:
-                self.plot()
-                                                                                                                                            
-    def plotMonitoring(self, resultDir, source_velocities, source):
+                self.plotTimes()
+                       
+    def plotTimes(self):
+        self.source = self.sourceInput.text()
+        self.timeView = TimeView()
+        self.timeView.createPlot(self.__createDateList(), self.getSourceVelocities(), self.__createVelocitie_dict(), self.__getCursorLabel())
+        
+    def getSource(self):
+        return self.source
+        
+    def getConfig(self, key, value):
+        config = ConfigParser.getInstance()
+        config.CreateConfig(self.configFilePath)
+        return config.getConfig(key, value)
+            
+    def getSourceVelocities(self):
+        source_velocities = self.getConfig('velocities', self.getSource()).replace(" ", "").split(",")
+        return source_velocities
+    
+    def getResultDir(self):
+        resultDir = self.getConfig('paths', 'resultFilePath')
+        return resultDir
+    
+    def getResults(self):
+        resultFileName = self.getSource() + ".json"
+        
+        with open(self.getResultDir() + resultFileName) as result_data:
+            results = json.load(result_data)
+            
+        return results
+    
+    def __createResultList(self):
         result_list = list()
-        velocitie_dict = {"u1":dict(), "u9":dict(), "avg":dict()}
-        iteration_list = list()
-        date_list = list()
         
-        for velocitie in velocitie_dict:
-            for vel in source_velocities:
-                velocitie_dict[velocitie][vel] = list()
-                                
-        resultFileName = source + ".json"
-        
-        with open(resultDir + resultFileName) as result_data:    
-                results = json.load(result_data)
-        
-        self.location_list = list()
-        labels2 = list()
-        for experiment in results:
-                scanData = results[experiment]
+        for experiment in self.getResults():
+                scanData = self.getResults()[experiment]
                 date = scanData["Date"]
                 location = scanData["location"]
                 amplitudes_for_u1 = scanData["polarizationU1"] # Got poitns for all experiments for polarization u1
@@ -247,150 +187,77 @@ class Monitoring(QWidget):
                 monthsNumber = dates[1]
                 dates[1] = self.months.getMonthNumber([monthsNumber][0])
                 date = scanData["time"].replace(":", " ") + " " +  " ".join(dates) 
-            
                 result = Result(location, datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number, specie)
-                
                 result_list.append(dict(result))
               
         result_list = sorted(result_list, key=itemgetter('date'), reverse=False)
-         
-        for experiment in result_list:
+        return result_list
+    
+    def __createDateList(self):
+        date_list = list()
+        for experiment in self.__createResultList():
+            date_list.append(experiment["date"])
+            
+        return date_list
+    
+    def __getCursorLabel(self):
+        labels = list()
+        for experiment in self.__createResultList():
+            location = experiment["location"]
+            specie = experiment["specie"]
+            label = "Station is " + location + "\n" + "Date is " + experiment["date"].strftime('%d %m %Y') + "\n " + "Iteration number " + str(experiment["iteration_number"]) + "\n " + "Specie " + str(specie)
+            labels.append(label)
+        return labels
+            
+    def __createVelocitie_dict(self):
+        velocitie_dict = {"u1":dict(), "u9":dict(), "avg":dict()}
+        
+        for velocitie in velocitie_dict:
+            for vel in self.getSourceVelocities():
+                velocitie_dict[velocitie][vel] = list()
+                   
+        for experiment in self.__createResultList():
             u1 = experiment["polarizationU1"]
             u9 = experiment["polarizationU9"]
             avg = experiment["polarizationUAVG"]
-            iteration_list.append(experiment["iteration_number"])
-            date_list.append(experiment["date"])
-            location = experiment["location"]
-            specie = experiment["specie"]
-            
-            self.location_list.append(location)
             
             for i in u1:
-                for vel in source_velocities:
+                for vel in self.getSourceVelocities():
                     if float(vel) == float(i[0]):
                         velocitie_dict["u1"][vel].append(i[1]) 
             
             for j in u9:
-                for vel in source_velocities:
+                for vel in self.getSourceVelocities():
                     if float(vel) == float(j[0]):
                         velocitie_dict["u9"][vel].append(j[1]) 
                         
             for k in avg:
-                for vel in source_velocities:
+                for vel in self.getSourceVelocities():
                     if float(vel) == float(k[0]):
-                        velocitie_dict["avg"][vel].append(k[1]) 
-                         
-            label = "Station is " + location + "\n" + "Date is " + experiment["date"].strftime('%d %m %Y') + "\n " + "Iteration number " + str(experiment["iteration_number"]) + "\n " + "Specie " + str(specie)
-            labels2.append(label)
-            
-        self.iteration_list = iteration_list
-       
-        x = list()
-        for a in range(0, len(date_list)):
-            x.append(date_list[a])
-        
-        Symbols =  ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
-        
-        lines = list()
-        
-        self.Monitoring_View = Monitoring_View(self.iteration_list, self.location_list, self.source, self.output_path)
-        self.monitoringPlot = Plot()
-        self.monitoringPlot.creatPlot(self.Monitoring_View.getGrid(), "Time", "Flux density (Jy)", None, (1,0))
-        
-        def convertDatetimeObjectToMJD(time):
-            time=time.isoformat()
-            t=Time(time, format='isot')
-            return t.mjd 
-        
-        for i in range(0, len(source_velocities)):
-            l1, = self.monitoringPlot.plot(x, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + source_velocities[i], visible=False, picker=False)
-            l2, = self.monitoringPlot.plot(x, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+"g", label="polarization U9 " + "Velocity " + source_velocities[i], visible=False, picker=False)
-            l3, = self.monitoringPlot.plot(x, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+"b", label="polarization AVG " + "Velocity " + source_velocities[i], visible=True, picker=5)
-            
-            lines.append(l1)
-            lines.append(l2)
-            lines.append(l3)
-            
-        t = np.array([convertDatetimeObjectToMJD(i) for i in x], dtype="float64")
-        
-        self.Monitoring_View._addWidget(self.monitoringPlot, 0, 0)
-        self.monitoringPlot.setXtics(x, [date.strftime("%H %M %d %m %Y") for date in  date_list], '30')
-        
-        self.monitoringPlot.addCursor(labels2)
-        labels = [str(line.get_label()) for line in lines]
-        
-        self.Monitoring_View.setLabels(labels)
-        self.Monitoring_View.setLines(lines)
-        self.monitoringPlot.addPickEvent(self.Monitoring_View.chooseSpectrum)
-        
-        y =  velocitie_dict["avg"][source_velocities[1]]
+                        velocitie_dict["avg"][vel].append(k[1])
+                        
+        return velocitie_dict
 
-        error = np.array(y) * 0.1
-        ls  = LombScargle(t,  y, error, fit_mean=True)
+class Main():
+    
+    def __parseArguments(self):
+        self.args = parseArguments()
+        self.configFilePath = str(self.args.__dict__["config"])
         
-        def dateDelta(d1, d2):
-            return abs(d1 -d2)
-        
-        def getMaxDateDelta():
-            
-            maxDelta = list()
-            for x in range(0, len(t) -1):
-                maxDelta.append(dateDelta(t[x], t[x + 1]))
-
-            return np.max(maxDelta)
-        
-        def getMinDateDelta():
-            
-            minDelta = list()
-            for x in range(0, len(t) -1):
-                minDelta.append(dateDelta(t[x], t[x + 1]))
-
-            return np.min(minDelta)
-
-        nyquist_factor = 2 * getMaxDateDelta()
-        maximum_frequency = 2  * getMinDateDelta()
-        minimum_frequency = 1/dateDelta(t[0], t[-1])
-        
-        print ("nyquist_factor", nyquist_factor)
-        print ("minimum_frequency", minimum_frequency)
-        print ("maximum_frequency", maximum_frequency)
-        frequency, power = ls.autopower(method='fastchi2', normalization='model', nyquist_factor=nyquist_factor, minimum_frequency=minimum_frequency, maximum_frequency=maximum_frequency, samples_per_peak=20)
-        
-        period_days = 1. / frequency
-        best_period = period_days[np.argmax(power)]
-        print("Best period: {0:.2f} hours".format(24 * best_period))
-                 
-        self.periodPlot = Plot()
-        self.periodPlot.creatPlot(self.Monitoring_View.getGrid(), "Period (days)", "Power", None, (1,1))
-        self.periodPlot.plot(period_days, power, "r*", label="polarization AVG " + "Velocity " + source_velocities[1], rasterized=True)
-        self.Monitoring_View._addWidget(self.periodPlot, 0, 1)
-        
-        self.Monitoring_View.showMaximized()
-        self.Monitoring_View.show()
-        
-    def plot(self):
-        config = ConfigParser.getInstance()
-        config.CreateConfig(self.configFilePath)
-        resultDir = config.getConfig('paths', "resultFilePath")
-        self.output_path = config.getConfig('paths', "outputFilePath")
-        self.source = self.sourceInput.text()
-        source_velocities = config.getConfig('velocities', self.source).split(",")
-            
-        self.plotMonitoring(resultDir, source_velocities, self.source)
+    def __CreateApp(self): 
+        qApp = QApplication(sys.argv)
+        aw = MonitoringApp(self.configFilePath)
+        aw.show()
+        sys.exit(qApp.exec_())
+        sys.exit(0)
+    
+    def run(self):
+        self.__parseArguments()
+        self.__CreateApp()
         
 def main():
-    # Parse the arguments
-    args = parseArguments()
-    configFilePath = str(args.__dict__["config"])
-     
-    #Create App
-    qApp = QApplication(sys.argv)
-    aw = Monitoring(configFilePath)
-    aw.show()
-    sys.exit(qApp.exec_())
+    app = Main()
+    app.run()
     
-    sys.exit(0)
-        
 if __name__=="__main__":
-    main()
-    
+    main() 
