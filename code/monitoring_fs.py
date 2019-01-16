@@ -102,6 +102,9 @@ class Period_View(PlotingView):
             print ("minimum_frequency", minimum_frequency)
             print ("maximum_frequency", maximum_frequency)
             frequency, power = ls.autopower(method='fastchi2', normalization='model', nyquist_factor=nyquist_factor, minimum_frequency=minimum_frequency, maximum_frequency=maximum_frequency, samples_per_peak=20)
+            false_alarm = ls.false_alarm_probability(power.max(), method="bootstrap", nyquist_factor=nyquist_factor, minimum_frequency=minimum_frequency, maximum_frequency=maximum_frequency, samples_per_peak=20)
+            print ("max power", power.max(), "false_alarm", false_alarm)
+            #print(ls.distribution(power, cumulative=False), power)
                 
             period_days = 1. / frequency
             best_period = period_days[np.argmax(power)]
