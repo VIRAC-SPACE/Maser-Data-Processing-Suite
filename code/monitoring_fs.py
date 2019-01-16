@@ -10,6 +10,7 @@ from astropy.time import Time
 from astropy.stats import LombScargle
 import datetime
 from operator import itemgetter
+import _thread
 
 from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QLabel, QLineEdit, QDesktopWidget, QComboBox, QGroupBox)
 from PyQt5.QtGui import QIcon
@@ -37,6 +38,8 @@ class PlotingView(QWidget):
         self.grid = QGridLayout()
         self.grid.setSpacing(10)
         self.setLayout(self.grid)
+        
+    def showView(self):
         self.show()
         
     def _addWidget(self, widget, row, collon):
@@ -105,16 +108,17 @@ class Period_View(PlotingView):
             print("Best period: {0:.2f} hours".format(24 * best_period))
             
             self.periodPlot = Plot()
-            self.periodPlot.creatPlot(self.getGrid(), "Period (days)", "Power", None, (1,1))
+            self.periodPlot.creatPlot(self.getGrid(), "Period (days)", "Power", None, (1,0))
             self.periodPlot.plot(period_days, power, "r*", label="polarization AVG " + "Velocity " + source_velocities[velocityIndex], rasterized=True)
             self._addWidget(self.periodPlot, 0, 0)
+            
+            self.showView()
         
 class TimeView(PlotingView):
     def __init__(self, outputDir, sourceVelocities, dateList, velocitie_dict):
         super().__init__()
         self.setWindowTitle("Monitoring")
-        self._addWidget(self.createControlGroup(), 1, 2)
-        self.showMaximized()
+        self._addWidget(self.createControlGroup(), 1, 1)
         
         self.labels = list()
         self.lines = list()
@@ -131,6 +135,10 @@ class TimeView(PlotingView):
         self.dateList = dateList
         self.velocitie_dict = velocitie_dict
         
+    def showView(self):
+        self.showMaximized()
+        self.show()
+        
     def createPeriodView(self):
             velocity = self.componentInput.text()
             velocityIndex = self.source_velocities.index(velocity)
@@ -139,6 +147,8 @@ class TimeView(PlotingView):
         
     def createControlGroup(self):
             groupBox = QGroupBox("")
+            groupBox.setFixedWidth(120)
+            groupBox.setFixedHeight(120)
                 
             comboBox = QComboBox(self)
             comboBox.addItem("polarization AVG")
@@ -153,6 +163,7 @@ class TimeView(PlotingView):
             plotPeriodsbutton.clicked.connect(self.createPeriodView)
             controlGrid.addWidget(plotPeriodsbutton, 1, 0)
             self.componentInput = QLineEdit()
+            self.componentInput.setFixedWidth(100)
             controlGrid.addWidget(self.componentInput, 0, 0)
             groupBox.setLayout(controlGrid)
                 
@@ -226,6 +237,8 @@ class TimeView(PlotingView):
                 self.plotList.append(plot_name)
                 self.spectrPlot.plot(x,y, "-", label=plot_name)
                 self.spectrPlot.canvasShow()
+                
+        self.spectre_View.showView()
             
     def chooseSpectrum(self, event):
         thisline = event.artist
@@ -264,6 +277,8 @@ class TimeView(PlotingView):
         self.setLines(lines)
         
         monitoringPlot.addPickEvent(self.chooseSpectrum)
+        
+        self.showView()
                     
 class SpectralView(PlotingView):
     def __init__(self):
@@ -306,12 +321,12 @@ class MonitoringApp(QWidget):
         if e.key() == Qt.Key_Return:
             if len (self.sourceInput.text()) > 1:
                 self.plotTimes()
-                       
+                        
     def plotTimes(self):
         self.source = self.sourceInput.text()
         self.timeView = TimeView(self.getOutputDir(), self.getSourceVelocities(), self.__createDateList(), self.__createVelocitie_dict())
-        self.timeView.createPlot(self.__getCursorLabel(), self.getSource(), self.__getLocationList(), self.__getIterationList())
-        
+        self.timeView.createPlot(self.__getCursorLabel(), self.getSource(), self.__getLocationList(), self.__getIterationList())   
+
     def getSource(self):
         return self.source
         
