@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import sys
-import _thread
 import argparse
 import json
 import numpy as np
 import matplotlib
+from astropy.time import Time
+from astropy.stats import LombScargle
 import datetime
 from operator import itemgetter
 
@@ -19,6 +20,7 @@ from parsers._configparser import ConfigParser
 from result import  Result
 from monitor.months import Months
 from monitor.monitoringViewHelper import MonitoringViewHelper
+from help import *
 
 matplotlib.use('Qt5Agg')
 
@@ -42,19 +44,100 @@ class PlotingView(QWidget):
             
     def getGrid(self):
         return self.grid
-
+    
+class Spectre_View(PlotingView):
+        def __init__(self):
+            super().__init__()
+            self.setWindowTitle(" ")
+            
+class Period_View(PlotingView):
+        def __init__(self):
+            super().__init__()
+            self.setWindowTitle("Periods in days ")
+            
+        def _addWidget(self, widget, row, collon):
+            self.grid.addWidget(widget, row, collon)
+            
+        def getGrid(self):
+            return self.grid
+        
+        def convertDatetimeObjectToMJD(self, time):
+            time=time.isoformat()
+            t=Time(time, format='isot')
+            return t.mjd 
+        
+        def PlotPeriods(self, dateList, velocitie_dict, source_velocities, velocityIndex):
+            x = dateList
+            t = np.array([self.convertDatetimeObjectToMJD(i) for i in x], dtype="float64")
+            y =  velocitie_dict["avg"][source_velocities[velocityIndex]]
+            error = np.array(y) * 0.1
+            ls  = LombScargle(t,  y, error, fit_mean=True)
+            
+            def dateDelta(d1, d2):
+                return abs(d1 -d2)
+            
+            def getMaxDateDelta():
+                maxDelta = list()
+                for x in range(0, len(t) -1):
+                    maxDelta.append(dateDelta(t[x], t[x + 1]))
+    
+                return np.max(maxDelta)
+            
+            def getMinDateDelta():
+            
+                minDelta = list()
+                for x in range(0, len(t) -1):
+                    minDelta.append(dateDelta(t[x], t[x + 1]))
+    
+                return np.min(minDelta)
+            
+            nyquist_factor = 2 * getMaxDateDelta()
+            maximum_frequency = 2  * getMinDateDelta()
+            minimum_frequency = 1/dateDelta(t[0], t[-1])
+                
+            print ("nyquist_factor", nyquist_factor)
+            print ("minimum_frequency", minimum_frequency)
+            print ("maximum_frequency", maximum_frequency)
+            frequency, power = ls.autopower(method='fastchi2', normalization='model', nyquist_factor=nyquist_factor, minimum_frequency=minimum_frequency, maximum_frequency=maximum_frequency, samples_per_peak=20)
+                
+            period_days = 1. / frequency
+            best_period = period_days[np.argmax(power)]
+            print("Best period: {0:.2f} hours".format(24 * best_period))
+            
+            self.periodPlot = Plot()
+            self.periodPlot.creatPlot(self.getGrid(), "Period (days)", "Power", None, (1,1))
+            self.periodPlot.plot(period_days, power, "r*", label="polarization AVG " + "Velocity " + source_velocities[velocityIndex], rasterized=True)
+            self._addWidget(self.periodPlot, 0, 0)
+        
 class TimeView(PlotingView):
-    def __init__(self):
+    def __init__(self, outputDir, sourceVelocities, dateList, velocitie_dict):
         super().__init__()
         self.setWindowTitle("Monitoring")
+        self._addWidget(self.createControlGroup(), 1, 2)
         self.showMaximized()
         
-        def createPeriodView():
-            #self.Period_View = Period_View()
-            #self.Period_View.PlotPeriods()
-            print("qwerty")
+        self.labels = list()
+        self.lines = list()
+        self.location_list = list()
+        self.iteration_list = list()
+        self.spectrumSet = set()
+        self.plotList = list()
+        self.polarization = "polarization AVG"
+        self.source = ""
+        self.output_path = outputDir
+        self.new_spectre = True
+        self.months = Months()
+        self.source_velocities = sourceVelocities
+        self.dateList = dateList
+        self.velocitie_dict = velocitie_dict
         
-        def createControlGroup():
+    def createPeriodView(self):
+            velocity = self.componentInput.text()
+            velocityIndex = self.source_velocities.index(velocity)
+            self.period_View = Period_View()
+            self.period_View.PlotPeriods(self.dateList, self.velocitie_dict, self.source_velocities, velocityIndex)
+        
+    def createControlGroup(self):
             groupBox = QGroupBox("")
                 
             comboBox = QComboBox(self)
@@ -67,30 +150,106 @@ class TimeView(PlotingView):
             controlGrid = QGridLayout()
             controlGrid.addWidget(comboBox, 2, 0)
             plotPeriodsbutton = QPushButton('Plot periods', self)
-            plotPeriodsbutton.clicked.connect(createPeriodView)
+            plotPeriodsbutton.clicked.connect(self.createPeriodView)
             controlGrid.addWidget(plotPeriodsbutton, 1, 0)
-            componentInput = QLineEdit()
-            controlGrid.addWidget(componentInput, 0, 0)
+            self.componentInput = QLineEdit()
+            controlGrid.addWidget(self.componentInput, 0, 0)
             groupBox.setLayout(controlGrid)
                 
             return groupBox
         
-        self._addWidget(createControlGroup(), 1, 2)
+    def keyPressEvent(self, e):
+        if e.key() == Qt.Key_Shift:
+            self.new_spectre = True
+        
+    def __setVisible(self, label, labels):
+            index = labels.index(label)
+            self.lines[index].set_visible(True)
+            self.lines[index].set_picker(5)
+            
+    def __unSetVisibel(self, label, labels):
+        index = labels.index(label)
+        self.lines[index].set_visible(False)
+        self.lines[index].set_picker(False)
+        
+    def getIndexiesOfPolarization(self, labels):
+        if self.polarization == "ALL":
+            all(i.set_visible(True) for i in self.lines)
+            all(i.set_picker(5) for i in self.lines)
+                
+        else:
+            for label in labels:
+                if self.polarization in label:
+                    self.__setVisible(label, labels)
+                elif self.polarization not in label:
+                    self.__unSetVisibel(label, labels)
+        
+    def setPolarization(self, polarization):
+        self.polarization = polarization
         
     def getPolarization(self, polarization):
-            self.setPolarization(polarization)
-            self.getIndexiesOfPolarization(self.labels)
+        self.setPolarization(polarization)
+        self.getIndexiesOfPolarization(self.labels)
+            
+    def setLabels(self, labels):
+        self.labels = labels
+             
+    def setLines(self, lines):
+        self.lines = lines
+            
+    def plotSpecter(self, spectraFileName, polarization):
+        if polarization == "U1":
+            amplitude_colon = 1
+        elif polarization == "U9":
+            amplitude_colon = 2
+        elif polarization == "AVG":
+            amplitude_colon = 3
+            
+        spectraFileName = self.output_path + spectraFileName
+        data = np.fromfile(spectraFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(spectraFileName),4))
+        tmpDate = spectraFileName.split("/")[-1].split("_")
+        tmpDate[-4] = self.months.getMonthNumber([tmpDate[-4]][0])
+        plot_name = datetime.datetime.strptime( " ".join(tmpDate[1:-2]), "%H %M %S %d %m %Y") 
+        x = data[:, [0]]
+        y = data[:, [amplitude_colon]]
         
-    def createPlot(self, x, source_velocities, velocitie_dict, cursorLabels):
+        if self.new_spectre:
+            self.spectre_View = Spectre_View()
+            self.spectrumSet.add(self.spectre_View)
+            self.spectrPlot = Plot()
+            self.spectrPlot.creatPlot(self.spectre_View.getGrid(), "Velocity (km sec$^{-1}$)", "Flux density (Jy)", spectraFileName.split("/")[-1].split("_")[0], (1,0))
+            self.spectre_View._addWidget(self.spectrPlot, 0, 0)
+            self.new_spectre = False
+            self.plotList.clear()
+            
+        if plot_name not in self.plotList:
+                self.plotList.append(plot_name)
+                self.spectrPlot.plot(x,y, "-", label=plot_name)
+                self.spectrPlot.canvasShow()
+            
+    def chooseSpectrum(self, event):
+        thisline = event.artist
+        xdata = thisline.get_xdata()
+        ind = event.ind
+        index = [ind][0]
+        polarization = thisline.get_label().split()[1]
+        spectraFileName = self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.location_list, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.iteration_list, int(index[0])) + ".dat"
+        self.plotSpecter(spectraFileName, polarization)
+        
+    def createPlot(self, cursorLabels, source, location_list, iteration_list):
+        x = self.dateList
+        self.iteration_list = iteration_list
+        self.location_list  = location_list
+        self.source = source
         lines = list()
         Symbols =  ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
         monitoringPlot = Plot()
         monitoringPlot.creatPlot(self.getGrid(), "Time", "Flux density (Jy)", None, (1,0))
        
-        for i in range(0, len(source_velocities)):
-            l1, = monitoringPlot.plot(x, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + source_velocities[i], visible=False, picker=False)
-            l2, = monitoringPlot.plot(x, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+"g", label="polarization U9 " + "Velocity " + source_velocities[i], visible=False, picker=False)
-            l3, = monitoringPlot.plot(x, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+"b", label="polarization AVG " + "Velocity " + source_velocities[i], visible=True, picker=5)
+        for i in range(0, len(self.source_velocities)):
+            l1, = monitoringPlot.plot(x, self.velocitie_dict["u1"][self.source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + self.source_velocities[i], visible=False, picker=False)
+            l2, = monitoringPlot.plot(x, self.velocitie_dict["u9"][self.source_velocities[i]], Symbols[i]+"g", label="polarization U9 " + "Velocity " + self.source_velocities[i], visible=False, picker=False)
+            l3, = monitoringPlot.plot(x, self.velocitie_dict["avg"][self.source_velocities[i]], Symbols[i]+"b", label="polarization AVG " + "Velocity " + self.source_velocities[i], visible=True, picker=5)
             
             lines.append(l1)
             lines.append(l2)
@@ -99,6 +258,12 @@ class TimeView(PlotingView):
         monitoringPlot.setXtics(x, [date.strftime("%H %M %d %m %Y") for date in  x], '30')
         monitoringPlot.addCursor(cursorLabels)
         self._addWidget(monitoringPlot, 0, 0)
+        labels = [str(line.get_label()) for line in lines]
+        
+        self.setLabels(labels)
+        self.setLines(lines)
+        
+        monitoringPlot.addPickEvent(self.chooseSpectrum)
                     
 class SpectralView(PlotingView):
     def __init__(self):
@@ -144,8 +309,8 @@ class MonitoringApp(QWidget):
                        
     def plotTimes(self):
         self.source = self.sourceInput.text()
-        self.timeView = TimeView()
-        self.timeView.createPlot(self.__createDateList(), self.getSourceVelocities(), self.__createVelocitie_dict(), self.__getCursorLabel())
+        self.timeView = TimeView(self.getOutputDir(), self.getSourceVelocities(), self.__createDateList(), self.__createVelocitie_dict())
+        self.timeView.createPlot(self.__getCursorLabel(), self.getSource(), self.__getLocationList(), self.__getIterationList())
         
     def getSource(self):
         return self.source
@@ -163,9 +328,12 @@ class MonitoringApp(QWidget):
         resultDir = self.getConfig('paths', 'resultFilePath')
         return resultDir
     
+    def getOutputDir(self):
+        outputDir = self.getConfig('paths', 'outputFilePath')
+        return outputDir
+    
     def getResults(self):
         resultFileName = self.getSource() + ".json"
-        
         with open(self.getResultDir() + resultFileName) as result_data:
             results = json.load(result_data)
             
@@ -199,6 +367,19 @@ class MonitoringApp(QWidget):
             date_list.append(experiment["date"])
             
         return date_list
+    
+    def __getLocationList(self):
+        location_list = list()
+        for experiment in self.__createResultList():
+            location = experiment["location"]
+            location_list.append(location)
+        return location_list
+    
+    def __getIterationList(self):
+        itertion_list = list()
+        for experiment in self.__createResultList():
+            itertion_list.append(experiment["iteration_number"])
+        return itertion_list
     
     def __getCursorLabel(self):
         labels = list()
@@ -239,7 +420,6 @@ class MonitoringApp(QWidget):
         return velocitie_dict
 
 class Main():
-    
     def __parseArguments(self):
         self.args = parseArguments()
         self.configFilePath = str(self.args.__dict__["config"])
