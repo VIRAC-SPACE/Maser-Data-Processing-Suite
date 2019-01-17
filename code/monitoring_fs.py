@@ -10,7 +10,7 @@ from astropy.time import Time
 from astropy.stats import LombScargle
 import datetime
 from operator import itemgetter
-import _thread
+from multiprocessing import Process
 
 from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QLabel, QLineEdit, QDesktopWidget, QComboBox, QGroupBox)
 from PyQt5.QtGui import QIcon
@@ -118,7 +118,7 @@ class Period_View(PlotingView):
             self.showView()
         
 class TimeView(PlotingView):
-    def __init__(self, outputDir, sourceVelocities, dateList, velocitie_dict):
+    def __init__(self, outputDir, sourceVelocities, dateList, velocitie_dict, source, location_list, iteration_list):
         super().__init__()
         self.setWindowTitle("Monitoring")
         self._addWidget(self.createControlGroup(), 1, 1)
@@ -137,6 +137,9 @@ class TimeView(PlotingView):
         self.source_velocities = sourceVelocities
         self.dateList = dateList
         self.velocitie_dict = velocitie_dict
+        self.iteration_list = iteration_list
+        self.location_list  = location_list
+        self.source = source
         
     def showView(self):
         self.showMaximized()
@@ -252,36 +255,34 @@ class TimeView(PlotingView):
         spectraFileName = self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.location_list, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.iteration_list, int(index[0])) + ".dat"
         self.plotSpecter(spectraFileName, polarization)
         
-    def createPlot(self, cursorLabels, source, location_list, iteration_list):
-        x = self.dateList
-        self.iteration_list = iteration_list
-        self.location_list  = location_list
-        self.source = source
+    def createPlot(self, cursorLabels):
         lines = list()
         Symbols =  ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
+        
         monitoringPlot = Plot()
         monitoringPlot.creatPlot(self.getGrid(), "Time", "Flux density (Jy)", None, (1,0))
-       
+        
         for i in range(0, len(self.source_velocities)):
-            l1, = monitoringPlot.plot(x, self.velocitie_dict["u1"][self.source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + self.source_velocities[i], visible=False, picker=False)
-            l2, = monitoringPlot.plot(x, self.velocitie_dict["u9"][self.source_velocities[i]], Symbols[i]+"g", label="polarization U9 " + "Velocity " + self.source_velocities[i], visible=False, picker=False)
-            l3, = monitoringPlot.plot(x, self.velocitie_dict["avg"][self.source_velocities[i]], Symbols[i]+"b", label="polarization AVG " + "Velocity " + self.source_velocities[i], visible=True, picker=5)
+            l1, = monitoringPlot.plot(self.dateList, self.velocitie_dict["u1"][self.source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + self.source_velocities[i], visible=False, picker=False)
+            l2, = monitoringPlot.plot(self.dateList, self.velocitie_dict["u9"][self.source_velocities[i]], Symbols[i]+"g", label="polarization U9 " + "Velocity " + self.source_velocities[i], visible=False, picker=False)
+            l3, = monitoringPlot.plot(self.dateList, self.velocitie_dict["avg"][self.source_velocities[i]], Symbols[i]+"b", label="polarization AVG " + "Velocity " + self.source_velocities[i], visible=True, picker=5)
             
             lines.append(l1)
             lines.append(l2)
             lines.append(l3)
-            
-        monitoringPlot.setXtics(x, [date.strftime("%H %M %d %m %Y") for date in  x], '30')
+ 
+        monitoringPlot.setXtics(self.dateList, [date.strftime("%H %M %d %m %Y") for date in  self.dateList], '30')
+        
         monitoringPlot.addCursor(cursorLabels)
         self._addWidget(monitoringPlot, 0, 0)
+        
+        self.show()
         labels = [str(line.get_label()) for line in lines]
         
         self.setLabels(labels)
         self.setLines(lines)
         
         monitoringPlot.addPickEvent(self.chooseSpectrum)
-        
-        self.showView()
                     
 class SpectralView(PlotingView):
     def __init__(self):
@@ -327,9 +328,10 @@ class MonitoringApp(QWidget):
                         
     def plotTimes(self):
         self.source = self.sourceInput.text()
-        self.timeView = TimeView(self.getOutputDir(), self.getSourceVelocities(), self.__createDateList(), self.__createVelocitie_dict())
-        self.timeView.createPlot(self.__getCursorLabel(), self.getSource(), self.__getLocationList(), self.__getIterationList())   
-
+        self.timeView = TimeView(self.getOutputDir(), self.getSourceVelocities(), self.__createDateList(), self.__createVelocitie_dict(),  self.getSource(), self.__getLocationList(), self.__getIterationList())
+        self.timeView.createPlot(self.__getCursorLabel())
+        self.timeView.showView()
+        
     def getSource(self):
         return self.source
         
@@ -339,28 +341,22 @@ class MonitoringApp(QWidget):
         return config.getConfig(key, value)
             
     def getSourceVelocities(self):
-        source_velocities = self.getConfig('velocities', self.getSource()).replace(" ", "").split(",")
-        return source_velocities
+        return self.getConfig('velocities', self.getSource()).replace(" ", "").split(",")
     
     def getResultDir(self):
-        resultDir = self.getConfig('paths', 'resultFilePath')
-        return resultDir
+        return self.getConfig('paths', 'resultFilePath')
     
     def getOutputDir(self):
-        outputDir = self.getConfig('paths', 'outputFilePath')
-        return outputDir
+        return self.getConfig('paths', 'outputFilePath')
     
     def getResults(self):
-        resultFileName = self.getSource() + ".json"
-        with open(self.getResultDir() + resultFileName) as result_data:
+        with open(self.getResultDir() + self.getSource() + ".json") as result_data:
             results = json.load(result_data)
-            
         return results
     
     def __createResultList(self):
-        result_list = list()
         
-        for experiment in self.getResults():
+        def createResult(experiment):
                 scanData = self.getResults()[experiment]
                 date = scanData["Date"]
                 location = scanData["location"]
@@ -374,39 +370,28 @@ class MonitoringApp(QWidget):
                 dates[1] = self.months.getMonthNumber([monthsNumber][0])
                 date = scanData["time"].replace(":", " ") + " " +  " ".join(dates) 
                 result = Result(location, datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number, specie)
-                result_list.append(dict(result))
-              
-        result_list = sorted(result_list, key=itemgetter('date'), reverse=False)
-        return result_list
+                return dict(result)
+            
+        return sorted([createResult(experiment) for experiment in self.getResults()], key=itemgetter('date'), reverse=False)
+    
+    def createResultKeyList(self, key):
+        return[experiment[key] for experiment in self.__createResultList()]
     
     def __createDateList(self):
-        date_list = list()
-        for experiment in self.__createResultList():
-            date_list.append(experiment["date"])
-            
-        return date_list
+        return self.createResultKeyList("date")
     
     def __getLocationList(self):
-        location_list = list()
-        for experiment in self.__createResultList():
-            location = experiment["location"]
-            location_list.append(location)
-        return location_list
+        return self.createResultKeyList("location")
     
     def __getIterationList(self):
-        itertion_list = list()
-        for experiment in self.__createResultList():
-            itertion_list.append(experiment["iteration_number"])
-        return itertion_list
+        return self.createResultKeyList("iteration_number")
     
     def __getCursorLabel(self):
-        labels = list()
-        for experiment in self.__createResultList():
-            location = experiment["location"]
-            specie = experiment["specie"]
-            label = "Station is " + location + "\n" + "Date is " + experiment["date"].strftime('%d %m %Y') + "\n " + "Iteration number " + str(experiment["iteration_number"]) + "\n " + "Specie " + str(specie)
-            labels.append(label)
-        return labels
+        def createLabelString(e):
+            label = "Station is " + e["location"] + "\n" + "Date is " + e["date"].strftime('%d %m %Y') + "\n " + "Iteration number " + str(e["iteration_number"]) + "\n " +  "Specie " + str(e["specie"])
+            return label
+        
+        return [createLabelString(l) for l in self.__createResultList()]
             
     def __createVelocitie_dict(self):
         velocitie_dict = {"u1":dict(), "u9":dict(), "avg":dict()}
@@ -414,26 +399,22 @@ class MonitoringApp(QWidget):
         for velocitie in velocitie_dict:
             for vel in self.getSourceVelocities():
                 velocitie_dict[velocitie][vel] = list()
-                   
+                           
         for experiment in self.__createResultList():
             u1 = experiment["polarizationU1"]
             u9 = experiment["polarizationU9"]
             avg = experiment["polarizationUAVG"]
             
-            for i in u1:
+            for i in range(0, len(avg)):
                 for vel in self.getSourceVelocities():
-                    if float(vel) == float(i[0]):
-                        velocitie_dict["u1"][vel].append(i[1]) 
-            
-            for j in u9:
-                for vel in self.getSourceVelocities():
-                    if float(vel) == float(j[0]):
-                        velocitie_dict["u9"][vel].append(j[1]) 
+                    if float(vel) == float(u1[i][0]):
+                        velocitie_dict["u1"][vel].append(u1[i][1]) 
                         
-            for k in avg:
-                for vel in self.getSourceVelocities():
-                    if float(vel) == float(k[0]):
-                        velocitie_dict["avg"][vel].append(k[1])
+                    if float(vel) == float(u9[i][0]):
+                        velocitie_dict["u9"][vel].append(u9[i][1])
+                        
+                    if float(vel) == float(avg[i][0]): 
+                        velocitie_dict["avg"][vel].append(avg[i][1])
                         
         return velocitie_dict
 
@@ -458,4 +439,6 @@ def main():
     app.run()
     
 if __name__=="__main__":
-    main() 
+    p = Process(target=main,)
+    p.start()
+    p.join()
