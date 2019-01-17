@@ -284,10 +284,6 @@ class TimeView(PlotingView):
         
         monitoringPlot.addPickEvent(self.chooseSpectrum)
                     
-class SpectralView(PlotingView):
-    def __init__(self):
-        super().__init__()
-
 class MonitoringApp(QWidget):
     def __init__(self, configFilePath):
         super().__init__()
