@@ -102,7 +102,6 @@ class Period_View(PlotingView):
             frequency, power = ls.autopower(method='fastchi2', normalization='model', nyquist_factor=nyquist_factor, minimum_frequency=minimum_frequency, maximum_frequency=maximum_frequency, samples_per_peak=20)
             false_alarm = ls.false_alarm_probability(power.max(), method="bootstrap", nyquist_factor=nyquist_factor, minimum_frequency=minimum_frequency, maximum_frequency=maximum_frequency, samples_per_peak=20)
             print ("max power", power.max(), "false_alarm", false_alarm)
-            #print(ls.distribution(power, cumulative=False), power)
                 
             period_days = 1. / frequency
             best_period = period_days[np.argmax(power)]
@@ -112,12 +111,11 @@ class Period_View(PlotingView):
             self.periodPlot.creatPlot(self.getGrid(), "Period (days)", "Power", None, (1,0))
             self.periodPlot.plot(period_days, power, "r*", label="polarization AVG " + "Velocity " + source_velocities[velocityIndex], rasterized=True)
             self._addWidget(self.periodPlot, 0, 0)
-            
             self.show()
 
 class Monitoring_View(PlotingView):
         def __init__(self, iteration_list, location_list, source, output_path, source_velocities, date_list, velocitie_dict):
-            __slots__ = ['grid', 'polarization', 'labels', 'lines', 'iteration_list', 'location_list', 'source', 'output_path', 'new_spectre', 'spectrumSet', 'plotList', 'months', 'dateList', 'velocitie_dict'] 
+            __slots__ = ['grid', 'polarization', 'labels', 'lines', 'iteration_list', 'location_list', 'source', 'output_path', 'new_spectre', 'spectrumSet', 'plotList', 'months', 'dateList', 'velocitie_dict', 'periodPlotSet'] 
             super().__init__()
             self.setWindowTitle("Monitoring")
             self._addWidget(self.createControlGroup(), 1, 1)
@@ -136,12 +134,14 @@ class Monitoring_View(PlotingView):
             self.source_velocities = source_velocities
             self.dateList = date_list
             self.velocitie_dict = velocitie_dict
+            self.periodPlotSet = set()
             
         def createPeriodView(self):
             velocity = self.componentInput.text()
             velocityIndex = self.source_velocities.index(velocity)
             self.period_View = Period_View()
             self.period_View.PlotPeriods(self.dateList, self.velocitie_dict, self.source_velocities, velocityIndex)
+            self.periodPlotSet.add(self.period_View)
         
         def createControlGroup(self):
             groupBox = QGroupBox("")
@@ -366,6 +366,7 @@ class MonitoringApp(QWidget):
             x.append(date_list[a])
         
         Symbols =  ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
+        colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
         
         lines = list()
         
@@ -374,9 +375,9 @@ class MonitoringApp(QWidget):
         self.monitoringPlot.creatPlot(self.Monitoring_View.getGrid(), "Time", "Flux density (Jy)", None, (1,0))
         
         for i in range(0, len(source_velocities)):
-            l1, = self.monitoringPlot.plot(x, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+"r", label="polarization U1 " + "Velocity " + source_velocities[i], visible=False, picker=False)
-            l2, = self.monitoringPlot.plot(x, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+"g", label="polarization U9 " + "Velocity " + source_velocities[i], visible=False, picker=False)
-            l3, = self.monitoringPlot.plot(x, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+"b", label="polarization AVG " + "Velocity " + source_velocities[i], visible=True, picker=5)
+            l1, = self.monitoringPlot.plot(x, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+colors[i], label="polarization U1 " + "Velocity " + source_velocities[i], visible=False, picker=False)
+            l2, = self.monitoringPlot.plot(x, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+colors[i], label="polarization U9 " + "Velocity " + source_velocities[i], visible=False, picker=False)
+            l3, = self.monitoringPlot.plot(x, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+colors[i], label="polarization AVG " + "Velocity " + source_velocities[i], visible=True, picker=5)
             
             lines.append(l1)
             lines.append(l2)
