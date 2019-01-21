@@ -67,7 +67,7 @@ class Period_View(PlotingView):
             t=Time(time, format='isot')
             return t.mjd 
         
-        def PlotPeriods(self, dateList, velocitie_dict, source_velocities, velocityIndex):
+        def PlotPeriods(self, dateList, velocitie_dict, source_velocities, velocityIndex, plotSimbol):
             x = dateList
             t = np.array([self.convertDatetimeObjectToMJD(i) for i in x], dtype="float64")
             y =  velocitie_dict["avg"][source_velocities[velocityIndex]]
@@ -109,7 +109,7 @@ class Period_View(PlotingView):
             
             self.periodPlot = Plot()
             self.periodPlot.creatPlot(self.getGrid(), "Period (days)", "Power", None, (1,0))
-            self.periodPlot.plot(period_days, power, "r*", label="polarization AVG " + "Velocity " + source_velocities[velocityIndex], rasterized=True)
+            self.periodPlot.plot(period_days, power, plotSimbol, label="polarization AVG " + "Velocity " + source_velocities[velocityIndex], rasterized=True)
             self._addWidget(self.periodPlot, 0, 0)
             self.show()
 
@@ -137,10 +137,13 @@ class Monitoring_View(PlotingView):
             self.periodPlotSet = set()
             
         def createPeriodView(self):
+            Symbols =  ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
+            colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
             velocity = self.componentInput.text()
             velocityIndex = self.source_velocities.index(velocity)
+            plotSimbol = Symbols[velocityIndex] + colors[velocityIndex]
             self.period_View = Period_View()
-            self.period_View.PlotPeriods(self.dateList, self.velocitie_dict, self.source_velocities, velocityIndex)
+            self.period_View.PlotPeriods(self.dateList, self.velocitie_dict, self.source_velocities, velocityIndex, plotSimbol)
             self.periodPlotSet.add(self.period_View)
         
         def createControlGroup(self):
