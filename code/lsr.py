@@ -1,6 +1,6 @@
 import numpy as np
 from astropy.time import Time
-from apt.progress.text import long
+import os
 
 #cepa: 225617.90, 620149.7, 2000.0
 
@@ -11,14 +11,13 @@ epoch = 2000.0
 year = 2019
 month = 1
 day = 22
-timeUT = '08:30'
+timeUT = '08:30:30'
 
-vsun = 20
+vsun = 11.192600995434107
 ra_vsun = "18:00:00"
 dec_vsun = "30:00:00"
 epoch_vsun = 1900
-vobs = 0
-
+vobs = 0.11203614556028638
 
 lat = '57:33:12.3' 
 lat = 57.553417
@@ -61,6 +60,48 @@ v = ((TWOPI * 149598500.) / (365.2564 * 86400.)) /np.sqrt (1. - eccen**2)
 slong = lperi + tanom + 180
 vannual = v * np.cos(em) * (np.sin(slong-lperi) - eccen*np.sin(lperi-lperi))
 print(vannual)
+
+#cepa: 225617.90, 620149.7, 2000.0
+RaStr = "22 56 17.90"
+DecStr = "62 01 49.7"
+dopsetPar = "2019 01 22 08 30 30 22 56 17.90 62 01 49.7"
+print(dopsetPar)
+os.system("code/dopsetpy_v1.5 " + dopsetPar)
+
+# dopsetpy parametru nolasisana
+with open('lsrShift.dat') as openfileobject:
+    for line in openfileobject:
+        Header = line.split(';')
+        vards = Header[0]
+        if vards == "Date":
+            dateStr = Header[1]
+        elif vards == "Time":
+            laiks = Header[1]
+        elif vards == "RA":
+            RaStr = Header[1]
+        elif vards == "DEC":
+            DecStr = Header[1]
+        elif vards == "Source":
+            Source = Header[1]
+        elif vards == "LSRshift":
+            lsrShift = Header[1]
+        elif vards == "MJD":
+            mjd = Header[1]
+            print ("MJD: \t", mjd)
+        elif vards == "Vobs":
+            Vobs = Header[1]
+            print ("Vobs: \t", Vobs)
+        elif vards == "AtFreq":
+            AtFreq = Header[1]
+            print ("At Freq: \t", AtFreq)
+        elif vards == "FreqShift":
+            FreqShift = Header[1]
+            print ("FreqShift: \t", FreqShift)
+        elif vards == "VelTotal":
+            VelTotal = float(Header[1])
+            print ("VelTotal: \t", VelTotal)
+            #Header +=1
+
 
 
 
