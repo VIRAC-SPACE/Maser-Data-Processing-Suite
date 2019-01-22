@@ -27,7 +27,6 @@ class Plot(FigureCanvas):
         self.graph.legend()
         return line
 
-
     def creatPlot(self, grid, x_label, y_label, title,toolbarpos):
         self.graph = self.fig.add_subplot(111)
         self.grid = grid
@@ -55,7 +54,7 @@ class Plot(FigureCanvas):
         
     def setXtics(self, x, y, rotation, **options):
         self.graph.set_xticks(x, y, **options)
-        self.graph.set_xticklabels(x, rotation=rotation, **options)
+        self.graph.set_xticklabels(y, rotation=rotation, **options)
        
     def annotations(self, xvalues, yvalues):
         ax = self.figure.add_subplot(111)
@@ -69,7 +68,11 @@ class Plot(FigureCanvas):
     def annotation(self, xvalue, yvalue, text):
         self.ax = self.figure.add_subplot(111)
         self.annotate = self.ax.annotate(text, xy=(xvalue, yvalue),  textcoords='data')
-    
+    '''    
+    def xticks(self, arg):
+        self.ax.xticks(arg)
+    '''
+        
     def remannotation(self):
         self.annotate.remove()
         del self.annotate

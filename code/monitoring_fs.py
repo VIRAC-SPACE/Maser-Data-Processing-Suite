@@ -6,6 +6,7 @@ import argparse
 import json
 import numpy as np
 import matplotlib
+from matplotlib import dates as d
 from astropy.time import Time
 from astropy.stats import LombScargle
 import datetime
@@ -363,34 +364,34 @@ class MonitoringApp(QWidget):
             labels2.append(label)
             
         self.iteration_list = iteration_list
-       
-        x = list()
-        for a in range(0, len(date_list)):
-            x.append(date_list[a])
-        
-        Symbols =  ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
+        Symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
         colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
-        
         lines = list()
         
         self.Monitoring_View = Monitoring_View(self.iteration_list, self.location_list, self.source, self.output_path, source_velocities, date_list, velocitie_dict)
         self.monitoringPlot = Plot()
         self.monitoringPlot.creatPlot(self.Monitoring_View.getGrid(), "Time", "Flux density (Jy)", None, (1,0))
         
+        def convertDatetimeObjectToMJD(time):
+            time=time.isoformat()
+            t=Time(time, format='isot')
+            return t.mjd
+        
+        #.strftime("%H %M %d %m %Y")
+        #x = [date.strftime("%H %M %d %m %Y") for date in date_list]
         for i in range(0, len(source_velocities)):
-            l1, = self.monitoringPlot.plot(x, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+colors[i], label="polarization U1 " + "Velocity " + source_velocities[i], visible=False, picker=False)
-            l2, = self.monitoringPlot.plot(x, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+colors[i], label="polarization U9 " + "Velocity " + source_velocities[i], visible=False, picker=False)
-            l3, = self.monitoringPlot.plot(x, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+colors[i], label="polarization AVG " + "Velocity " + source_velocities[i], visible=True, picker=5)
+            l1, = self.monitoringPlot.plot(date_list, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+colors[i], label="polarization U1 " + "Velocity " + source_velocities[i], visible=False, picker=False)
+            l2, = self.monitoringPlot.plot(date_list, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+colors[i], label="polarization U9 " + "Velocity " + source_velocities[i], visible=False, picker=False)
+            l3, = self.monitoringPlot.plot(date_list, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+colors[i], label="polarization AVG " + "Velocity " + source_velocities[i], visible=True, picker=5)
             
             lines.append(l1)
             lines.append(l2)
             lines.append(l3)
-        
+
         self.Monitoring_View._addWidget(self.monitoringPlot, 0, 0)
-        self.monitoringPlot.setXtics(x, [date.strftime("%H %M %d %m %Y") for date in  date_list], '30')
+        #self.monitoringPlot.setXtics(date_list, [convertDatetimeObjectToMJD(date) for date in  date_list], '30')
         
         self.monitoringPlot.addCursor(labels2)
-           
         labels = [str(line.get_label()) for line in lines]
         
         self.Monitoring_View.setLabels(labels)
