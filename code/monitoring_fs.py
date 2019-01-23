@@ -6,7 +6,6 @@ import argparse
 import json
 import numpy as np
 import matplotlib
-from matplotlib import dates as d
 from astropy.time import Time
 from astropy.stats import LombScargle
 import datetime

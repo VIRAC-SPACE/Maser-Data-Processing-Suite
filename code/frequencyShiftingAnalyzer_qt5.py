@@ -14,7 +14,6 @@ import numpy as np
 import scipy.constants
 import pandas as pd
 from multiprocessing import Pool
-from pandas import Series
 
 from experimentsLogReader import ExperimentLogReader
 from ploting_qt5 import  Plot

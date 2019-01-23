@@ -120,4 +120,13 @@ viraclogo.png
 dopsetpy_v1.5
 dopsetpy_v1.4
 
+Pipfile
+Pipfile.lock
+bin/
+include/
+local/
+share/
+
+
+
 
