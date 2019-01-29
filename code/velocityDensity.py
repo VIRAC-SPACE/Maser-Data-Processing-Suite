@@ -5,7 +5,8 @@ import sys
 import os
 import argparse
 import numpy as np
-from lmfit.models import ExponentialModel, GaussianModel
+from astropy.modeling import models, fitting
+from scipy.integrate import simps
 from parsers._configparser import ConfigParser
 from help import *
 
@@ -47,24 +48,24 @@ def getData(outputFiles):
         amplitudeList.append(ampvid)
     return (velocitiesList, amplitudeList)
     
-def computeDensity(velocity, ampvid):
-    exp_mod = ExponentialModel(prefix='exp_')
-    pars = exp_mod.guess(ampvid, x=velocity)
-    gauss1 = GaussianModel(prefix='g1_')
-    pars.update(gauss1.make_params())
-    
-    pars['g1_center'].set(105, min=75, max=125)
-    pars['g1_sigma'].set(15, min=3)
-    pars['g1_amplitude'].set(2000, min=10)
-    print (pars)
+def computeDensity(velocity, ampvid, vel):
+    index = (np.abs(velocity - vel)).argmin()
+    g_init = models.Gaussian1D(amplitude=ampvid[index], mean=np.mean(ampvid), stddev=np.std(ampvid))
+    #g_init = models.Gaussian1D(amplitude=ampvid[index], mean=1, stddev=0)
+    fit_g = fitting.LevMarLSQFitter()
+    g = fit_g(g_init, velocity, ampvid)
+    dx = np.abs(np.abs(velocity[-1]) - np.abs(velocity[0]))/velocity.size
+    area = np.sum(simps(g(ampvid), dx=dx))
+    print ("area", area)
 
 def main():
     source = "cepa"
     velocitiesList, amplitudeList = getData(getOputFiles(source))
     source_velocities = getConfigs('velocities', source).split(",")
     
-    for i in range(0, len(velocitiesList)):
-        computeDensity(velocitiesList[i], amplitudeList[i])
+    for vel in source_velocities:
+        for i in range(0, len(velocitiesList)):
+            computeDensity(velocitiesList[i], amplitudeList[i], float(vel))
     
     sys.exit(0)
     

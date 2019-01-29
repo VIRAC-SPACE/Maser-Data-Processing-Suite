@@ -3,3 +3,10 @@ def file_len(fname):
         for i, l in enumerate(f):
             pass
     return i + 1
+
+def indexies(array, value):
+    indexs = list()
+    for i in range(0, len(array)-1):
+        if array[i] == value:
+            indexs.append(i)
+    return indexs
