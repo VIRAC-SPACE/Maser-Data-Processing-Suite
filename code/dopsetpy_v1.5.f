@@ -102,13 +102,13 @@ cccccccccccccccccccccccccccccccccccccccccccccccccc
         freq0=6668.5192
         f_shift=(Vdop/c)*freq0
     
-        write(*,*)'----------------------------------'
-        write(*,*)'Julian Day at given UT: ', dj
-        write(*,*)'V Sun: ', Vsun
-        write(*,*)'V obs: ', Vobs
-        write(*,*)'V tot: ', Vdop
-        write(*,*)'f shift at ', freq0,'MHz  = ', f_shift,' MHz'
-        write(*,*)'----------------------------------'
+c        write(*,*)'----------------------------------'
+c        write(*,*)'Julian Day at given UT: ', dj
+c        write(*,*)'V Sun: ', Vsun
+c        write(*,*)'V obs: ', Vobs
+c        write(*,*)'V tot: ', Vdop
+c        write(*,*)'f shift at ', freq0,'MHz  = ', f_shift,' MHz'
+c        write(*,*)'----------------------------------'
 
         open(11,file="V_tot.dat")
         write(11,*)Vdop,0.0
