@@ -61,6 +61,8 @@ area = np.sum(simps(g(ampvid), dx=dx))
 '''
     
 def computeDensity(velocity, ampvid, source_velocities):
+    velocity = np.array([v[0] for v in velocity])
+    ampvid = np.array([a[0] for a in ampvid])
     dx = np.abs(np.abs(velocity[-1]) - np.abs(velocity[0]))/velocity.size
     areas = list()
     colors = ['b', 'g', 'c', 'm', 'y', 'k', 'w']
@@ -69,10 +71,9 @@ def computeDensity(velocity, ampvid, source_velocities):
     i = 0
     for vel in source_velocities:
         index = (np.abs(velocity - float(vel))).argmin()
-        g = gauss(velocity, ampvid[index][0], float(vel), 0.4)
-        plt.plot(velocity, g, "-" + colors[i])
+        g = gauss(velocity, ampvid[index], float(vel), 0.4)
+        plt.plot(velocity, g, "--" + colors[i])
         area = simps(g, dx=dx)
-        print(np.sum(area))
         areas.append(area)
         i = i + 1
     plt.show()
@@ -85,7 +86,6 @@ def main():
     
     for i in range(0, len(velocitiesList)):
         computeDensity(velocitiesList[i], amplitudeList[i], source_velocities)
-    
     sys.exit(0)
     
 if __name__ == "__main__":
