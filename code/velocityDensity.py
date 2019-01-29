@@ -7,6 +7,7 @@ import argparse
 import numpy as np
 from astropy.modeling import models, fitting
 from scipy.integrate import simps
+import matplotlib.pyplot as plt
 from parsers._configparser import ConfigParser
 from help import *
 
@@ -47,25 +48,43 @@ def getData(outputFiles):
         velocitiesList.append(velocity)
         amplitudeList.append(ampvid)
     return (velocitiesList, amplitudeList)
+
+def gauss(x, A, μ, σ):
+    return A / (σ * np.sqrt(2 * np.pi)) * np.exp(-(x-μ)**2 / (2*σ**2))
+
+'''
+g_init = models.Gaussian1D(amplitude=ampvid[index][0], mean=vel, stddev=dx)
+g_init = models.Gaussian1D(amplitude=1, mean=vel, stddev=1)
+fit_g = fitting.LevMarLSQFitter()
+g = fit_g(g_init, velocity, ampvid)
+area = np.sum(simps(g(ampvid), dx=dx))
+'''
     
-def computeDensity(velocity, ampvid, vel):
-    index = (np.abs(velocity - vel)).argmin()
-    g_init = models.Gaussian1D(amplitude=ampvid[index], mean=np.mean(ampvid), stddev=np.std(ampvid))
-    #g_init = models.Gaussian1D(amplitude=ampvid[index], mean=1, stddev=0)
-    fit_g = fitting.LevMarLSQFitter()
-    g = fit_g(g_init, velocity, ampvid)
+def computeDensity(velocity, ampvid, source_velocities):
     dx = np.abs(np.abs(velocity[-1]) - np.abs(velocity[0]))/velocity.size
-    area = np.sum(simps(g(ampvid), dx=dx))
-    print ("area", area)
+    areas = list()
+    colors = ['b', 'g', 'c', 'm', 'y', 'k', 'w']
+    fig  = plt.figure()
+    plt.plot(velocity, ampvid, "r")
+    i = 0
+    for vel in source_velocities:
+        index = (np.abs(velocity - float(vel))).argmin()
+        g = gauss(velocity, ampvid[index][0], float(vel), 0.4)
+        plt.plot(velocity, g, "-" + colors[i])
+        area = simps(g, dx=dx)
+        print(np.sum(area))
+        areas.append(area)
+        i = i + 1
+    plt.show()
+    print ("area", areas)
 
 def main():
     source = "cepa"
     velocitiesList, amplitudeList = getData(getOputFiles(source))
     source_velocities = getConfigs('velocities', source).split(",")
     
-    for vel in source_velocities:
-        for i in range(0, len(velocitiesList)):
-            computeDensity(velocitiesList[i], amplitudeList[i], float(vel))
+    for i in range(0, len(velocitiesList)):
+        computeDensity(velocitiesList[i], amplitudeList[i], source_velocities)
     
     sys.exit(0)
     
