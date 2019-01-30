@@ -38,7 +38,7 @@ def convertDatetimeObjectToMJD(time):
 #velocitieList = [v[0] for v in velocitieList]      
 dateList = [convertDatetimeObjectToMJD(date) for date in dateList]
 
-print (dir("aa"))
+
 
 '''
 fig = plt.figure()
