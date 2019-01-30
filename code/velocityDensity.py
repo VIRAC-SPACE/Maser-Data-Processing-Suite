@@ -9,6 +9,7 @@ from scipy.integrate import trapz
 from scipy import optimize
 import matplotlib.pyplot as plt
 import json
+from multiprocessing import Process
 from parsers._configparser import ConfigParser
 from help import *
 
@@ -135,7 +136,9 @@ def main():
         velocitiesList, amplitudeList, itarationList = getData(getOputFiles(source))
         
         for i in range(0, len(velocitiesList)):
-            computeDensity(velocitiesList[i], amplitudeList[i], source_velocities, source, itarationList[i])
+            p = Process(target=computeDensity, args=(velocitiesList[i], amplitudeList[i], source_velocities, source, itarationList[i],))
+            p.start()
+            p.join()
     else:
         velocity, amplitude = getData2(output)
         plotDensity(velocity, amplitude, source_velocities)
@@ -143,4 +146,9 @@ def main():
     sys.exit(0)
     
 if __name__ == "__main__":
-    main()
+    p = Process(target=main)
+    p.start()
+    #p.join()
+    
+    
+    
