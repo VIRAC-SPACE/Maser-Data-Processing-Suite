@@ -6,7 +6,7 @@ import os
 import argparse
 import numpy as np
 from scipy.integrate import trapz
-from scipy import optimize, signal
+from scipy import optimize
 import matplotlib.pyplot as plt
 import json
 from parsers._configparser import ConfigParser
@@ -112,7 +112,6 @@ def plotDensity(velocity, amplitude, source_velocities):
         index = (np.abs(velocity - float(vel))).argmin()
         initial_guess = [float(vel), amplitude[index][0], 0.38]
         result = optimize.minimize(cost, initial_guess)
-        print("result", result.x, initial_guess)
         g = createGaussFit(velocity, result.x[0], result.x[1], result.x[2])
         plt.plot(velocity, g, "--" + colors[i], label=float(vel))
         i = i + 1
