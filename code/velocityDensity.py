@@ -16,7 +16,7 @@ def parseArguments():
     parser = argparse.ArgumentParser(description='''Velocity Density. ''', epilog="""Velocity Density.""")
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 0.1')
-    parser.add_argument("-o", "--output", help="Plot fits for outputfile ")
+    parser.add_argument("-o", "--output", help="Plot fits for outputfile ", default="")
     parser.add_argument("source", help="Experiment source", type=str, default="")
     args = parser.parse_args()
     return args
@@ -80,7 +80,6 @@ def gauss(x, A, μ, σ):
     return float(A) / (float(σ) * np.sqrt(2 * np.pi)) * np.exp(-(x-float(μ))**2 / (2*float(σ)**2))
 
 def createGaussFit(velocity, vel, amplitude, sigma):
-    #index = (np.abs(velocity - float(vel))).argmin()
     g = gauss(velocity, amplitude, float(vel), sigma)
     return g
   
@@ -90,8 +89,14 @@ def computeDensity(velocity, ampvid, source_velocities, source, iteration):
     dx = np.abs(np.abs(velocity[-1]) - np.abs(velocity[0]))/velocity.size
     areas = list()
     i = 0
+    def cost(parameters):
+        a, b, c = parameters
+        return np.sum(np.power(gauss(velocity, a, b, c) - ampvid, 2)) / velocity.size
     for vel in source_velocities:
-        g = createGaussFit(velocity, vel, ampvid)
+        index = (np.abs(velocity - float(vel))).argmin()
+        initial_guess = [float(vel), ampvid[index], 0.38]
+        result = optimize.minimize(cost, initial_guess)
+        g = createGaussFit(velocity, result.x[0], result.x[1], result.x[2])
         area = trapz(g, dx=dx)
         areas.append(area)
         addAreaToResultFile(source, iteration, areas)
@@ -126,7 +131,7 @@ def main():
     source = str(args.__dict__["source"])
     source_velocities = getConfigs('velocities', source).split(",")
     
-    if output == None:
+    if output == "":
         velocitiesList, amplitudeList, itarationList = getData(getOputFiles(source))
         
         for i in range(0, len(velocitiesList)):
