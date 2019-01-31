@@ -135,7 +135,7 @@ class VelocityDensityPolter(VelocityDensity):
         self.amplitude = np.array([a[0] for a in amplitude])
         self.source = source
         self.source_velocities = getConfigs('velocities', self.source).split(",")
-          
+        
     def plotDensity(self):
         colors = ['b', 'g', 'c', 'm', 'y', 'k', 'w']
         fig = plt.figure("Gauss fit")
