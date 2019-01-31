@@ -8,9 +8,11 @@ import numpy as np
 from scipy.integrate import trapz
 from scipy import optimize
 import matplotlib.pyplot as plt
+from lmfit import models
 import json
 from multiprocessing import Process
 import threading
+from functools import reduce
 from parsers._configparser import ConfigParser
 from help import *
 
@@ -135,6 +137,27 @@ class VelocityDensityPolter(VelocityDensity):
         self.source = source
         self.source_velocities = getConfigs('velocities', self.source).split(",")
         
+    def createModel(self):
+        modelList = list()
+        paramsList = list()
+        prefix = self.source + "_"
+        
+        def sum(a,b):
+            return a + b
+        
+        for component in range (0, len(self.source_velocities)):
+            model_n = models.GaussianModel(prefix=prefix + str(component))
+            modelList.append(model_n)
+            params_n = model_n.make_params(center=float(self.source_velocities[component]), sigma=0.1)
+            paramsList.append(params_n)
+        
+        model = reduce(sum, modelList)
+        param = reduce(sum, paramsList)
+        
+        output = model.fit(self.amplitude, param, x=self.velocity)
+        fig, gridspec = output.plot(data_kws={'markersize': 1})
+        plt.show()
+             
     def plotDensity(self):
         colors = ['b', 'g', 'c', 'm', 'y', 'k', 'w']
         fig = plt.figure("Gauss fit")
@@ -169,9 +192,7 @@ def main():
         velocitiesList, amplitudeList, itarationList = dataFileProcessing.getData()
         
         for i in range(0, len(velocitiesList)):
-            from sys import getsizeof
             velocityDensity = VelocityDensity(velocitiesList[i], amplitudeList[i], source, itarationList[i])
-            print (getsizeof(velocityDensity))
             velocityDensity.start()
             velocityDensity.join()
             velocityDensity.write()
@@ -179,7 +200,8 @@ def main():
     else:
         velocity, amplitude = dataFileProcessing.getDataForSingleDataFile(output)
         velocityDensityPolter = VelocityDensityPolter(velocity, amplitude, source)
-        velocityDensityPolter.plotDensity()
+        #velocityDensityPolter.plotDensity()
+        velocityDensityPolter.createModel()
          
     sys.exit(0)
     
