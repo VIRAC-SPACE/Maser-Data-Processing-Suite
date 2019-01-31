@@ -130,7 +130,6 @@ class VelocityDensity(threading.Thread):
                 
 class VelocityDensityPolter(VelocityDensity):
     def __init__(self, velocity, amplitude, source):
-        __slots__ = ['velocity', 'amplitude', 'source_velocities', 'source']
         self.velocity = np.array([v[0] for v in velocity])
         self.amplitude = np.array([a[0] for a in amplitude])
         self.source = source
@@ -170,20 +169,21 @@ def main():
         velocitiesList, amplitudeList, itarationList = dataFileProcessing.getData()
         
         for i in range(0, len(velocitiesList)):
+            from sys import getsizeof
             velocityDensity = VelocityDensity(velocitiesList[i], amplitudeList[i], source, itarationList[i])
+            print (getsizeof(velocityDensity))
             velocityDensity.start()
             velocityDensity.join()
             velocityDensity.write()
                     
     else:
         velocity, amplitude = dataFileProcessing.getDataForSingleDataFile(output)
-        velocityDensity = VelocityDensityPolter(velocity, amplitude, source)
-        velocityDensity.plotDensity()
+        velocityDensityPolter = VelocityDensityPolter(velocity, amplitude, source)
+        velocityDensityPolter.plotDensity()
          
     sys.exit(0)
     
 if __name__ == "__main__":
     p = Process(target=main)
     p.start()
-    #p.join()
     
