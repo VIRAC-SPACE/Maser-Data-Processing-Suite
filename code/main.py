@@ -12,6 +12,7 @@ def parseArguments():
     parser.add_argument("source", help="Source Name", type=str)
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-m", "--manual", help="Set manual log data", action='store_true')
+    parser.add_argument("-n", "--noGUI", help="Create smoothed and not smothed outputfiles", action='store_true')
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 3.0')
     args = parser.parse_args()
 
@@ -102,8 +103,12 @@ def main():
                 
         for d in data_files:
             if d.split(".")[0].split("_")[-1] not in processed_iteration:
-                print ("\033[1;31;47mExecute ",  "python3  " + "code/totalSpectrumAnalyer_qt5.py " + d  +  " \033[0;29;39m") 
-                os.system("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d)
+                if args.noGUI:
+                    print ("\033[1;31;47mExecute ",  "python3  " + "code/totalSpectrumAnalyer_qt5.py " + d  +  " -n \033[0;29;39m") 
+                    os.system("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d + " -n")
+                else:
+                    print ("\033[1;31;47mExecute ",  "python3  " + "code/totalSpectrumAnalyer_qt5.py " + d  +  " \033[0;29;39m") 
+                    os.system("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d)
                 
     except IOError as e:
         print ("IO Error",  e)
