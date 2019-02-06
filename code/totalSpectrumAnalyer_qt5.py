@@ -24,6 +24,7 @@ def parseArguments():
     parser = argparse.ArgumentParser(description='''plotting tool. ''', epilog="""PRE PLOTTER.""")
     parser.add_argument("datafile", help="Experiment correlation file name", type=str)
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
+    parser.add_argument("-n", "--noGUI", help="Create smoothed and not smothed outputfiles", action='store_true')
     parser.add_argument("-r", "--rawdata", help="Use raw data, skip smoothing", action='store_true')
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
     args = parser.parse_args()
@@ -81,11 +82,10 @@ class Analyzer(QWidget):
         self.changeParms = False
         
         try:
-           
             result = pickle.load(open(datafile, "rb"))
             self.specie = result.getSpecie()
             data = result.getMatrix()
-        
+            
         except IOError as e:
             print ("IO Error",  e)
             sys.exit(1)
@@ -121,9 +121,9 @@ class Analyzer(QWidget):
                 self.y1array[i] = self.y_u1[i]
                 self.y2array[i] = self.y_u9[i]
                 
-            self.xarray =  np.flip(self.xarray,0)
-            self.y1array =  np.flip(self.y1array,0)
-            self.y2array =  np.flip(self.y2array,0)
+            self.xarray = np.flip(self.xarray,0)
+            self.y1array = np.flip(self.y1array,0)
+            self.y2array = np.flip(self.y2array,0)
             
             self.grid = QGridLayout()
             self.setLayout(self.grid)
@@ -693,39 +693,178 @@ class Analyzer(QWidget):
         self.hide()
         self.close()
         del self
-              
+             
+class NoGUI(object):
+    
+    def __init__(self, datafile, cuts, output):
+        self.datafile = datafile
+        self.cuts = cuts
+        self.polynomialOrder = 3
+        self.output = output
+        self.source = datafile.split("/")[-1].split(".")[0].split("_")[0]
+        self.time = datafile.split("/")[-1].split(".")[0].split("_")[-3]
+        self.date = "_".join([datafile.split("/")[-1].split(".")[0].split("_")[1], datafile.split("/")[-1].split(".")[0].split("_")[2], datafile.split("/")[-1].split(".")[0].split("_")[3]])
+        self.location = datafile.split("/")[-1].split(".")[0].split("_")[-2]
+        self.iteration_number = datafile.split("/")[-1].split(".")[0].split("_")[-1]
+        
+    def createData(self):
+        try:
+            result = pickle.load(open(self.datafile, "rb"))
+            self.data = result.getMatrix()
+        
+        except IOError as e:
+            print ("IO Error",  e)
+            sys.exit(1)
+            
+        except TypeError as e:
+            print ("TypeError",  e)
+            sys.exit(1)
+            
+        except AttributeError as e:
+            print ("AttributeError",  e)
+            sys.exit(1)
+                
+        except:
+            print("Unexpected error:", sys.exc_info()[0])
+            sys.exit(1)
+        else:
+            self.dataPoints = self.data.shape[0]
+                        
+            self.xdata = self.data[:, [0]]
+            self.y_u1 = self.data[:, [1]] 
+            self.y_u9 = self.data[:, [2]]
+            
+            #Making sure that data is numpy array
+            self.xarray = np.zeros(self.dataPoints)
+            self.y1array = np.zeros(self.dataPoints)
+            self.y2array = np.zeros(self.dataPoints)
+            
+            for i in range (0, self.dataPoints):
+                self.xarray[i] = self.xdata[i]
+                self.y1array[i] = self.y_u1[i]
+                self.y2array[i] = self.y_u9[i]
+                
+            self.xarray = np.flip(self.xarray,0)
+            self.y1array = np.flip(self.y1array,0)
+            self.y2array = np.flip(self.y2array,0)
+            
+    def createPolynomial(self):
+        cutsIndex = list()
+        cutsIndex.append(0)
+
+        for cut in self.cuts:
+            cutsIndex.append((np.abs(self.xarray-float(cut[0]))).argmin()) 
+            cutsIndex.append((np.abs(self.xarray-float(cut[1]))).argmin())
+            
+        cutsIndex.append(self.dataPoints)
+        
+        polyArray_x = list()
+        polyArray_u1 = list()
+        polyArray_u9 = list()
+        
+        i = 0
+        j = 1
+        
+        while i != len(cutsIndex):
+            polyArray_x.append(self.xarray[cutsIndex[i] : cutsIndex[j]])
+            polyArray_u1.append(self.y1array[cutsIndex[i] : cutsIndex[j]])
+            polyArray_u9.append(self.y2array[cutsIndex[i] : cutsIndex[j]])
+            i = i + 2 
+            j = j + 2
+            
+        poly_x = list()
+        poly_u1 = list()
+        poly_u9 = list()
+        
+        for p in polyArray_x:
+            for p1 in p:
+                poly_x.append(p1)
+                
+        for p in polyArray_u1:
+            for p1 in p:
+                poly_u1.append(p1)
+        
+        for p in polyArray_u9:
+            for p1 in p:
+                poly_u9.append(p1)
+            
+        self.polyx = np.array(poly_x)
+        self.polyu1 = np.array(poly_u1)
+        self.polyu9 = np.array(poly_u9)
+        
+        z_u1 = np.polyfit(self.polyx, self.polyu1, self.polynomialOrder)
+        self.p_u1 = np.poly1d(z_u1)
+        
+        z_u9 = np.polyfit(self.polyx, self.polyu9, self.polynomialOrder)
+        self.p_u9 = np.poly1d(z_u9)
+        
+    def writeResult(self):
+        self.localMax_Array_u1 = self.y1array - self.p_u1(self.xarray)
+        self.localMax_Array_u9 = self.y2array - self.p_u9(self.xarray)
+        self.z1_NotSmoohtData = self.localMax_Array_u1
+        self.z2_NotSmoohtData = self.localMax_Array_u9
+        self.avg_y_NotSmoohtData = (self.z1_NotSmoohtData + self.z2_NotSmoohtData) / 2
+        
+        g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
+        g2 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
+        self.z1_SmoohtData = convolve(self.localMax_Array_u1, g1, boundary='extend')
+        self.z2_SmoohtData = convolve(self.localMax_Array_u9, g2, boundary='extend')
+        self.avg_y_SmoohtData = (self.z1_SmoohtData + self.z2_SmoohtData) / 2
+        
+        totalResults = [self.xarray,  self.z1_SmoohtData,  self.z2_SmoohtData,  self.avg_y_SmoohtData]
+        output_file_name = self.output + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
+        output_file_name = output_file_name.replace(" ", "")
+        np.savetxt(output_file_name, np.transpose(totalResults))
+        
+        totalResults = [self.xarray,  self.z1_NotSmoohtData,  self.z2_NotSmoohtData,  self.avg_y_NotSmoohtData]
+        output_file_name = self.output + "/NotSmooht/"  + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
+        output_file_name = output_file_name.replace(" ", "")
+        np.savetxt(output_file_name, np.transpose(totalResults))
+        
+    def run(self):
+        self.createData()
+        self.createPolynomial()
+        self.writeResult()
+        
+class Main():
+    def __init__(self):
+        args = parseArguments()
+        self.datafile = str(args.__dict__["datafile"])
+        configFilePath = str(args.__dict__["config"])
+    
+        if args.rawdata:
+            self.skipsmooth = True
+        else:
+            self.skipsmooth = False
+        
+        config = configparser.RawConfigParser()
+        config.read(configFilePath)
+        self.dataFilesPath =  config.get('paths', "dataFilePath")
+        self.resultFilePath =  config.get('paths', "resultFilePath")
+        self.output =  config.get('paths', "outputFilePath")
+        source = self.datafile.split("/")[-1].split(".")[0].split("_")[0]
+        cuts = config.get('cuts', source).split(";")
+        self.cuts = [c.split(",") for c in  cuts]
+        print ("source", source)
+        self.source_velocities = config.get('velocities', source).replace(" ", "").split(",")
+        self.index_range_for_local_maxima = int(config.get('parameters', "index_range_for_local_maxima"))
+        self.noGUI = args.noGUI
+    
+    def execute(self):
+        if self.noGUI:
+            NoGUI(self.dataFilesPath + self.datafile, self.cuts, self.output).run()
+        else:
+            qApp = QApplication(sys.argv)
+            aw = Analyzer(self.dataFilesPath + self.datafile, self.resultFilePath, self.source_velocities, self.cuts, self.output, self.index_range_for_local_maxima, self.skipsmooth)
+            aw.show()
+            aw.showMaximized() 
+            sys.exit(qApp.exec_())
+        sys.exit(0)
+
 def main():
-    args = parseArguments()
-   
-    datafile = str(args.__dict__["datafile"])
-    configFilePath = str(args.__dict__["config"])
-
-    if args.rawdata:
-        skipsmooth = True
-    else:
-        skipsmooth = False
-    
-    config = configparser.RawConfigParser()
-    config.read(configFilePath)
-    dataFilesPath =  config.get('paths', "dataFilePath")
-    resultFilePath =  config.get('paths', "resultFilePath")
-    output =  config.get('paths', "outputFilePath")
-    source = datafile.split("/")[-1].split(".")[0].split("_")[0]
-    cuts = config.get('cuts', source).split(";")
-    cuts = [c.split(",") for c in  cuts]
-    print ("source", source)
-    source_velocities = config.get('velocities', source).replace(" ", "").split(",")
-    index_range_for_local_maxima = int(config.get('parameters', "index_range_for_local_maxima"))
-    
-    #Create App
-    qApp = QApplication(sys.argv)
-
-    aw = Analyzer(dataFilesPath + datafile, resultFilePath, source_velocities, cuts, output, index_range_for_local_maxima, skipsmooth)
-    aw.show()
-    aw.showMaximized() 
-    sys.exit(qApp.exec_())
-    
-    sys.exit(0)
+    app = Main()
+    app.execute()
                 
 if __name__=="__main__":
     main()
+    

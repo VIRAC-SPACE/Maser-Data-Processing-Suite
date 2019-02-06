@@ -144,12 +144,21 @@ class VelocityDensityPolter(VelocityDensity):
         
         def sum(a,b):
             return a + b
-        
+        i = 0
+        j = 1
         for component in range (0, len(self.source_velocities)):
             model_n = models.GaussianModel(prefix=prefix + str(component))
             modelList.append(model_n)
-            params_n = model_n.make_params(center=float(self.source_velocities[component]), sigma=0.1)
+            if component == 4:
+                sigma = (np.abs(float(self.source_velocities[-1])))/6
+            else:
+                sigma = (np.abs(float(self.source_velocities[i]) - float(self.source_velocities[j])))/6
+                
+            print("sigma", sigma)
+            params_n = model_n.make_params(center=float(self.source_velocities[component]), sigma=sigma)
             paramsList.append(params_n)
+            i = i + 1
+            j = j + 1
         
         model = reduce(sum, modelList)
         param = reduce(sum, paramsList)
