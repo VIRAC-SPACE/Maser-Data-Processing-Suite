@@ -696,7 +696,7 @@ class Analyzer(QWidget):
              
 class NoGUI(object):
     
-    def __init__(self, datafile, cuts, output):
+    def __init__(self, datafile, cuts, output, resultFilePath, source_velocities, index_range_for_local_maxima):
         self.datafile = datafile
         self.cuts = cuts
         self.polynomialOrder = 3
@@ -706,11 +706,16 @@ class NoGUI(object):
         self.date = "_".join([datafile.split("/")[-1].split(".")[0].split("_")[1], datafile.split("/")[-1].split(".")[0].split("_")[2], datafile.split("/")[-1].split(".")[0].split("_")[3]])
         self.location = datafile.split("/")[-1].split(".")[0].split("_")[-2]
         self.iteration_number = datafile.split("/")[-1].split(".")[0].split("_")[-1]
+        self.resultFilePath = resultFilePath
+        self.expername = datafile.split("/")[-1].split(".")[0]
+        self.source_velocities = source_velocities
+        self.index_range_for_local_maxima = index_range_for_local_maxima
         
     def createData(self):
         try:
             result = pickle.load(open(self.datafile, "rb"))
             self.data = result.getMatrix()
+            self.specie = result.getSpecie()
         
         except IOError as e:
             print ("IO Error",  e)
@@ -821,6 +826,79 @@ class NoGUI(object):
         output_file_name = output_file_name.replace(" ", "")
         np.savetxt(output_file_name, np.transpose(totalResults))
         
+        resultFileName = self.source + ".json"
+        
+        if os.path.isfile(self.resultFilePath + resultFileName):
+            pass
+        else:
+            os.system("touch " + self.resultFilePath +  resultFileName)
+            
+            resultFile = open (self.resultFilePath +  resultFileName, "w")
+            resultFile.write("{ \n" + "\n}")
+            resultFile.close()
+        
+        with open(self.resultFilePath + resultFileName) as result_data:    
+            result = json.load(result_data)
+        
+        if self.expername not in result:
+            result[self.expername] = dict()
+        
+        indexies_for_source_velocities = [0] * len(self.source_velocities)
+        
+        for index in range (0, len(self.source_velocities)):
+            indexies_for_source_velocities[index] =  (np.abs(self.xarray-float(self.source_velocities[index]))).argmin()
+            
+        max_amplitude_list_u1 = list()
+        max_amplitude_list_u9 = list()
+        max_amplitude_list_uavg = list()
+        for index in indexies_for_source_velocities:
+            max_amplitude_list_tmp_u1 = list()
+            max_amplitude_list_tmp_u9 = list()
+            max_amplitude_list_tmp_uavg = list()
+            for i in range (index - self.index_range_for_local_maxima, index + self.index_range_for_local_maxima):
+                max_amplitude_list_tmp_u1.append(self.z1_SmoohtData[i])
+                max_amplitude_list_tmp_u9.append(self.z2_SmoohtData[i])
+                max_amplitude_list_tmp_uavg.append(self.avg_y_SmoohtData[i])
+                
+            max_amplitude_list_u1.append(max_amplitude_list_tmp_u1)
+            max_amplitude_list_u9.append(max_amplitude_list_tmp_u9)
+            max_amplitude_list_uavg.append(max_amplitude_list_tmp_uavg)
+        
+        max_apmlitudes_u1 = [np.max(value) for value  in max_amplitude_list_u1]
+        max_apmlitudes_u9 = [np.max(value) for value  in max_amplitude_list_u9]
+        max_apmlitudes_uavg = [np.max(value) for value  in max_amplitude_list_uavg]
+        
+        for max in range(0,len(max_apmlitudes_u1)):
+            max_apmlitudes_u1[max] = [self.source_velocities[max], max_apmlitudes_u1[max]]
+            max_apmlitudes_u9[max] = [self.source_velocities[max], max_apmlitudes_u9[max]]
+            max_apmlitudes_uavg[max] = [self.source_velocities[max], max_apmlitudes_uavg[max]]
+            
+        time = self.time + self.date.replace(" ", "_")
+        
+        try:
+            time=datetime.strptime(time, "%H:%M:%S%d_%b_%Y" ).isoformat()
+            t=Time(time, format='isot')
+            MJD = t.mjd
+            result[self.expername]["modifiedJulianDays"] = MJD
+        except ValueError as e:
+            print ("Cannot crate modified Julian Days",  e)
+        except:
+            print("Unexpected error:", sys.exc_info()[0])                                       
+            
+        result[self.expername]["location"] = self.location
+        result[self.expername]["Date"] = self.date
+        result[self.expername]["Iteration_number"] = int(self.iteration_number)
+        result[self.expername]["time"] = self.time
+        result[self.expername]["specie"] = self.specie
+        
+        result[self.expername]["polarizationU1"] =  max_apmlitudes_u1
+        result[self.expername]["polarizationU9"] = max_apmlitudes_u9
+        result[self.expername]["polarizationAVG"] = max_apmlitudes_uavg
+                
+        resultFile = open (self.resultFilePath +  resultFileName, "w")
+        resultFile.write(json.dumps(result, indent=2))
+        resultFile.close()
+
     def run(self):
         self.createData()
         self.createPolynomial()
@@ -852,7 +930,7 @@ class Main():
     
     def execute(self):
         if self.noGUI:
-            NoGUI(self.dataFilesPath + self.datafile, self.cuts, self.output).run()
+            NoGUI(self.dataFilesPath + self.datafile, self.cuts, self.output, self.resultFilePath, self.source_velocities, self.index_range_for_local_maxima).run()
         else:
             qApp = QApplication(sys.argv)
             aw = Analyzer(self.dataFilesPath + self.datafile, self.resultFilePath, self.source_velocities, self.cuts, self.output, self.index_range_for_local_maxima, self.skipsmooth)
