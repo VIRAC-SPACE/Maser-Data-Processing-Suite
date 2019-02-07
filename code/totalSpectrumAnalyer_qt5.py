@@ -695,7 +695,9 @@ class Analyzer(QWidget):
         del self
              
 class NoGUI(object):
-    
+    __slots__ = ('datafile', 'cuts', 'output', 'resultFilePath', 'source_velocities', 'index_range_for_local_maxima', 'polynomialOrder', 'source', 'time', 'date', 'location', 
+                'iteration_number', 'resultFilePath', 'expername', 'data', 'specie', 'dataPoints', 'dataPoints', 'xdata', 'y_u1', 'y_u9', 'xarray', 'y1array', 'y2array', 'polyx',
+                'polyu1', 'polyu9', 'p_u1', 'p_u9', 'localMax_Array_u1', 'localMax_Array_u9', 'z1_NotSmoohtData', 'z2_NotSmoohtData', 'avg_y_NotSmoohtData', 'z1_SmoohtData', 'z2_SmoohtData', 'avg_y_SmoohtData')
     def __init__(self, datafile, cuts, output, resultFilePath, source_velocities, index_range_for_local_maxima):
         self.datafile = datafile
         self.cuts = cuts
@@ -904,7 +906,8 @@ class NoGUI(object):
         self.createPolynomial()
         self.writeResult()
         
-class Main():
+class Main(object):
+    __slots__ = ('datafile', 'dataFilesPath', 'resultFilePath', 'output', 'cuts', 'source_velocities', 'index_range_for_local_maxima', 'noGUI', 'skipsmooth')
     def __init__(self):
         args = parseArguments()
         self.datafile = str(args.__dict__["datafile"])
@@ -923,7 +926,6 @@ class Main():
         source = self.datafile.split("/")[-1].split(".")[0].split("_")[0]
         cuts = config.get('cuts', source).split(";")
         self.cuts = [c.split(",") for c in  cuts]
-        print ("source", source)
         self.source_velocities = config.get('velocities', source).replace(" ", "").split(",")
         self.index_range_for_local_maxima = int(config.get('parameters', "index_range_for_local_maxima"))
         self.noGUI = args.noGUI
@@ -940,8 +942,7 @@ class Main():
         sys.exit(0)
 
 def main():
-    app = Main()
-    app.execute()
+    Main().execute()
                 
 if __name__=="__main__":
     main()
