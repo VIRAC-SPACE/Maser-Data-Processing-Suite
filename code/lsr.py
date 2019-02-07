@@ -1,3 +1,8 @@
+from __future__ import print_function
+from __future__ import division
+
+
+
 import jplephem
 from jplephem.spk import SPK
 import astropy
@@ -8,8 +13,10 @@ from astropy.coordinates import get_body_barycentric, get_body
 import math
 import numpy as np
 import os
-
 import datetime
+
+
+from barycorrpy import get_BC_vel , exposure_meter_BC_vel
 
 kernel = SPK.open('/home/janis/Downloads/de435.bsp')
 
@@ -194,9 +201,9 @@ def v_lsr(source, observer):
         The velocity of the local standard of rest relative to the source.
     """
     
-    #print("v_sun", np.mean(v_sun(source))/1000)
-    #print("v_earth", np.mean(v_earth(source))/1000)
-    #print("v_obs",  np.mean(v_obs(source, observer))/1000)
+    print("v_sun", np.mean(v_sun(source))/1000)
+    print("v_earth", np.mean(v_earth(source))/1000)
+    print("v_obs",  np.mean(v_obs(source, observer))/1000)
     v =  v_sun(source) + (v_earth(source) + v_obs(source, observer))
     return v
 
@@ -236,7 +243,17 @@ def convertDatetimeObjectToMJD(time):
     time=time.isoformat()
     t=Time(time, format='isot')
     return t.mjd
-  
+
+time = datetime.datetime(year, month, day, 8, 30, 30)
+time=time.isoformat()
+t = Time(time, format='isot', scale='utc')
+a = get_BC_vel (t, lat=lat, longi=long, alt=altitude, ephemeris='de430', zmeas=0.0, ra=ra, dec=dec, leap_update=True, epoch=2451545.0)
+b = a[0] /1000
+print("barry", b)
+
+lsr('22h56m17.90s', '+62d01m49.7s', t)
+
+'''  
 for i in range (0, 520):
     time = datetime.datetime.today() - datetime.timedelta(weeks = i)
     timeStr = datetime.datetime.strftime(time , '%Y %m %d %H %M %S')
@@ -244,6 +261,7 @@ for i in range (0, 520):
     lsrDatePar = datetime.datetime.strftime(time , '%Y-%m-%dT%H:%M:%S')
     lsr('22h56m17.90s', '+62d01m49.7s', lsrDatePar)
     print(convertDatetimeObjectToMJD(time), dopsety2(dopsetPar), lsr('22h56m17.90s', '+62d01m49.7s', lsrDatePar), np.abs(dopsety2(dopsetPar)) - np.abs(lsr('22h56m17.90s', '+62d01m49.7s', lsrDatePar)))
+'''
 
 '''
 #g107p3: 222126.81, 635137.14, 2000
