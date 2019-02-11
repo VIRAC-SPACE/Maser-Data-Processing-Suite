@@ -543,6 +543,16 @@ class Analyzer(QWidget):
         self.localMax_Array_u1 = self.y1array - self.p_u1(self.xarray)
         self.localMax_Array_u9 = self.y2array - self.p_u9(self.xarray)
         
+        self.z1_NotSmoohtData = self.localMax_Array_u1
+        self.z2_NotSmoohtData = self.localMax_Array_u9
+        self.avg_y_NotSmoohtData = (self.z1_NotSmoohtData + self.z2_NotSmoohtData) / 2
+        
+        g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
+        g2 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
+        self.z1_SmoohtData = convolve(self.localMax_Array_u1, g1, boundary='extend')
+        self.z2_SmoohtData = convolve(self.localMax_Array_u9, g2, boundary='extend')
+        self.avg_y_SmoohtData = (self.z1_SmoohtData + self.z2_SmoohtData) / 2
+        
         # Smoohting
         if self.skipsmoothing:
             self.z1 = self.localMax_Array_u1
@@ -678,10 +688,15 @@ class Analyzer(QWidget):
         resultFile.write(json.dumps(result, indent=2))
         resultFile.close()
         
-        totalResults = [self.xarray,  self.z1,  self.z2,  self.avg_y]
+        totalResults = [self.xarray,  self.z1_SmoohtData,  self.z2_SmoohtData,  self.avg_y_SmoohtData]
         output_file_name = self.output + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
-        np.savetxt(output_file_name, np.transpose(totalResults)) 
+        np.savetxt(output_file_name, np.transpose(totalResults))
+        
+        totalResults = [self.xarray,  self.z1_NotSmoohtData,  self.z2_NotSmoohtData,  self.avg_y_NotSmoohtData]
+        output_file_name = self.output + "/NotSmooht/"  + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
+        output_file_name = output_file_name.replace(" ", "")
+        np.savetxt(output_file_name, np.transpose(totalResults))
         
         self._quit()
     
