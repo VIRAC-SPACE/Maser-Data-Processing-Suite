@@ -6,7 +6,7 @@ def file_len(fname):
 
 def indexies(array, value):
     indexs = list()
-    for i in range(0, len(array)-1):
+    for i in range(0, len(array)):
         if array[i] == value:
             indexs.append(i)
     return indexs

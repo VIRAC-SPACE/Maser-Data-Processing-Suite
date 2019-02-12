@@ -749,7 +749,6 @@ class Analyzer(QWidget):
         totalResults = np.concatenate((velocitys_avg, y_u1_avg, y_u9_avg), axis=1)
         output_file_name = self.dataFilesPath + self.source + "_" +self.date.replace(" ", "_") + "_" + self.firstScanStartTime + "_" + self.logs["header"]["location"] + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
-        #np.savetxt(output_file_name, totalResults)
 
         result = Result(totalResults, specie)
         pickle.dump(result, open(output_file_name, 'wb'))
@@ -873,7 +872,6 @@ class Analyzer(QWidget):
         ston_u9 = STON(self.x, self.total_u9, self.cuts)
         stone_AVG = STON(self.x, ((self.total_u1 + self.total_u9) / 2), self.cuts)
 
-
         self.STON_list_u1.pop()
         self.STON_list_u9.pop()
         self.STON_list_AVG.pop()
@@ -903,8 +901,6 @@ class Analyzer(QWidget):
 
         self.plot_start_u9.fig.canvas.draw()
         self.plot_start_u9.fig.canvas.flush_events()
-
-
 
 def main():
     args = parseArguments()
