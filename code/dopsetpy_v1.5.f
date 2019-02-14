@@ -104,8 +104,9 @@ cccccccccccccccccccccccccccccccccccccccccccccccccc
     
 c        write(*,*)'----------------------------------'
 c        write(*,*)'Julian Day at given UT: ', dj
-c        write(*,*)'V Sun: ', Vsun
-c        write(*,*)'V obs: ', Vobs
+         write(*,*)'V Sun: ', Vsun
+         write(*,*)'V obs: ', Vobs
+	 write(*,*)'V Earth: ', VEarth, 123
 c        write(*,*)'V tot: ', Vdop
 c        write(*,*)'f shift at ', freq0,'MHz  = ', f_shift,' MHz'
 c        write(*,*)'----------------------------------'
@@ -304,7 +305,7 @@ c sredni czas gwiazdowy miejsca
 	call BARVEL(DJE,0.d0,VHelio,ve)	
 c ve zawiera predkosc wzgledem barycentrum Ukladu Slonecznego
 	vEarth=(ve(1)*dcos(ra)+ve(2)*dsin(ra))*cdec+ve(3)*sdec
-
+        write(*,*)'V Earth: ', VEarth
 	Vtot = vSun + vEarth + vobs
 	end
 

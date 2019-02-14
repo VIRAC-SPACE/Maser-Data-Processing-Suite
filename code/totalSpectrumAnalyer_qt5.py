@@ -664,6 +664,7 @@ class Analyzer(QWidget):
             
         time = self.time + self.date.replace(" ", "_")
         
+        print ("time",time)
         try:
             time=datetime.strptime(time, "%H:%M:%S%d_%b_%Y" ).isoformat()
             t=Time(time, format='isot')

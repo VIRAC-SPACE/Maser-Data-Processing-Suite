@@ -15,13 +15,11 @@ import numpy as np
 import os
 import datetime
 
-
-from barycorrpy import get_BC_vel , exposure_meter_BC_vel
+from barycorrpy import get_BC_vel
 
 kernel = SPK.open('/home/janis/Downloads/de435.bsp')
 
 def dopsety(dopsetPar):
-    
     os.system("code/dopsetpy_v1.5 " + dopsetPar)
     # dopsetpy parametru nolasisana
     with open('lsrShift.dat') as openfileobject:
@@ -236,7 +234,7 @@ dec = 620149.7
 epoch = 2000.0
 
 dopsetPar = "2019 01 22 08 30 30 22 56 17.90 62 01 49.7"
-#print(dopsety(dopsetPar))
+print(dopsety(dopsetPar))
 #lsr('22h56m17.90s', '+62d01m49.7s')
 
 def convertDatetimeObjectToMJD(time):
