@@ -443,8 +443,6 @@ class Analyzer(QWidget):
             self.plot_start_u1.fig.canvas.mpl_connect('pick_event',self._on_left_click_u1)
             self.plot_start_u1.fig.canvas.mpl_connect('pick_event',self._on_right_click_u1)
 
-
-
             self.plot_start_u9 = Plot()
 
             self.plot_start_u9.setFocusPolicy(QtCore.Qt.ClickFocus)
@@ -459,7 +457,6 @@ class Analyzer(QWidget):
 
             self.plot_start_u9.fig.canvas.mpl_connect('pick_event', self._on_left_click_u9)
             self.plot_start_u9.fig.canvas.mpl_connect('pick_event', self._on_right_click_u9)
-
 
             self.grid.addWidget(self.plot_start_u1, 0, 0)
             self.grid.addWidget(self.plot_start_u9, 0, 1)
@@ -481,7 +478,6 @@ class Analyzer(QWidget):
 
             self.totalResults_u1.append(self.total_u1)
             self.totalResults_u9.append(self.total_u9)
-
 
             self.plot_total_u1 = Plot()
             self.plot_total_u1.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (5, 0))

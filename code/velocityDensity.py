@@ -146,6 +146,21 @@ class VelocityDensityPolter(VelocityDensity):
             return a + b
         i = 0
         j = 1
+        
+        cuts = getConfigs('cuts', self.source).split(";")
+        cuts = [c.split(",") for c in  cuts]
+        cutsIntervalCount = len(cuts) // 2
+        
+        indexFirst = (np.abs(self.velocity - float(cuts[0][0]))).argmin()    
+        indexLast = (np.abs(self.velocity - float(cuts[0][1]))).argmin()
+        x = self.velocity[indexFirst:indexLast]
+        y = self.amplitude[indexFirst:indexLast]
+        dx = x - np.mean(x)
+        fwhm = 2 * np.sqrt(np.sum((dx * dx) * y) / np.sum(y))
+        sigmaN = fwhm / 2.355
+        
+        print("sigmaN", sigmaN)
+        
         for component in range (0, len(self.source_velocities)):
             model_n = models.GaussianModel(prefix=prefix + str(component))
             modelList.append(model_n)
@@ -155,7 +170,7 @@ class VelocityDensityPolter(VelocityDensity):
                 sigma = (np.abs(float(self.source_velocities[i]) - float(self.source_velocities[j])))/6
                 
             print("sigma", sigma)
-            params_n = model_n.make_params(center=float(self.source_velocities[component]), sigma=sigma)
+            params_n = model_n.make_params(center=float(self.source_velocities[component]), sigma=sigmaN)
             paramsList.append(params_n)
             i = i + 1
             j = j + 1
