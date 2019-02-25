@@ -120,9 +120,10 @@ def main():
         
     except ValueError as e:
             print ("Cannot crate modified Julian Days", e)
+            
     except TypeError as e:
         print ("TypeError",  e)
-        sys.exit(1)
+        #sys.exit(1)
         
     except:
         print("Unexpected error:", sys.exc_info()[0])
