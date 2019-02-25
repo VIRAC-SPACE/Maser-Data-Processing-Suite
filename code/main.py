@@ -19,10 +19,14 @@ def parseArguments():
     return args
 
 def findLogFile(logList, iteration):
+    tmpL = -1
     for l in range(0, len(logList)):
         if logList[l].split("/")[-1].split(".")[0].split("_")[-1] == iteration:
-            return l
-        
+            tmpL = l
+            break
+    print ("tmpL", tmpL)
+    return tmpL
+    
 def main():
     # Parse the arguments
     args = parseArguments()
