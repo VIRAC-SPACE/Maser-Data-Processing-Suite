@@ -20,6 +20,7 @@ def parseArguments():
 
 def findLogFile(logList, iteration):
     tmpL = -1
+    print("iteration", iteration)
     for l in range(0, len(logList)):
         if logList[l].split("/")[-1].split(".")[0].split("_")[-1] == iteration:
             tmpL = l
