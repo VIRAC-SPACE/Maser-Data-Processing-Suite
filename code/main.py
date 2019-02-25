@@ -21,13 +21,12 @@ def parseArguments():
 
 def findLogFile(logList, iteration):
     tmpL = -1
-    print("iteration", iteration)
     for l in range(0, len(logList)):
         if logList[l].split("/")[-1].split(".")[0].split("_")[-1] == iteration:
             tmpL = l
             break
     if tmpL == -1:
-        warnings.warn("Warning " + "log for iteration " + iteration + " do not exist log file " + logList[-1] + " will be used instead !")
+        warnings.showwarning("Warning " + "log for iteration " + iteration + " do not exist log file " + logList[-1] + " will be used instead !")
         
     return tmpL
     
