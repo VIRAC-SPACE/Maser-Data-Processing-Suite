@@ -7,6 +7,7 @@ import argparse
 import configparser
 import json
 import warnings
+from unicodedata import category
 
 def parseArguments():
     parser = argparse.ArgumentParser(description='''automatically call frequencyShiftingAnalyzer and totalSpectrumAnalyer. ''', epilog="""Main program.""")
@@ -26,7 +27,7 @@ def findLogFile(logList, iteration):
             tmpL = l
             break
     if tmpL == -1:
-        warnings.warn("Warning " + "log for iteration " + iteration + " do not exist log file " + logList[-1] + " will be used instead !", stacklevel=1, Warning="Warning")
+        warnings.warn("Warning " + "log for iteration " + iteration + " do not exist log file " + logList[-1] + " will be used instead !", stacklevel=1, category="Warning")
         
     return tmpL
     
