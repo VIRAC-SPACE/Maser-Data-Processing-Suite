@@ -81,35 +81,36 @@ def main():
     processed_iteration.sort(key=int, reverse=False)        
     print ("processed_iteration", processed_iteration)
     
-    try:
-        if args.manual:
-            for i in iterations:
-                if i not in processed_iteration:
-                    frequencyShiftingParametr = sourceName + " " + i + " " + str(logfile_list[findLogFile(logfile_list, i)])
-                    print ("\033[1;32;39mExecute ",  "python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr + " -m\033[0;29;39m")
-                    os.system("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr  + " -m") 
-        else:
-            for i in iterations:
-                if i not in processed_iteration:
-                    frequencyShiftingParametr = sourceName + " " + i + " " + str(logfile_list[findLogFile(logfile_list, i)])
-                    print ("\033[1;31;47mExecute ",  "python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr +  " \033[0;29;39m")
-                    os.system("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
+    #try:
+    if args.manual:
+        for i in iterations:
+            if i not in processed_iteration:
+                frequencyShiftingParametr = sourceName + " " + i + " " + str(logfile_list[findLogFile(logfile_list, i)])
+                print ("\033[1;32;39mExecute ",  "python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr + " -m\033[0;29;39m")
+                os.system("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr  + " -m") 
+    else:
+        for i in iterations:
+            if i not in processed_iteration:
+                frequencyShiftingParametr = sourceName + " " + i + " " + str(logfile_list[findLogFile(logfile_list, i)])
+                print ("\033[1;31;47mExecute ",  "python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr +  " \033[0;29;39m")
+                os.system("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
         
-        # Creating data file list
-        data_files = list()
-        for data in os.listdir(dataFilesPath):
-            if data.startswith(sourceName) and data.endswith(".dat"):
-                data_files.append(data)
+    # Creating data file list
+    data_files = list()
+    for data in os.listdir(dataFilesPath):
+        if data.startswith(sourceName) and data.endswith(".dat"):
+            data_files.append(data)
                 
-        for d in data_files:
-            if d.split(".")[0].split("_")[-1] not in processed_iteration:
-                if args.noGUI:
-                    print ("\033[1;31;47mExecute ",  "python3  " + "code/totalSpectrumAnalyer_qt5.py " + d  +  " -n \033[0;29;39m") 
-                    os.system("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d + " -n")
-                else:
-                    print ("\033[1;31;47mExecute ",  "python3  " + "code/totalSpectrumAnalyer_qt5.py " + d  +  " \033[0;29;39m") 
-                    os.system("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d)
-                
+    for d in data_files:
+        if d.split(".")[0].split("_")[-1] not in processed_iteration:
+            if args.noGUI:
+                print ("\033[1;31;47mExecute ",  "python3  " + "code/totalSpectrumAnalyer_qt5.py " + d  +  " -n \033[0;29;39m") 
+                os.system("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d + " -n")
+            else:
+                print ("\033[1;31;47mExecute ",  "python3  " + "code/totalSpectrumAnalyer_qt5.py " + d  +  " \033[0;29;39m") 
+                os.system("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d)
+    
+    '''            
     except IOError as e:
         print ("IO Error",  e)
         sys.exit(1)
@@ -128,7 +129,8 @@ def main():
     except:
         print("Unexpected error:", sys.exc_info()[0])
         sys.exit(1)
-    
+    '''
+                    
 if __name__=="__main__":
     main()
     sys.exit(0)
