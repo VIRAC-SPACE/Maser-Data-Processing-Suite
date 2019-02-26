@@ -19,7 +19,6 @@ def parseArguments():
     parser.add_argument("-n", "--noGUI", help="Create smoothed and not smothed outputfiles", action='store_true')
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 3.0')
     args = parser.parse_args()
-    
     return args
 
 def findLogFile(logList, iteration):
@@ -33,12 +32,10 @@ def findLogFile(logList, iteration):
     return tmpL
     
 def main():
-    # Parse the arguments
     args = parseArguments()
     sourceName = str(args.__dict__["source"])
     configFilePath = str(args.__dict__["config"])
     
-    # Creating config parametrs
     config = configparser.RawConfigParser()
     config.read(configFilePath)
     dataFilesPath = config.get('paths', "dataFilePath")
@@ -48,24 +45,19 @@ def main():
     path = dataFilesPath + sourceName + "/"
     iterations = list()
     
-    # Creating iteration list
     for iteration in os.listdir(path):
         iterations.append(iteration)
             
     iterations.sort(key=int, reverse=False)
-    
-    print ("iterations", iterations)
      
     logfile_list = list()
     
-    # Creating log file list 
     for log in os.listdir(logPath):
         if log.startswith(sourceName):
             logfile_list.append(log)
             
     resultFileName = sourceName + ".json"
-    
-    # Create result file if not exits   
+     
     if os.path.isfile(resultPath + resultFileName):
         pass
     else:
@@ -75,36 +67,32 @@ def main():
         resultFile.write("{ \n" + "\n}")
         resultFile.close()
     
-    # Open result file   
     with open(resultPath + resultFileName) as result_data:    
         result = json.load(result_data)
     
     processed_iteration = list()
     
-    # Create processed observation list
     for experiment in result:
         if experiment.split("_")[-1]  in iterations and experiment.split("_")[-1] not in processed_iteration:
             processed_iteration.append(experiment.split("_")[-1])
             
     
-    processed_iteration.sort(key=int, reverse=False)        
-    print ("processed_iteration", processed_iteration)
+    processed_iteration.sort(key=int, reverse=False)
     
     try:
         if args.manual:
             for i in iterations:
                 if i not in processed_iteration:
                     frequencyShiftingParametr = sourceName + " " + i + " " + str(logfile_list[findLogFile(logfile_list, i)])
-                    logger.info("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr + " -m")
+                    logger.info("Executing python3 " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr + " -m")
                     os.system("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr  + " -m") 
         else:
             for i in iterations:
                 if i not in processed_iteration:
                     frequencyShiftingParametr = sourceName + " " + i + " " + str(logfile_list[findLogFile(logfile_list, i)])
-                    logger.info("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
-                    os.system("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
+                    logger.info("Executing python3 " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
+                    os.system("python3 " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
             
-        # Creating data file list
         data_files = list()
         for data in os.listdir(dataFilesPath):
             if data.startswith(sourceName) and data.endswith(".dat"):
@@ -113,11 +101,11 @@ def main():
         for d in data_files:
             if d.split(".")[0].split("_")[-1] not in processed_iteration:
                 if args.noGUI:
-                    logger.info("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d  +  " -n") 
-                    os.system("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d + " -n")
+                    logger.info("Executing python3 " + "code/totalSpectrumAnalyer_qt5.py " + d  +  " -n") 
+                    os.system("python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " -n")
                 else:
-                    logger.info("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d) 
-                    os.system("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d)
+                    logger.info("Executing python3 " + "code/totalSpectrumAnalyer_qt5.py " + d) 
+                    os.system("python3 " + "code/totalSpectrumAnalyer_qt5.py " + d)
            
     except IOError as e:
         print ("IO Error",  e)
