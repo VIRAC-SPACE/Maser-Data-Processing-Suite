@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import os
 import argparse
 import json
 import numpy as np
@@ -12,8 +13,8 @@ import datetime
 from operator import itemgetter
 from multiprocessing import Process
 
-from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QLabel, QLineEdit, QDesktopWidget, QComboBox, QGroupBox)
-from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QWidget, QGridLayout, QApplication, QPushButton, QLabel, QLineEdit, QDesktopWidget, QComboBox, QGroupBox
+from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtCore import Qt
 
 from ploting_qt5 import  Plot
@@ -51,17 +52,22 @@ class Spectre_View(PlotingView):
             super().__init__()
             self.setWindowTitle(" ")
             
+class Maps_View(PlotingView):
+        __slots__ = ['source', 'label']            
+        def __init__(self, source):
+            super().__init__()
+            self.setWindowTitle(" ")
+            self.source = source
+            self.label = QLabel(self)
+            pixmap = QPixmap("maps/" + self.source + ".png")
+            self.label.setPixmap(pixmap)
+            self._addWidget(self.label, 0, 0)
+            
 class Period_View(PlotingView):
         def __init__(self):
             super().__init__()
             self.setWindowTitle("Periods in days ")
             
-        def _addWidget(self, widget, row, collon):
-            self.grid.addWidget(widget, row, collon)
-            
-        def getGrid(self):
-            return self.grid
-        
         def convertDatetimeObjectToMJD(self, time):
             time=time.isoformat()
             t=Time(time, format='isot')
@@ -149,7 +155,10 @@ class Monitoring_View(PlotingView):
             self.periodPlotSet.add(self.period_View)
             
         def createMapVew(self):
-            print("createMapVew")
+            os.system("rm " + "maps/" + self.source)
+            os.system("perl " + "code/find_multiple.pl " + self.source)
+            self.maps_view = Maps_View(self.source)
+            self.maps_view.show()
         
         def createControlGroup(self):
             groupBox = QGroupBox("")
@@ -177,12 +186,6 @@ class Monitoring_View(PlotingView):
             groupBox.setLayout(controlGrid)
                 
             return groupBox
-                        
-        def _addWidget(self, widget, row, collon):
-            self.grid.addWidget(widget, row, collon)
-            
-        def getGrid(self):
-            return self.grid
         
         def setPolarization(self, polarization):
             self.polarization = polarization

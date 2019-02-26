@@ -45,12 +45,12 @@ def dopsety(dopsetPar):
                 #Header +=1
     #print("Vobs f", Vobs)
     #print ("Vearth f", float (VEarth) )
-    #print ("Vobs f", float(Vobs) )
+    print ("Vobs f", float(Vobs))
     #print ("Vsun f", float(Vsun))
     #return float(VEarth) 
     #return(float(Vobs))
-    return float(Vsun)          
-    #return VelTotal 
+    #return float(Vsun)          
+    return VelTotal 
 
 @u.quantity_input(canon_velocity=(u.meter / u.second))
 def v_sun(source, apex = "18h03m50.29s +30d00m16.8s", canon_velocity = 20.0 * 1000 * u.meter / u.second):
@@ -86,27 +86,29 @@ def vbos(dec, ra, time):
         return np.double(a) % np.double(b)
     
     dj = convertDatetimeObjectToJD(time)
-    #print ("djp", dj)
+    print ("djp", dj)
     ro=3430.18601252541
     vhor=2*np.pi*ro/(24*3600)*1.002737909350795
-    #print("vhorp", vhor)
-    #cdec=np.cos(np.deg2rad(dec))
-    cdec=np.cos(dec)
-    #print("cdecp", cdec)
+    print("vhorp", vhor)
+    cdec=np.cos(np.deg2rad(dec))
+    #cdec=np.cos(dec)
+    print("cdecp", cdec)
     albypi=0.121415123729
     t=dj-2451545 
     #print("t", t)
     #print("tp", t)
+    t=2
+    albypi=3 
     aLMST=np.pi*dmod(np.double(5.55811454652)+dmod(t+t,np.double(2))+ t*(np.double(0.547581870159)-2+t*(np.double(1.61549)-15-t*np.double(1.473)-24))+albypi,np.double(2))
-    #print("aLMSTp", aLMST)
-    #print("dmod(t+t,2.0)", dmod(t+t,2.0))
-    #rint("aLMST", aLMST)
+    print("aLMSTp", aLMST)
+    print("dmod(t+t,2.0)", dmod(t+t,2.0))
+    
     ravhor=aLMST+np.pi/2
-    #print("ravhorp", ravhor)
-    #print("ra python", np.deg2rad(ra))
-    #vobs=vhor*cdec*np.cos(np.deg2rad(ra)-ravhor)
-    vobs=vhor*cdec*np.cos(ra-ravhor)
-    #print("vobsp", vobs) 
+    print("ravhorp", ravhor)
+    print("ra python", np.deg2rad(ra))
+    vobs=vhor*cdec*np.cos(np.deg2rad(ra)-ravhor)
+    #vobs=vhor*cdec*np.cos(ra-ravhor)
+    print("vobsp", vobs) 
     return (vobs)
 
 year = 2019
@@ -114,12 +116,11 @@ month = 2
 day = 18
 
 def v_lsr(source, time):
-    #time = datetime.datetime(year, month, day, 8, 30, 30)
     ra = 22 + 56/60 + 17.90/3600
     dec = 62 + 1/60 + 49.7/3600
-    #v =  np.mean(v_sun(source)).value / 1000  + vbos(dec, ra, time)  + np.mean(v_earth(source)).value /1000
+    v =  np.mean(v_sun(source)).value / 1000  + vbos(dec, ra, time)  + np.mean(v_earth(source)).value /1000
     #v = np.mean(v_earth(source)).value /1000
-    v =  np.mean(v_sun(source)).value / 1000
+    #v =  np.mean(v_sun(source)).value / 1000
     #v =  np.mean(v_earth(source)).value /1000
     #v = vbos(dec, ra, time)
     return v
@@ -142,26 +143,26 @@ def lsr(ra, dec, date, t):
     time_range = np.linspace(0, 10000, 10000)*u.second
     times = start_time + time_range
     source = SkyCoord(ra=ra, dec=dec, frame=FK5, equinox='J2000.0', obstime=times)
-    source.transform_to(source) 
-    V_lsr= v_lsr(source, time)
+    source.transform_to(source)
+    V_lsr= v_lsr(source, t)
     return V_lsr
 
-time = datetime.datetime(year, month, day, 8, 30, 30)
-time=time.isoformat()
-t = Time(time, format='isot', scale='utc')
+t = datetime.datetime(year, month, day, 8, 30, 30)
+time=t.isoformat()
+date = Time(time, format='isot', scale='utc')
 
+vTotal = lsr('22h56m17.90s', '+62d01m49.7s', date, t)
+print("vTotal p", vTotal)
 
-#vTotal = lsr('22h56m17.90s', '+62d01m49.7s', t)
-#print("vTotal p", vTotal)
-
-#dopsetPar = "2019 02 18 08 30 30 22 56 17.90 62 01 49.7"
-#print("vTotal f", dopsety(dopsetPar))
+dopsetPar = "2019 02 18 08 30 30 22 56 17.90 62 01 49.7"
+print("vTotal f", dopsety(dopsetPar))
 
 def convertDatetimeObjectToMJD(time):
     time=time.isoformat()
     t=Time(time, format='isot')
     return t.mjd
 
+'''
 for i in range (0, 512):
     time = datetime.datetime.today() - datetime.timedelta(weeks = i)
     timeStr = datetime.datetime.strftime(time , '%Y %m %d %H %M %S')
@@ -170,6 +171,6 @@ for i in range (0, 512):
     #print(type(lsrDatePar))
     #lsr('22h56m17.90s', '+62d01m49.7s', lsrDatePar, time)
     #print(convertDatetimeObjectToMJD(time), dopsety(dopsetPar), lsr('22h56m17.90s', '+62d01m49.7s', lsrDatePar), np.abs(dopsety(dopsetPar)) - np.abs(lsr('22h56m17.90s', '+62d01m49.7s', lsrDatePar)))
-    print(convertDatetimeObjectToMJD(time), dopsety(dopsetPar), lsr('22h56m17.90s', '+62d01m49.7s', lsrDatePar, time), np.abs(dopsety(dopsetPar)) - np.abs(lsr('22h56m17.90s', '+62d01m49.7s', lsrDatePar, time)))
-
+    print(convertDatetimeObjectToMJD(time), dopsety(dopsetPar), lsr('22h56m17.90s', '+62d01m49.7s', time), np.abs(dopsety(dopsetPar)) - np.abs(lsr('22h56m17.90s', '+62d01m49.7s', lsrDatePar, time)))
+'''
 

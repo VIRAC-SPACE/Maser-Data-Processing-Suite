@@ -127,7 +127,7 @@ bin/
 include/
 local/
 share/
-
+maps/
 
 *.out
 *.out_backup
