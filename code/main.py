@@ -7,6 +7,10 @@ import argparse
 import configparser
 import json
 import warnings
+import coloredlogs, logging
+
+coloredlogs.install(level='PRODUCTION')
+logger = logging.getLogger('Main')
 
 def parseArguments():
     parser = argparse.ArgumentParser(description='''automatically call frequencyShiftingAnalyzer and totalSpectrumAnalyer. ''', epilog="""Main program.""")
@@ -26,7 +30,8 @@ def findLogFile(logList, iteration):
             tmpL = l
             break
     if tmpL == -1:
-        warnings.warn("Warning " + "log for iteration " + iteration + " do not exist log file " + logList[-1] + " will be used instead!", stacklevel=2)
+        logger.info("Warning " + "log for iteration " + iteration + " do not exist log file " + logList[-1] + " will be used instead!")
+        #warnings.warn("Warning " + "log for iteration " + iteration + " do not exist log file " + logList[-1] + " will be used instead!", stacklevel=2)
         
     return tmpL
     
