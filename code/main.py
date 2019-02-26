@@ -95,13 +95,13 @@ def main():
             for i in iterations:
                 if i not in processed_iteration:
                     frequencyShiftingParametr = sourceName + " " + i + " " + str(logfile_list[findLogFile(logfile_list, i)])
-                    logger.info("\033[1;32;39mExecute ",  "python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr + " -m\033[0;29;39m")
+                    logger.info("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr + " -m")
                     os.system("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr  + " -m") 
         else:
             for i in iterations:
                 if i not in processed_iteration:
                     frequencyShiftingParametr = sourceName + " " + i + " " + str(logfile_list[findLogFile(logfile_list, i)])
-                    logger.info("\033[1;31;47mExecute ",  "python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr +  " \033[0;29;39m")
+                    logger.info("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
                     os.system("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
             
         # Creating data file list
@@ -113,10 +113,10 @@ def main():
         for d in data_files:
             if d.split(".")[0].split("_")[-1] not in processed_iteration:
                 if args.noGUI:
-                    logger.info("\033[1;31;47mExecute ",  "python3  " + "code/totalSpectrumAnalyer_qt5.py " + d  +  " -n \033[0;29;39m") 
+                    logger.info("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d  +  " -n") 
                     os.system("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d + " -n")
                 else:
-                    logger.info("\033[1;31;47mExecute ",  "python3  " + "code/totalSpectrumAnalyer_qt5.py " + d  +  " \033[0;29;39m") 
+                    logger.info("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d) 
                     os.system("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d)
            
     except IOError as e:
