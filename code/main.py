@@ -20,7 +20,7 @@ def parseArguments():
     parser.add_argument("-n", "--noGUI", help="Create smoothed and not smothed outputfiles", action='store_true')
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 3.0')
     args = parser.parse_args()
-
+    
     return args
 
 def findLogFile(logList, iteration):
