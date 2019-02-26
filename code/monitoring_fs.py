@@ -99,10 +99,12 @@ class Period_View(PlotingView):
             print ("nyquist_factor", nyquist_factor)
             print ("minimum_frequency", minimum_frequency)
             print ("maximum_frequency", maximum_frequency)
+            
             frequency, power = ls.autopower(method='fastchi2', normalization='model', nyquist_factor=nyquist_factor, minimum_frequency=minimum_frequency, maximum_frequency=maximum_frequency, samples_per_peak=20)
             false_alarm = ls.false_alarm_probability(power.max(), method="bootstrap", nyquist_factor=nyquist_factor, minimum_frequency=minimum_frequency, maximum_frequency=maximum_frequency, samples_per_peak=20)
+            
             print ("max power", power.max(), "false_alarm", false_alarm)
-                
+            
             period_days = 1. / frequency
             best_period = period_days[np.argmax(power)]
             print("Best period: {0:.2f} hours".format(24 * best_period))
@@ -112,7 +114,7 @@ class Period_View(PlotingView):
             self.periodPlot.plot(period_days, power, plotSimbol, label="polarization AVG " + "Velocity " + source_velocities[velocityIndex], rasterized=True)
             self._addWidget(self.periodPlot, 0, 0)
             self.show()
-
+            
 class Monitoring_View(PlotingView):
         def __init__(self, iteration_list, location_list, source, output_path, source_velocities, date_list, velocitie_dict):
             __slots__ = ['grid', 'polarization', 'labels', 'lines', 'iteration_list', 'location_list', 'source', 'output_path', 'new_spectre', 'spectrumSet', 'plotList', 'months', 'dateList', 'velocitie_dict', 'periodPlotSet'] 
@@ -145,6 +147,9 @@ class Monitoring_View(PlotingView):
             self.period_View = Period_View()
             self.period_View.PlotPeriods(self.dateList, self.velocitie_dict, self.source_velocities, velocityIndex, plotSimbol)
             self.periodPlotSet.add(self.period_View)
+            
+        def createMapVew(self):
+            print("createMapVew")
         
         def createControlGroup(self):
             groupBox = QGroupBox("")
@@ -163,6 +168,9 @@ class Monitoring_View(PlotingView):
             plotPeriodsbutton = QPushButton('Plot periods', self)
             plotPeriodsbutton.clicked.connect(self.createPeriodView)
             controlGrid.addWidget(plotPeriodsbutton, 1, 0)
+            plotMapsbutton = QPushButton('Plot maps', self)
+            plotMapsbutton.clicked.connect(self.createMapVew)
+            controlGrid.addWidget(plotMapsbutton, 2, 0)
             self.componentInput = QLineEdit()
             self.componentInput.setFixedWidth(100)
             controlGrid.addWidget(self.componentInput, 0, 0)
