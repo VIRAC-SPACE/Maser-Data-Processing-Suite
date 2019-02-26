@@ -30,8 +30,7 @@ def findLogFile(logList, iteration):
             tmpL = l
             break
     if tmpL == -1:
-        logger.info("Warning " + "log for iteration " + iteration + " do not exist log file " + logList[-1] + " will be used instead!")
-        #warnings.warn("Warning " + "log for iteration " + iteration + " do not exist log file " + logList[-1] + " will be used instead!", stacklevel=2)
+        logger.warning("Warning " + "log for iteration " + iteration + " do not exist log file " + logList[-1] + " will be used instead!")
         
     return tmpL
     
