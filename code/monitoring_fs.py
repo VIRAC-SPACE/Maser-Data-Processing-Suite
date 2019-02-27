@@ -6,7 +6,10 @@ import os
 import argparse
 import json
 import numpy as np
+from numpy import genfromtxt
+from scipy.interpolate import griddata
 import matplotlib
+from matplotlib.ticker import MaxNLocator
 from astropy.time import Time
 from astropy.stats import LombScargle
 import datetime
@@ -58,11 +61,83 @@ class Maps_View(PlotingView):
             super().__init__()
             self.setWindowTitle(" ")
             self.source = source
-            self.label = QLabel(self)
-            pixmap = QPixmap("maps/" + self.source + ".png")
-            self.label.setPixmap(pixmap)
-            self._addWidget(self.label, 0, 0)
             
+        def plotMaps(self, output_path):
+            parametrs = json.load(open("python.txt", "r"))
+            fin = open(output_path + "3d.txt","r")
+            max_flux_limit = 9999
+            JD_shift = 0
+            jd_min = 0
+            jd_max = float(parametrs["days"])
+            vmin = float(parametrs["min_v"])
+            vmax = float(parametrs["max_v"]) 
+            jd_first = float(parametrs["jd_first"])
+            vrange = vmax-vmin
+            sources_vrange = genfromtxt('DB_vrange.csv', names=True, delimiter=',', dtype=None, encoding=None)
+            
+            i = 0
+            found_vrange = False
+            found_ind = -1
+            for source in sources_vrange:
+                if(str(source[0]) == self.source):
+                    print('We found vrange for source '+source[0]+': from '+str(source[1])+' to '+str(source[2]))
+                    found_vrange = True
+                    found_ind = i
+                    vmin = source[1]
+                    vmax = source[2]
+                i = i + 1
+
+            velocity = []
+            observed_flux = []
+            observed_time = []
+            
+            print('Reading data...\n')
+            
+            while True:
+                line = fin.readline()
+                if(len(line)) == 0:
+                    break
+                if (line.find("#")==-1):
+                    line = line.split()
+                    velocity.append(float(line[0]))
+                    if (float(line[1]) > max_flux_limit):
+                        observed_flux.append( max_flux_limit)
+                    else:
+                        if float(line[1]) < 0:
+                            observed_flux.append( 0.001 )
+                        else:
+                            observed_flux.append( float(line[1])) 
+                
+                    observed_time.append( float(line[2])+JD_shift )
+            #        if (float(line[2]) == 316) and ( float(line[0])== -9.41):
+            #            print float(line[1])    
+                        
+            fin.close()
+            velocity = np.array(velocity)
+            observed_flux = np.array(observed_flux)
+            observed_time = np.array(observed_time)
+            
+            print('Initialize arrays...\n')
+            
+            x = np.arange(vmin, vmax, 0.01)
+            y = np.arange(0, jd_max, 0.5)
+            X, Y = np.meshgrid(x,y)
+            
+            print('Regridding data...\n')
+            #Z = matplotlib.mlab.griddata(velocity,observed_time,observed_flux, X, Y, interp='linear')
+            Z = griddata((velocity, observed_time), observed_flux, (X[:], Y[:]), method='linear')
+            self.mapPlot = Plot()
+            self.mapPlot.creatPlot(self.getGrid(), "Velocity (km/s)", "JD (days) -  " + str(jd_first), None, (1,0))
+            CS = self.mapPlot.contourf(X, Y, Z)
+            #self.periodPlot.plot(period_days, power, plotSimbol, label="polarization AVG " + "Velocity " + source_velocities[velocityIndex], rasterized=True)
+            self._addWidget(self.mapPlot, 0, 0)
+            '''
+            cbar = self.mapPlot.colorbar(CS)
+            cbar.set_clim(vmin=0) # ,vmax=max_flux_limit
+            cbar.ax.set_ylabel(r'$Flux~(\mathrm{Jy})$')
+            cbar.locator = MaxNLocator(nbins = 50)
+            '''
+                                    
 class Period_View(PlotingView):
         def __init__(self):
             super().__init__()
@@ -91,7 +166,6 @@ class Period_View(PlotingView):
                 return np.max(maxDelta)
             
             def getMinDateDelta():
-            
                 minDelta = list()
                 for x in range(0, len(t) -1):
                     minDelta.append(dateDelta(t[x], t[x + 1]))
@@ -155,9 +229,10 @@ class Monitoring_View(PlotingView):
             self.periodPlotSet.add(self.period_View)
             
         def createMapVew(self):
-            os.system("rm " + "maps/" + self.source)
+            #os.system("rm " + "maps/" + self.source + ".png")
             os.system("perl " + "code/find_multiple.pl " + self.source)
             self.maps_view = Maps_View(self.source)
+            self.maps_view.plotMaps(self.output_path)
             self.maps_view.show()
         
         def createControlGroup(self):
@@ -184,7 +259,6 @@ class Monitoring_View(PlotingView):
             self.componentInput.setFixedWidth(100)
             controlGrid.addWidget(self.componentInput, 0, 0)
             groupBox.setLayout(controlGrid)
-                
             return groupBox
         
         def setPolarization(self, polarization):

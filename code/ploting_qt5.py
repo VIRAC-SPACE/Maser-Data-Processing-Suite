@@ -26,6 +26,14 @@ class Plot(FigureCanvas):
         line = self.graph.plot(x,y, line, **options)
         self.graph.legend()
         return line
+    
+    def contourf(self, x, y, z):
+        cs = self.graph.contourf(x, y, z, 500, cmap='jet')
+        return cs
+    
+    def colorbar(self, cs):
+        cbar = self.graph.colorbar(cs)
+        return cbar
 
     def creatPlot(self, grid, x_label, y_label, title,toolbarpos):
         self.graph = self.fig.add_subplot(111)
