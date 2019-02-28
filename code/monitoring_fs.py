@@ -15,6 +15,7 @@ from astropy.stats import LombScargle
 import datetime
 from operator import itemgetter
 from multiprocessing import Process
+import math
 
 from PyQt5.QtWidgets import QWidget, QGridLayout, QApplication, QPushButton, QLabel, QLineEdit, QDesktopWidget, QComboBox, QGroupBox
 from PyQt5.QtGui import QIcon, QPixmap
@@ -129,14 +130,31 @@ class Maps_View(PlotingView):
             self.mapPlot = Plot()
             self.mapPlot.creatPlot(self.getGrid(), "Velocity (km/s)", "JD (days) -  " + str(jd_first), None, (1,0))
             CS = self.mapPlot.contourf(X, Y, Z)
-            #self.periodPlot.plot(period_days, power, plotSimbol, label="polarization AVG " + "Velocity " + source_velocities[velocityIndex], rasterized=True)
-            self._addWidget(self.mapPlot, 0, 0)
-            '''
+    
             cbar = self.mapPlot.colorbar(CS)
             cbar.set_clim(vmin=0) # ,vmax=max_flux_limit
             cbar.ax.set_ylabel(r'$Flux~(\mathrm{Jy})$')
             cbar.locator = MaxNLocator(nbins = 50)
-            '''
+            
+            text_file = open(output_path + "labels.txt", "r")
+            days = text_file.readline().rstrip().split(',')
+            days = [float(i) for i in days]
+            dates = text_file.readline().rstrip().split(',')
+            dates_days = text_file.readline().rstrip().split(',')
+            dates_days = [float(i) for i in dates_days]
+            text_file.close()
+            
+            print ("adding date to plot....")
+            for iday in days:
+                CS = self.mapPlot.plot([vmax-math.fabs(vmax-vmin)/8.0, vmax], [iday+0.0, iday+0.0], 'w', linewidth=0.5, alpha=0.9)
+                
+            for i in range(0,len(dates_days)-1):
+                iday = dates_days[i]
+                self.mapPlot.setAxiesText(vmin+0.2, iday, dates[i], fontsize=5, color='white', horizontalalignment='left', alpha= 1.0)
+
+            self.mapPlot.setAxiesText(0.01,1.01, dates[len(dates_days)-1], fontsize=5, color='black', horizontalalignment='left', alpha= 1.0)
+            print ("Done")
+            self._addWidget(self.mapPlot, 0, 0)
                                     
 class Period_View(PlotingView):
         def __init__(self):
@@ -463,15 +481,18 @@ class MonitoringApp(QWidget):
         
         #.strftime("%H %M %d %m %Y")
         #x = [date.strftime("%H %M %d %m %Y") for date in date_list]
+        
+        monitoringResults = [[convertDatetimeObjectToMJD(d) for d in date_list]]
         for i in range(0, len(source_velocities)):
             l1, = self.monitoringPlot.plot(date_list, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+colors[i], label="polarization U1 " + "Velocity " + source_velocities[i], visible=False, picker=False)
             l2, = self.monitoringPlot.plot(date_list, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+colors[i], label="polarization U9 " + "Velocity " + source_velocities[i], visible=False, picker=False)
             l3, = self.monitoringPlot.plot(date_list, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+colors[i], label="polarization AVG " + "Velocity " + source_velocities[i], visible=True, picker=5)
-            
+            monitoringResults.append(velocitie_dict["avg"][source_velocities[i]])
             lines.append(l1)
             lines.append(l2)
             lines.append(l3)
-
+            
+        np.savetxt("monitoring/" + self.source, np.transpose(monitoringResults))
         self.Monitoring_View._addWidget(self.monitoringPlot, 0, 0)
         #self.monitoringPlot.setXtics(date_list, [convertDatetimeObjectToMJD(date) for date in  date_list], '30')
         

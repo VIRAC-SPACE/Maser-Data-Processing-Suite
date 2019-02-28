@@ -8,7 +8,7 @@ from matplotlib.figure import Figure
 from matplotlib import rcParams
 rcParams['font.family'] = 'sans-serif'
 rcParams['font.sans-serif'] = ['Time New Roman']
-rcParams['font.size'] = 10
+rcParams['font.size'] = 12
 import mplcursors
 from PyQt5 import QtWidgets
 
@@ -24,7 +24,7 @@ class Plot(FigureCanvas):
 
     def plot(self, x, y, line, **options):
         line = self.graph.plot(x,y, line, **options)
-        self.graph.legend()
+        #self.graph.legend()
         return line
     
     def contourf(self, x, y, z):
@@ -32,10 +32,10 @@ class Plot(FigureCanvas):
         return cs
     
     def colorbar(self, cs):
-        cbar = self.graph.colorbar(cs)
+        cbar = self.fig.colorbar(cs)
         return cbar
 
-    def creatPlot(self, grid, x_label, y_label, title,toolbarpos):
+    def creatPlot(self, grid, x_label, y_label, title, toolbarpos):
         self.graph = self.fig.add_subplot(111)
         self.grid = grid
         
@@ -51,11 +51,19 @@ class Plot(FigureCanvas):
         self.grid.addWidget(self.toolbar, toolbarpos[0], toolbarpos[1])
         
         self.graph.grid(True)
-        self.graph.set_xlabel(x_label)
-        self.graph.set_ylabel(y_label)
+        if self.x_label != None:
+            self.graph.set_xlabel(self.x_label)
+        if self.y_label !=None:
+            self.graph.set_ylabel(self.y_label)
         
     def get_label(self):
         return self.graph.get_label()
+
+    def setAxiesText(self, x, y, s,  **options):
+        self.graph.axes.text( x, y, s,  **options)
+        
+    def get_axes(self):
+        return self.graph.axes
     
     def get_visible(self):
         return self.graph.get_visible()
@@ -76,11 +84,7 @@ class Plot(FigureCanvas):
     def annotation(self, xvalue, yvalue, text):
         self.ax = self.figure.add_subplot(111)
         self.annotate = self.ax.annotate(text, xy=(xvalue, yvalue),  textcoords='data')
-    '''    
-    def xticks(self, arg):
-        self.ax.xticks(arg)
-    '''
-        
+         
     def remannotation(self):
         self.annotate.remove()
         del self.annotate
@@ -123,7 +127,5 @@ class Plot(FigureCanvas):
         
     def __del__(self):
         del self.fig
-        
-        #del self.canvas
         del self.toolbar
         del self
