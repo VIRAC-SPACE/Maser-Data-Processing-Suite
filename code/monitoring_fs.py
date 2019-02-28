@@ -492,7 +492,7 @@ class MonitoringApp(QWidget):
             lines.append(l2)
             lines.append(l3)
             
-        np.savetxt("monitoring/" + self.source, np.transpose(monitoringResults))
+        np.savetxt("monitoring/" + self.source + "txt", np.transpose(monitoringResults))
         self.Monitoring_View._addWidget(self.monitoringPlot, 0, 0)
         #self.monitoringPlot.setXtics(date_list, [convertDatetimeObjectToMJD(date) for date in  date_list], '30')
         
