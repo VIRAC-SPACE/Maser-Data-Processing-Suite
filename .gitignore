@@ -131,4 +131,13 @@ maps/
 
 *.out
 *.out_backup
+DB.csv
+DB_vrange.csv
+code/3d.txt
+code/DB.csv
+code/DB_vrange.csv
+code/days.txt
+code/python.txt
+monitoring/
+python.txt
 

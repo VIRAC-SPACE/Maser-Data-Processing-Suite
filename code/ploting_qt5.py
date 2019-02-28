@@ -24,7 +24,8 @@ class Plot(FigureCanvas):
 
     def plot(self, x, y, line, **options):
         line = self.graph.plot(x,y, line, **options)
-        self.graph.legend()
+        if "label" in options.keys():
+            self.graph.legend()
         return line
     
     def contourf(self, x, y, z):
