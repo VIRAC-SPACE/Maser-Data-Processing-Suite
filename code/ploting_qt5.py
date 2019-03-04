@@ -6,7 +6,7 @@ import matplotlib.backends.backend_qt5agg as qt5agg
 from matplotlib.widgets import Slider
 from matplotlib.figure import Figure
 from matplotlib import rcParams
-rcParams['font.family'] = 'sans-serif'
+rcParams['font.family'] = 'DejaVu Sans'
 rcParams['font.sans-serif'] = ['Time New Roman']
 rcParams['font.size'] = 12
 import mplcursors
@@ -22,10 +22,10 @@ class Plot(FigureCanvas):
         FigureCanvas.setSizePolicy(self, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
 
-    def plot(self, x, y, line, **options):
+    def plot(self, x, y, line, fontsize=12, **options):
         line = self.graph.plot(x,y, line, **options)
         if "label" in options.keys():
-            self.graph.legend()
+            self.legend = self.graph.legend(prop={'size': fontsize})
         return line
     
     def contourf(self, x, y, z):
