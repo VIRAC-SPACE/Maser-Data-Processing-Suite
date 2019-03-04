@@ -690,12 +690,12 @@ class Analyzer(QWidget):
         resultFile.close()
         
         totalResults = [self.xarray,  self.z1_SmoohtData,  self.z2_SmoohtData,  self.avg_y_SmoohtData]
-        output_file_name = self.output + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
+        output_file_name = self.output + self.source +  "/" + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
         np.savetxt(output_file_name, np.transpose(totalResults))
         
         totalResults = [self.xarray,  self.z1_NotSmoohtData,  self.z2_NotSmoohtData,  self.avg_y_NotSmoohtData]
-        output_file_name = self.output + "/NotSmooht/"  + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
+        output_file_name = self.output + "/NotSmooht/" + self.source +  "/" + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
         np.savetxt(output_file_name, np.transpose(totalResults))
         
@@ -822,6 +822,7 @@ class NoGUI(object):
         self.p_u9 = np.poly1d(z_u9)
         
     def writeResult(self):
+        print("yes")
         self.localMax_Array_u1 = self.y1array - self.p_u1(self.xarray)
         self.localMax_Array_u9 = self.y2array - self.p_u9(self.xarray)
         self.z1_NotSmoohtData = self.localMax_Array_u1
@@ -835,12 +836,13 @@ class NoGUI(object):
         self.avg_y_SmoohtData = (self.z1_SmoohtData + self.z2_SmoohtData) / 2
         
         totalResults = [self.xarray,  self.z1_SmoohtData,  self.z2_SmoohtData,  self.avg_y_SmoohtData]
-        output_file_name = self.output + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
+        output_file_name = self.output + self.source +  "/" + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
+        print("output_file_name", output_file_name)
         output_file_name = output_file_name.replace(" ", "")
         np.savetxt(output_file_name, np.transpose(totalResults))
         
         totalResults = [self.xarray,  self.z1_NotSmoohtData,  self.z2_NotSmoohtData,  self.avg_y_NotSmoohtData]
-        output_file_name = self.output + "/NotSmooht/"  + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
+        output_file_name = self.output + "/NotSmooht/" + self.source +  "/"  + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
         np.savetxt(output_file_name, np.transpose(totalResults))
         

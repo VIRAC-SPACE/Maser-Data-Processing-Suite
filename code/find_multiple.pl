@@ -6,7 +6,7 @@ use Data::Dumper qw(Dumper);
  
 my @source = @ARGV[0];
 
- my $directory = "/home/janis/Documents/workspace-sts/DataProcessingForMaserObservation/output/$source";
+my $directory = "/home/janis/Documents/workspace-sts/DataProcessingForMaserObservation/output/$source";
 
 open(DB,">DB.csv");
 open(PYTHON,">python.txt");

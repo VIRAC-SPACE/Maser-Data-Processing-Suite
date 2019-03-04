@@ -18,7 +18,7 @@ from multiprocessing import Process
 import math
 
 from PyQt5.QtWidgets import QWidget, QGridLayout, QApplication, QPushButton, QLabel, QLineEdit, QDesktopWidget, QComboBox, QGroupBox
-from PyQt5.QtGui import QIcon, QPixmap
+from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 
 from ploting_qt5 import  Plot
@@ -324,7 +324,7 @@ class Monitoring_View(PlotingView):
             ind = event.ind
             index = [ind][0]
             polarization = thisline.get_label().split()[1]
-            spectraFileName = self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.location_list, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.iteration_list, int(index[0])) + ".dat"
+            spectraFileName = self.source + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.location_list, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.iteration_list, int(index[0])) + ".dat"
             self.plotSpecter(spectraFileName, polarization)
         
         def plotSpecter(self, spectraFileName, polarization):
@@ -492,7 +492,7 @@ class MonitoringApp(QWidget):
             lines.append(l2)
             lines.append(l3)
             
-        np.savetxt("monitoring/" + self.source + "txt", np.transpose(monitoringResults))
+        np.savetxt("monitoring/" + self.source + ".txt", np.transpose(monitoringResults))
         self.Monitoring_View._addWidget(self.monitoringPlot, 0, 0)
         #self.monitoringPlot.setXtics(date_list, [convertDatetimeObjectToMJD(date) for date in  date_list], '30')
         
