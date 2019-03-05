@@ -266,7 +266,7 @@ class Monitoring_View(PlotingView):
             comboBox.addItem("polarization U9")
             comboBox.addItem("ALL")
             comboBox.activated[str].connect(self.getPolarization)    
-                        
+                  
             controlGrid = QGridLayout()
             controlGrid.addWidget(comboBox, 3, 0)
             plotPeriodsbutton = QPushButton('Plot periods', self)

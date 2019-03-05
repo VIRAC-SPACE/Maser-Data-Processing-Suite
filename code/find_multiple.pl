@@ -18,7 +18,7 @@ print DB "name,min_date,max_date,JD_min,JD_max,days,min_v,max_v,n_spectra\n";
     #next unless -d $directory . '/' . $dir_entry;
     #next if $dir_entry eq '.' or $dir_entry eq '..';
     #print "Found directory $dir_entry\n";
-
+    
 	open(F,">$directory/3d.txt");
 	open(list_days,">$directory/days.txt");
 	open(labels,">$directory/labels.txt");
