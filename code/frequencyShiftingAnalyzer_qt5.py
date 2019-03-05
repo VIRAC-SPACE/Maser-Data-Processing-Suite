@@ -433,12 +433,12 @@ class Analyzer(QWidget):
             self.plot_start_u1.setFocusPolicy(QtCore.Qt.ClickFocus)
             self.plot_start_u1.setFocus()
             self.plot_start_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u1 Polarization", (1, 0))
-            self.line_1_u1 = self.plot_start_u1.plot(self.xdata, self.ydata_1_u1, 'b', label=pair[0], picker=3)
-            self.line_2_u1 = self.plot_start_u1.plot(self.xdata, self.ydata_2_u1, 'r', label=pair[1], picker=3)
+            self.line_1_u1 = self.plot_start_u1.plot(self.xdata, self.ydata_1_u1, 'b', label=pair[0], picker=3, visible=True)
+            self.line_2_u1 = self.plot_start_u1.plot(self.xdata, self.ydata_2_u1, 'r', label=pair[1], picker=3, visible=True)
 
             #if (self.filter > 0):
-            self.badplot_1_u1 = self.plot_start_u1.plot(self.x_bad_point_1_u1, self.y_bad_point_1_u1, 'x')
-            self.badplot_2_u1 = self.plot_start_u1.plot(self.x_bad_point_2_u1, self.y_bad_point_2_u1, 'x')
+            self.badplot_1_u1 = self.plot_start_u1.plot(self.x_bad_point_1_u1, self.y_bad_point_1_u1, 'x', visible=True)
+            self.badplot_2_u1 = self.plot_start_u1.plot(self.x_bad_point_2_u1, self.y_bad_point_2_u1, 'x', visible=True)
 
             self.plot_start_u1.fig.canvas.mpl_connect('pick_event',self._on_left_click_u1)
             self.plot_start_u1.fig.canvas.mpl_connect('pick_event',self._on_right_click_u1)
@@ -448,12 +448,12 @@ class Analyzer(QWidget):
             self.plot_start_u9.setFocusPolicy(QtCore.Qt.ClickFocus)
             self.plot_start_u9.setFocus()
             self.plot_start_u9.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u9 Polarization", (1, 1))
-            self.line_1_u9 = self.plot_start_u9.plot(self.xdata, self.ydata_1_u9, 'b', label=pair[0], picker=3)
-            self.line_2_u9 = self.plot_start_u9.plot(self.xdata, self.ydata_2_u9, 'r', label=pair[1], picker=3)
+            self.line_1_u9 = self.plot_start_u9.plot(self.xdata, self.ydata_1_u9, 'b', label=pair[0], picker=3, visible=True)
+            self.line_2_u9 = self.plot_start_u9.plot(self.xdata, self.ydata_2_u9, 'r', label=pair[1], picker=3, visible=True)
 
             #if (self.filter > 0):
-            self.badplot_1_u9 = self.plot_start_u9.plot(self.x_bad_point_1_u9, self.y_bad_point_1_u9, 'x')
-            self.badplot_2_u9 = self.plot_start_u9.plot(self.x_bad_point_2_u9, self.y_bad_point_2_u9, 'x')
+            self.badplot_1_u9 = self.plot_start_u9.plot(self.x_bad_point_1_u9, self.y_bad_point_1_u9, 'x', visible=True)
+            self.badplot_2_u9 = self.plot_start_u9.plot(self.x_bad_point_2_u9, self.y_bad_point_2_u9, 'x', visible=True)
 
             self.plot_start_u9.fig.canvas.mpl_connect('pick_event', self._on_left_click_u9)
             self.plot_start_u9.fig.canvas.mpl_connect('pick_event', self._on_right_click_u9)
@@ -481,11 +481,11 @@ class Analyzer(QWidget):
 
             self.plot_total_u1 = Plot()
             self.plot_total_u1.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (5, 0))
-            self.line_total_u1 = self.plot_total_u1.plot(self.x, self.total_u1, 'b')
+            self.line_total_u1 = self.plot_total_u1.plot(self.x, self.total_u1, 'b', visible=True)
 
             self.plot_total_u9 = Plot()
             self.plot_total_u9.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (5, 1))
-            self.line_total_u9 = self.plot_total_u9.plot(self.x, self.total_u9, 'b')
+            self.line_total_u9 = self.plot_total_u9.plot(self.x, self.total_u9, 'b', visible=True)
 
             self.grid.addWidget(self.plot_total_u1, 4, 0)
             self.grid.addWidget(self.plot_total_u9, 4, 1)
@@ -719,12 +719,12 @@ class Analyzer(QWidget):
 
         self.plot_velocity_u1 = Plot()
         self.plot_velocity_u1.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization", (1,0))
-        self.plot_velocity_u1.plot(velocitys_avg, y_u1_avg, 'b')
+        self.plot_velocity_u1.plot(velocitys_avg, y_u1_avg, 'b', visible=True)
         #self.plot_velocity_u1.plot(x, y, 'r')
 
         self.plot_velocity_u9 = Plot()
         self.plot_velocity_u9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization", (1,1))
-        self.plot_velocity_u9.plot(velocitys_avg, y_u9_avg, 'b')
+        self.plot_velocity_u9.plot(velocitys_avg, y_u9_avg, 'b', visible=True)
 
         #self.plot_velocity_uAVG = Plot()
         #self.plot_velocity_uAVG.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization")
@@ -733,9 +733,9 @@ class Analyzer(QWidget):
         ston_x = np.arange(0, len(self.STON_list_u1))
         self.plot_STON = Plot()
         self.plot_STON.creatPlot(self.grid, 'Pair', 'Ratio', "Signal to Noise", (3,0))
-        self.plot_STON.plot(ston_x, self.STON_list_u1, '*r', label="u1 Polarization")
-        self.plot_STON.plot(ston_x, self.STON_list_u9, 'og', label="u9 Polarization")
-        self.plot_STON.plot(ston_x, self.STON_list_AVG, 'vb', label="AVG Polarization")
+        self.plot_STON.plot(ston_x, self.STON_list_u1, '*r', label="u1 Polarization", visible=True)
+        self.plot_STON.plot(ston_x, self.STON_list_u9, 'og', label="u9 Polarization", visible=True)
+        self.plot_STON.plot(ston_x, self.STON_list_AVG, 'vb', label="AVG Polarization", visible=True)
 
         self.grid.addWidget(self.plot_velocity_u1, 0, 0)
         self.grid.addWidget(self.plot_velocity_u9, 0, 1)
