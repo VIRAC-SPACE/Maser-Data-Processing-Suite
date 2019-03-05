@@ -236,6 +236,9 @@ class Monitoring_View(PlotingView):
             self.velocitie_dict = velocitie_dict
             self.periodPlotSet = set()
             
+        def setLineDict(self, lineDict):
+            self.lineDict = lineDict
+              
         def createPeriodView(self):
             Symbols =  ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
             colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
@@ -247,7 +250,6 @@ class Monitoring_View(PlotingView):
             self.periodPlotSet.add(self.period_View)
             
         def createMapVew(self):
-            #os.system("rm " + "maps/" + self.source + ".png")
             os.system("perl " + "code/find_multiple.pl " + self.source)
             self.maps_view = Maps_View(self.source)
             self.maps_view.plotMaps(self.output_path)
@@ -257,16 +259,16 @@ class Monitoring_View(PlotingView):
             groupBox = QGroupBox("")
             groupBox.setFixedWidth(120)
             groupBox.setFixedHeight(120)
-                
+            
             comboBox = QComboBox(self)
             comboBox.addItem("polarization AVG")
             comboBox.addItem("polarization U1")
             comboBox.addItem("polarization U9")
             comboBox.addItem("ALL")
-            comboBox.activated[str].connect(self.getPolarization)
-                
+            comboBox.activated[str].connect(self.getPolarization)    
+                        
             controlGrid = QGridLayout()
-            controlGrid.addWidget(comboBox, 2, 0)
+            controlGrid.addWidget(comboBox, 3, 0)
             plotPeriodsbutton = QPushButton('Plot periods', self)
             plotPeriodsbutton.clicked.connect(self.createPeriodView)
             controlGrid.addWidget(plotPeriodsbutton, 1, 0)
@@ -287,32 +289,58 @@ class Monitoring_View(PlotingView):
              
         def setLines(self, lines):
             self.lines = lines
-            
-        def __setVisible(self, label, labels):
-            index = labels.index(label)
-            self.lines[index].set_visible(True)
-            self.lines[index].set_picker(5)
-            
-        def __unSetVisibel(self, label, labels):
-            index = labels.index(label)
-            self.lines[index].set_visible(False)
-            self.lines[index].set_picker(False)
         
-        def getIndexiesOfPolarization(self, labels):
-            if self.polarization == "ALL":
-                all(i.set_visible(True) for i in self.lines)
-                all(i.set_picker(5) for i in self.lines)
-                
+        def getIndexiesOfPolarization(self):
+            polarization = self.polarization.split(" ")[-1]
+            
+            if polarization == "ALL":
+                for line in self.lines:
+                    line.set_picker(5)
+                    line.set_visible(True)            
+                 
             else:
-                for label in labels:
-                    if self.polarization in label:
-                        self.__setVisible(label, labels)
-                    elif self.polarization not in label:
-                        self.__unSetVisibel(label, labels)
+                if polarization == "AVG":
+                    for line in self.lineDict["avg"]:
+                        line.set_picker(5)
+                        line.set_visible(True)
                         
+                    for line in self.lineDict["u1"]:
+                        line.set_picker(False)
+                        line.set_visible(False)
+                        
+                    for line in self.lineDict["u9"]:
+                        line.set_picker(False)
+                        line.set_visible(False)
+                        
+                elif polarization == "U1":
+                    for line in self.lineDict["u1"]:
+                        line.set_picker(5)
+                        line.set_visible(True)
+                        
+                    for line in self.lineDict["avg"]:
+                        line.set_picker(False)
+                        line.set_visible(False)
+                        
+                    for line in self.lineDict["u9"]:
+                        line.set_picker(False)
+                        line.set_visible(False)
+                
+                elif polarization == "U9":
+                    for line in self.lineDict["u9"]:
+                        line.set_picker(5)
+                        line.set_visible(True)
+                        
+                    for line in self.lineDict["u1"]:
+                        line.set_picker(False)
+                        line.set_visible(False)
+                        
+                    for line in self.lineDict["avg"]:
+                        line.set_picker(False)
+                        line.set_visible(False)
+                                            
         def getPolarization(self, polarization):
             self.setPolarization(polarization)
-            self.getIndexiesOfPolarization(self.labels)
+            self.getIndexiesOfPolarization()
             
         def keyPressEvent(self, e):
             if e.key() == Qt.Key_Shift:
@@ -323,16 +351,16 @@ class Monitoring_View(PlotingView):
             xdata = thisline.get_xdata()
             ind = event.ind
             index = [ind][0]
-            polarization = thisline.get_label().split()[1]
             spectraFileName = self.source + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.location_list, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.iteration_list, int(index[0])) + ".dat"
-            self.plotSpecter(spectraFileName, polarization)
+            self.plotSpecter(spectraFileName, self.polarization)
         
         def plotSpecter(self, spectraFileName, polarization):
+            amplitude_colon = 3
             if polarization == "U1":
                 amplitude_colon = 1
             elif polarization == "U9":
                 amplitude_colon = 2
-            elif polarization == "AVG":
+            elif polarization == "AVG" or polarization=="ALL":
                 amplitude_colon = 3
                 
             spectraFileName = self.output_path + spectraFileName
@@ -357,7 +385,7 @@ class Monitoring_View(PlotingView):
             
             if plot_name not in self.plotList:
                 self.plotList.append(plot_name)
-                self.spectrPlot.plot(x,y, "-", label=plot_name)
+                self.spectrPlot.plot(x,y, "-", label=plot_name, visible=True)
                 self.spectrPlot.canvasShow()
                         
 class MonitoringApp(QWidget):
@@ -468,7 +496,6 @@ class MonitoringApp(QWidget):
         self.iteration_list = iteration_list
         Symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
         colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
-        lines = list()
         
         self.Monitoring_View = Monitoring_View(self.iteration_list, self.location_list, self.source, self.output_path, source_velocities, date_list, velocitie_dict)
         self.monitoringPlot = Plot()
@@ -482,15 +509,25 @@ class MonitoringApp(QWidget):
         #.strftime("%H %M %d %m %Y")
         #x = [date.strftime("%H %M %d %m %Y") for date in date_list]
         
+        '''
+        label="polarization U1 " + "Velocity " + source_velocities[i]
+        label="polarization U9 " + "Velocity " + source_velocities[i]
+        '''
+        
+        lineDict = {"u1":list(), "u9":list(), "avg":list()}
+        lines = list()
         monitoringResults = [[convertDatetimeObjectToMJD(d) for d in date_list]]
         for i in range(0, len(source_velocities)):
-            l1, = self.monitoringPlot.plot(date_list, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+colors[i], fontsize=8, label="polarization U1 " + "Velocity " + source_velocities[i], visible=False, picker=False)
-            l2, = self.monitoringPlot.plot(date_list, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+colors[i], fontsize=8, label="polarization U9 " + "Velocity " + source_velocities[i], visible=False, picker=False)
-            l3, = self.monitoringPlot.plot(date_list, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+colors[i], fontsize=8, label="polarization AVG " + "Velocity " + source_velocities[i], visible=True, picker=5)
+            l1, = self.monitoringPlot.plot(date_list, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+colors[i], fontsize=8, visible=False, picker=False)
+            l2, = self.monitoringPlot.plot(date_list, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+colors[i], fontsize=8, visible=False, picker=False)
+            l3, = self.monitoringPlot.plot(date_list, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+colors[i], fontsize=8, label="Velocity " + source_velocities[i], visible=True, picker=5)
             monitoringResults.append(velocitie_dict["avg"][source_velocities[i]])
             lines.append(l1)
             lines.append(l2)
             lines.append(l3)
+            lineDict["u1"].append(l1)
+            lineDict["u9"].append(l2)
+            lineDict["avg"].append(l3)
             
         np.savetxt("monitoring/" + self.source + ".txt", np.transpose(monitoringResults))
         self.Monitoring_View._addWidget(self.monitoringPlot, 0, 0)
@@ -499,10 +536,10 @@ class MonitoringApp(QWidget):
         self.monitoringPlot.addCursor(labels2)
         labels = [str(line.get_label()) for line in lines]
         
+        self.Monitoring_View.setLineDict(lineDict)
         self.Monitoring_View.setLabels(labels)
         self.Monitoring_View.setLines(lines)
         self.monitoringPlot.addPickEvent(self.Monitoring_View.chooseSpectrum)
-        
         self.Monitoring_View.showMaximized()
         self.Monitoring_View.show()
         
@@ -514,7 +551,6 @@ class MonitoringApp(QWidget):
         self.source = self.sourceInput.text()
         source_velocities = config.getConfig('velocities', self.source).split(",")
         source_velocities = [x.strip() for x in source_velocities]
-            
         self.plotMonitoring(resultDir, source_velocities, self.source)
         
 class Main(object):
