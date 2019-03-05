@@ -5,8 +5,9 @@ use List::Util qw( min max );
 use Data::Dumper qw(Dumper);
  
 my @source = @ARGV[0];
+my @outputDir = @ARGV[1];
 
-my $directory = "/home/janis/Documents/workspace-sts/DataProcessingForMaserObservation/output/@source";
+my $directory = "@source/@outputDir";
 
 open(DB,">DB.csv");
 open(PYTHON,">python.txt");

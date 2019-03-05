@@ -250,7 +250,7 @@ class Monitoring_View(PlotingView):
             self.periodPlotSet.add(self.period_View)
             
         def createMapVew(self):
-            os.system("perl " + "code/find_multiple.pl " + self.source)
+            os.system("perl " + "code/find_multiple.pl " + self.output_path + " " + self.source)
             self.maps_view = Maps_View(self.source)
             self.maps_view.plotMaps(self.output_path)
             self.maps_view.show()
