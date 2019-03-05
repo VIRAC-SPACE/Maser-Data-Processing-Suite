@@ -65,7 +65,7 @@ class Maps_View(PlotingView):
             
         def plotMaps(self, output_path):
             parametrs = json.load(open("python.txt", "r"))
-            fin = open(output_path + "3d.txt","r")
+            fin = open(output_path + self.source + "/" + "3d.txt","r")
             max_flux_limit = 9999
             JD_shift = 0
             jd_min = 0
@@ -136,7 +136,7 @@ class Maps_View(PlotingView):
             cbar.ax.set_ylabel(r'$Flux~(\mathrm{Jy})$')
             cbar.locator = MaxNLocator(nbins = 50)
             
-            text_file = open(output_path + "labels.txt", "r")
+            text_file = open(output_path + self.source + "/" + "labels.txt", "r")
             days = text_file.readline().rstrip().split(',')
             days = [float(i) for i in days]
             dates = text_file.readline().rstrip().split(',')
