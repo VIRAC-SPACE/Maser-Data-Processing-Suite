@@ -6,7 +6,7 @@ use Data::Dumper qw(Dumper);
  
 my @source = @ARGV[0];
 
- my $directory = "/home/janis/Documents/workspace-sts/DataProcessingForMaserObservation/output/$source";
+my $directory = "/home/janis/Documents/workspace-sts/DataProcessingForMaserObservation/output/@source";
 
 open(DB,">DB.csv");
 open(PYTHON,">python.txt");
@@ -67,7 +67,7 @@ print DB "name,min_date,max_date,JD_min,JD_max,days,min_v,max_v,n_spectra\n";
     }
 
 	  closedir(DIR);
-print "jds @jds";
+
 my $n_spectra = @jds;
 my $jd_first = min @jds;
 my $jd_last = max @jds;
@@ -166,7 +166,6 @@ if ($min_v == 999 or $max_v == -999) {
 	$max_v = 20;
 }
 
-print "jd_first $jd_first";
 #my $cmd = "python3 code/plot_multiple.py $directory/3d.txt $directory/labels.txt @source.png 0 $days $min_v $max_v $jd_first @source";
 my $cmd = "{\n\"days\":$days,\n\"min_v\":$min_v,\n\"max_v\":$max_v,\n\"jd_first\":$jd_first\n}";
 print PYTHON $cmd;
