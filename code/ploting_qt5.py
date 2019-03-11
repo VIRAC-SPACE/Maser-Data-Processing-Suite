@@ -25,7 +25,7 @@ class Plot(FigureCanvas):
     def plot(self, x, y, line, fontsize=12, **options):
         line = self.graph.plot(x,y, line, **options)
         
-        if "label" in options.keys() and  options["visible"]:
+        if "label" in options.keys():
             self.legend = self.graph.legend(prop={'size': fontsize})
         return line
     

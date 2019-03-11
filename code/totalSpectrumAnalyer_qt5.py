@@ -186,11 +186,11 @@ class Analyzer(QWidget):
          
         self.plot_1 = Plot()
         self.plot_1.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization", (1, 0))
-        self.plot_1.plot(self.xarray, self.y1array, 'ko', label='Data Points', markersize=1, visible=True)
+        self.plot_1.plot(self.xarray, self.y1array, 'ko', label='Data Points', markersize=1)
             
         self.plot_2 = Plot()
         self.plot_2.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization", (1, 1))
-        self.plot_2.plot(self.xarray, self.y2array, 'ko', label='Data Points', markersize=1, visible=True)
+        self.plot_2.plot(self.xarray, self.y2array, 'ko', label='Data Points', markersize=1)
             
         self.grid.addWidget(self.plot_1, 0, 0)
         self.grid.addWidget(self.plot_2, 0, 1)
@@ -276,8 +276,8 @@ class Analyzer(QWidget):
         QMessageBox.information(self, "Info", "Data was changed")
         
     def change_M(self, value):
-        self.plot_1.plot(self.xarray[int(self.previousM)], self.y1array[int(self.previousM)], 'ko', markersize=1, visible=True)
-        self.plot_2.plot(self.xarray[int(self.previousM)], self.y2array[int(self.previousM)], 'ko', markersize=1, visible=True)
+        self.plot_1.plot(self.xarray[int(self.previousM)], self.y1array[int(self.previousM)], 'ko', markersize=1)
+        self.plot_2.plot(self.xarray[int(self.previousM)], self.y2array[int(self.previousM)], 'ko', markersize=1)
         
         self.plot_1.annotation(self.xarray[int(self.previousM)], self.y1array[int(self.previousM)], " ")
         self.plot_2.annotation(self.xarray[int(self.previousM)], self.y2array[int(self.previousM)], " ")
@@ -297,8 +297,8 @@ class Analyzer(QWidget):
         self.previousM = value
     
     def change_N(self, value):
-        self.plot_1.plot(self.xarray[int(self.previousN-1)], self.y1array[int(self.previousN-1)], 'ko', markersize=1, visible=True)
-        self.plot_2.plot(self.xarray[int(self.previousN-1)], self.y2array[int(self.previousN-1)], 'ko', markersize=1, visible=True)
+        self.plot_1.plot(self.xarray[int(self.previousN-1)], self.y1array[int(self.previousN-1)], 'ko', markersize=1)
+        self.plot_2.plot(self.xarray[int(self.previousN-1)], self.y2array[int(self.previousN-1)], 'ko', markersize=1)
         
         self.plot_1.annotation(self.xarray[int(self.previousN-1)], self.y1array[int(self.previousN-1)], " ")
         self.plot_2.annotation(self.xarray[int(self.previousN-1)], self.y2array[int(self.previousN-1)], " ")
@@ -309,8 +309,8 @@ class Analyzer(QWidget):
         self.plot_1.annotation(self.xarray[int(value-1)], self.y1array[int(value-1)], "N")
         self.plot_2.annotation(self.xarray[int(value-1)], self.y2array[int(value-1)], "N")
         
-        self.plot_1.plot(self.xarray[int(value-1)], self.y1array[int(value-1)], 'ro', markersize=1, visible=True)
-        self.plot_2.plot(self.xarray[int(value-1)], self.y2array[int(value-1)], 'ro', markersize=1, visible=True)
+        self.plot_1.plot(self.xarray[int(value-1)], self.y1array[int(value-1)], 'ro', markersize=1)
+        self.plot_2.plot(self.xarray[int(value-1)], self.y2array[int(value-1)], 'ro', markersize=1)
         
         self.plot_1.canvasShow()
         self.plot_2.canvasShow()
@@ -407,12 +407,12 @@ class Analyzer(QWidget):
         #u1 plot
         self.plot_10 = Plot()
         self.plot_10.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0))
-        self.plot_10.plot(self.xarray, self.y1array, 'ko', label='Data Points',  markersize=1, visible=True)
+        self.plot_10.plot(self.xarray, self.y1array, 'ko', label='Data Points',  markersize=1)
         
         #u9 plot
         self.plot_11 = Plot()
         self.plot_11.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1))
-        self.plot_11.plot(self.xarray, self.y2array, 'ko', label='Data Points',  markersize=1, visible=True)
+        self.plot_11.plot(self.xarray, self.y2array, 'ko', label='Data Points',  markersize=1)
         
         self.grid.addWidget(self.plot_10, 0, 0)
         self.grid.addWidget(self.plot_11, 0, 1)
@@ -497,16 +497,16 @@ class Analyzer(QWidget):
         #u1 plot
         self.plot_5 = Plot()
         self.plot_5.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0))
-        self.plot_5.plot(self.polyx, self.polyu1, 'ko', label='Data Points',  markersize=1, visible=True)
+        self.plot_5.plot(self.polyx, self.polyu1, 'ko', label='Data Points',  markersize=1)
         #self.plot_5.plot(self.xarray[self.m:self.n], self.ceb_1(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
-        self.plot_5.plot(self.xarray, self.p_u1(self.xarray), 'b', label='Numpy polyfit', markersize=1, visible=True)
+        self.plot_5.plot(self.xarray, self.p_u1(self.xarray), 'b', label='Numpy polyfit', markersize=1)
         
         #u9 plot
         self.plot_6 = Plot()
         self.plot_6.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1))
-        self.plot_6.plot(self.polyx, self.polyu9, 'ko', label='Data Points',  markersize=1, visible=True)
+        self.plot_6.plot(self.polyx, self.polyu9, 'ko', label='Data Points',  markersize=1)
         #self.plot_6.plot(self.xarray[self.m:self.n], self.ceb_2(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
-        self.plot_6.plot(self.xarray, self.p_u9(self.xarray), 'b', label='Numpy polyfit', markersize=1, visible=True)
+        self.plot_6.plot(self.xarray, self.p_u9(self.xarray), 'b', label='Numpy polyfit', markersize=1)
         
         self.grid.addWidget(self.plot_5, 0, 0)
         self.grid.addWidget(self.plot_6, 0, 1)
@@ -584,22 +584,22 @@ class Analyzer(QWidget):
         #u1
         self.plot_7 = Plot()
         self.plot_7.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0))
-        self.plot_7.plot(self.xarray, self.z1, 'b', label='Signal - polynomial', markersize=1, visible=True)
-        self.plot_7.plot(self.xarray[indexes_for_ceb], self.z1[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2, visible=True)
+        self.plot_7.plot(self.xarray, self.z1, 'b', label='Signal - polynomial', markersize=1)
+        self.plot_7.plot(self.xarray[indexes_for_ceb], self.z1[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2)
         self.plot_7.annotations(self.xarray[indexes_for_ceb], self.z1[indexes_for_ceb])
         
         #u9
         self.plot_8 = Plot()
         self.plot_8.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1))
-        self.plot_8.plot(self.xarray, self.z2, 'b', label='Signal - polynomial', markersize=1, visible=True)
-        self.plot_8.plot(self.xarray[indexes_for_ceb2], self.z2[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2, visible=True)
+        self.plot_8.plot(self.xarray, self.z2, 'b', label='Signal - polynomial', markersize=1)
+        self.plot_8.plot(self.xarray[indexes_for_ceb2], self.z2[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2)
         self.plot_8.annotations(self.xarray[indexes_for_ceb2], self.z2[indexes_for_ceb2])
         
         #uAVG
         self.plot_9 = Plot()
         self.plot_9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Average Polarization", (1, 2))
-        self.plot_9.plot(self.xarray, self.avg_y, 'b', label='Signal - polynomial', markersize=1, visible=True)
-        self.plot_9.plot(self.xarray[indexes_for_avg], self.avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2, visible=True)
+        self.plot_9.plot(self.xarray, self.avg_y, 'b', label='Signal - polynomial', markersize=1)
+        self.plot_9.plot(self.xarray[indexes_for_avg], self.avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2)
         self.plot_9.annotations(self.xarray[indexes_for_avg], self.avg_y[indexes_for_avg])
         
         self.grid.addWidget(self.plot_7, 0, 0)

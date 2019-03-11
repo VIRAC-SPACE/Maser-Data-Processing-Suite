@@ -243,11 +243,14 @@ class Monitoring_View(PlotingView):
             Symbols =  ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
             colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
             velocity = self.componentInput.text()
-            velocityIndex = self.source_velocities.index(velocity)
-            plotSimbol = Symbols[velocityIndex] + colors[velocityIndex]
-            self.period_View = Period_View()
-            self.period_View.PlotPeriods(self.dateList, self.velocitie_dict, self.source_velocities, velocityIndex, plotSimbol)
-            self.periodPlotSet.add(self.period_View)
+            if velocity != "":
+                velocityIndex = self.source_velocities.index(velocity)
+                plotSimbol = Symbols[velocityIndex] + colors[velocityIndex]
+                self.period_View = Period_View()
+                self.period_View.PlotPeriods(self.dateList, self.velocitie_dict, self.source_velocities, velocityIndex, plotSimbol)
+                self.periodPlotSet.add(self.period_View)
+            else:
+                print("No velocity choosed")
             
         def createMapVew(self):
             os.system("perl " + "code/find_multiple.pl " + self.output_path + " " + self.source)
@@ -385,7 +388,7 @@ class Monitoring_View(PlotingView):
             
             if plot_name not in self.plotList:
                 self.plotList.append(plot_name)
-                self.spectrPlot.plot(x,y, "-", label=plot_name, visible=True)
+                self.spectrPlot.plot(x,y, "-", label=plot_name)
                 self.spectrPlot.canvasShow()
                         
 class MonitoringApp(QWidget):
@@ -508,11 +511,6 @@ class MonitoringApp(QWidget):
         
         #.strftime("%H %M %d %m %Y")
         #x = [date.strftime("%H %M %d %m %Y") for date in date_list]
-        
-        '''
-        label="polarization U1 " + "Velocity " + source_velocities[i]
-        label="polarization U9 " + "Velocity " + source_velocities[i]
-        '''
         
         lineDict = {"u1":list(), "u9":list(), "avg":list()}
         lines = list()
