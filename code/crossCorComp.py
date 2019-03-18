@@ -42,6 +42,7 @@ def getData():
 def main():
     x = getData()[0]
     y = getData()[1]
+    print ("corr coef", np.corrcoef(x,y))
     crossCorr = np.correlate(x, y, "full")
     plt.plot(crossCorr)
     plt.grid(True)

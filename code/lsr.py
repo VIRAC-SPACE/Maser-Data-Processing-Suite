@@ -111,7 +111,8 @@ def vbos(dec, ra, time):
     aLMST=np.pi*math.fmod(np.double(5.55811454652)+math.fmod(t+t,np.double(2))+ t*(np.double(0.547581870159)-2+t*(np.double(1.61549)-15-t*np.double(1.473)-24))+albypi,np.double(2))
     #aLMST = np.rad2deg(aLMST)
     print("aLMSTP",aLMST)
-    location = EarthLocation(x=3183.661, y=1276.902, z=5359.291).value
+    #location = EarthLocation(x=3183.661, y=1276.902, z=5359.291).value
+    location = EarthLocation(x=3183661 * u.m, y=1276902 * u.m, z=5359291 * u.m)
     print("location", location)
     #('-21d51m17s', '57d33m12.3s','87.30m')
     sdTIme = Time('2019-02-18 08:30:30', scale='utc',location=location)
