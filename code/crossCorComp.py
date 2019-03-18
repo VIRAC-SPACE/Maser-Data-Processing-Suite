@@ -37,11 +37,12 @@ def getData():
     data = np.fromfile(monitoringFile, dtype="float64", count=-1, sep=" ").reshape((file_len(monitoringFile),compunetCount + 1))    
     x = correctNumpyReadData(data[:, [a]])
     y = correctNumpyReadData(data[:, [b]])
-    return (x, y)
+    z = correctNumpyReadData(data[:, [1]])
+    return (x, y, z)
 
 def main():
-    x = getData()[0]
-    y = getData()[1]
+    x = getData()[0] / getData()[2]
+    y = getData()[1] / getData()[2]
     print ("corr coef", np.corrcoef(x,y))
     crossCorr = np.correlate(x, y, "full")
     plt.plot(crossCorr)
