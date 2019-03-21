@@ -1,0 +1,105 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+from help import *
+
+#'''
+plt.subplot(1,4,1)
+data = np.fromfile("a.out", dtype="float64", count=-1, sep=" ").reshape((file_len("a.out"), 4))
+time = correctNumpyReadData(data[:, [0]])
+fortran = correctNumpyReadData(data[:, [1]])
+python = correctNumpyReadData(data[:, [2]])
+starpiba = correctNumpyReadData(data[:, [3]])
+plt.title("Nedelas minus 512")
+plt.plot(time, fortran, label="fortran")
+plt.plot(time, python, label="python")
+plt.plot(time, starpiba, label="starpiba")
+
+plt.subplot(1,4,2)
+data = np.fromfile("b.out", dtype="float64", count=-1, sep=" ").reshape((file_len("b.out"), 4))
+time = correctNumpyReadData(data[:, [0]])
+fortran = correctNumpyReadData(data[:, [1]])
+python = correctNumpyReadData(data[:, [2]])
+starpiba = correctNumpyReadData(data[:, [3]])
+plt.title("Nedelas pluss 512")
+plt.plot(time, fortran, label="fortran")
+plt.plot(time, python, label="python")
+plt.plot(time, starpiba, label="starpiba")
+
+
+plt.subplot(1,4,3)
+data = np.fromfile("c.out", dtype="float64", count=-1, sep=" ").reshape((file_len("c.out"), 4))
+time = correctNumpyReadData(data[:, [0]])
+fortran = correctNumpyReadData(data[:, [1]])
+python = correctNumpyReadData(data[:, [2]])
+starpiba = correctNumpyReadData(data[:, [3]])
+plt.title("Dienas minus 720")
+plt.plot(time, fortran, label="fortran")
+plt.plot(time, python, label="python")
+plt.plot(time, starpiba, label="starpiba")
+
+plt.subplot(1,4,4)
+data = np.fromfile("d.out", dtype="float64", count=-1, sep=" ").reshape((file_len("d.out"), 4))
+time = correctNumpyReadData(data[:, [0]])
+fortran = correctNumpyReadData(data[:, [1]])
+python = correctNumpyReadData(data[:, [2]])
+starpiba = correctNumpyReadData(data[:, [3]])
+plt.title("Dienas pluss 720")
+plt.plot(time, fortran, label="fortran")
+plt.plot(time, python, label="python")
+plt.plot(time, starpiba, label="starpiba")
+
+plt.legend()
+plt.show()
+
+
+'''
+plt.figure("vearth")
+plt.subplot(1,4,1)
+data = np.fromfile("o.out", dtype="float64", count=-1, sep=" ").reshape((file_len("o.out"), 4))
+time = correctNumpyReadData(data[:, [0]])
+fortran = correctNumpyReadData(data[:, [1]])
+python = correctNumpyReadData(data[:, [2]])
+starpiba = correctNumpyReadData(data[:, [3]])
+plt.title("Nedelas minus 512")
+plt.plot(time, fortran, label="fortran")
+plt.plot(time, python, label="python")
+plt.plot(time, starpiba, label="starpiba")
+
+plt.subplot(1,4,2)
+data = np.fromfile("p.out", dtype="float64", count=-1, sep=" ").reshape((file_len("p.out"), 4))
+time = correctNumpyReadData(data[:, [0]])
+fortran = correctNumpyReadData(data[:, [1]])
+python = correctNumpyReadData(data[:, [2]])
+starpiba = correctNumpyReadData(data[:, [3]])
+plt.title("Nedelas pluss 512")
+plt.plot(time, fortran, label="fortran")
+plt.plot(time, python, label="python")
+plt.plot(time, starpiba, label="starpiba")
+
+
+plt.subplot(1,4,3)
+data = np.fromfile("z.out", dtype="float64", count=-1, sep=" ").reshape((file_len("z.out"), 4))
+time = correctNumpyReadData(data[:, [0]])
+fortran = correctNumpyReadData(data[:, [1]])
+python = correctNumpyReadData(data[:, [2]])
+starpiba = correctNumpyReadData(data[:, [3]])
+plt.title("Dienas minus 720")
+plt.plot(time, fortran, label="fortran")
+plt.plot(time, python, label="python")
+plt.plot(time, starpiba, label="starpiba")
+
+plt.subplot(1,4,4)
+data = np.fromfile("r.out", dtype="float64", count=-1, sep=" ").reshape((file_len("r.out"), 4))
+time = correctNumpyReadData(data[:, [0]])
+fortran = correctNumpyReadData(data[:, [1]])
+python = correctNumpyReadData(data[:, [2]])
+starpiba = correctNumpyReadData(data[:, [3]])
+plt.title("Dienas pluss 720")
+plt.plot(time, fortran, label="fortran")
+plt.plot(time, python, label="python")
+plt.plot(time, starpiba, label="starpiba")
+
+plt.legend()
+plt.show()
+'''

@@ -11,7 +11,6 @@ import time
 
 kernel = SPK.open('/home/janis/Downloads/de435.bsp')
 
-
 def dopsety(dopsetPar):
     os.system("code/dopsetpy_v1.5 " + dopsetPar)
     # dopsetpy parametru nolasisana
@@ -41,18 +40,19 @@ def dopsety(dopsetPar):
                 FreqShift = Header[1]
             elif vards == 'VSun':
                 Vsun = Header[1]
-            elif vards == 'vEarth':
+            elif vards == 'V Earth':
                 VEarth = Header[1]
             elif vards == "VelTotal":
                 VelTotal = float(Header[1])
                 # Header +=1
-    print("Vobs f", Vobs)
+    #print("Vobs f", Vobs)
     # print ("Vearth f", float (VEarth) )
-    print("Vobs f", float(Vobs))
+    #print("Vobs f", float(Vobs))
     # print ("Vsun f", float(Vsun))
-    # return float(VEarth)
-    # return(float(Vobs))
-    # return float(Vsun)
+
+    #return float(VEarth)
+    #return(float(Vobs))
+    #return float(Vsun)
     return VelTotal
 
 
@@ -88,51 +88,56 @@ def convertDatetimeObjectToJD(time):
     return t.jd
 
 
-def vbos(dec, ra, time):
+def vbos(dec, ra, time, stringTime):
     def dmod(a, b):
         return np.double(a) % np.double(b)
 
     dj = convertDatetimeObjectToJD(time)
-    print("djp", dj)
-    ro = 3430.18601252541
+    #print("djp", dj)
+    #ro = 3430.18601252541
+    x = 3183661
+    y = 1276902
+    ro = np.sqrt(x**2+y**2) / 1000.0
     vhor = 2 * np.pi * ro / (24 * 3600) * 1.002737909350795
-    print("vhorp", vhor)
+    #print("vhorp", vhor)
     angleDEC = SkyCoord(ra='22h56m17.90s', dec='+62d01m49.7s').dec.radian
     cdec = np.cos(angleDEC)
     # cdec=np.cos(dec)
-    print("cdecp", cdec)
-    albypi = 0.121415123729
+    #print("cdecp", cdec)
+    #albypi = 0.121415123729
+    x = x / 1000.0
+    y = y / 1000.0
+    along = np.arctan2(y, x)
+    albypi = along / np.pi
     t = dj - 2451545
-    print("t", t)
-    print("tp", t)
+    #print("t", t)
+    #print("tp", t)
     # t=2
     # albypi=3
-    print("t", t)
-    aLMST = np.pi * math.fmod(np.double(5.55811454652) + math.fmod(t + t, np.double(2)) + t * (
-                np.double(0.547581870159) - 2 + t * (np.double(1.61549) - 15 - t * np.double(1.473) - 24)) + albypi,
-                              np.double(2))
+    #print("t", t)
+    aLMST = np.pi * math.fmod(np.double(5.55811454652) + math.fmod(t + t, np.double(2)) + t * (np.double(0.547581870159) - 2 + t * (np.double(1.61549) - 15 - t * np.double(1.473) - 24)) + albypi, np.double(2))
     # aLMST = np.rad2deg(aLMST)
 
     location = EarthLocation(x=3183661 * u.m, y=1276902 * u.m, z=5359291 * u.m)
-    print("location", location)
+    #print("location", location)
     # ('-21d51m17s', '57d33m12.3s','87.30m')
-    sdTIme = Time('2019-02-18 08:30:30', scale='utc', location=location)
-    print("SD time", sdTIme.sidereal_time('apparent'))
+    sdTIme = Time(stringTime, scale='utc', location=location)
+    #sdTIme = Time("2019-03-19 10:50:32", scale='utc', location=location)
+    #print("SD time", sdTIme.sidereal_time('apparent'))
     aLMST2 = np.deg2rad(sdTIme.sidereal_time('apparent')).value
-    print("aLMSTp", aLMST2, "sdTIME", sdTIme)
-    print("math.fmod(t+t,2.0)", math.fmod(t + t, 2.0))
+    #print("aLMSTp", aLMST2, "sdTIME", sdTIme)
+    #print("math.fmod(t+t,2.0)", math.fmod(t + t, 2.0))
 
-    aLMSTf = 5.1923676562989565
-             5.192298374463161
+    aLMSTf = 5.1923676562989565  #5.192298374463161
     ravhor = aLMST2 + np.pi / 2
-    print("ravhorp", ravhor)
-    print("Angle", SkyCoord(ra='22h56m17.90s', dec='+62d01m49.7s').ra.radian)
-    print("ra python", np.deg2rad(ra))
+    #print("ravhorp", ravhor)
+    #print("Angle", SkyCoord(ra='22h56m17.90s', dec='+62d01m49.7s').ra.radian)
+    #print("ra python", np.deg2rad(ra))
     angleRA = SkyCoord(ra='22h56m17.90s', dec='+62d01m49.7s').ra.radian
-    print("np.cos(np.deg2rad(ra)-ravhor)p", np.cos(angleRA - ravhor))
+    #print("np.cos(np.deg2rad(ra)-ravhor)p", np.cos(angleRA - ravhor))
     vobs = vhor * cdec * np.cos(angleRA - ravhor)
     # vobs=vhor*cdec*np.cos(ra-ravhor)
-    print("vobsp", vobs)
+    #print("vobsp", vobs)
     return (vobs)
 
 
@@ -141,16 +146,16 @@ month = 2
 day = 18
 
 
-def v_lsr(source, time):
+def v_lsr(source, time, stringTime):
     ra = 22 + 56 / 60 + 17.90 / 3600
     dec = 62 + 1 / 60 + 49.7 / 3600
     rar0 = (22 + 56 / 60.0 + 17.90 / 3600.0) / 12 * np.pi
     decr0 = (np.abs(62) + np.abs(1) / 60.0 + np.abs(49.7) / 3600.0) / 180 * np.pi
-    v = np.mean(v_sun(source)).value / 1000 + vbos(decr0, rar0, time) + np.mean(v_earth(source)).value / 1000
-    # v = np.mean(v_earth(source)).value /1000
-    # v =  np.mean(v_sun(source)).value / 1000
+    v = np.mean(v_sun(source)).value / 1000 + vbos(decr0, rar0, time, stringTime) + np.mean(v_earth(source)).value / 1000
+    #v = np.mean(v_earth(source)).value /1000
+    #v =  np.mean(v_sun(source)).value / 1000
     # v =  np.mean(v_earth(source)).value /1000
-    # v = vbos(dec, ra, time)
+    #v = vbos(decr0, rar0, time, stringTime)
     return v
 
 
@@ -168,13 +173,13 @@ dec = 620149.7
 epoch = 2000.0
 
 
-def lsr(ra, dec, date, t):
+def lsr(ra, dec, date, t, stringTime):
     start_time = Time(date, format='isot', scale='utc')
     time_range = np.linspace(0, 10000, 10000) * u.second
     times = start_time + time_range
     source = SkyCoord(ra=ra, dec=dec, frame=FK5, equinox='J2000.0', obstime=times)
     source.transform_to(source)
-    V_lsr = v_lsr(source, t)
+    V_lsr = v_lsr(source, t, stringTime)
     return V_lsr
 
 
@@ -182,11 +187,12 @@ t = datetime.datetime(year, month, day, 8, 30, 30)
 time = t.isoformat()
 date = Time(time, format='isot', scale='utc')
 
-vTotal = lsr('22h56m17.90s', '+62d01m49.7s', date, t)
-print("vTotal p", vTotal)
+#'2019-02-18 08:30:30'
+#vTotal = lsr('22h56m17.90s', '+62d01m49.7s', date, t, "2019-03-19 10:50:32")
+#print("vTotal p", vTotal)
 
-dopsetPar = "2019 02 18 08 30 30 22 56 17.90 62 01 49.7"
-print("vTotal f", dopsety(dopsetPar))
+#dopsetPar = "2019 02 18 08 30 30 22 56 17.90 62 01 49.7"
+#print("vTotal f", dopsety(dopsetPar))
 
 
 def convertDatetimeObjectToMJD(time):
@@ -194,10 +200,9 @@ def convertDatetimeObjectToMJD(time):
     t = Time(time, format='isot')
     return t.mjd
 
-
-'''
-for i in range (0, 512):
-    time = datetime.datetime.today() - datetime.timedelta(weeks = i)
+for i in range (0, 720):
+    time = datetime.datetime.today() + datetime.timedelta(days = i)
+    stringTime = time.strftime('%Y-%m-%d %H:%M:%S')
     timeStr = datetime.datetime.strftime(time , '%Y %m %d %H %M %S')
     dopsetPar = timeStr + " 22 56 17.90 62 01 49.7"
     lsrDatePar = datetime.datetime.strftime(time , '%Y-%m-%dT%H:%M:%S')
@@ -206,6 +211,5 @@ for i in range (0, 512):
     #print(type(lsrDatePar))
     #lsr('22h56m17.90s', '+62d01m49.7s', lsrDatePar, time)
     #print(convertDatetimeObjectToMJD(time), dopsety(dopsetPar), lsr('22h56m17.90s', '+62d01m49.7s', lsrDatePar), np.abs(dopsety(dopsetPar)) - np.abs(lsr('22h56m17.90s', '+62d01m49.7s', lsrDatePar)))
-    print(convertDatetimeObjectToMJD(time), dopsety(dopsetPar), lsr('22h56m17.90s', '+62d01m49.7s', t, time), np.abs(dopsety(dopsetPar)) - np.abs(lsr('22h56m17.90s', '+62d01m49.7s', t, time)))
-'''
+    print(convertDatetimeObjectToMJD(time), dopsety(dopsetPar), lsr('22h56m17.90s', '+62d01m49.7s', t, time, stringTime), np.abs(dopsety(dopsetPar)) - np.abs(lsr('22h56m17.90s', '+62d01m49.7s', t, time, stringTime)))
 
