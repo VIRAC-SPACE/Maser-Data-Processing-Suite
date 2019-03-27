@@ -104,9 +104,9 @@ cccccccccccccccccccccccccccccccccccccccccccccccccc
     
 c        write(*,*)'----------------------------------'
 c        write(*,*)'Julian Day at given UT: ', dj
-         write(*,*)'V Sun: ', Vsun
-         write(*,*)'V obs: ', Vobs
-	 write(*,*)'V Earth: ', VEarth, 123
+c        write(*,*)'V Sun: ', Vsun
+c        write(*,*)'V obs: ', Vobs
+c	 write(*,*)'V Earth: ', VEarth, 123
 c        write(*,*)'V tot: ', Vdop
 c        write(*,*)'f shift at ', freq0,'MHz  = ', f_shift,' MHz'
 c        write(*,*)'----------------------------------'
@@ -122,7 +122,9 @@ c     MJD=JD-2400000.5d0   ! this formula gives Modified Julian Day number
         write(11,996) "LSRshift",f_shift,"MHz"
         write(11,997) "MJD",dj-2400000.5d0
         write(11,997)'Vobs', Vobs,"km/s"
+        write(11,996) "VSun",VSun,"km/s"
         write(11,996) "AtFreq",freq0,"MHz"
+	write(11,996) "V Earth", VEarth, "km/s"
         write(11,996) "FreqShift",f_shift,"MHz"
         write(11,996) "VelTotal",Vdop,"km/s"
         close(11)
@@ -305,10 +307,13 @@ c sredni czas gwiazdowy miejsca
 	call BARVEL(DJE,0.d0,VHelio,ve)	
 c ve zawiera predkosc wzgledem barycentrum Ukladu Slonecznego
 	vEarth=(ve(1)*dcos(ra)+ve(2)*dsin(ra))*cdec+ve(3)*sdec
-        write(*,*)'V Earth: ', VEarth
+c        open(11,file="lsrShift.dat")
+c        write(*,*)'V Earth: ', VEarth
+c        write(11,996) "V Earth", VEarth, "km/s"
+c        close(11)
 	Vtot = vSun + vEarth + vobs
+c 996     format (a,";",f15.10,";",a,";")
 	end
-
 
 	SUBROUTINE PREold(dra,d,dra1,d1,Dje1,Dje2)
 

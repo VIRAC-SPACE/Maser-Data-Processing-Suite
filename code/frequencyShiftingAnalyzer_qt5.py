@@ -14,9 +14,13 @@ import numpy as np
 import scipy.constants
 import pandas as pd
 from multiprocessing import Pool
+import time
+import datetime
+from astropy.time import Time
 
 from experimentsLogReader import ExperimentLogReader
 from ploting_qt5 import  Plot
+from vlsr import lsr
 
 def parseArguments():
     parser = argparse.ArgumentParser(description='''Creates input file for plotting tool. ''', epilog="""PRE PLOTTER.""")
@@ -648,48 +652,17 @@ class Analyzer(QWidget):
             months = {"Jan":"1", "Feb":"2", "Mar":"3", "Apr":"4", "May":"5", "Jun":"6", "Jul":"7", "Aug":"8", "Sep":"9", "Oct":"10", "Nov":"11", "Dec":"12"}
             dateStrList[1] = int(months[dateStrList[1]])
             dateStr = str(dateStrList[2]) + " " + str(dateStrList[1]) + " " + str(dateStrList[0])
-            RaStr = " ".join(scan_1["Ra"])
-            DecStr = " ".join(scan_1["Dec"])
-            dopsetPar = dateStr + " " + timeStr + " " + RaStr + " " + DecStr
-            print ("dopsetPar", dopsetPar,  " dateStr ", dateStr + " timeStr " + timeStr + " RaStr " + RaStr + " DecStr" + DecStr)
-            os.system("code/dopsetpy_v1.5 " + dopsetPar)
 
-            # dopsetpy parametru nolasisana
-            with open('lsrShift.dat') as openfileobject:
-                for line in openfileobject:
-                    Header = line.split(';')
-                    vards = Header[0]
-                    if vards == "Date":
-                        dateStr = Header[1]
-                    elif vards == "Time":
-                        laiks = Header[1]
-                    elif vards == "RA":
-                        RaStr = Header[1]
-                    elif vards == "DEC":
-                        DecStr = Header[1]
-                    elif vards == "Source":
-                        Source = Header[1]
-                    elif vards == "LSRshift":
-                        lsrShift = Header[1]
-                    elif vards == "MJD":
-                        mjd = Header[1]
-                        print ("MJD: \t", mjd)
-                    elif vards == "Vobs":
-                        Vobs = Header[1]
-                        print ("Vobs: \t", Vobs)
-                    elif vards == "AtFreq":
-                        AtFreq = Header[1]
-                        print ("At Freq: \t", AtFreq)
-                    elif vards == "FreqShift":
-                        FreqShift = Header[1]
-                        print ("FreqShift: \t", FreqShift)
-                    elif vards == "VelTotal":
-                        VelTotal = float(Header[1])
-                        print ("VelTotal: \t", VelTotal)
-                    #Header +=1
+            dateStr = dateStr.split(" ")
+            timeStr = timeStr.split(" ")
+            t = datetime.datetime(int(dateStr[0]), int(dateStr[1]), int(dateStr[2]),     int(timeStr[0]), int(timeStr[1]), int(timeStr[2]))
+            time = t.isoformat()
+            date = Time(time, format='isot', scale='utc')
+            RaStr = scan_1["Ra"][0] + "h" + scan_1["Ra"][1] + "m" + scan_1["Ra"][2] + "s"
+            DecStr = "+" + scan_1["Dec"][0] + "d" + scan_1["Dec"][1] + "m" + scan_1["Dec"][2] + "s"
+            VelTotal = lsr(RaStr, DecStr,  date, t,  dateStr[0] + "-" + dateStr[1] + "-" + dateStr[2] + " " + timeStr[0] + ":" + timeStr[1] + ":" + timeStr[2])
 
-            Vobs = float(Vobs)
-            lsrCorr = float(lsrShift)*1.e6 # for MHz
+            print("VelTotal", VelTotal)
 
             self.max_yu1_index =  self.totalResults_u1[p].argmax(axis=0)
             self.max_yu9_index =  self.totalResults_u9[p].argmax(axis=0)
