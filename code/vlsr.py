@@ -31,7 +31,7 @@ def convertDatetimeObjectToJD(time):
     t = Time(time, format='isot')
     return t.jd
 
-def vobs(dec, ra, stringTime, x, y, z):
+def vobs(ra, dec, stringTime, x, y, z):
     ro = np.sqrt(x ** 2 + y ** 2) / 1000.0
     vhor = 2 * np.pi * ro / (24 * 3600) * 1.002737909350795
     angleDEC = SkyCoord(ra=ra, dec=dec).dec.radian
@@ -44,10 +44,10 @@ def vobs(dec, ra, stringTime, x, y, z):
     vobs = vhor * cdec * np.cos(angleRA - ravhor)
     return vobs
 
-def v_lsr(source, stringTime, x, y, z, RA, DEC):
+def v_lsr(ra, dec, source, stringTime, x, y, z, RA, DEC):
     rar0 = (np.float64(RA[0]) + np.float64(RA[1]) / 60.0 + np.float64(RA[2]) / 3600.0) / 12 * np.pi
     decr0 = (np.abs(np.float64(DEC[0])) + np.abs(np.float64(DEC[1])) / 60.0 + np.abs(np.float64(DEC[2])) / 3600.0) / 180 * np.pi
-    v = np.mean(v_sun(source)).value / 1000 + vobs(decr0, rar0, stringTime, x, y, z) + np.mean(v_earth(source)).value / 1000
+    v = np.mean(v_sun(source)).value / 1000 + vobs(ra, dec, stringTime, x, y, z) + np.mean(v_earth(source)).value / 1000
     return v
 
 def lsr(ra, dec, date, stringTime, x, y, z, RA, DEC):
@@ -56,5 +56,5 @@ def lsr(ra, dec, date, stringTime, x, y, z, RA, DEC):
     times = start_time + time_range
     source = SkyCoord(ra=ra, dec=dec, frame=FK5, equinox='J2000.0', obstime=times)
     source.transform_to(source)
-    V_lsr = v_lsr(source, stringTime, x, y, z, RA, DEC)
+    V_lsr = v_lsr(ra, dec, source, stringTime, x, y, z, RA, DEC)
     return V_lsr

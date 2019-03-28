@@ -20,6 +20,7 @@ from astropy.time import Time
 from ExperimentsLogReader.experimentsLogReader import LogReaderFactory, LogTypes
 from ploting_qt5 import  Plot
 from vlsr import lsr
+from help import *
 
 def parseArguments():
     parser = argparse.ArgumentParser(description='''Creates input file for plotting tool. ''', epilog="""PRE PLOTTER.""")
@@ -32,14 +33,7 @@ def parseArguments():
     parser.add_argument("-m", "--manual", help="Set manual log data", action='store_true')
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
     args = parser.parse_args()
-    
     return args
-
-def file_len(fname):
-    with open(fname) as f:
-        for i, l in enumerate(f):
-            pass
-    return i + 1
 
 def is_outlier(points, threshold):
     if len(points.shape) == 1:
@@ -99,10 +93,6 @@ def STON(xarray, yarray, cuts):
     ston = max/(std*3)
     return ston
 
-def func():
-    pass
-
-
 def replaceBadPoints(xdata, ydata, x_bad_point, y_bad_point, data):
     tempx = []
     tempy = []
@@ -135,7 +125,7 @@ class Result():
         return self.specie
 
 class Analyzer(QWidget):
-    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime, base_frequencies):
+    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime, base_frequencies, stationCordinations):
         super().__init__()
        
         self.setWindowIcon(QIcon('viraclogo.png'))
@@ -171,6 +161,7 @@ class Analyzer(QWidget):
         self.firstScanStartTime = firstScanStartTime
         self.base_frequencies = base_frequencies
         self.base_frequencies_list = list()
+        self.stationCordinations = stationCordinations
 
         for value in self.base_frequencies:
             self.base_frequencies_list.append(float(self.base_frequencies[value]))
@@ -658,7 +649,11 @@ class Analyzer(QWidget):
             date = Time(time, format='isot', scale='utc')
             RaStr = scan_1["Ra"][0] + "h" + scan_1["Ra"][1] + "m" + scan_1["Ra"][2] + "s"
             DecStr = "+" + scan_1["Dec"][0] + "d" + scan_1["Dec"][1] + "m" + scan_1["Dec"][2] + "s"
-            VelTotal = lsr(RaStr, DecStr,  date, t,  dateStr[0] + "-" + dateStr[1] + "-" + dateStr[2] + " " + timeStr[0] + ":" + timeStr[1] + ":" + timeStr[2], scan_1["Ra"], scan_1["Dec"])
+            stringTime = dateStr[0] + "-" + dateStr[1] + "-" + dateStr[2] + " " + timeStr[0] + ":" + timeStr[1] + ":" + timeStr[2]
+            x = np.float64(self.stationCordinations[0])
+            y = np.float64(self.stationCordinations[1])
+            z = np.float64(self.stationCordinations[2])
+            VelTotal = lsr(RaStr, DecStr,  date, stringTime, x, y, z, scan_1["Ra"], scan_1["Dec"])
 
             print("VelTotal", VelTotal)
 
@@ -879,41 +874,40 @@ def main():
     configFilePath = str(args.__dict__["config"])
     config = configparser.RawConfigParser()
     config.read(configFilePath)
-    dataFilesPath =  config.get('paths', "dataFilePath")
-    prettyLogsPath =  config.get('paths', "prettyLogsPath")
+    dataFilesPath = config.get('paths', "dataFilePath")
+    prettyLogsPath = config.get('paths', "prettyLogsPath")
     logPath = config.get('paths', "logPath")
     resultPath = config.get('paths', "resultFilePath")
-    badPointRange =  config.getint('parameters', "badPointRange")
+    badPointRange = config.getint('parameters', "badPointRange")
     coordinates = config.get('sources', source).replace(" ", "").split(",")
     cuts = config.get('cuts', source).split(";")
-    cuts = [c.split(",") for c in  cuts]
+    cuts = [c.split(",") for c in cuts]
     base_frequencies = dict(config.items('base_frequencies'))
     
     if args.manual:
-        with open(prettyLogsPath + source + "_" + str(iteration_number) + "log.dat") as data_file:    
-                logs  = json.load(data_file)
+        with open(prettyLogsPath + source + "_" + str(iteration_number) + "log.dat") as data_file:
+            logs  = json.load(data_file)
         f = list()
-        
+
         for scan in logs:
             f.append(logs[scan]["fs_frequencyfs"])
         
     else:
-        logs = LogReaderFactory.getLgReader(LogTypes.DBBC, logFile, outputPath, [], True).getLogs()
-        f = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getAllfs_frequencys()
+        l = LogReaderFactory.getLgReader(LogTypes.DBBC, logPath + logFile, prettyLogsPath + source + "_" + str(iteration_number), coordinates, source)
+        logs = l.getLogs()
+        f = l.getAllfs_frequencys()
+        firstScanStartTime = l.getFirstScanStartTime()
 
-        logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getLogs()
-        f = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getAllfs_frequencys()
-        firstScanStartTime = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getFirstScanStartTime()
-        
     f = [float(fi) for fi in f]
     f = list(set(f))
     f.sort()
     f1 =  f[-1]
     f2 = f[-2]
     fstart = (f1 + f2)/ 2.0
-    
     location = logs["header"]["location"]
-    
+    stationCordinations = config.get('stations', location)
+    stationCordinations = stationCordinations.replace(" ", "").split(",")
+
     if location == "IRBENE":
         DPFU_max =  config.get('parameters', "DPFU_max").split(",")
         G_El =  config.get('parameters', "G_El").split(",")
@@ -929,20 +923,16 @@ def main():
     DPFU_max = [float(i) for i in DPFU_max]
     G_El = [float(i) for i in G_El]
 
-    
     if threshold <= 0.0:
         raise Exception("Threshold cannot be negative or zero")   
-    
+
     #Create App
     qApp = QApplication(sys.argv)
-
-
-    aw = Analyzer(source, iteration_number, filter, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime, base_frequencies)
+    aw = Analyzer(source, iteration_number, filter, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime, base_frequencies, stationCordinations)
     aw.show()
     sys.exit(qApp.exec_())
-    
     sys.exit(0)
 
 if __name__=="__main__":
     main()
-    
+
