@@ -1,11 +1,8 @@
-import os
 import astropy.units as u
 import numpy as np
-from astropy.coordinates import SkyCoord, ICRS, FK5, EarthLocation, AltAz, Angle
+from astropy.coordinates import SkyCoord, FK5, EarthLocation
 from astropy.time import Time
-import datetime
 from jplephem.spk import SPK
-import time
 
 @u.quantity_input(canon_velocity=(u.meter / u.second))
 def v_sun(source, apex="18h03m50.29s +30d00m16.8s", canon_velocity=20.0 * 1000 * u.meter / u.second):
@@ -34,38 +31,30 @@ def convertDatetimeObjectToJD(time):
     t = Time(time, format='isot')
     return t.jd
 
-def vobs(dec, ra, time, stringTime):
-    dj = convertDatetimeObjectToJD(time)
-    x = 3183661
-    y = 1276902
+def vobs(dec, ra, stringTime, x, y, z):
     ro = np.sqrt(x ** 2 + y ** 2) / 1000.0
     vhor = 2 * np.pi * ro / (24 * 3600) * 1.002737909350795
-    angleDEC = SkyCoord(ra='22h56m17.90s', dec='+62d01m49.7s').dec.radian
+    angleDEC = SkyCoord(ra=ra, dec=dec).dec.radian
     cdec = np.cos(angleDEC)
-    x = x / 1000.0
-    y = y / 1000.0
-    along = np.arctan2(y, x)
-    albypi = along / np.pi
-    t = dj - 2451545
-    location = EarthLocation(x=3183661 * u.m, y=1276902 * u.m, z=5359291 * u.)
+    location = EarthLocation(x=x * u.m, y=y * u.m, z=z * u.m)
     sdTIme = Time(stringTime, scale='utc', location=location)
     aLMST = np.deg2rad(sdTIme.sidereal_time('apparent')).value
     ravhor = aLMST + np.pi / 2
-    angleRA = SkyCoord(ra='22h56m17.90s', dec='+62d01m49.7s').ra.radian
+    angleRA = SkyCoord(ra=ra, dec=dec).ra.radian
     vobs = vhor * cdec * np.cos(angleRA - ravhor)
     return vobs
 
-def v_lsr(source, time, stringTime):
-    rar0 = (22 + 56 / 60.0 + 17.90 / 3600.0) / 12 * np.pi
-    decr0 = (np.abs(62) + np.abs(1) / 60.0 + np.abs(49.7) / 3600.0) / 180 * np.pi
-    v = np.mean(v_sun(source)).value / 1000 + vobs(decr0, rar0, time, stringTime) + np.mean(v_earth(source)).value / 1000
+def v_lsr(source, stringTime, x, y, z, RA, DEC):
+    rar0 = (np.float64(RA[0]) + np.float64(RA[1]) / 60.0 + np.float64(RA[2]) / 3600.0) / 12 * np.pi
+    decr0 = (np.abs(np.float64(DEC[0])) + np.abs(np.float64(DEC[1])) / 60.0 + np.abs(np.float64(DEC[2])) / 3600.0) / 180 * np.pi
+    v = np.mean(v_sun(source)).value / 1000 + vobs(decr0, rar0, stringTime, x, y, z) + np.mean(v_earth(source)).value / 1000
     return v
 
-def lsr(ra, dec, date, t, stringTime):
+def lsr(ra, dec, date, stringTime, x, y, z, RA, DEC):
     start_time = Time(date, format='isot', scale='utc')
     time_range = np.linspace(0, 10000, 10000) * u.second
     times = start_time + time_range
     source = SkyCoord(ra=ra, dec=dec, frame=FK5, equinox='J2000.0', obstime=times)
     source.transform_to(source)
-    V_lsr = v_lsr(source, t, stringTime)
+    V_lsr = v_lsr(source, stringTime, x, y, z, RA, DEC)
     return V_lsr

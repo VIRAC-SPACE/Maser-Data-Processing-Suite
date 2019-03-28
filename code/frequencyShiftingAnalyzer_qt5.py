@@ -14,11 +14,10 @@ import numpy as np
 import scipy.constants
 import pandas as pd
 from multiprocessing import Pool
-import time
 import datetime
 from astropy.time import Time
 
-from experimentsLogReader import ExperimentLogReader
+from ExperimentsLogReader.experimentsLogReader import LogReaderFactory, LogTypes
 from ploting_qt5 import  Plot
 from vlsr import lsr
 
@@ -56,7 +55,6 @@ def is_outlier(points, threshold):
 
 def dopler(ObservedFrequency, velocityReceiver, f0):
     c = scipy.constants.speed_of_light
-    #f0 = 6668519200 # Hz 
     velocitySoure = (-((ObservedFrequency/f0)-1)*c + (velocityReceiver * 1000))/1000
     return velocitySoure
 
@@ -660,7 +658,7 @@ class Analyzer(QWidget):
             date = Time(time, format='isot', scale='utc')
             RaStr = scan_1["Ra"][0] + "h" + scan_1["Ra"][1] + "m" + scan_1["Ra"][2] + "s"
             DecStr = "+" + scan_1["Dec"][0] + "d" + scan_1["Dec"][1] + "m" + scan_1["Dec"][2] + "s"
-            VelTotal = lsr(RaStr, DecStr,  date, t,  dateStr[0] + "-" + dateStr[1] + "-" + dateStr[2] + " " + timeStr[0] + ":" + timeStr[1] + ":" + timeStr[2])
+            VelTotal = lsr(RaStr, DecStr,  date, t,  dateStr[0] + "-" + dateStr[1] + "-" + dateStr[2] + " " + timeStr[0] + ":" + timeStr[1] + ":" + timeStr[2], scan_1["Ra"], scan_1["Dec"])
 
             print("VelTotal", VelTotal)
 
@@ -900,6 +898,9 @@ def main():
             f.append(logs[scan]["fs_frequencyfs"])
         
     else:
+        logs = LogReaderFactory.getLgReader(LogTypes.DBBC, logFile, outputPath, [], True).getLogs()
+        f = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getAllfs_frequencys()
+
         logs  = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getLogs()
         f = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getAllfs_frequencys()
         firstScanStartTime = ExperimentLogReader(logPath + logFile, prettyLogsPath, coordinates, source).getFirstScanStartTime()
