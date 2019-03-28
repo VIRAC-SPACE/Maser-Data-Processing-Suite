@@ -634,7 +634,6 @@ class Analyzer(QWidget):
             scan_number_2 = self.scanPairs[p][1].split("_")[-1][2:].lstrip("0").split(".")[0]
             print ("\npairs ", self.scanPairs[p])
             scan_1 = self.logs[str(scan_number_1)]
-            scan_2 = self.logs[str(scan_number_2)]
 
             timeStr = scan_1['startTime'].replace(":", " ")
             dateStrList = scan_1['dates'].split()
@@ -647,6 +646,7 @@ class Analyzer(QWidget):
             t = datetime.datetime(int(dateStr[0]), int(dateStr[1]), int(dateStr[2]),     int(timeStr[0]), int(timeStr[1]), int(timeStr[2]))
             time = t.isoformat()
             date = Time(time, format='isot', scale='utc')
+            print("date", date)
             RaStr = scan_1["Ra"][0] + "h" + scan_1["Ra"][1] + "m" + scan_1["Ra"][2] + "s"
             DecStr = "+" + scan_1["Dec"][0] + "d" + scan_1["Dec"][1] + "m" + scan_1["Dec"][2] + "s"
             stringTime = dateStr[0] + "-" + dateStr[1] + "-" + dateStr[2] + " " + timeStr[0] + ":" + timeStr[1] + ":" + timeStr[2]
@@ -657,8 +657,8 @@ class Analyzer(QWidget):
 
             print("VelTotal", VelTotal)
 
-            self.max_yu1_index =  self.totalResults_u1[p].argmax(axis=0)
-            self.max_yu9_index =  self.totalResults_u9[p].argmax(axis=0)
+            self.max_yu1_index = self.totalResults_u1[p].argmax(axis=0)
+            self.max_yu9_index = self.totalResults_u9[p].argmax(axis=0)
 
             self.freq_0_u1_index = ((np.abs(self.base_frequencies_list - (self.x[self.max_yu1_index] + FreqStart) * (10 ** 6) ).argmin()))
             self.freq_0_u9_index = ((np.abs(self.base_frequencies_list - (self.x[self.max_yu9_index] + FreqStart) * (10 ** 6) ).argmin()))
@@ -886,14 +886,14 @@ def main():
     
     if args.manual:
         with open(prettyLogsPath + source + "_" + str(iteration_number) + "log.dat") as data_file:
-            logs  = json.load(data_file)
+            logs = json.load(data_file)
         f = list()
 
         for scan in logs:
             f.append(logs[scan]["fs_frequencyfs"])
         
     else:
-        l = LogReaderFactory.getLgReader(LogTypes.DBBC, logPath + logFile, prettyLogsPath + source + "_" + str(iteration_number), coordinates, source)
+        l = LogReaderFactory.getLogReader(LogTypes.DBBC, logPath + logFile, prettyLogsPath + source + "_" + str(iteration_number), coordinates, source)
         logs = l.getLogs()
         f = l.getAllfs_frequencys()
         firstScanStartTime = l.getFirstScanStartTime()

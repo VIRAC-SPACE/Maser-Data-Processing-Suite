@@ -45,8 +45,6 @@ def vobs(ra, dec, stringTime, x, y, z):
     return vobs
 
 def v_lsr(ra, dec, source, stringTime, x, y, z, RA, DEC):
-    rar0 = (np.float64(RA[0]) + np.float64(RA[1]) / 60.0 + np.float64(RA[2]) / 3600.0) / 12 * np.pi
-    decr0 = (np.abs(np.float64(DEC[0])) + np.abs(np.float64(DEC[1])) / 60.0 + np.abs(np.float64(DEC[2])) / 3600.0) / 180 * np.pi
     v = np.mean(v_sun(source)).value / 1000 + vobs(ra, dec, stringTime, x, y, z) + np.mean(v_earth(source)).value / 1000
     return v
 
