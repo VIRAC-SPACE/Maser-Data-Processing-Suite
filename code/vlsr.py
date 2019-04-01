@@ -50,7 +50,7 @@ def v_lsr(ra, dec, source, stringTime, x, y, z, RA, DEC):
 
 def lsr(ra, dec, date, stringTime, x, y, z, RA, DEC):
     start_time = Time(date, format='isot', scale='utc')
-    time_range = np.linspace(0, 10000, 10000) * u.second
+    time_range = np.linspace(0, 1, 1) * u.second
     times = start_time + time_range
     source = SkyCoord(ra=ra, dec=dec, frame=FK5, equinox='J2000.0', obstime=times)
     source.transform_to(source)
