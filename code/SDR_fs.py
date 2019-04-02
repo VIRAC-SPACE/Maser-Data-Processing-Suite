@@ -9,10 +9,13 @@ from PyQt5 import QtCore
 import argparse
 import re
 import numpy as np
+from astropy.time import Time
+import datetime
 
 from parsers._configparser import ConfigParser
 from ExperimentsLogReader.experimentsLogReader import LogReaderFactory, LogTypes
 from ploting_qt5 import Plot
+from vlsr import lsr
 from help import *
 
 def parseArguments():
@@ -44,6 +47,8 @@ class Analyzer(QWidget):
         self.DataFiles = os.listdir(self.DataDir)
         self.ScanPairs = self.createScanPairs()
         self.index = 0
+        self.SfU1 = list()
+        self.SfU9 = list()
         self.logs = LogReaderFactory.getLogReader(LogTypes.SDR, getConfigs("paths", "logPath") + getArgs("logFile"), getConfigs("paths", "prettyLogsPath") + getArgs("source") + "_" + getArgs("iteration_number")).getLogs()
         self.grid = QGridLayout()
         self.setLayout(self.grid)
@@ -184,27 +189,105 @@ class Analyzer(QWidget):
 
         El = 80
         G_El = [-0.0000333143, 0.0033676682, 0.9144626256]
-        SfU1 = TaU1 / float(self.logs["header"]["DPFU"][0]) * np.polyval(G_El, El)
-        SfU9 = TaU9 / float(self.logs["header"]["DPFU"][1]) * np.polyval(G_El, El)
+        SfU1scan = TaU1 / float(self.logs["header"]["DPFU"][0]) * np.polyval(G_El, El)
+        SfU9scan = TaU9 / float(self.logs["header"]["DPFU"][1]) * np.polyval(G_El, El)
+
+        self.SfU1.append(SfU1scan)
+        self.SfU9.append(SfU9scan)
 
         # plot3
         self.total_u1 = Plot()
         self.total_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "", (4, 0))
-        self.total_u1.plot(frequencyA[si:ei], SfU1[si:ei], 'b', label=str(index + 1))
+        self.total_u1.plot(frequencyA[si:ei], SfU1scan[si:ei], 'b', label=str(index + 1))
         self.grid.addWidget(self.total_u1, 3, 0)
 
         # plot4
-        self.total__u9 = Plot()
-        self.total__u9.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "", (4, 1))
-        self.total__u9.plot(frequencyA[si:ei], SfU9[si:ei], 'b', label=str(index + 1))
-        self.grid.addWidget(self.total__u9, 3, 1)
+        self.total_u9 = Plot()
+        self.total_u9.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "", (4, 1))
+        self.total_u9.plot(frequencyA[si:ei], SfU9scan[si:ei], 'b', label=str(index + 1))
+        self.grid.addWidget(self.total_u9, 3, 1)
 
         if index == len(self.ScanPairs) - 1:
             self.nextPairButton.setText('Move to total results')
             self.nextPairButton.clicked.connect(self.plotTotalResults)
 
     def plotTotalResults(self):
-        pass
+        self.grid.removeWidget(self.plot_start_u1A)
+        self.grid.removeWidget(self.plot_start_u9B)
+        self.grid.removeWidget(self.total_u1)
+        self.grid.removeWidget(self.total_u9)
+
+        self.plot_start_u1A.hide()
+        self.plot_start_u9B.hide()
+        self.total_u1.hide()
+        self.total_u9.hide()
+
+        self.plot_start_u1A.close()
+        self.plot_start_u9B.close()
+        self.total_u1.close()
+        self.total_u9.close()
+
+        self.plot_start_u1A.removePolt()
+        self.plot_start_u9B.removePolt()
+        self.total_u1.removePolt()
+        self.total_u9.removePolt()
+
+        del self.plot_start_u1A
+        del self.plot_start_u9B
+        del self.total_u1
+        del self.total_u9
+
+        self.grid.removeWidget(self.nextPairButton)
+        self.nextPairButton.hide()
+        self.nextPairButton.close()
+        del self.nextPairButton
+
+        for i in reversed(range(self.grid.count())):
+            self.grid.itemAt(i).widget().deleteLater()
+
+        velocitys_avg = np.zeros(len(self.SfU1))
+        y_u1_avg = np.zeros(len(self.SfU1))
+        y_u9_avg = np.zeros(len(self.SfU9))
+
+        for p in range(0, len(self.ScanPairs)):
+            scanNumber = self.ScanPairs[p][0][0]
+            scan_1 = self.logs[str(scanNumber)]
+            stringTime = scan_1["date"].replace("T", " ")
+            #'2019-03-21T12:09:36'
+            t = datetime.datetime.strptime(scan_1["date"], '%Y-%m-%dT%H:%M:%S')
+            time = t.isoformat()
+            date = Time(time, format='isot', scale='utc')
+            stationCordinations = getConfigs("stations", "IRBENE16")
+            x = np.float64(stationCordinations[0])
+            y = np.float64(stationCordinations[1])
+            z = np.float64(stationCordinations[2])
+            sourceCordinations =  getConfigs("sources",  getArgs("source")).split(",")
+            sourceCordinations = [sc.strip() for sc in sourceCordinations]
+            RA = sourceCordinations[0]
+            DEC = sourceCordinations[1]
+
+            ra = list()
+            dec = list()
+            ra.append(RA[0:2])
+            ra.append(RA[2:4])
+            ra.append(RA[4:len(RA)])
+
+            if DEC[0] == "-":
+                dec.append(DEC[0:3])
+                dec.append(DEC[3:5])
+                dec.append(DEC[5:len(DEC)])
+            else:
+                dec.append(DEC[0:2])
+                dec.append(DEC[2:4])
+                dec.append(DEC[4:len(DEC)])
+
+            RaStr = ra[0] + "h" + ra[1] + "m" + ra[2] + "s"
+            DecStr = "+" + dec[0] + "d" + dec[1] + "m" + dec[2] + "s"
+            VelTotal = lsr(RaStr, DecStr, date, stringTime, x, y, z, RA, DEC)
+            print("VelTotal", VelTotal)
+
+        #self.SfU1
+        #self.SfU9
 
     def nextPair(self):
         if self.index == len(self.ScanPairs)- 1:
