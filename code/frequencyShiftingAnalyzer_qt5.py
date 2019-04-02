@@ -104,8 +104,7 @@ def replaceBadPoints(xdata, ydata, x_bad_point, y_bad_point, data):
 
     for idx, point in enumerate(x_bad_point):
         index = xlist.index(point)
-        if (y_bad_point[idx] / ydata[index][0] > 1.10 or
-                y_bad_point[idx] / ydata[index][0] < 0.90):
+        if (y_bad_point[idx] / ydata[index][0] > 1.10 or y_bad_point[idx] / ydata[index][0] < 0.90):
             tempx.append(x_bad_point[idx])
             tempy.append(y_bad_point[idx])
             ydata[index][0] = p(x_bad_point[idx])
@@ -125,8 +124,7 @@ class Result():
         return self.specie
 
 class Analyzer(QWidget):
-    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, DPFU_max,
-                 G_El, Tcal, k, fstart, cuts, firstScanStartTime, base_frequencies, stationCordinations):
+    def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime, base_frequencies, stationCordinations):
         super().__init__()
 
         self.setWindowIcon(QIcon('viraclogo.png'))
@@ -555,14 +553,11 @@ class Analyzer(QWidget):
             self.data_1 = np.delete(self.data_1, (0), axis=0)  # izdzes masiva primo elementu
             self.data_2 = np.delete(self.data_2, (0), axis=0)  # izdzes masiva primo elementu
 
-            self.xdata, self.ydata_1_u1, self.ydata_2_u1, self.ydata_1_u9, self.ydata_2_u9 = self.__getDataForPolarization__(
-                self.data_1, self.data_2, self.filter)
+            self.xdata, self.ydata_1_u1, self.ydata_2_u1, self.ydata_1_u9, self.ydata_2_u9 = self.__getDataForPolarization__(self.data_1, self.data_2, self.filter)
 
             # Calibration
-            self.data_u1 = self.calibration(self.xdata, self.ydata_1_u1, self.ydata_2_u1, float(self.tsys_u1_1),
-                                            float(self.tsys_u1_2), self.elevation)
-            self.data_u9 = self.calibration(self.xdata, self.ydata_1_u9, self.ydata_2_u9, float(self.tsys_u9_1),
-                                            float(self.tsys_u9_2), self.elevation)
+            self.data_u1 = self.calibration(self.xdata, self.ydata_1_u1, self.ydata_2_u1, float(self.tsys_u1_1), float(self.tsys_u1_2), self.elevation)
+            self.data_u9 = self.calibration(self.xdata, self.ydata_1_u9, self.ydata_2_u9, float(self.tsys_u9_1), float(self.tsys_u9_2), self.elevation)
 
             self.xdata = np.array(self.xdata)
 
@@ -673,10 +668,8 @@ class Analyzer(QWidget):
             self.max_yu1_index = self.totalResults_u1[p].argmax(axis=0)
             self.max_yu9_index = self.totalResults_u9[p].argmax(axis=0)
 
-            self.freq_0_u1_index = (
-            (np.abs(self.base_frequencies_list - (self.x[self.max_yu1_index] + FreqStart) * (10 ** 6)).argmin()))
-            self.freq_0_u9_index = (
-            (np.abs(self.base_frequencies_list - (self.x[self.max_yu9_index] + FreqStart) * (10 ** 6)).argmin()))
+            self.freq_0_u1_index = ((np.abs(self.base_frequencies_list - (self.x[self.max_yu1_index] + FreqStart) * (10 ** 6)).argmin()))
+            self.freq_0_u9_index = ((np.abs(self.base_frequencies_list - (self.x[self.max_yu9_index] + FreqStart) * (10 ** 6)).argmin()))
 
             self.freq_0_u1 = self.base_frequencies_list[self.freq_0_u1_index]
             self.freq_0_u9 = self.base_frequencies_list[self.freq_0_u9_index]
@@ -725,8 +718,6 @@ class Analyzer(QWidget):
 
         self.grid.addWidget(self.plot_STON, 2, 0)
 
-        print(velocitys_avg)
-        print(velocitys_avg.size, y_u1_avg.size, y_u9_avg.size)
         totalResults = np.concatenate((velocitys_avg, y_u1_avg, y_u9_avg), axis=1)
         output_file_name = self.dataFilesPath + self.source + "_" + self.date.replace(" ","_") + "_" + self.firstScanStartTime + "_" + self.logs["header"]["location"] + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
@@ -894,7 +885,7 @@ def main():
     configFilePath = str(args.__dict__["config"])
     config = configparser.RawConfigParser()
     config.read(configFilePath)
-    dataFilesPath = config.get('paths', "dataFilePath")
+    dataFilesPath = config.get('paths', "dataFilePath") + "/DBBC/"
     prettyLogsPath = config.get('paths', "prettyLogsPath")
     logPath = config.get('paths', "logPath")
     resultPath = config.get('paths', "resultFilePath")
@@ -949,8 +940,7 @@ def main():
 
         # Create App
     qApp = QApplication(sys.argv)
-    aw = Analyzer(source, iteration_number, filter, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max,
-                  G_El, Tcal, k, fstart, cuts, firstScanStartTime, base_frequencies, stationCordinations)
+    aw = Analyzer(source, iteration_number, filter, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max,  G_El, Tcal, k, fstart, cuts, firstScanStartTime, base_frequencies, stationCordinations)
     aw.show()
     sys.exit(qApp.exec_())
     sys.exit(0)
