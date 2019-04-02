@@ -5,7 +5,7 @@ from astropy.time import Time
 from jplephem.spk import SPK
 
 @u.quantity_input(canon_velocity=(u.meter / u.second))
-def v_sun(source, apex="18h03m50.29s +30d00m16.8s", canon_velocity=20.0 * 1000 * u.meter / u.second):
+def v_sun(source, apex="18h03m50.29s +30d00m16.8s", canon_velocity=19.954 * 1000 * u.meter / u.second):
     if isinstance(source.obstime.value, str):
         equinox = source.obstime
     else:
