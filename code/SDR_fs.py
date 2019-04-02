@@ -189,15 +189,22 @@ class Analyzer(QWidget):
 
         # plot3
         self.total_u1 = Plot()
-        self.total_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u1 Polarization", (4, 0))
+        self.total_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "", (4, 0))
         self.total_u1.plot(frequencyA[si:ei], SfU1[si:ei], 'b', label=str(index + 1))
         self.grid.addWidget(self.total_u1, 3, 0)
 
         # plot4
         self.total__u9 = Plot()
-        self.total__u9.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u9 Polarization", (4, 1))
+        self.total__u9.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "", (4, 1))
         self.total__u9.plot(frequencyA[si:ei], SfU9[si:ei], 'b', label=str(index + 1))
         self.grid.addWidget(self.total__u9, 3, 1)
+
+        if index == len(self.ScanPairs) - 1:
+            self.nextPairButton.setText('Move to total results')
+            self.nextPairButton.clicked.connect(self.plotTotalResults)
+
+    def plotTotalResults(self):
+        pass
 
     def nextPair(self):
         if self.index == len(self.ScanPairs)- 1:
@@ -214,7 +221,7 @@ class Analyzer(QWidget):
         if self.index != len(self.ScanPairs) - 1:  # cheking if there is not one pair
             self.nextPairButton = QPushButton("Next pair", self)
             self.nextPairButton.clicked.connect(self.nextPair)
-            self.grid.addWidget(self.nextPairButton, 1, 5)
+            self.grid.addWidget(self.nextPairButton, 4, 2)
 
         self.plotPair(self.index)
 
