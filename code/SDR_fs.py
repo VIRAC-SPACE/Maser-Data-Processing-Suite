@@ -50,7 +50,8 @@ def dopler(ObservedFrequency, velocityReceiver, f0):
     velocitySoure = (-((ObservedFrequency / f0) - 1) * c + (velocityReceiver * 1000)) / 1000
     return velocitySoure
 
-class Result():
+class Result(object):
+    __slots__ = ('matrix', 'specie')
     def __init__(self, matrix, specie):
         self.matrix = matrix
         self.specie = specie
@@ -169,8 +170,8 @@ class Analyzer(QWidget):
         self.plot_start_u9B.plot(frequencyD, polarizationU9D, 'y', label=str(index + 1) + "s1")
         self.grid.addWidget(self.plot_start_u9B, 0, 1)
 
-        df_div = 16
-        BW = 1.5625
+        df_div = 4
+        BW = float(self.logs["header"]["Fs,Ns,RBW"][0])
         f_shift = BW / df_div
         l_spec = len(frequencyA)
         f_step = (frequencyA[l_spec - 1] - frequencyA[0]) / (l_spec - 1)
@@ -201,7 +202,7 @@ class Analyzer(QWidget):
         Ta_2_calonU9 = (Tsys_off_2U9 + float(self.logs["header"]["Tcal"][1])) * (polarizationU9D - polarizationU9C) / polarizationU9C  # cal phase
 
         Ta_refU1 = (Ta_2_caloffU1 + Ta_2_calonU1) / 2
-        Ta_refU9 = (Ta_2_caloffU9 + Ta_2_calonU9) / 2;
+        Ta_refU9 = (Ta_2_caloffU9 + Ta_2_calonU9) / 2
 
         Ta_sigU1 = np.roll(Ta_sigU1, +n_shift)
         Ta_sigU9 = np.roll(Ta_sigU9, +n_shift)
@@ -212,8 +213,10 @@ class Analyzer(QWidget):
         TaU1 = (Ta_sigU1 + Ta_refU1) / 2
         TaU9 = (Ta_sigU9 + Ta_refU9) / 2
 
-        El = 80
-        G_El = [-0.0000333143, 0.0033676682, 0.9144626256]
+        El = (float(self.logs[pair[0][0]]["AzEl"][1]) + float(self.logs[pair[0][1]]["AzEl"][1]) + float(self.logs[pair[1][0]]["AzEl"][1]) + float(self.logs[pair[1][1]]["AzEl"][1]))/ 4
+        print("Elevation", El, "\n")
+        G_El = self.logs["header"]["Elev_poly"]#[-0.0000333143, 0.0033676682, 0.9144626256]
+        G_El = [float(gel) for gel in G_El]
         SfU1scan = TaU1 / float(self.logs["header"]["DPFU"][0]) * np.polyval(G_El, El)
         SfU9scan = TaU9 / float(self.logs["header"]["DPFU"][1]) * np.polyval(G_El, El)
 
@@ -224,14 +227,18 @@ class Analyzer(QWidget):
         self.total_u1 = Plot()
         self.total_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "", (4, 0))
         self.x = frequencyA
-        self.total_u1.plot(frequencyA[si:ei], SfU1scan[si:ei], 'b', label=str(index + 1))
+        #[self.si:self.ei]
+        self.total_u1.plot(frequencyA, SfU1scan, 'b', label=str(index + 1))
         self.grid.addWidget(self.total_u1, 3, 0)
 
         # plot4
         self.total_u9 = Plot()
         self.total_u9.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "", (4, 1))
-        self.total_u9.plot(frequencyA[si:ei], SfU9scan[si:ei], 'b', label=str(index + 1))
+        self.total_u9.plot(frequencyA, SfU9scan, 'b', label=str(index + 1))
         self.grid.addWidget(self.total_u9, 3, 1)
+
+        self.si = si
+        self.ei = ei
 
         if index == len(self.ScanPairs) - 1:
             self.nextPairButton.setText('Move to total results')
@@ -320,8 +327,9 @@ class Analyzer(QWidget):
             for value in base_frequencies:
                 base_frequencies_list.append(float(base_frequencies[value]))
 
-            self.freq_0_u1_index = ((np.abs(base_frequencies_list - (self.x[self.max_yu1_index]) * (10 ** 6)).argmin()))
-            self.freq_0_u9_index = ((np.abs(base_frequencies_list - (self.x[self.max_yu9_index]) * (10 ** 6)).argmin()))
+            LO = float(self.logs["header"]["Frst,LO,IF"][1])
+            self.freq_0_u1_index = ((np.abs(base_frequencies_list - (self.x[self.max_yu1_index] + LO) * (10 ** 6)).argmin()))
+            self.freq_0_u9_index = ((np.abs(base_frequencies_list - (self.x[self.max_yu9_index] + LO) * (10 ** 6)).argmin()))
 
             self.freq_0_u1 = base_frequencies_list[self.freq_0_u1_index]
             self.freq_0_u9 = base_frequencies_list[self.freq_0_u9_index]
@@ -334,7 +342,7 @@ class Analyzer(QWidget):
 
             print("specie", specie, "\n")
 
-            velocitys = dopler((self.x) * (10 ** 6), VelTotal, self.freq_0_u1)
+            velocitys = dopler((self.x + LO) * (10 ** 6), VelTotal, self.freq_0_u1)
             y_u1_avg = y_u1_avg + self.SfU1[p]
             y_u9_avg = y_u9_avg + self.SfU9[p]
             velocitys_avg = velocitys_avg + velocitys
