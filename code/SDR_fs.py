@@ -379,11 +379,114 @@ class Analyzer(QWidget):
 
             self.plotPair(self.index)
 
+    def skipAll(self):
+        while self.index < len(self.ScanPairs):
+            pair = self.ScanPairs[self.index]
+            file1 = self.DataDir + self.__getDataFileForScan__(pair[0][0]) #r0
+            file2 = self.DataDir + self.__getDataFileForScan__(pair[0][1]) #s0
+            file3 = self.DataDir + self.__getDataFileForScan__(pair[1][0]) #r1
+            file4 = self.DataDir + self.__getDataFileForScan__(pair[1][1]) #s1
+
+            frequencyA = self.__getData(file1)[0] #r0
+            polarizationU1A = self.__getData(file1)[1] #r0
+            polarizationU9A = self.__getData(file1)[2] #r0
+
+            frequencyB = self.__getData(file2)[0] #s0
+            polarizationU1B = self.__getData(file2)[1] #s0
+            polarizationU9B = self.__getData(file2)[2] #s0
+
+            frequencyC = self.__getData(file3)[0] #r1
+            polarizationU1C = self.__getData(file3)[1] #r1
+            polarizationU9C = self.__getData(file3)[2] #r1
+
+            frequencyD = self.__getData(file4)[0] #s1
+            polarizationU1D = self.__getData(file4)[1] #s1
+            polarizationU9D = self.__getData(file4)[2] #s1
+
+            # fft shift
+            polarizationU1A = np.fft.fftshift(polarizationU1A) #r0
+            polarizationU9A = np.fft.fftshift(polarizationU9A) #r0
+            polarizationU1B = np.fft.fftshift(polarizationU1B) #s0
+            polarizationU9B = np.fft.fftshift(polarizationU9B) #s0
+            polarizationU1C = np.fft.fftshift(polarizationU1C) #r1
+            polarizationU9C = np.fft.fftshift(polarizationU9C) #r1
+            polarizationU1D = np.fft.fftshift(polarizationU1D) #s1
+            polarizationU9D = np.fft.fftshift(polarizationU9D) #s1
+
+            df_div = 4
+            BW = float(self.logs["header"]["Fs,Ns,RBW"][0])
+            f_shift = BW / df_div
+            l_spec = len(frequencyA)
+            f_step = (frequencyA[l_spec - 1] - frequencyA[0]) / (l_spec - 1)
+            n_shift = int(f_shift / f_step)
+            avg_interval = 0.5 # inner 50%
+            si = int(l_spec / 2 - l_spec * avg_interval / 2)
+            ei = int(l_spec / 2 + l_spec * avg_interval / 2)
+
+            Tsys_off_1U1 = float(self.logs["header"]["Tcal"][0]) * ((polarizationU1D + polarizationU1B) - np.mean(polarizationU1D[si:ei] - polarizationU1B[si:ei])) / (2 * np.mean(polarizationU1D[si:ei] - polarizationU1B[si:ei]))
+            Tsys_off_2U1 = float(self.logs["header"]["Tcal"][1]) * ((polarizationU1C + polarizationU1A) - np.mean(polarizationU1C[si:ei] - polarizationU1A[si:ei])) / (2 * np.mean(polarizationU1C[si:ei] - polarizationU1A[si:ei]))
+
+            Tsys_off_1U9 = float(self.logs["header"]["Tcal"][0]) * ((polarizationU9D + polarizationU9B) - np.mean(polarizationU9D[si:ei] - polarizationU9B[si:ei])) / (2 * np.mean(polarizationU9D[si:ei] - polarizationU9B[si:ei]))
+            Tsys_off_2U9 = float(self.logs["header"]["Tcal"][1]) * ((polarizationU9C + polarizationU9A) - np.mean(polarizationU9C[si:ei] - polarizationU9A[si:ei])) / (2 * np.mean(polarizationU9C[si:ei] - polarizationU9A[si:ei]))
+
+            Ta_1_caloffU1 = Tsys_off_1U1 * (polarizationU1A - polarizationU1B) / polarizationU1B # non-cal phase
+            Ta_1_caloffU9 = Tsys_off_1U9 * (polarizationU9A - polarizationU9B) / polarizationU9B  # non-cal phase
+
+            Ta_1_calonU1 = (Tsys_off_1U1 + float(self.logs["header"]["Tcal"][0])) * (polarizationU1C - polarizationU1D) / polarizationU1D  # cal phase
+            Ta_1_calonU9 = (Tsys_off_1U9 + float(self.logs["header"]["Tcal"][1])) * (polarizationU9C - polarizationU9D) / polarizationU9D  # cal phase
+
+            Ta_sigU1 = (Ta_1_caloffU1 + Ta_1_calonU1) / 2
+            Ta_sigU9 = (Ta_1_caloffU9 + Ta_1_calonU9) / 2
+
+            Ta_2_caloffU1 = Tsys_off_2U1 * (polarizationU1A - polarizationU1A) / polarizationU1A  # non-cal phase
+            Ta_2_caloffU9 = Tsys_off_2U9 * (polarizationU9A - polarizationU1A) / polarizationU1A  # non-cal phase
+
+            Ta_2_calonU1 = (Tsys_off_2U1 + float(self.logs["header"]["Tcal"][0])) * (polarizationU1D - polarizationU1C) / polarizationU1C  # cal phase
+            Ta_2_calonU9 = (Tsys_off_2U9 + float(self.logs["header"]["Tcal"][1])) * (polarizationU9D - polarizationU9C) / polarizationU9C  # cal phase
+
+            Ta_refU1 = (Ta_2_caloffU1 + Ta_2_calonU1) / 2
+            Ta_refU9 = (Ta_2_caloffU9 + Ta_2_calonU9) / 2
+
+            Ta_sigU1 = np.roll(Ta_sigU1, +n_shift)
+            Ta_sigU9 = np.roll(Ta_sigU9, +n_shift)
+
+            Ta_refU1 = np.roll(Ta_refU1, -n_shift)
+            Ta_refU9 = np.roll(Ta_refU9, -n_shift)
+
+            TaU1 = (Ta_sigU1 + Ta_refU1) / 2
+            TaU9 = (Ta_sigU9 + Ta_refU9) / 2
+
+            El = (float(self.logs[pair[0][0]]["AzEl"][1]) + float(self.logs[pair[0][1]]["AzEl"][1]) + float(self.logs[pair[1][0]]["AzEl"][1]) + float(self.logs[pair[1][1]]["AzEl"][1]))/ 4
+            print("Elevation", El, "\n")
+            G_El = self.logs["header"]["Elev_poly"]#[-0.0000333143, 0.0033676682, 0.9144626256]
+            G_El = [float(gel) for gel in G_El]
+            SfU1scan = TaU1 / float(self.logs["header"]["DPFU"][0]) * np.polyval(G_El, El)
+            SfU9scan = TaU9 / float(self.logs["header"]["DPFU"][1]) * np.polyval(G_El, El)
+
+            self.SfU1.append(SfU1scan)
+            self.SfU9.append(SfU9scan)
+            self.x = frequencyA
+
+            self.si = si
+            self.ei = ei
+
+            if self.index == len(self.ScanPairs) - 1:
+                self.nextPairButton.setText('Move to total results')
+                self.nextPairButton.clicked.connect(self.plotTotalResults)
+
+            self.index +=1
+
+        self.plotTotalResults()
+
     def __UI__(self):
         if self.index != len(self.ScanPairs) - 1:  # cheking if there is not one pair
             self.nextPairButton = QPushButton("Next pair", self)
             self.nextPairButton.clicked.connect(self.nextPair)
             self.grid.addWidget(self.nextPairButton, 4, 2)
+
+        self.skipAllButton = QPushButton("Skip to end", self)
+        self.skipAllButton.clicked.connect(self.skipAll)
+        self.grid.addWidget(self.skipAllButton, 5, 2)
 
         self.plotPair(self.index)
 
