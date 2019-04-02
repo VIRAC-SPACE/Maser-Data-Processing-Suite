@@ -9,8 +9,10 @@ from PyQt5 import QtCore
 import argparse
 import re
 import numpy as np
+import scipy.constants
 from astropy.time import Time
 import datetime
+import pickle
 
 from parsers._configparser import ConfigParser
 from ExperimentsLogReader.experimentsLogReader import LogReaderFactory, LogTypes
@@ -31,11 +33,33 @@ def parseArguments():
 def getArgs(key):
     return str(parseArguments().__dict__[key])
 
+def getConfingItem(item):
+    configFilePath = getArgs("config")
+    config = ConfigParser.getInstance()
+    config.CreateConfig(configFilePath)
+    return config.getItems(item)
+
 def getConfigs(key, value):
     configFilePath = getArgs("config")
     config = ConfigParser.getInstance()
     config.CreateConfig(configFilePath)
     return config.getConfig(key, value)
+
+def dopler(ObservedFrequency, velocityReceiver, f0):
+    c = scipy.constants.speed_of_light
+    velocitySoure = (-((ObservedFrequency / f0) - 1) * c + (velocityReceiver * 1000)) / 1000
+    return velocitySoure
+
+class Result():
+    def __init__(self, matrix, specie):
+        self.matrix = matrix
+        self.specie = specie
+
+    def getMatrix(self):
+        return self.matrix
+
+    def getSpecie(self):
+        return self.specie
 
 class Analyzer(QWidget):
     def __init__(self):
@@ -47,6 +71,7 @@ class Analyzer(QWidget):
         self.DataFiles = os.listdir(self.DataDir)
         self.ScanPairs = self.createScanPairs()
         self.index = 0
+        self.f0 = 6668519200
         self.SfU1 = list()
         self.SfU9 = list()
         self.logs = LogReaderFactory.getLogReader(LogTypes.SDR, getConfigs("paths", "logPath") + getArgs("logFile"), getConfigs("paths", "prettyLogsPath") + getArgs("source") + "_" + getArgs("iteration_number")).getLogs()
@@ -198,12 +223,13 @@ class Analyzer(QWidget):
         # plot3
         self.total_u1 = Plot()
         self.total_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "", (4, 0))
+        self.x = frequencyA
         self.total_u1.plot(frequencyA[si:ei], SfU1scan[si:ei], 'b', label=str(index + 1))
         self.grid.addWidget(self.total_u1, 3, 0)
 
         # plot4
         self.total_u9 = Plot()
-        self.total_u9.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "", (4, 1))
+        self.total_u9.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "", (4, 1))
         self.total_u9.plot(frequencyA[si:ei], SfU9scan[si:ei], 'b', label=str(index + 1))
         self.grid.addWidget(self.total_u9, 3, 1)
 
@@ -245,15 +271,14 @@ class Analyzer(QWidget):
         for i in reversed(range(self.grid.count())):
             self.grid.itemAt(i).widget().deleteLater()
 
-        velocitys_avg = np.zeros(len(self.SfU1))
-        y_u1_avg = np.zeros(len(self.SfU1))
-        y_u9_avg = np.zeros(len(self.SfU9))
+        velocitys_avg = np.zeros(len(self.x))
+        y_u1_avg = np.zeros(len(self.x))
+        y_u9_avg = np.zeros(len(self.x))
 
         for p in range(0, len(self.ScanPairs)):
             scanNumber = self.ScanPairs[p][0][0]
             scan_1 = self.logs[str(scanNumber)]
             stringTime = scan_1["date"].replace("T", " ")
-            #'2019-03-21T12:09:36'
             t = datetime.datetime.strptime(scan_1["date"], '%Y-%m-%dT%H:%M:%S')
             time = t.isoformat()
             date = Time(time, format='isot', scale='utc')
@@ -261,7 +286,7 @@ class Analyzer(QWidget):
             x = np.float64(stationCordinations[0])
             y = np.float64(stationCordinations[1])
             z = np.float64(stationCordinations[2])
-            sourceCordinations =  getConfigs("sources",  getArgs("source")).split(",")
+            sourceCordinations = getConfigs("sources",  getArgs("source")).split(",")
             sourceCordinations = [sc.strip() for sc in sourceCordinations]
             RA = sourceCordinations[0]
             DEC = sourceCordinations[1]
@@ -286,8 +311,54 @@ class Analyzer(QWidget):
             VelTotal = lsr(RaStr, DecStr, date, stringTime, x, y, z, RA, DEC)
             print("VelTotal", VelTotal)
 
-        #self.SfU1
-        #self.SfU9
+            self.max_yu1_index = self.SfU1[p].argmax(axis=0)
+            self.max_yu9_index = self.SfU9[p].argmax(axis=0)
+
+            base_frequencies = getConfingItem('base_frequencies')
+            base_frequencies_list = list()
+
+            for value in base_frequencies:
+                base_frequencies_list.append(float(base_frequencies[value]))
+
+            self.freq_0_u1_index = ((np.abs(base_frequencies_list - (self.x[self.max_yu1_index]) * (10 ** 6)).argmin()))
+            self.freq_0_u9_index = ((np.abs(base_frequencies_list - (self.x[self.max_yu9_index]) * (10 ** 6)).argmin()))
+
+            self.freq_0_u1 = base_frequencies_list[self.freq_0_u1_index]
+            self.freq_0_u9 = base_frequencies_list[self.freq_0_u9_index]
+
+            print("base freqcvencie", self.freq_0_u1, self.freq_0_u9)
+
+            for key, value in base_frequencies.items():
+                if float(value) == self.freq_0_u1:
+                    specie = key
+
+            print("specie", specie, "\n")
+
+            velocitys = dopler((self.x) * (10 ** 6), VelTotal, self.freq_0_u1)
+            y_u1_avg = y_u1_avg + self.SfU1[p]
+            y_u9_avg = y_u9_avg + self.SfU9[p]
+            velocitys_avg = velocitys_avg + velocitys
+
+        velocitys_avg = velocitys_avg / len(self.ScanPairs)
+        y_u1_avg = y_u1_avg / len(self.ScanPairs)
+        y_u9_avg = y_u9_avg / len(self.ScanPairs)
+
+        self.plot_velocity_u1 = Plot()
+        self.plot_velocity_u1.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization",(1, 0))
+        self.plot_velocity_u1.plot(velocitys_avg, y_u1_avg, 'b')
+
+        self.plot_velocity_u9 = Plot()
+        self.plot_velocity_u9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization",(1, 1))
+        self.plot_velocity_u9.plot(velocitys_avg, y_u9_avg, 'b')
+
+        self.grid.addWidget(self.plot_velocity_u1, 0, 0)
+        self.grid.addWidget(self.plot_velocity_u9, 0, 1)
+
+        totalResults = np.transpose(np.array([np.transpose(velocitys_avg), np.transpose(y_u1_avg), np.transpose(y_u9_avg)]))
+        output_file_name = getConfigs("paths", "dataFilePath")  + "SDR/" + getArgs("source") + "_" + scan_1["date"] + "_" +  "IRBENE16"+ "_" + getArgs("iteration_number") + ".dat"
+        output_file_name = output_file_name.replace(" ", "")
+        result = Result(totalResults, specie)
+        pickle.dump(result, open(output_file_name, 'wb'))
 
     def nextPair(self):
         if self.index == len(self.ScanPairs)- 1:
@@ -317,4 +388,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

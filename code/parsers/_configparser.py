@@ -24,4 +24,7 @@ class ConfigParser():
     def getConfig(self, key, value):
         _config = self.config.get(key, value)
         return _config
+
+    def getItems(self, item):
+        return dict(self.config.items(item))
     
