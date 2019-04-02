@@ -44,7 +44,6 @@ class Analyzer(QWidget):
         self.DataFiles = os.listdir(self.DataDir)
         self.ScanPairs = self.createScanPairs()
         self.index = 0
-        getConfigs("paths", "logPath") + getArgs("logFile")
         self.logs = LogReaderFactory.getLogReader(LogTypes.SDR, getConfigs("paths", "logPath") + getArgs("logFile"), getConfigs("paths", "prettyLogsPath") + getArgs("source") + "_" + getArgs("iteration_number")).getLogs()
         self.grid = QGridLayout()
         self.setLayout(self.grid)
@@ -126,29 +125,19 @@ class Analyzer(QWidget):
         self.plot_start_u1A = Plot()
         self.plot_start_u1A.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u1 Polarization", (1, 0))
         self.plot_start_u1A.plot(frequencyA, polarizationU1A, 'b', label=str(index+1) + "r0")
-        self.plot_start_u1A.plot(frequencyB, polarizationU1B, 'r', label=str(index+1) + "s0")
+        self.plot_start_u1A.plot(frequencyB, polarizationU1B, 'g', label=str(index+1) + "s0")
+        self.plot_start_u1A.plot(frequencyC, polarizationU1C, 'r', label=str(index + 1) + "r1")
+        self.plot_start_u1A.plot(frequencyD, polarizationU1D, 'y', label=str(index + 1) + "s1")
         self.grid.addWidget(self.plot_start_u1A, 0, 0)
 
         #plot2
         self.plot_start_u9B = Plot()
         self.plot_start_u9B.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u9 Polarization", (1, 1))
         self.plot_start_u9B.plot(frequencyA, polarizationU9A, 'b', label=str(index+1) + "r0")
-        self.plot_start_u9B.plot(frequencyB, polarizationU9B, 'r', label=str(index+1) + "s0")
+        self.plot_start_u9B.plot(frequencyB, polarizationU9B, 'g', label=str(index+1) + "s0")
+        self.plot_start_u9B.plot(frequencyC, polarizationU9C, 'r', label=str(index + 1) + "r1")
+        self.plot_start_u9B.plot(frequencyD, polarizationU9D, 'y', label=str(index + 1) + "s1")
         self.grid.addWidget(self.plot_start_u9B, 0, 1)
-
-        #plot3
-        self.plot_start_u1C = Plot()
-        self.plot_start_u1C.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u1 Polarization", (1, 2))
-        self.plot_start_u1C.plot(frequencyC, polarizationU1C, 'b', label=str(index+1) + "r1")
-        self.plot_start_u1C.plot(frequencyD, polarizationU1D, 'r', label=str(index+1) + "s1")
-        self.grid.addWidget(self.plot_start_u1C, 0, 2)
-
-        #plot4
-        self.plot_start_u9D = Plot()
-        self.plot_start_u9D.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u9 Polarization", (1, 3))
-        self.plot_start_u9D.plot(frequencyC, polarizationU9C, 'b', label=str(index+1) + "r1")
-        self.plot_start_u9D.plot(frequencyD, polarizationU9D, 'r', label=str(index+1) + "s1")
-        self.grid.addWidget(self.plot_start_u9D, 0, 3)
 
         df_div = 16
         BW = 1.5625
@@ -191,20 +180,20 @@ class Analyzer(QWidget):
         Ta_refU9 = np.roll(Ta_refU9, -n_shift)
 
         TaU1 = (Ta_sigU1 + Ta_refU1) / 2
-        TaU9 = (Ta_sigU1 + Ta_refU9) / 2
+        TaU9 = (Ta_sigU9 + Ta_refU9) / 2
 
         El = 80
         G_El = [-0.0000333143, 0.0033676682, 0.9144626256]
         SfU1 = TaU1 / float(self.logs["header"]["DPFU"][0]) * np.polyval(G_El, El)
         SfU9 = TaU9 / float(self.logs["header"]["DPFU"][1]) * np.polyval(G_El, El)
 
-        # plot5
+        # plot3
         self.total_u1 = Plot()
         self.total_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u1 Polarization", (4, 0))
         self.total_u1.plot(frequencyA[si:ei], SfU1[si:ei], 'b', label=str(index + 1))
         self.grid.addWidget(self.total_u1, 3, 0)
 
-        # plot6
+        # plot4
         self.total__u9 = Plot()
         self.total__u9.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u9 Polarization", (4, 1))
         self.total__u9.plot(frequencyA[si:ei], SfU9[si:ei], 'b', label=str(index + 1))
@@ -217,8 +206,6 @@ class Analyzer(QWidget):
         else:
             self.plot_start_u1A.removePolt()
             self.plot_start_u9B.removePolt()
-            self.plot_start_u1C.removePolt()
-            self.plot_start_u9D.removePolt()
             self.index = self.index + 1
 
             self.plotPair(self.index)
