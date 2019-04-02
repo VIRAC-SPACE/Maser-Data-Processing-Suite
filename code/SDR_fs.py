@@ -458,10 +458,13 @@ class Analyzer(QWidget):
 
             El = (float(self.logs[pair[0][0]]["AzEl"][1]) + float(self.logs[pair[0][1]]["AzEl"][1]) + float(self.logs[pair[1][0]]["AzEl"][1]) + float(self.logs[pair[1][1]]["AzEl"][1]))/ 4
             print("Elevation", El, "\n")
-            G_El = self.logs["header"]["Elev_poly"]#[-0.0000333143, 0.0033676682, 0.9144626256]
-            G_El = [float(gel) for gel in G_El]
-            SfU1scan = TaU1 / float(self.logs["header"]["DPFU"][0]) * np.polyval(G_El, El)
-            SfU9scan = TaU9 / float(self.logs["header"]["DPFU"][1]) * np.polyval(G_El, El)
+            #G_El = self.logs["header"]["Elev_poly"]#[-0.0000333143, 0.0033676682, 0.9144626256]
+            G_El = [-0.0000333143, 0.0033676682, 0.9144626256]
+            #G_El = [float(gel) for gel in G_El]
+            print("G_El", G_El)
+
+            SfU1scan = TaU1 / ((-1) * float(self.logs["header"]["DPFU"][0])) * np.polyval(G_El, El)
+            SfU9scan = TaU9 / ((-1) * float(self.logs["header"]["DPFU"][1]) ) * np.polyval(G_El, El)
 
             self.SfU1.append(SfU1scan)
             self.SfU9.append(SfU9scan)
