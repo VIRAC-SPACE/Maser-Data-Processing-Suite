@@ -670,7 +670,6 @@ class Analyzer(QWidget):
         result[self.expername]["polarizationU1"] =  max_apmlitudes_u1
         result[self.expername]["polarizationU9"] = max_apmlitudes_u9
         result[self.expername]["polarizationAVG"] = max_apmlitudes_uavg
-        print(max_apmlitudes_uavg)
                 
         resultFile = open (self.resultFilePath +  resultFileName, "w")
         resultFile.write(json.dumps(result, indent=2))
