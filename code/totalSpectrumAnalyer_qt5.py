@@ -44,13 +44,11 @@ class Result():
         return self.specie
 
 class Analyzer(QWidget):
-    def __init__(self, datafile, resultFilePath, source_velocities, cuts, output, index_range_for_local_maxima, skipsmooth):
+    def __init__(self, datafile, resultFilePath, source_velocities, cuts, output, index_range_for_local_maxima, skipsmooth, calibType):
         super().__init__()
         self.skipsmoothing = skipsmooth
-
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.center()
-        
         self.polynomialOrder = 3
         self.source = datafile.split("/")[-1].split(".")[0].split("_")[0]
         self.expername = datafile.split("/")[-1].split(".")[0]
@@ -63,11 +61,10 @@ class Analyzer(QWidget):
         self.cuts = cuts
         self.output = output
         self.index_range_for_local_maxima = index_range_for_local_maxima
-        
         self.infoSet = set()
         self.infoSet_2 = list()
-        
         self.changeParms = False
+        self.calibType = calibType
         
         try:
             result = pickle.load(open(datafile, "rb"))
@@ -670,6 +667,11 @@ class Analyzer(QWidget):
         result[self.expername]["polarizationU1"] =  max_apmlitudes_u1
         result[self.expername]["polarizationU9"] = max_apmlitudes_u9
         result[self.expername]["polarizationAVG"] = max_apmlitudes_uavg
+
+        if self.calibType == "SDR":
+            result[self.expername]["type"] = "SDR"
+        else:
+            result[self.expername]["type"] = "DBBC"
                 
         resultFile = open (self.resultFilePath +  resultFileName, "w")
         resultFile.write(json.dumps(result, indent=2))
@@ -699,8 +701,8 @@ class Analyzer(QWidget):
 class NoGUI(object):
     __slots__ = ('datafile', 'cuts', 'output', 'resultFilePath', 'source_velocities', 'index_range_for_local_maxima', 'polynomialOrder', 'source', 'time', 'date', 'location', 
                 'iteration_number', 'resultFilePath', 'expername', 'data', 'specie', 'dataPoints', 'dataPoints', 'xdata', 'y_u1', 'y_u9', 'xarray', 'y1array', 'y2array', 'polyx',
-                'polyu1', 'polyu9', 'p_u1', 'p_u9', 'localMax_Array_u1', 'localMax_Array_u9', 'z1_NotSmoohtData', 'z2_NotSmoohtData', 'avg_y_NotSmoohtData', 'z1_SmoohtData', 'z2_SmoohtData', 'avg_y_SmoohtData')
-    def __init__(self, datafile, cuts, output, resultFilePath, source_velocities, index_range_for_local_maxima):
+                'polyu1', 'polyu9', 'p_u1', 'p_u9', 'localMax_Array_u1', 'localMax_Array_u9', 'z1_NotSmoohtData', 'z2_NotSmoohtData', 'avg_y_NotSmoohtData', 'z1_SmoohtData', 'z2_SmoohtData', 'avg_y_SmoohtData', 'calibType')
+    def __init__(self, datafile, cuts, output, resultFilePath, source_velocities, index_range_for_local_maxima, calibType):
         self.datafile = datafile
         self.cuts = cuts
         self.polynomialOrder = 3
@@ -714,6 +716,7 @@ class NoGUI(object):
         self.expername = datafile.split("/")[-1].split(".")[0]
         self.source_velocities = source_velocities
         self.index_range_for_local_maxima = index_range_for_local_maxima
+        self.calibType = calibType
         
     def createData(self):
         try:
@@ -898,6 +901,11 @@ class NoGUI(object):
         result[self.expername]["polarizationU1"] =  max_apmlitudes_u1
         result[self.expername]["polarizationU9"] = max_apmlitudes_u9
         result[self.expername]["polarizationAVG"] = max_apmlitudes_uavg
+        if self.calibType == "SDR":
+            result[self.expername]["type"] = "SDR"
+        else:
+            result[self.expername]["type"] = "DBBC"
+
         resultFile = open (self.resultFilePath +  resultFileName, "w")
         resultFile.write(json.dumps(result, indent=2))
         resultFile.close()
@@ -934,10 +942,10 @@ class Main(object):
     
     def execute(self):
         if self.noGUI:
-            NoGUI(self.dataFilesPath + "/" + self.calibType + "/" + self.datafile, self.cuts, self.output, self.resultFilePath, self.source_velocities, self.index_range_for_local_maxima).run()
+            NoGUI(self.dataFilesPath + "/" + self.calibType + "/" + self.datafile, self.cuts, self.output, self.resultFilePath, self.source_velocities, self.index_range_for_local_maxima, self.calibType).run()
         else:
             qApp = QApplication(sys.argv)
-            aw = Analyzer(self.dataFilesPath + "/" + self.calibType + "/" + self.datafile, self.resultFilePath, self.source_velocities, self.cuts, self.output, self.index_range_for_local_maxima, self.skipsmooth)
+            aw = Analyzer(self.dataFilesPath + "/" + self.calibType + "/" + self.datafile, self.resultFilePath, self.source_velocities, self.cuts, self.output, self.index_range_for_local_maxima, self.skipsmooth, self.calibType)
             aw.show()
             aw.showMaximized() 
             sys.exit(qApp.exec_())

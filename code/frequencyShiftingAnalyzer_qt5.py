@@ -886,7 +886,7 @@ def main():
     config.read(configFilePath)
     dataFilesPath = config.get('paths', "dataFilePath") + "/DBBC/"
     prettyLogsPath = config.get('paths', "prettyLogsPath")
-    logPath = config.get('paths', "logPath")
+    logPath = config.get('paths', "logPath") + "DBBC/"
     resultPath = config.get('paths', "resultFilePath")
     badPointRange = config.getint('parameters', "badPointRange")
     coordinates = config.get('sources', source).replace(" ", "").split(",")
@@ -903,8 +903,7 @@ def main():
             f.append(logs[scan]["fs_frequencyfs"])
 
     else:
-        l = LogReaderFactory.getLogReader(LogTypes.DBBC, logPath + logFile,
-                                          prettyLogsPath + source + "_" + str(iteration_number), coordinates, source)
+        l = LogReaderFactory.getLogReader(LogTypes.DBBC, logPath + logFile, prettyLogsPath + source + "_" + str(iteration_number), coordinates, source)
         logs = l.getLogs()
         f = l.getAllfs_frequencys()
         firstScanStartTime = l.getFirstScanStartTime()

@@ -75,7 +75,7 @@ class Analyzer(QWidget):
         self.f0 = 6668519200
         self.SfU1 = list()
         self.SfU9 = list()
-        self.logs = LogReaderFactory.getLogReader(LogTypes.SDR, getConfigs("paths", "logPath") + getArgs("logFile"), getConfigs("paths", "prettyLogsPath") + getArgs("source") + "_" + getArgs("iteration_number")).getLogs()
+        self.logs = LogReaderFactory.getLogReader(LogTypes.SDR, getConfigs("paths", "logPath") + "SDR/"+ getArgs("logFile"), getConfigs("paths", "prettyLogsPath") + getArgs("source") + "_" + getArgs("iteration_number")).getLogs()
         self.grid = QGridLayout()
         self.setLayout(self.grid)
         self.grid.setSpacing(10)
@@ -214,7 +214,6 @@ class Analyzer(QWidget):
         TaU9 = (Ta_sigU9 + Ta_refU9) / 2
 
         El = (float(self.logs[pair[0][0]]["AzEl"][1]) + float(self.logs[pair[0][1]]["AzEl"][1]) + float(self.logs[pair[1][0]]["AzEl"][1]) + float(self.logs[pair[1][1]]["AzEl"][1]))/ 4
-        print("Elevation", El, "\n")
         #G_El = self.logs["header"]["Elev_poly"]#[-0.0000333143, 0.0033676682, 0.9144626256]
         #G_El = [float(gel) for gel in G_El]
         G_EL = G_El = [-0.0000333143, 0.0033676682, 0.9144626256]
@@ -469,7 +468,6 @@ class Analyzer(QWidget):
             TaU9 = (Ta_sigU9 + Ta_refU9) / 2
 
             El = (float(self.logs[pair[0][0]]["AzEl"][1]) + float(self.logs[pair[0][1]]["AzEl"][1]) + float(self.logs[pair[1][0]]["AzEl"][1]) + float(self.logs[pair[1][1]]["AzEl"][1]))/ 4
-            print("Elevation", El, "\n")
             #G_El = self.logs["header"]["Elev_poly"]#[-0.0000333143, 0.0033676682, 0.9144626256]
             G_El = [-0.0000333143, 0.0033676682, 0.9144626256]
             #G_El = [float(gel) for gel in G_El]
