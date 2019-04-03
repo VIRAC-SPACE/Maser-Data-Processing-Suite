@@ -196,7 +196,7 @@ class Analyzer(QWidget):
         Ta_sigU9 = (Ta_1_caloffU9 + Ta_1_calonU9) / 2
 
         Ta_2_caloffU1 = Tsys_off_2U1 * (polarizationU1A - polarizationU1A) / polarizationU1A  # non-cal phase
-        Ta_2_caloffU9 = Tsys_off_2U9 * (polarizationU9A - polarizationU1A) / polarizationU1A  # non-cal phase
+        Ta_2_caloffU9 = Tsys_off_2U9 * (polarizationU9A - polarizationU9A) / polarizationU9A  # non-cal phase
 
         Ta_2_calonU1 = (Tsys_off_2U1 + float(self.logs["header"]["Tcal"][0])) * (polarizationU1D - polarizationU1C) / polarizationU1C  # cal phase
         Ta_2_calonU9 = (Tsys_off_2U9 + float(self.logs["header"]["Tcal"][1])) * (polarizationU9D - polarizationU9C) / polarizationU9C  # cal phase
@@ -450,7 +450,7 @@ class Analyzer(QWidget):
             Ta_sigU9 = (Ta_1_caloffU9 + Ta_1_calonU9) / 2
 
             Ta_2_caloffU1 = Tsys_off_2U1 * (polarizationU1A - polarizationU1A) / polarizationU1A  # non-cal phase
-            Ta_2_caloffU9 = Tsys_off_2U9 * (polarizationU9A - polarizationU1A) / polarizationU1A  # non-cal phase
+            Ta_2_caloffU9 = Tsys_off_2U9 * (polarizationU9A - polarizationU9A) / polarizationU9A  # non-cal phase
 
             Ta_2_calonU1 = (Tsys_off_2U1 + float(self.logs["header"]["Tcal"][0])) * (polarizationU1D - polarizationU1C) / polarizationU1C  # cal phase
             Ta_2_calonU9 = (Tsys_off_2U9 + float(self.logs["header"]["Tcal"][1])) * (polarizationU9D - polarizationU9C) / polarizationU9C  # cal phase
@@ -471,7 +471,6 @@ class Analyzer(QWidget):
             #G_El = self.logs["header"]["Elev_poly"]#[-0.0000333143, 0.0033676682, 0.9144626256]
             G_El = [-0.0000333143, 0.0033676682, 0.9144626256]
             #G_El = [float(gel) for gel in G_El]
-            print("G_El", G_El)
 
             SfU1scan = TaU1 / (((-1) * (float(self.logs["header"]["DPFU"][0])) ) * np.polyval(G_El, El))
             SfU9scan = TaU9 / (((-1) * (float(self.logs["header"]["DPFU"][1])) ) * np.polyval(G_El, El))
