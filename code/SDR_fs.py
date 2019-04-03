@@ -289,6 +289,7 @@ class Analyzer(QWidget):
             t = datetime.datetime.strptime(scan_1["date"], '%Y-%m-%dT%H:%M:%S')
             time = t.isoformat()
             date = Time(time, format='isot', scale='utc')
+            station = "IRBENE16"
             stationCordinations = getConfigs("stations", "IRBENE16")
             x = np.float64(stationCordinations[0])
             y = np.float64(stationCordinations[1])
@@ -363,7 +364,19 @@ class Analyzer(QWidget):
         self.grid.addWidget(self.plot_velocity_u9, 0, 1)
 
         totalResults = np.transpose(np.array([np.transpose(velocitys_avg), np.transpose(y_u1_avg), np.transpose(y_u9_avg)]))
-        output_file_name = getConfigs("paths", "dataFilePath")  + "SDR/" + getArgs("source") + "_" + scan_1["date"] + "_" +  "IRBENE16"+ "_" + getArgs("iteration_number") + ".dat"
+
+        # source_day_Month_year_houre:minute:seconde_station_iteration.dat
+        day = scan_1["date"].split("-")[2][0:2]
+        month = scan_1["date"].split("-")[1]
+        months = {"Jan": "1", "Feb": "2", "Mar": "3", "Apr": "4", "May": "5", "Jun": "6", "Jul": "7", "Aug": "8", "Sep": "9", "Oct": "10", "Nov": "11", "Dec": "12"}
+        month = list(months.keys())[int(month)]
+        year = scan_1["date"].split("-")[0]
+        houre = scan_1["date"].split("T")[1].split(":")[0]
+        minute = scan_1["date"].split("T")[1].split(":")[1]
+        seconde = scan_1["date"].split("T")[1].split(":")[2]
+        output_file_name =  getConfigs("paths", "dataFilePath")  + "SDR/" + getArgs("source") + "_" + day + "_" + month + "_" + year + "_"  + houre + ":" + minute + ":" + seconde + "_" + station + "_" + getArgs("iteration_number") + ".dat"
+        print("output_file_name", output_file_name)
+        #output_file_name = getConfigs("paths", "dataFilePath")  + "SDR/" + getArgs("source") + "_" + scan_1["date"] + "_" + station + "_" + getArgs("iteration_number") + ".dat"
         output_file_name = output_file_name.replace(" ", "")
         result = Result(totalResults, specie)
         pickle.dump(result, open(output_file_name, 'wb'))
@@ -376,7 +389,6 @@ class Analyzer(QWidget):
             self.plot_start_u1A.removePolt()
             self.plot_start_u9B.removePolt()
             self.index = self.index + 1
-
             self.plotPair(self.index)
 
     def skipAll(self):

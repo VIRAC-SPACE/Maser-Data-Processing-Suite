@@ -642,8 +642,7 @@ class Analyzer(QWidget):
 
             timeStr = scan_1['startTime'].replace(":", " ")
             dateStrList = scan_1['dates'].split()
-            months = {"Jan": "1", "Feb": "2", "Mar": "3", "Apr": "4", "May": "5", "Jun": "6", "Jul": "7", "Aug": "8",
-                      "Sep": "9", "Oct": "10", "Nov": "11", "Dec": "12"}
+            months = {"Jan": "1", "Feb": "2", "Mar": "3", "Apr": "4", "May": "5", "Jun": "6", "Jul": "7", "Aug": "8", "Sep": "9", "Oct": "10", "Nov": "11", "Dec": "12"}
             dateStrList[1] = int(months[dateStrList[1]])
             dateStr = str(dateStrList[2]) + " " + str(dateStrList[1]) + " " + str(dateStrList[0])
 

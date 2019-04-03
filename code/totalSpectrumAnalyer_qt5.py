@@ -19,6 +19,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QColor
 
 from ploting_qt5 import  Plot
+from help import *
 
 def parseArguments():
     parser = argparse.ArgumentParser(description='''plotting tool. ''', epilog="""PRE PLOTTER.""")
@@ -26,23 +27,10 @@ def parseArguments():
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-n", "--noGUI", help="Create smoothed and not smothed outputfiles", action='store_true')
     parser.add_argument("-r", "--rawdata", help="Use raw data, skip smoothing", action='store_true')
+    parser.add_argument("-t", "--calibType", help="Type of calibration", default="SDR")
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
     args = parser.parse_args()
-    
     return args
-
-def file_len(fname):
-    with open(fname) as f:
-        for i, l in enumerate(f):
-            pass
-    return i + 1
-
-def indexies(array, value):
-    indexs = list()
-    for i in range(0, len(array)-1):
-        if array[i] == value:
-            indexs.append(i)
-    return indexs
 
 class Result():
     def __init__(self, matrix, specie):
@@ -58,7 +46,7 @@ class Result():
 class Analyzer(QWidget):
     def __init__(self, datafile, resultFilePath, source_velocities, cuts, output, index_range_for_local_maxima, skipsmooth):
         super().__init__()
-        self.skipsmoothing = skipsmooth;
+        self.skipsmoothing = skipsmooth
 
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.center()
@@ -87,15 +75,15 @@ class Analyzer(QWidget):
             data = result.getMatrix()
             
         except IOError as e:
-            print ("IO Error",  e)
+            print("IO Error",  e)
             sys.exit(1)
             
         except TypeError as e:
-            print ("TypeError",  e)
+            print("TypeError",  e)
             sys.exit(1)
             
         except AttributeError as e:
-            print ("AttributeError",  e)
+            print("AttributeError",  e)
             sys.exit(1)
                 
         except:
@@ -682,6 +670,7 @@ class Analyzer(QWidget):
         result[self.expername]["polarizationU1"] =  max_apmlitudes_u1
         result[self.expername]["polarizationU9"] = max_apmlitudes_u9
         result[self.expername]["polarizationAVG"] = max_apmlitudes_uavg
+        print(max_apmlitudes_uavg)
                 
         resultFile = open (self.resultFilePath +  resultFileName, "w")
         resultFile.write(json.dumps(result, indent=2))
@@ -910,7 +899,6 @@ class NoGUI(object):
         result[self.expername]["polarizationU1"] =  max_apmlitudes_u1
         result[self.expername]["polarizationU9"] = max_apmlitudes_u9
         result[self.expername]["polarizationAVG"] = max_apmlitudes_uavg
-                
         resultFile = open (self.resultFilePath +  resultFileName, "w")
         resultFile.write(json.dumps(result, indent=2))
         resultFile.close()
@@ -921,7 +909,7 @@ class NoGUI(object):
         self.writeResult()
         
 class Main(object):
-    __slots__ = ('datafile', 'dataFilesPath', 'resultFilePath', 'output', 'cuts', 'source_velocities', 'index_range_for_local_maxima', 'noGUI', 'skipsmooth')
+    __slots__ = ('datafile', 'dataFilesPath', 'resultFilePath', 'output', 'cuts', 'source_velocities', 'index_range_for_local_maxima', 'noGUI', 'skipsmooth', 'calibType')
     def __init__(self):
         args = parseArguments()
         self.datafile = str(args.__dict__["datafile"])
@@ -943,13 +931,14 @@ class Main(object):
         self.source_velocities = config.get('velocities', source).replace(" ", "").split(",")
         self.index_range_for_local_maxima = int(config.get('parameters', "index_range_for_local_maxima"))
         self.noGUI = args.noGUI
+        self.calibType = str(args.__dict__["calibType"])
     
     def execute(self):
         if self.noGUI:
-            NoGUI(self.dataFilesPath + self.datafile, self.cuts, self.output, self.resultFilePath, self.source_velocities, self.index_range_for_local_maxima).run()
+            NoGUI(self.dataFilesPath + "/" + self.calibType + "/" + self.datafile, self.cuts, self.output, self.resultFilePath, self.source_velocities, self.index_range_for_local_maxima).run()
         else:
             qApp = QApplication(sys.argv)
-            aw = Analyzer(self.dataFilesPath + self.datafile, self.resultFilePath, self.source_velocities, self.cuts, self.output, self.index_range_for_local_maxima, self.skipsmooth)
+            aw = Analyzer(self.dataFilesPath + "/" + self.calibType + "/" + self.datafile, self.resultFilePath, self.source_velocities, self.cuts, self.output, self.index_range_for_local_maxima, self.skipsmooth)
             aw.show()
             aw.showMaximized() 
             sys.exit(qApp.exec_())
