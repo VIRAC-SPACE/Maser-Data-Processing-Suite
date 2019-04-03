@@ -157,8 +157,8 @@ class Analyzer(QWidget):
         self.plot_start_u1A.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u1 Polarization", (1, 0))
         self.plot_start_u1A.plot(frequencyA, polarizationU1A, 'b', label=str(index+1) + "r0")
         self.plot_start_u1A.plot(frequencyB, polarizationU1B, 'g', label=str(index+1) + "s0")
-        self.plot_start_u1A.plot(frequencyC, polarizationU1C, 'r', label=str(index + 1) + "r1")
-        self.plot_start_u1A.plot(frequencyD, polarizationU1D, 'y', label=str(index + 1) + "s1")
+        self.plot_start_u1A.plot(frequencyC, polarizationU1C, 'r', label=str(index+1) + "r1")
+        self.plot_start_u1A.plot(frequencyD, polarizationU1D, 'y', label=str(index+1) + "s1")
         self.grid.addWidget(self.plot_start_u1A, 0, 0)
 
         #plot2
@@ -166,8 +166,8 @@ class Analyzer(QWidget):
         self.plot_start_u9B.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u9 Polarization", (1, 1))
         self.plot_start_u9B.plot(frequencyA, polarizationU9A, 'b', label=str(index+1) + "r0")
         self.plot_start_u9B.plot(frequencyB, polarizationU9B, 'g', label=str(index+1) + "s0")
-        self.plot_start_u9B.plot(frequencyC, polarizationU9C, 'r', label=str(index + 1) + "r1")
-        self.plot_start_u9B.plot(frequencyD, polarizationU9D, 'y', label=str(index + 1) + "s1")
+        self.plot_start_u9B.plot(frequencyC, polarizationU9C, 'r', label=str(index+1) + "r1")
+        self.plot_start_u9B.plot(frequencyD, polarizationU9D, 'y', label=str(index+1) + "s1")
         self.grid.addWidget(self.plot_start_u9B, 0, 1)
 
         df_div = 4
@@ -215,30 +215,30 @@ class Analyzer(QWidget):
 
         El = (float(self.logs[pair[0][0]]["AzEl"][1]) + float(self.logs[pair[0][1]]["AzEl"][1]) + float(self.logs[pair[1][0]]["AzEl"][1]) + float(self.logs[pair[1][1]]["AzEl"][1]))/ 4
         print("Elevation", El, "\n")
-        G_El = self.logs["header"]["Elev_poly"]#[-0.0000333143, 0.0033676682, 0.9144626256]
-        G_El = [float(gel) for gel in G_El]
-        SfU1scan = TaU1 / float(self.logs["header"]["DPFU"][0]) * np.polyval(G_El, El)
-        SfU9scan = TaU9 / float(self.logs["header"]["DPFU"][1]) * np.polyval(G_El, El)
+        #G_El = self.logs["header"]["Elev_poly"]#[-0.0000333143, 0.0033676682, 0.9144626256]
+        #G_El = [float(gel) for gel in G_El]
+        G_EL = G_El = [-0.0000333143, 0.0033676682, 0.9144626256]
+        SfU1scan = TaU1 / (((-1) * float(self.logs["header"]["DPFU"][0])) * np.polyval(G_El, El))
+        SfU9scan = TaU9 / (((-1) * float(self.logs["header"]["DPFU"][1])) * np.polyval(G_El, El))
 
-        self.SfU1.append(SfU1scan)
-        self.SfU9.append(SfU9scan)
+        self.si = si
+        self.ei = ei
+
+        self.SfU1.append(SfU1scan[self.si:self.ei])
+        self.SfU9.append(SfU9scan[self.si:self.ei])
 
         # plot3
         self.total_u1 = Plot()
         self.total_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "", (4, 0))
-        self.x = frequencyA
-        #[self.si:self.ei]
-        self.total_u1.plot(frequencyA, SfU1scan, 'b', label=str(index + 1))
+        self.x = frequencyA[self.si:self.ei]
+        self.total_u1.plot(frequencyA[self.si:self.ei], SfU1scan[self.si:self.ei], 'b', label=str(index + 1))
         self.grid.addWidget(self.total_u1, 3, 0)
 
         # plot4
         self.total_u9 = Plot()
         self.total_u9.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "", (4, 1))
-        self.total_u9.plot(frequencyA, SfU9scan, 'b', label=str(index + 1))
+        self.total_u9.plot(frequencyA[self.si:self.ei], SfU9scan[self.si:self.ei], 'b', label=str(index + 1))
         self.grid.addWidget(self.total_u9, 3, 1)
-
-        self.si = si
-        self.ei = ei
 
         if index == len(self.ScanPairs) - 1:
             self.nextPairButton.setText('Move to total results')
@@ -463,12 +463,12 @@ class Analyzer(QWidget):
             #G_El = [float(gel) for gel in G_El]
             print("G_El", G_El)
 
-            SfU1scan = TaU1 / ((-1) * float(self.logs["header"]["DPFU"][0])) * np.polyval(G_El, El)
-            SfU9scan = TaU9 / ((-1) * float(self.logs["header"]["DPFU"][1]) ) * np.polyval(G_El, El)
+            SfU1scan = TaU1 / (((-1) * (float(self.logs["header"]["DPFU"][0])) ) * np.polyval(G_El, El))
+            SfU9scan = TaU9 / (((-1) * (float(self.logs["header"]["DPFU"][1])) ) * np.polyval(G_El, El))
 
-            self.SfU1.append(SfU1scan)
-            self.SfU9.append(SfU9scan)
-            self.x = frequencyA
+            self.SfU1.append(SfU1scan[self.si:self.ei])
+            self.SfU9.append(SfU9scan[self.si:self.ei])
+            self.x = frequencyA[self.si:self.ei]
 
             self.si = si
             self.ei = ei
