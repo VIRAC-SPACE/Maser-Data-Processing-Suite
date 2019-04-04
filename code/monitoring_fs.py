@@ -456,17 +456,19 @@ class MonitoringApp(QWidget):
                 amplitudes_for_uAVG = scanData["polarizationAVG"] # Got poitns for all experiments for polarization uAVG
                 iter_number = scanData["Iteration_number"]
                 specie = scanData["specie"]
+                type = scanData["type"]
+                modifiedJulianDays = scanData["modifiedJulianDays"]
                 dates = date.split("_")
                 monthsNumber = dates[1]
                 dates[1] = self.months.getMonthNumber([monthsNumber][0])
-                date = scanData["time"].replace(":", " ") + " " +  " ".join(dates) 
-            
-                result = Result(location, datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number, specie)
-                
+                date = scanData["time"].replace(":", " ") + " " +  " ".join(dates)
+
+                result = Result(location, datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number, specie, type, modifiedJulianDays)
                 result_list.append(dict(result))
               
         result_list = sorted(result_list, key=itemgetter('date'), reverse=False)
-         
+
+        modifiedJulianDaysList = list()
         for experiment in result_list:
             u1 = experiment["polarizationU1"]
             u9 = experiment["polarizationU9"]
@@ -492,9 +494,11 @@ class MonitoringApp(QWidget):
                 for vel in source_velocities:
                     if float(vel) == float(k[0]):
                         velocitie_dict["avg"][vel].append(k[1]) 
-                         
-            label = "Station is " + location + "\n" + "Date is " + experiment["date"].strftime('%d %m %Y') + "\n " + "Iteration number " + str(experiment["iteration_number"]) + "\n " + "Specie " + str(specie)
+
+            type = experiment["type"]
+            label = "Station is " + location + "\n" + "Date is " + experiment["date"].strftime('%d %m %Y') + "\n " + "Iteration number " + str(experiment["iteration_number"]) + "\n " + "Specie " + str(specie) + "\n " + "Type " + type
             labels2.append(label)
+            modifiedJulianDaysList.append(experiment["modifiedJulianDays"])
             
         self.iteration_list = iteration_list
         Symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
@@ -503,6 +507,7 @@ class MonitoringApp(QWidget):
         self.Monitoring_View = Monitoring_View(self.iteration_list, self.location_list, self.source, self.output_path, source_velocities, date_list, velocitie_dict)
         self.monitoringPlot = Plot()
         self.monitoringPlot.creatPlot(self.Monitoring_View.getGrid(), "Time", "Flux density (Jy)", None, (1,0))
+        self.monitoringPlot.addSecondAxis2(modifiedJulianDaysList, label="Modified Julian Days", axiss=self.monitoringPlot.get_axes())
         
         def convertDatetimeObjectToMJD(time):
             time=time.isoformat()
@@ -533,7 +538,7 @@ class MonitoringApp(QWidget):
         
         self.monitoringPlot.addCursor(labels2)
         labels = [str(line.get_label()) for line in lines]
-        
+
         self.Monitoring_View.setLineDict(lineDict)
         self.Monitoring_View.setLabels(labels)
         self.Monitoring_View.setLines(lines)
@@ -576,4 +581,3 @@ if __name__=="__main__":
     p = Process(target=main,)
     p.start()
     p.join()
-    

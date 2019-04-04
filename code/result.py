@@ -1,5 +1,6 @@
-class Result():
-    def __init__(self, location, date, polarizationU1, polarizationU9, polarizationAVG, iteration_number, specie):
+class Result(object):
+    __slots__ = ('location', 'date', 'polarizationU1', 'polarizationU9', 'polarizationAVG', 'iteration_number', 'specie', 'type', 'modifiedJulianDays')
+    def __init__(self, location, date, polarizationU1, polarizationU9, polarizationAVG, iteration_number, specie, type, modifiedJulianDays):
         self.location = location
         self.date = date
         self.polarizationU1 = polarizationU1
@@ -7,6 +8,8 @@ class Result():
         self.polarizationAVG = polarizationAVG
         self.iteration_number = iteration_number
         self.specie = specie
+        self.type = type
+        self.modifiedJulianDays = modifiedJulianDays
         
     def __iter__(self):
         yield 'location', self.location
@@ -16,3 +19,5 @@ class Result():
         yield 'polarizationUAVG', self.polarizationAVG
         yield 'iteration_number', self.iteration_number
         yield 'specie', self.specie
+        yield 'type', self.type
+        yield 'modifiedJulianDays', self.modifiedJulianDays

@@ -111,6 +111,12 @@ class Plot(FigureCanvas):
         self.second_x_axis.set_xlabel(label)
         self.graph.tick_params(axis=axiss)
         self.second_x_axis.set_xticks(range(start, stop, step))
+
+    def addSecondAxis2(self, values, label, axiss):
+        self.second_x_axis = self.graph.twiny()
+        self.second_x_axis.set_xlabel(label)
+        self.graph.tick_params(axis=axiss)
+        self.second_x_axis.set_xticklabels(values)
         
     def addSlider(self, cords, label, start, stop, init, callback):
         self.figure.subplots_adjust(bottom=0.25)
