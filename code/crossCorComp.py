@@ -4,6 +4,7 @@
 import sys
 import argparse
 import numpy as np
+from scipy.signal import correlate
 import matplotlib.pyplot as plt
 
 from help import *
@@ -41,10 +42,45 @@ def getData():
 def main():
     x = getData()[0]
     y = getData()[1]
-    print ("corr coef", np.corrcoef(x,y))
+    print ("corr coef", np.corrcoef(x,y), "\n\n")
+
+    print("Direct")
     crossCorr = np.correlate(x, y, "full")
-    plt.plot(crossCorr)
+    a = len(x)
+    b = len(crossCorr)
+    ratio = a/b
+    print("Input point count", a)
+    print("Output point count", b)
+    print("Ratio between input data length and cross-correlation is", ratio)
+    points = np.linspace(0, b, b)
+    time = points * ratio
+    print("Delay is", time[np.argmax(crossCorr)], "time units")
+
+    plt.subplot(1,2,1)
+    plt.plot(time, crossCorr)
+    plt.xlabel('Time')
+    plt.ylabel('Cross-correlation between components ' + getArgs("a") + " " + getArgs("b"))
     plt.grid(True)
+    plt.title("Direct")
+
+    print("\n\nFFT")
+    crossCorr = correlate(x, y, "full", "fft")
+    a = len(x)
+    b = len(crossCorr)
+    ratio = a / b
+    print("Input point count", a)
+    print("Output point count", b)
+    print("Ratio between input data length and cross-correlation is", ratio)
+    points = np.linspace(0, b, b)
+    time = points * ratio
+    print("Delay is", time[np.argmax(crossCorr)], "time units")
+
+    plt.subplot(1, 2, 2)
+    plt.plot(time, crossCorr)
+    plt.xlabel('Time')
+    plt.ylabel('Cross-correlation between components ' + getArgs("a") + " " + getArgs("b"))
+    plt.grid(True)
+    plt.title("FFT")
     plt.show()
     sys.exit(0)
     

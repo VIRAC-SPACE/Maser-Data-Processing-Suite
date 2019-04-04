@@ -368,7 +368,8 @@ class Analyzer(QWidget):
         day = scan_1["date"].split("-")[2][0:2]
         month = scan_1["date"].split("-")[1]
         months = {"Jan": "1", "Feb": "2", "Mar": "3", "Apr": "4", "May": "5", "Jun": "6", "Jul": "7", "Aug": "8", "Sep": "9", "Oct": "10", "Nov": "11", "Dec": "12"}
-        month = list(months.keys())[int(month)]
+        month = list(months.keys())[int(month) -1]
+        print(month)
         year = scan_1["date"].split("-")[0]
         houre = scan_1["date"].split("T")[1].split(":")[0]
         minute = scan_1["date"].split("T")[1].split(":")[1]
