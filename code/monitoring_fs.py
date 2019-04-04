@@ -367,7 +367,6 @@ class Monitoring_View(PlotingView):
                 amplitude_colon = 3
                 
             spectraFileName = self.output_path + spectraFileName
-            
             data = np.fromfile(spectraFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(spectraFileName),4))
             tmpDate = spectraFileName.split("/")[-1].split("_")
             tmpDate[-4] = self.months.getMonthNumber([tmpDate[-4]][0])
@@ -507,7 +506,6 @@ class MonitoringApp(QWidget):
         self.Monitoring_View = Monitoring_View(self.iteration_list, self.location_list, self.source, self.output_path, source_velocities, date_list, velocitie_dict)
         self.monitoringPlot = Plot()
         self.monitoringPlot.creatPlot(self.Monitoring_View.getGrid(), "Time", "Flux density (Jy)", None, (1,0))
-        self.monitoringPlot.addSecondAxis2(modifiedJulianDaysList, label="Modified Julian Days", axiss=self.monitoringPlot.get_axes())
         
         def convertDatetimeObjectToMJD(time):
             time=time.isoformat()
@@ -538,7 +536,7 @@ class MonitoringApp(QWidget):
         
         self.monitoringPlot.addCursor(labels2)
         labels = [str(line.get_label()) for line in lines]
-
+        #self.monitoringPlot.addSecondAxis2(modifiedJulianDaysList, label="Modified Julian Days", axiss=None)
         self.Monitoring_View.setLineDict(lineDict)
         self.Monitoring_View.setLabels(labels)
         self.Monitoring_View.setLines(lines)
