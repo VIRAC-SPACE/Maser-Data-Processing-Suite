@@ -660,7 +660,7 @@ class Analyzer(QWidget):
             x = np.float64(self.stationCordinations[0])
             y = np.float64(self.stationCordinations[1])
             z = np.float64(self.stationCordinations[2])
-            VelTotal = lsr(RaStr, DecStr, date, stringTime, x, y, z, scan_1["Ra"], scan_1["Dec"])
+            VelTotal = lsr(RaStr, DecStr, date, stringTime, x, y, z)
 
             print("VelTotal", VelTotal)
 
