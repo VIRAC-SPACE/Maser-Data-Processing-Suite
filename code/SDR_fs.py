@@ -315,7 +315,7 @@ class Analyzer(QWidget):
 
             RaStr = ra[0] + "h" + ra[1] + "m" + ra[2] + "s"
             DecStr = "+" + dec[0] + "d" + dec[1] + "m" + dec[2] + "s"
-            VelTotal = lsr(RaStr, DecStr, date, stringTime, x, y, z, RA, DEC)
+            VelTotal = lsr(RaStr, DecStr, date, stringTime, x, y, z)
             print("VelTotal", VelTotal)
 
             self.max_yu1_index = self.SfU1[p].argmax(axis=0)

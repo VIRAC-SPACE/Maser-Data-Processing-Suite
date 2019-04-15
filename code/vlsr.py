@@ -44,15 +44,15 @@ def vobs(ra, dec, stringTime, x, y, z):
     vobs = vhor * cdec * np.cos(angleRA - ravhor)
     return vobs
 
-def v_lsr(ra, dec, source, stringTime, x, y, z, RA, DEC):
+def v_lsr(ra, dec, source, stringTime, x, y, z):
     v = np.mean(v_sun(source)).value / 1000 + vobs(ra, dec, stringTime, x, y, z) + np.mean(v_earth(source)).value / 1000
     return v
 
-def lsr(ra, dec, date, stringTime, x, y, z, RA, DEC):
+def lsr(ra, dec, date, stringTime, x, y, z):
     start_time = Time(date, format='isot', scale='utc')
     time_range = np.linspace(0, 1, 1) * u.second
     times = start_time + time_range
     source = SkyCoord(ra=ra, dec=dec, frame=FK5, equinox='J2000.0', obstime=times)
     source.transform_to(source)
-    V_lsr = v_lsr(ra, dec, source, stringTime, x, y, z, RA, DEC)
+    V_lsr = v_lsr(ra, dec, source, stringTime, x, y, z)
     return V_lsr
