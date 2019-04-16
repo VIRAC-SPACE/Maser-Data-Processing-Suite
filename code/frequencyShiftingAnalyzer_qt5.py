@@ -659,7 +659,7 @@ class Analyzer(QWidget):
             if int(scan_1["Dec"][0]) > 0:
                 DecStr = "+" + scan_1["Dec"][0] + "d" + scan_1["Dec"][1] + "m" + scan_1["Dec"][2] + "s"
             else:
-                DecStr = "-" + scan_1["Dec"][0] + "d" + scan_1["Dec"][1] + "m" + scan_1["Dec"][2] + "s"
+                DecStr =  scan_1["Dec"][0] + "d" + scan_1["Dec"][1] + "m" + scan_1["Dec"][2] + "s"
 
             stringTime = dateStr[0] + "-" + dateStr[1] + "-" + dateStr[2] + " " + timeStr[0] + ":" + timeStr[1] + ":" + \
                          timeStr[2]
