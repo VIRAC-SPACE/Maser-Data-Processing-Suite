@@ -655,6 +655,12 @@ class Analyzer(QWidget):
             print("date", date)
             RaStr = scan_1["Ra"][0] + "h" + scan_1["Ra"][1] + "m" + scan_1["Ra"][2] + "s"
             DecStr = "+" + scan_1["Dec"][0] + "d" + scan_1["Dec"][1] + "m" + scan_1["Dec"][2] + "s"
+
+            if int(scan_1["Dec"][0]) > 0:
+                DecStr = "+" + scan_1["Dec"][0] + "d" + scan_1["Dec"][1] + "m" + scan_1["Dec"][2] + "s"
+            else:
+                DecStr = "-" + scan_1["Dec"][0] + "d" + scan_1["Dec"][1] + "m" + scan_1["Dec"][2] + "s"
+
             stringTime = dateStr[0] + "-" + dateStr[1] + "-" + dateStr[2] + " " + timeStr[0] + ":" + timeStr[1] + ":" + \
                          timeStr[2]
             x = np.float64(self.stationCordinations[0])

@@ -314,7 +314,11 @@ class Analyzer(QWidget):
                 dec.append(DEC[4:len(DEC)])
 
             RaStr = ra[0] + "h" + ra[1] + "m" + ra[2] + "s"
-            DecStr = "+" + dec[0] + "d" + dec[1] + "m" + dec[2] + "s"
+            if int(dec[0]) > 0:
+                DecStr = "+" + dec[0] + "d" + dec[1] + "m" + dec[2] + "s"
+            else:
+                DecStr = "-" + dec[0] + "d" + dec[1] + "m" + dec[2] + "s"
+
             VelTotal = lsr(RaStr, DecStr, date, stringTime, x, y, z)
             print("VelTotal", VelTotal)
 
