@@ -175,7 +175,7 @@ class Analyzer(QWidget):
         f_shift = BW / df_div
         l_spec = len(frequencyA)
         f_step = (frequencyA[l_spec - 1] - frequencyA[0]) / (l_spec - 1)
-        n_shift = int(f_shift / f_step)
+        n_shift = int(f_shift / f_step) + 1
         avg_interval = 0.5 # inner 50%
         si = int(l_spec / 2 - l_spec * avg_interval / 2)
         ei = int(l_spec / 2 + l_spec * avg_interval / 2)
@@ -434,7 +434,7 @@ class Analyzer(QWidget):
             f_shift = BW / df_div
             l_spec = len(frequencyA)
             f_step = (frequencyA[l_spec - 1] - frequencyA[0]) / (l_spec - 1)
-            n_shift = int(f_shift / f_step)
+            n_shift = int(f_shift / f_step) + 1
             avg_interval = 0.5 # inner 50%
             si = int(l_spec / 2 - l_spec * avg_interval / 2)
             ei = int(l_spec / 2 + l_spec * avg_interval / 2)
