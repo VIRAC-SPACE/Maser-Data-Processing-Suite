@@ -45,7 +45,7 @@ def main():
     print ("corr coef", np.corrcoef(x,y), "\n\n")
 
     print("Direct")
-    crossCorr = np.correlate(x, y, "full")
+    crossCorr = np.correlate(np.interp(x,x, y), y, "full")
     a = len(x)
     b = len(crossCorr)
     ratio = a/b
@@ -56,7 +56,14 @@ def main():
     time = points * ratio
     print("Delay is", time[np.argmax(crossCorr)], "time units")
 
-    plt.subplot(1,2,1)
+    plt.subplot(1, 3, 1)
+    plt.plot(x, np.interp(y,x, y))
+    plt.xlabel('Time')
+    plt.ylabel('Re sampling')
+    plt.grid(True)
+    plt.title("Re sampling")
+
+    plt.subplot(1,3,2)
     plt.plot(time, crossCorr)
     plt.xlabel('Time')
     plt.ylabel('Cross-correlation between components ' + getArgs("a") + " " + getArgs("b"))
@@ -64,7 +71,7 @@ def main():
     plt.title("Direct")
 
     print("\n\nFFT")
-    crossCorr = correlate(x, y, "full", "fft")
+    crossCorr = correlate(np.interp(x,x, y), y, "full", "fft")
     a = len(x)
     b = len(crossCorr)
     ratio = a / b
@@ -75,7 +82,7 @@ def main():
     time = points * ratio
     print("Delay is", time[np.argmax(crossCorr)], "time units")
 
-    plt.subplot(1, 2, 2)
+    plt.subplot(1, 3, 3)
     plt.plot(time, crossCorr)
     plt.xlabel('Time')
     plt.ylabel('Cross-correlation between components ' + getArgs("a") + " " + getArgs("b"))
