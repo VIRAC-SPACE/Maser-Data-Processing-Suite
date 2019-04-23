@@ -54,7 +54,15 @@ if __name__ == "__main__":
     plt.plot(velocity, ampvid, 'b+', label="data")
     plt.plot(velocity, gg_fit(velocity), "-", label="total fit", linewidth=4,)
 
-    colors = ["b", "g", "r", "c", "m", "y", "k", "w","C1", "C2", "C3", "C4"]
+    colors = []
+
+    for index in range(0, len(gaussLines)):
+        if index %2:
+            index -= 1
+        else:
+            index += 1
+        colors.append("C" + str(index))
+
     c = 0
     for st in sts:
         plt.plot(velocity, st(velocity), colors[c], label="ST" + str(c))
@@ -66,4 +74,3 @@ if __name__ == "__main__":
     plt.show()
 
     print("Fit value",  np.mean(ampvid - gg_fit(velocity)))
-
