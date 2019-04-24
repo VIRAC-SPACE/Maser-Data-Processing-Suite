@@ -52,14 +52,14 @@ if __name__ == "__main__":
     print(gg_fit.parameters)
     sts = [models.Gaussian1D(gg_fit[index].amplitude, gg_fit[index].mean, gg_fit[index].stddev) for index in range(0, len(gaussLines))]
 
-    #trapz(sts[0], 5)
 
-    plt.plot(velocity, ampvid, 'b+', label="data")
-    plt.plot(velocity, gg_fit(velocity), "-", label="total fit", linewidth=4,)
+    plt.figure("Gausian fits")
+    plt.plot(velocity, ampvid, 'C0+', label="data")
+    plt.plot(velocity, gg_fit(velocity), "C1-", label="total fit", linewidth=4)
 
     colors = []
 
-    for index in range(0, len(gaussLines)):
+    for index in range(2, len(gaussLines) + 2):
         if index %2:
             index -= 1
         else:
