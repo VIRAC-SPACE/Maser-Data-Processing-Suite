@@ -3,6 +3,7 @@
 
 import argparse
 import numpy as np
+from numpy import trapz
 import matplotlib.pyplot as plt
 from astropy.modeling import models, fitting
 from astropy.modeling.fitting import LevMarLSQFitter
@@ -51,6 +52,8 @@ if __name__ == "__main__":
     print(gg_fit.parameters)
     sts = [models.Gaussian1D(gg_fit[index].amplitude, gg_fit[index].mean, gg_fit[index].stddev) for index in range(0, len(gaussLines))]
 
+    #trapz(sts[0], 5)
+
     plt.plot(velocity, ampvid, 'b+', label="data")
     plt.plot(velocity, gg_fit(velocity), "-", label="total fit", linewidth=4,)
 
@@ -65,6 +68,9 @@ if __name__ == "__main__":
 
     c = 0
     for st in sts:
+        #print(st(velocity)[st(velocity)>0], st(velocity)[st(velocity)>0].ndim)
+        #print(trapz(st(velocity)[st(velocity)>0], 5))
+        print("Area of st" + str(c), trapz(st(velocity), velocity))
         plt.plot(velocity, st(velocity), colors[c], label="ST" + str(c))
         c += 1
 
