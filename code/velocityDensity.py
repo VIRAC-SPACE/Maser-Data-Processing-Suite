@@ -68,8 +68,6 @@ if __name__ == "__main__":
 
     c = 0
     for st in sts:
-        #print(st(velocity)[st(velocity)>0], st(velocity)[st(velocity)>0].ndim)
-        #print(trapz(st(velocity)[st(velocity)>0], 5))
         print("Area of st" + str(c), trapz(st(velocity), velocity))
         plt.plot(velocity, st(velocity), colors[c], label="ST" + str(c))
         c += 1
