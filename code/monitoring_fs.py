@@ -37,6 +37,16 @@ def parseArguments():
     args = parser.parse_args()
     return args
 
+def getArgs(key):
+    args = parseArguments()
+    return str(args.__dict__[key])
+
+def getConfigs(key, value):
+    configFilePath = getArgs("config")
+    config = ConfigParser.getInstance()
+    config.CreateConfig(configFilePath)
+    return config.getConfig(key, value)
+
 class PlotingView(QWidget):
     __slots__ = ['grid']
     def __init__(self):
@@ -55,7 +65,36 @@ class Spectre_View(PlotingView):
         def __init__(self):
             super().__init__()
             self.setWindowTitle(" ")
-            
+
+class Gauss_View(PlotingView):
+    __slots__ = ['AreaList', 'source']
+    def __init__(self, AreaList, source):
+        super().__init__()
+        self.setWindowTitle(" ")
+        self.AreaList = AreaList
+        self.source = source
+
+    def plot(self):
+        gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
+        gaussLineDict = dict()
+
+        for l in gaussLines:
+            gaussLineDict[l] = list()
+
+        for areas in self.AreaList:
+            i = 0
+            for g in gaussLines:
+                gaussLineDict[g].append(areas[i])
+                i += 1
+
+        self.gaussAreaPlot = Plot()
+        self.gaussAreaPlot.creatPlot(self.getGrid(), "Time", "Gauss Areas", None, (1, 0))
+
+        for gl in (gaussLines):
+            self.gaussAreaPlot.plot(np.arange(0, len(gaussLineDict[gl])), gaussLineDict[gl], "b", fontsize=8, visible=True, picker=False)
+
+        self._addWidget(self.gaussAreaPlot, 0, 0)
+
 class Maps_View(PlotingView):
         __slots__ = ['source', 'label']            
         def __init__(self, source):
@@ -214,8 +253,8 @@ class Period_View(PlotingView):
             self.show()
             
 class Monitoring_View(PlotingView):
-        def __init__(self, iteration_list, location_list, source, output_path, source_velocities, date_list, velocitie_dict):
-            __slots__ = ['grid', 'polarization', 'labels', 'lines', 'iteration_list', 'location_list', 'source', 'output_path', 'new_spectre', 'spectrumSet', 'plotList', 'months', 'dateList', 'velocitie_dict', 'periodPlotSet'] 
+        def __init__(self, iteration_list, location_list, source, output_path, source_velocities, date_list, velocitie_dict, AreaList):
+            __slots__ = ['grid', 'polarization', 'labels', 'lines', 'iteration_list', 'location_list', 'source', 'output_path', 'new_spectre', 'spectrumSet', 'plotList', 'months', 'dateList', 'velocitie_dict', 'periodPlotSet', 'AreaList']
             super().__init__()
             self.setWindowTitle("Monitoring")
             self._addWidget(self.createControlGroup(), 1, 1)
@@ -235,6 +274,7 @@ class Monitoring_View(PlotingView):
             self.dateList = date_list
             self.velocitie_dict = velocitie_dict
             self.periodPlotSet = set()
+            self.AreaList = AreaList
             
         def setLineDict(self, lineDict):
             self.lineDict = lineDict
@@ -251,6 +291,11 @@ class Monitoring_View(PlotingView):
                 self.periodPlotSet.add(self.period_View)
             else:
                 print("No velocity choosed")
+
+        def createGaussAreaView(self):
+            self.gauss_view = Gauss_View(self.AreaList, self.source)
+            self.gauss_view.plot()
+            self.gauss_view.show()
             
         def createMapVew(self):
             os.system("perl " + "code/find_multiple.pl " + self.output_path + " " + self.source)
@@ -271,12 +316,17 @@ class Monitoring_View(PlotingView):
             comboBox.activated[str].connect(self.getPolarization)    
                   
             controlGrid = QGridLayout()
-            controlGrid.addWidget(comboBox, 3, 0)
+            controlGrid.addWidget(comboBox, 4, 0)
             plotPeriodsbutton = QPushButton('Plot periods', self)
             plotPeriodsbutton.clicked.connect(self.createPeriodView)
             controlGrid.addWidget(plotPeriodsbutton, 1, 0)
             plotMapsbutton = QPushButton('Plot maps', self)
             plotMapsbutton.clicked.connect(self.createMapVew)
+
+            plotGaussAreasbutton = QPushButton('Plot Gauss Areas', self)
+            plotGaussAreasbutton.clicked.connect(self.createGaussAreaView)
+            controlGrid.addWidget(plotGaussAreasbutton, 3, 0)
+
             controlGrid.addWidget(plotMapsbutton, 2, 0)
             self.componentInput = QLineEdit()
             self.componentInput.setFixedWidth(100)
@@ -457,16 +507,21 @@ class MonitoringApp(QWidget):
                 specie = scanData["specie"]
                 type = scanData["type"]
                 modifiedJulianDays = scanData["modifiedJulianDays"]
+                if "areas" in scanData.keys():
+                    areas = scanData["areas"]
+                else:
+                    print("No Gauss Area in result file with iteration ", iter_number)
                 dates = date.split("_")
                 monthsNumber = dates[1]
                 dates[1] = self.months.getMonthNumber([monthsNumber][0])
                 date = scanData["time"].replace(":", " ") + " " +  " ".join(dates)
 
-                result = Result(location, datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number, specie, type, modifiedJulianDays)
+                result = Result(location, datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number, specie, type, modifiedJulianDays, areas)
                 result_list.append(dict(result))
               
         result_list = sorted(result_list, key=itemgetter('date'), reverse=False)
 
+        self.AreaList = list()
         modifiedJulianDaysList = list()
         for experiment in result_list:
             u1 = experiment["polarizationU1"]
@@ -476,7 +531,11 @@ class MonitoringApp(QWidget):
             date_list.append(experiment["date"])
             location = experiment["location"]
             specie = experiment["specie"]
-            
+            areas = experiment["areas"]
+
+            gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
+            if len(areas) == len(gaussLines):
+                self.AreaList.append(areas)
             self.location_list.append(location)
             
             for i in u1:
@@ -503,7 +562,7 @@ class MonitoringApp(QWidget):
         Symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
         colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
         
-        self.Monitoring_View = Monitoring_View(self.iteration_list, self.location_list, self.source, self.output_path, source_velocities, date_list, velocitie_dict)
+        self.Monitoring_View = Monitoring_View(self.iteration_list, self.location_list, self.source, self.output_path, source_velocities, date_list, velocitie_dict,  self.AreaList)
         self.monitoringPlot = Plot()
         self.monitoringPlot.creatPlot(self.Monitoring_View.getGrid(), "Time", "Flux density (Jy)", None, (1,0))
         
@@ -579,3 +638,4 @@ if __name__=="__main__":
     p = Process(target=main,)
     p.start()
     p.join()
+    sys.exit(0)
