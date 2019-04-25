@@ -67,12 +67,13 @@ class Spectre_View(PlotingView):
             self.setWindowTitle(" ")
 
 class Gauss_View(PlotingView):
-    __slots__ = ['AreaList', 'source']
-    def __init__(self, AreaList, source):
+    __slots__ = ['AreaList', 'source', 'GaussDatePointsList']
+    def __init__(self, AreaList, source, GaussDatePointsList):
         super().__init__()
         self.setWindowTitle(" ")
         self.AreaList = AreaList
         self.source = source
+        self.GaussDatePointsList = GaussDatePointsList
 
     def plot(self):
         gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
@@ -90,8 +91,18 @@ class Gauss_View(PlotingView):
         self.gaussAreaPlot = Plot()
         self.gaussAreaPlot.creatPlot(self.getGrid(), "Time", "Gauss Areas", None, (1, 0))
 
+        i = 0
+        colors = []
+        Symbols = ["*", "o", "v", "^", "<", ">", "."]
+        for index in range(2, len(gaussLines) + 2):
+            if index % 2:
+                index -= 1
+            else:
+                index += 1
+            colors.append("C" + str(index))
         for gl in (gaussLines):
-            self.gaussAreaPlot.plot(np.arange(0, len(gaussLineDict[gl])), gaussLineDict[gl], "b", fontsize=8, visible=True, picker=False)
+            self.gaussAreaPlot.plot(self.GaussDatePointsList, gaussLineDict[gl], colors[i] + "-.", fontsize=8, visible=True, picker=False, label=gl)
+            i += 1
 
         self._addWidget(self.gaussAreaPlot, 0, 0)
 
@@ -253,8 +264,8 @@ class Period_View(PlotingView):
             self.show()
             
 class Monitoring_View(PlotingView):
-        def __init__(self, iteration_list, location_list, source, output_path, source_velocities, date_list, velocitie_dict, AreaList):
-            __slots__ = ['grid', 'polarization', 'labels', 'lines', 'iteration_list', 'location_list', 'source', 'output_path', 'new_spectre', 'spectrumSet', 'plotList', 'months', 'dateList', 'velocitie_dict', 'periodPlotSet', 'AreaList']
+        def __init__(self, iteration_list, location_list, source, output_path, source_velocities, date_list, velocitie_dict, AreaList, GaussDatePointsList):
+            __slots__ = ['grid', 'polarization', 'labels', 'lines', 'iteration_list', 'location_list', 'source', 'output_path', 'new_spectre', 'spectrumSet', 'plotList', 'months', 'dateList', 'velocitie_dict', 'periodPlotSet', 'AreaList', 'GaussDatePointsList']
             super().__init__()
             self.setWindowTitle("Monitoring")
             self._addWidget(self.createControlGroup(), 1, 1)
@@ -275,6 +286,7 @@ class Monitoring_View(PlotingView):
             self.velocitie_dict = velocitie_dict
             self.periodPlotSet = set()
             self.AreaList = AreaList
+            self.GaussDatePointsList = GaussDatePointsList
             
         def setLineDict(self, lineDict):
             self.lineDict = lineDict
@@ -293,7 +305,7 @@ class Monitoring_View(PlotingView):
                 print("No velocity choosed")
 
         def createGaussAreaView(self):
-            self.gauss_view = Gauss_View(self.AreaList, self.source)
+            self.gauss_view = Gauss_View(self.AreaList, self.source, self.GaussDatePointsList)
             self.gauss_view.plot()
             self.gauss_view.show()
             
@@ -522,6 +534,7 @@ class MonitoringApp(QWidget):
         result_list = sorted(result_list, key=itemgetter('date'), reverse=False)
 
         self.AreaList = list()
+        self.GaussDatePointsList = list()
         modifiedJulianDaysList = list()
         for experiment in result_list:
             u1 = experiment["polarizationU1"]
@@ -536,6 +549,7 @@ class MonitoringApp(QWidget):
             gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
             if len(areas) == len(gaussLines):
                 self.AreaList.append(areas)
+                self.GaussDatePointsList.append(experiment["date"])
             self.location_list.append(location)
             
             for i in u1:
@@ -562,7 +576,7 @@ class MonitoringApp(QWidget):
         Symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
         colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
         
-        self.Monitoring_View = Monitoring_View(self.iteration_list, self.location_list, self.source, self.output_path, source_velocities, date_list, velocitie_dict,  self.AreaList)
+        self.Monitoring_View = Monitoring_View(self.iteration_list, self.location_list, self.source, self.output_path, source_velocities, date_list, velocitie_dict, self.AreaList, self.GaussDatePointsList)
         self.monitoringPlot = Plot()
         self.monitoringPlot.creatPlot(self.Monitoring_View.getGrid(), "Time", "Flux density (Jy)", None, (1,0))
         
