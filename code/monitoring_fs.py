@@ -12,7 +12,10 @@ import matplotlib
 from matplotlib.ticker import MaxNLocator
 from astropy.time import Time
 from astropy.stats import LombScargle
+from astropy.modeling import models, fitting
+from astropy.modeling.fitting import LevMarLSQFitter
 import datetime
+from functools import reduce
 from operator import itemgetter
 from multiprocessing import Process
 import math
@@ -67,13 +70,15 @@ class Spectre_View(PlotingView):
             self.setWindowTitle(" ")
 
 class Gauss_View(PlotingView):
-    __slots__ = ['AreaList', 'source', 'GaussDatePointsList']
-    def __init__(self, AreaList, source, GaussDatePointsList):
+    __slots__ = ['AreaList', 'source', 'GaussDatePointsList', 'gaussLocationList']
+    def __init__(self, AreaList, source, GaussDatePointsList, gaussLocationList, gaussIterationList):
         super().__init__()
         self.setWindowTitle(" ")
         self.AreaList = AreaList
         self.source = source
         self.GaussDatePointsList = GaussDatePointsList
+        self.gaussLocationList = gaussLocationList
+        self.gaussIterationList = gaussIterationList
 
     def plot(self):
         gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
@@ -100,10 +105,62 @@ class Gauss_View(PlotingView):
                 index += 1
             colors.append("C" + str(index))
         for gl in (gaussLines):
-            self.gaussAreaPlot.plot(self.GaussDatePointsList, gaussLineDict[gl], colors[i] + "-.", fontsize=8, visible=True, picker=False, label=gl)
+            self.gaussAreaPlot.plot(self.GaussDatePointsList, gaussLineDict[gl], colors[i] + "-.", fontsize=8, visible=True, picker=5, label=gl)
             i += 1
 
+        self.gaussAreaPlot.addPickEvent(self.chooseGaussFitt)
         self._addWidget(self.gaussAreaPlot, 0, 0)
+
+    def chooseGaussFitt(self, event):
+        thisline = event.artist
+        xdata = thisline.get_xdata()
+        ind = event.ind
+        index = [ind][0]
+        fittFile = getConfigs("paths", "notSmoohtFilePath") + self.source + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.gaussLocationList, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.gaussIterationList, int(index[0])) + ".dat"
+
+        gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
+
+        data = np.fromfile(fittFile, dtype="float64", count=-1, sep=" ").reshape((file_len(fittFile), 4))
+        velocity = correctNumpyReadData(data[:, [0]])
+        ampvid = correctNumpyReadData(data[:, [3]])
+        indexies = [(np.abs(velocity - float(line))).argmin() for line in gaussLines]
+        mons = [max(ampvid[index - 5:index + 5]) for index in indexies]
+        gaussian = [models.Gaussian1D(mons[index], gaussLines[index], 0.05, bounds={'stddev': (None, 0.15)}) for index
+                    in range(0, len(mons))]
+
+        def sum(a, b):
+            return a + b
+
+        gg_init = reduce(sum, gaussian)
+        fit = LevMarLSQFitter()
+        gg_fit = fit(gg_init, velocity, ampvid)
+        sts = [models.Gaussian1D(gg_fit[index].amplitude, gg_fit[index].mean, gg_fit[index].stddev) for index in
+               range(0, len(gaussLines))]
+
+        self.fitPlotview = PlotingView()
+        self.fitPlot = Plot()
+        self.fitPlot.creatPlot(self.getGrid(), "Velocity", "Gauss Fits", None, (1, 0))
+        self.fitPlot.plot(velocity, ampvid, 'C0+', label="data")
+        self.fitPlot.plot(velocity, gg_fit(velocity), "C1-", label="total fit", linewidth=4)
+
+        colors = []
+
+        for index in range(2, len(gaussLines) + 2):
+            if index % 2:
+                index -= 1
+            else:
+                index += 1
+            colors.append("C" + str(index))
+
+        c = 0
+        for st in sts:
+            self.fitPlot.plot(velocity, st(velocity), colors[c], label="ST" + str(c))
+            c += 1
+
+        self.fitPlot.plot(velocity, (gg_fit(velocity) - ampvid) * 1 - 35, "r")
+        self.fitPlot.plot(velocity, velocity * 0 - 35, "g")
+        self.fitPlotview._addWidget(self.fitPlot, 0, 0)
+        self.fitPlotview.show()
 
 class Maps_View(PlotingView):
         __slots__ = ['source', 'label']            
@@ -263,8 +320,8 @@ class Period_View(PlotingView):
             self.show()
             
 class Monitoring_View(PlotingView):
-        def __init__(self, iteration_list, location_list, source, output_path, source_velocities, date_list, velocitie_dict, AreaList, GaussDatePointsList):
-            __slots__ = ['grid', 'polarization', 'labels', 'lines', 'iteration_list', 'location_list', 'source', 'output_path', 'new_spectre', 'spectrumSet', 'plotList', 'months', 'dateList', 'velocitie_dict', 'periodPlotSet', 'AreaList', 'GaussDatePointsList']
+        def __init__(self, iteration_list, location_list, source, output_path, source_velocities, date_list, velocitie_dict, AreaList, GaussDatePointsList, gaussLocationList, gaussIterationList):
+            __slots__ = ['grid', 'polarization', 'labels', 'lines', 'iteration_list', 'location_list', 'source', 'output_path', 'new_spectre', 'spectrumSet', 'plotList', 'months', 'dateList', 'velocitie_dict', 'periodPlotSet', 'AreaList', 'GaussDatePointsList', 'gaussLocationList', "gaussIterationList"]
             super().__init__()
             self.setWindowTitle("Monitoring")
             self._addWidget(self.createControlGroup(), 1, 1)
@@ -286,6 +343,8 @@ class Monitoring_View(PlotingView):
             self.periodPlotSet = set()
             self.AreaList = AreaList
             self.GaussDatePointsList = GaussDatePointsList
+            self.gaussLocationList = gaussLocationList
+            self.gaussIterationList = gaussIterationList
             
         def setLineDict(self, lineDict):
             self.lineDict = lineDict
@@ -304,7 +363,7 @@ class Monitoring_View(PlotingView):
                 print("No velocity choosed")
 
         def createGaussAreaView(self):
-            self.gauss_view = Gauss_View(self.AreaList, self.source, self.GaussDatePointsList)
+            self.gauss_view = Gauss_View(self.AreaList, self.source, self.GaussDatePointsList, self.gaussLocationList, self.gaussIterationList)
             self.gauss_view.plot()
             self.gauss_view.show()
             
@@ -417,7 +476,7 @@ class Monitoring_View(PlotingView):
             index = [ind][0]
             spectraFileName = self.source + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.location_list, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.iteration_list, int(index[0])) + ".dat"
             self.plotSpecter(spectraFileName, self.polarization)
-        
+
         def plotSpecter(self, spectraFileName, polarization):
             amplitude_colon = 3
             if polarization == "U1":
@@ -534,6 +593,8 @@ class MonitoringApp(QWidget):
 
         self.AreaList = list()
         self.GaussDatePointsList = list()
+        self.gaussLocationList = list()
+        self.gaussIterationList = list()
         modifiedJulianDaysList = list()
         for experiment in result_list:
             u1 = experiment["polarizationU1"]
@@ -549,6 +610,8 @@ class MonitoringApp(QWidget):
             if len(areas) == len(gaussLines):
                 self.AreaList.append(areas)
                 self.GaussDatePointsList.append(experiment["date"])
+                self.gaussLocationList.append(location)
+                self.gaussIterationList.append(experiment["iteration_number"])
             self.location_list.append(location)
             
             for i in u1:
@@ -575,7 +638,7 @@ class MonitoringApp(QWidget):
         Symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
         colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
         
-        self.Monitoring_View = Monitoring_View(self.iteration_list, self.location_list, self.source, self.output_path, source_velocities, date_list, velocitie_dict, self.AreaList, self.GaussDatePointsList)
+        self.Monitoring_View = Monitoring_View(self.iteration_list, self.location_list, self.source, self.output_path, source_velocities, date_list, velocitie_dict, self.AreaList, self.GaussDatePointsList, self.gaussLocationList, self.gaussIterationList)
         self.monitoringPlot = Plot()
         self.monitoringPlot.creatPlot(self.Monitoring_View.getGrid(), "Time", "Flux density (Jy)", None, (1,0))
         
