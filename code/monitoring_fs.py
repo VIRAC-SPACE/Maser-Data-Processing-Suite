@@ -93,7 +93,6 @@ class Gauss_View(PlotingView):
 
         i = 0
         colors = []
-        Symbols = ["*", "o", "v", "^", "<", ">", "."]
         for index in range(2, len(gaussLines) + 2):
             if index % 2:
                 index -= 1
