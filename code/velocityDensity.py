@@ -38,7 +38,7 @@ def iterationFromDataFile(dataFileName):
 
 def computeGauss(file):
     gaussLines = getConfigs("gauss_lines", getArgs("source")).replace(" ", "").split(",")
-    dataFile = getConfigs("paths", "notSmoohtFilePath") + getArgs("source") + "/" + file  #getArgs("output")
+    dataFile = getConfigs("paths", "notSmoohtFilePath") + getArgs("source") + "/" + file
 
     data = np.fromfile(dataFile, dtype="float64", count=-1, sep=" ").reshape((file_len(dataFile), 4))
     velocity = correctNumpyReadData(data[:, [0]])
@@ -71,7 +71,6 @@ def addAreasToResultFiles(file, gaussianAreas, gaussianaAmplitudes, gaussianaMea
 
     for experiment in results:
         if int(results[experiment]["Iteration_number"]) == int(iterationFromDataFile(file)):
-            #print(gaussianaAmplitudes)
             results[experiment]["areas"] = gaussianAreas
             results[experiment]["gauss_amp"] = gaussianaAmplitudes
             results[experiment]["gauss_mean"] = gaussianaMean
@@ -115,7 +114,6 @@ if __name__ == "__main__":
         for resultFile in os.listdir(getConfigs("paths", "notSmoohtFilePath") + getArgs("source")):
             print("processing file", resultFile)
             tmp = computeGauss(resultFile)
-            #print (tmp)
             addAreasToResultFiles(resultFile, tmp[0], tmp[6], tmp[7], tmp[8])
 
     sys.exit(0)
