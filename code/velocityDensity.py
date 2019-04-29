@@ -36,46 +36,6 @@ def getConfigs(key, value):
 def iterationFromDataFile(dataFileName):
     return dataFileName.split(".")[0].split("_")[-1]
 
-def getLocalMaximum(xarray, yarray, source):
-    dataPoints = len(xarray)
-    cuts = getConfigs("cuts", source).split(";")
-    cuts = [c.split(",") for c in cuts]
-    cutsIndex = list()
-    cutsIndex.append(0)
-
-    for cut in cuts:
-        cutsIndex.append((np.abs(xarray - float(cut[0]))).argmin())
-        cutsIndex.append((np.abs(xarray - float(cut[1]))).argmin())
-
-    cutsIndex.append(dataPoints)
-
-    polyArray_x = list()
-    polyArray_y = list()
-
-    while i != len(cutsIndex):
-        polyArray_x.append(xarray[cutsIndex[i]: cutsIndex[j]])
-        polyArray_y.append(yarray[cutsIndex[i]: cutsIndex[j]])
-        i = i + 2
-        j = j + 2
-
-    poly_x = list()
-    poly_y = list()
-
-    for p in polyArray_x:
-        for p1 in p:
-            poly_x.append(p1)
-
-    for p in polyArray_y:
-        for p1 in p:
-            poly_y.append(p1)
-
-    polyx = np.array(poly_x)
-    polyy = np.array(poly_y)
-
-    z = np.polyfit(polyx, polyy, 3)
-    p = np.poly1d(z)
-    localMax_Array = yarray - p(xarray)
-
 def computeGauss(file):
     gaussLines = getConfigs("gauss_lines", getArgs("source")).replace(" ", "").split(",")
     dataFile = getConfigs("paths", "notSmoohtFilePath") + getArgs("source") + "/" + file  #getArgs("output")
@@ -96,26 +56,33 @@ def computeGauss(file):
     gg_fit = fit(gg_init, velocity, ampvid)
     sts = [models.Gaussian1D(gg_fit[index].amplitude, gg_fit[index].mean, gg_fit[index].stddev) for index in range(0, len(gaussLines))]
     gaussianAreas = []
-
+    gaussianaAmplitudes = [str(gg_fit[index].amplitude).split("=")[-1].replace(")", "") for index in range(0, len(gaussLines))]
+    gaussianaMean = [str(gg_fit[index].mean).split("=")[-1].replace(")", "") for index in range(0, len(gaussLines))]
+    gaussianaSTD = [str(gg_fit[index].stddev).split(",")[1].split("=")[-1] for index in range(0, len(gaussLines))]
+    
     for st in sts:
         gaussianAreas.append(trapz(st(velocity), velocity))
 
-    return (gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines)
+    return (gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines, gaussianaAmplitudes, gaussianaMean, gaussianaSTD)
 
-def addAreasToResultFiles(file, gaussianAreas):
+def addAreasToResultFiles(file, gaussianAreas, gaussianaAmplitudes, gaussianaMean, gaussianaSTD):
     with open(getConfigs("paths", "resultFilePath") + getArgs("source") + ".json", "r") as resultFile:
         results = json.load(resultFile)
 
     for experiment in results:
         if int(results[experiment]["Iteration_number"]) == int(iterationFromDataFile(file)):
+            #print(gaussianaAmplitudes)
             results[experiment]["areas"] = gaussianAreas
+            results[experiment]["gauss_amp"] = gaussianaAmplitudes
+            results[experiment]["gauss_mean"] = gaussianaMean
+            results[experiment]["gauss_STD"] = gaussianaSTD
 
     with open(getConfigs("paths", "resultFilePath") + getArgs("source") + ".json", "w") as resultFile:
         resultFile.write(json.dumps(results, indent=2))
 
 if __name__ == "__main__":
     if getArgs("output") != "":
-        gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines = computeGauss(getArgs("output"))
+        gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines, gaussianaAmplitudes, gaussianaMean, gaussianaSTD = computeGauss(getArgs("output"))
 
         plt.figure("Gausian fits")
         plt.plot(velocity, ampvid, 'C0+', label="data")
@@ -142,11 +109,13 @@ if __name__ == "__main__":
 
         print("Fit value",  np.mean(ampvid - gg_fit(velocity)))
 
-        addAreasToResultFiles(getArgs("output"), gaussianAreas)
+        addAreasToResultFiles(getArgs("output"), gaussianAreas, gaussianaAmplitudes, gaussianaMean, gaussianaSTD)
 
     else:
         for resultFile in os.listdir(getConfigs("paths", "notSmoohtFilePath") + getArgs("source")):
             print("processing file", resultFile)
-            addAreasToResultFiles(resultFile, computeGauss(resultFile)[0])
+            tmp = computeGauss(resultFile)
+            #print (tmp)
+            addAreasToResultFiles(resultFile, tmp[0], tmp[6], tmp[7], tmp[8])
 
     sys.exit(0)
