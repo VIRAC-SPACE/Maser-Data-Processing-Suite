@@ -929,9 +929,9 @@ class Main(object):
         
         config = configparser.RawConfigParser()
         config.read(configFilePath)
-        self.dataFilesPath =  config.get('paths', "dataFilePath")
-        self.resultFilePath =  config.get('paths', "resultFilePath")
-        self.output =  config.get('paths', "outputFilePath")
+        self.dataFilesPath = config.get('paths', "dataFilePath")
+        self.resultFilePath = config.get('paths', "resultFilePath")
+        self.output = config.get('paths', "outputFilePath")
         source = self.datafile.split("/")[-1].split(".")[0].split("_")[0]
         cuts = config.get('cuts', source).split(";")
         self.cuts = [c.split(",") for c in  cuts]

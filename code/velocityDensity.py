@@ -36,6 +36,46 @@ def getConfigs(key, value):
 def iterationFromDataFile(dataFileName):
     return dataFileName.split(".")[0].split("_")[-1]
 
+def getLocalMaximum(xarray, yarray, source):
+    dataPoints = len(xarray)
+    cuts = getConfigs("cuts", source).split(";")
+    cuts = [c.split(",") for c in cuts]
+    cutsIndex = list()
+    cutsIndex.append(0)
+
+    for cut in cuts:
+        cutsIndex.append((np.abs(xarray - float(cut[0]))).argmin())
+        cutsIndex.append((np.abs(xarray - float(cut[1]))).argmin())
+
+    cutsIndex.append(dataPoints)
+
+    polyArray_x = list()
+    polyArray_y = list()
+
+    while i != len(cutsIndex):
+        polyArray_x.append(xarray[cutsIndex[i]: cutsIndex[j]])
+        polyArray_y.append(yarray[cutsIndex[i]: cutsIndex[j]])
+        i = i + 2
+        j = j + 2
+
+    poly_x = list()
+    poly_y = list()
+
+    for p in polyArray_x:
+        for p1 in p:
+            poly_x.append(p1)
+
+    for p in polyArray_y:
+        for p1 in p:
+            poly_y.append(p1)
+
+    polyx = np.array(poly_x)
+    polyy = np.array(poly_y)
+
+    z = np.polyfit(polyx, polyy, 3)
+    p = np.poly1d(z)
+    localMax_Array = yarray - p(xarray)
+
 def computeGauss(file):
     gaussLines = getConfigs("gauss_lines", getArgs("source")).replace(" ", "").split(",")
     dataFile = getConfigs("paths", "notSmoohtFilePath") + getArgs("source") + "/" + file  #getArgs("output")
