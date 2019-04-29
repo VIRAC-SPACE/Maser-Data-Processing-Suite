@@ -4,7 +4,7 @@
 import sys
 import argparse
 import numpy as np
-from scipy.signal import correlate
+from scipy.signal import correlate, resample
 import matplotlib.pyplot as plt
 
 from help import *
@@ -37,16 +37,40 @@ def getData():
     data = np.fromfile(monitoringFile, dtype="float64", count=-1, sep=" ").reshape((file_len(monitoringFile),compunetCount + 1))    
     x = correctNumpyReadData(data[:, [a]])
     y = correctNumpyReadData(data[:, [b]])
-    return (x, y)
+    time = correctNumpyReadData(data[:, [0]])
+    return (x, y, time)
 
 def main():
-    x = getData()[0]
+    x = getData()[0][index1:index2]
     y = getData()[1]
-    print ("corr coef", np.corrcoef(x,y), "\n\n")
+    time = getData()[2]
+
+    print("Resampling", x.shape, time.shape)
+
+    xResample = resample(x, len(x), t=time)
+    yResample = resample(y, len(y), t=time)
+
+    plt.subplot(1, 2, 1)
+    plt.plot(xResample[1], xResample[0])
+    plt.xlabel('Time')
+    plt.ylabel('Resampled components A' )
+    plt.grid(True)
+
+    plt.subplot(1, 2, 2)
+    plt.plot(yResample[1], yResample[0])
+    plt.xlabel('Time')
+    plt.ylabel('Resampled components B')
+    plt.grid(True)
+
+    plt.show()
+
+    print("corr coef befor resampling", np.corrcoef(x, y), "\n\n")
+    print ("corr coef after resampling", np.corrcoef(xResample[0], yResample[0]), "\n\n")
+
 
     print("Direct")
-    crossCorr = np.correlate(np.interp(x,x, y), y, "full")
-    a = len(x)
+    crossCorr = np.correlate(xResample[0], yResample[0], "full")
+    a = len(xResample[0])
     b = len(crossCorr)
     ratio = a/b
     print("Input point count", a)
@@ -56,13 +80,16 @@ def main():
     time = points * ratio
     print("Delay is", time[np.argmax(crossCorr)], "time units")
 
+
     plt.subplot(1, 3, 1)
-    plt.plot(x, np.interp(y,x, y))
+    plt.plot(time, crossCorr)
     plt.xlabel('Time')
     plt.ylabel('Re sampling')
     plt.grid(True)
     plt.title("Re sampling")
-
+    plt.show()
+    '''
+    
     plt.subplot(1,3,2)
     plt.plot(time, crossCorr)
     plt.xlabel('Time')
@@ -89,6 +116,7 @@ def main():
     plt.grid(True)
     plt.title("FFT")
     plt.show()
+    '''
     sys.exit(0)
     
 if __name__ == "__main__":
