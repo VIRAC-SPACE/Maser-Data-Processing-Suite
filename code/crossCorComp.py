@@ -15,6 +15,8 @@ def parseArguments():
     parser.add_argument("source", help="Experiment source", type=str, default="")
     parser.add_argument("a", help="componet A ", type=int)
     parser.add_argument("b", help="componet B", type=str)
+    parser.add_argument("--index1", help="index 1", type=str, default="")
+    parser.add_argument("--index2", help="index 2", type=str, default="")
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 2.0')
     args = parser.parse_args()
@@ -41,11 +43,23 @@ def getData():
     return (x, y, time)
 
 def main():
-    x = getData()[0][index1:index2]
-    y = getData()[1]
-    time = getData()[2]
+    index1 = getArgs("index1")
+    index2 = getArgs("index2")
 
-    print("Resampling", x.shape, time.shape)
+    if index1 == "":
+        index1 = 0
+
+    if index2 == "":
+        index2 = len(getData()[0])
+
+    index1 = int(index1)
+    index2 = int(index2)
+
+    x = getData()[0][index1:index2]
+    y = getData()[1][index1:index2]
+    time = getData()[2][index1:index2]
+
+    print("Resampling\n")
 
     xResample = resample(x, len(x), t=time)
     yResample = resample(y, len(y), t=time)
@@ -67,7 +81,6 @@ def main():
     print("corr coef befor resampling", np.corrcoef(x, y), "\n\n")
     print ("corr coef after resampling", np.corrcoef(xResample[0], yResample[0]), "\n\n")
 
-
     print("Direct")
     crossCorr = np.correlate(xResample[0], yResample[0], "full")
     a = len(xResample[0])
@@ -80,17 +93,7 @@ def main():
     time = points * ratio
     print("Delay is", time[np.argmax(crossCorr)], "time units")
 
-
-    plt.subplot(1, 3, 1)
-    plt.plot(time, crossCorr)
-    plt.xlabel('Time')
-    plt.ylabel('Re sampling')
-    plt.grid(True)
-    plt.title("Re sampling")
-    plt.show()
-    '''
-    
-    plt.subplot(1,3,2)
+    plt.subplot(1,2,1)
     plt.plot(time, crossCorr)
     plt.xlabel('Time')
     plt.ylabel('Cross-correlation between components ' + getArgs("a") + " " + getArgs("b"))
@@ -98,7 +101,7 @@ def main():
     plt.title("Direct")
 
     print("\n\nFFT")
-    crossCorr = correlate(np.interp(x,x, y), y, "full", "fft")
+    crossCorr = correlate(xResample[0], yResample[0], "full", "fft")
     a = len(x)
     b = len(crossCorr)
     ratio = a / b
@@ -109,14 +112,14 @@ def main():
     time = points * ratio
     print("Delay is", time[np.argmax(crossCorr)], "time units")
 
-    plt.subplot(1, 3, 3)
+    plt.subplot(1, 2, 2)
     plt.plot(time, crossCorr)
     plt.xlabel('Time')
     plt.ylabel('Cross-correlation between components ' + getArgs("a") + " " + getArgs("b"))
     plt.grid(True)
     plt.title("FFT")
     plt.show()
-    '''
+
     sys.exit(0)
     
 if __name__ == "__main__":
