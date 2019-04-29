@@ -125,8 +125,7 @@ class Gauss_View(PlotingView):
         ampvid = correctNumpyReadData(data[:, [3]])
         indexies = [(np.abs(velocity - float(line))).argmin() for line in gaussLines]
         mons = [max(ampvid[index - 5:index + 5]) for index in indexies]
-        gaussian = [models.Gaussian1D(mons[index], gaussLines[index], 0.05, bounds={'stddev': (None, 0.15)}) for index
-                    in range(0, len(mons))]
+        gaussian = [models.Gaussian1D(mons[index], gaussLines[index], 0.05, bounds={'stddev': (None, 0.15)}) for index in range(0, len(mons))]
 
         def sum(a, b):
             return a + b
@@ -134,12 +133,11 @@ class Gauss_View(PlotingView):
         gg_init = reduce(sum, gaussian)
         fit = LevMarLSQFitter()
         gg_fit = fit(gg_init, velocity, ampvid)
-        sts = [models.Gaussian1D(gg_fit[index].amplitude, gg_fit[index].mean, gg_fit[index].stddev) for index in
-               range(0, len(gaussLines))]
+        sts = [models.Gaussian1D(gg_fit[index].amplitude, gg_fit[index].mean, gg_fit[index].stddev) for index in range(0, len(gaussLines))]
 
         self.fitPlotview = PlotingView()
         self.fitPlot = Plot()
-        self.fitPlot.creatPlot(self.getGrid(), "Velocity", "Gauss Fits", None, (1, 0))
+        self.fitPlot.creatPlot(self.fitPlotview .getGrid(), "Velocity", "Gauss Fits", None, (1, 0))
         self.fitPlot.plot(velocity, ampvid, 'C0+', label="data")
         self.fitPlot.plot(velocity, gg_fit(velocity), "C1-", label="total fit", linewidth=4)
 
