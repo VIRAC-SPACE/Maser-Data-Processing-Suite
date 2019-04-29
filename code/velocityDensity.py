@@ -59,7 +59,7 @@ def computeGauss(file):
     gaussianaAmplitudes = [str(gg_fit[index].amplitude).split("=")[-1].replace(")", "") for index in range(0, len(gaussLines))]
     gaussianaMean = [str(gg_fit[index].mean).split("=")[-1].replace(")", "") for index in range(0, len(gaussLines))]
     gaussianaSTD = [str(gg_fit[index].stddev).split(",")[1].split("=")[-1] for index in range(0, len(gaussLines))]
-    
+    6
     for st in sts:
         gaussianAreas.append(trapz(st(velocity), velocity))
 
