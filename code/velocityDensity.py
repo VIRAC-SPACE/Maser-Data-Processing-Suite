@@ -52,7 +52,7 @@ def computeGauss(file):
 
     gg_init = reduce(sum, gaussian)
     fitter = fitting.SLSQPLSQFitter()
-    fit = LevMarLSQFitter()
+    fit = LevMarLSQFitpython3 ter()
     gg_fit = fit(gg_init, velocity, ampvid)
     sts = [models.Gaussian1D(gg_fit[index].amplitude, gg_fit[index].mean, gg_fit[index].stddev) for index in range(0, len(gaussLines))]
     gaussianAreas = []
