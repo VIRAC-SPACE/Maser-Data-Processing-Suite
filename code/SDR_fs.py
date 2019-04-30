@@ -175,7 +175,7 @@ class Analyzer(QWidget):
         f_shift = BW / df_div
         l_spec = len(frequencyA)
         f_step = (frequencyA[l_spec - 1] - frequencyA[0]) / (l_spec - 1)
-        n_shift = int(f_shift / f_step) + 1
+        n_shift = int(np.rint(f_shift / f_step))
         avg_interval = 0.5 # inner 50%
         si = int(l_spec / 2 - l_spec * avg_interval / 2)
         ei = int(l_spec / 2 + l_spec * avg_interval / 2)
@@ -214,9 +214,15 @@ class Analyzer(QWidget):
         TaU9 = (Ta_sigU9 + Ta_refU9) / 2
 
         El = (float(self.logs[pair[0][0]]["AzEl"][1]) + float(self.logs[pair[0][1]]["AzEl"][1]) + float(self.logs[pair[1][0]]["AzEl"][1]) + float(self.logs[pair[1][1]]["AzEl"][1]))/ 4
-        #G_El = self.logs["header"]["Elev_poly"]#[-0.0000333143, 0.0033676682, 0.9144626256]
-        #G_El = [float(gel) for gel in G_El]
-        G_EL = G_El = [-0.0000333143, 0.0033676682, 0.9144626256]
+        G_El = self.logs["header"]["Elev_poly"]
+        G_El = [float(gel) for gel in G_El]
+        G_ELtmp = [0,0,0]
+        G_ELtmp[0] = G_El[2]
+        G_ELtmp[1] = G_El[1]
+        G_ELtmp[2] = G_El[0]
+        G_El = G_ELtmp
+
+        #G_EL = G_El = [-0.0000333143, 0.0033676682, 0.9144626256]
         SfU1scan = TaU1 / (((-1) * float(self.logs["header"]["DPFU"][0])) * np.polyval(G_El, El))
         SfU9scan = TaU9 / (((-1) * float(self.logs["header"]["DPFU"][1])) * np.polyval(G_El, El))
 
@@ -434,7 +440,7 @@ class Analyzer(QWidget):
             f_shift = BW / df_div
             l_spec = len(frequencyA)
             f_step = (frequencyA[l_spec - 1] - frequencyA[0]) / (l_spec - 1)
-            n_shift = int(f_shift / f_step) + 1
+            n_shift = int(np.rint(f_shift/f_step))
             avg_interval = 0.5 # inner 50%
             si = int(l_spec / 2 - l_spec * avg_interval / 2)
             ei = int(l_spec / 2 + l_spec * avg_interval / 2)
@@ -473,9 +479,13 @@ class Analyzer(QWidget):
             TaU9 = (Ta_sigU9 + Ta_refU9) / 2
 
             El = (float(self.logs[pair[0][0]]["AzEl"][1]) + float(self.logs[pair[0][1]]["AzEl"][1]) + float(self.logs[pair[1][0]]["AzEl"][1]) + float(self.logs[pair[1][1]]["AzEl"][1]))/ 4
-            #G_El = self.logs["header"]["Elev_poly"]#[-0.0000333143, 0.0033676682, 0.9144626256]
-            G_El = [-0.0000333143, 0.0033676682, 0.9144626256]
-            #G_El = [float(gel) for gel in G_El]
+            G_El = self.logs["header"]["Elev_poly"]
+            G_El = [float(gel) for gel in G_El]
+            G_ELtmp = [0,0,0]
+            G_ELtmp[0] = G_El[2]
+            G_ELtmp[1] = G_El[1]
+            G_ELtmp[2] = G_El[0]
+            G_El = G_ELtmp
 
             SfU1scan = TaU1 / (((-1) * (float(self.logs["header"]["DPFU"][0])) ) * np.polyval(G_El, El))
             SfU9scan = TaU9 / (((-1) * (float(self.logs["header"]["DPFU"][1])) ) * np.polyval(G_El, El))
