@@ -318,8 +318,8 @@ class Period_View(PlotingView):
             self.show()
             
 class Monitoring_View(PlotingView):
-        def __init__(self, iteration_list, location_list, source, output_path, source_velocities, date_list, velocitie_dict, AreaList, GaussDatePointsList, gaussLocationList, gaussIterationList):
-            __slots__ = ['grid', 'polarization', 'labels', 'lines', 'iteration_list', 'location_list', 'source', 'output_path', 'new_spectre', 'spectrumSet', 'plotList', 'months', 'dateList', 'velocitie_dict', 'periodPlotSet', 'AreaList', 'GaussDatePointsList', 'gaussLocationList', "gaussIterationList"]
+        def __init__(self, iteration_list, location_list, source, output_path, source_velocities, date_list, velocitie_dict, AreaList, GaussDatePointsList, gaussLocationList, gaussIterationList, gauss_ampList):
+            __slots__ = ['grid', 'polarization', 'labels', 'lines', 'iteration_list', 'location_list', 'source', 'output_path', 'new_spectre', 'spectrumSet', 'plotList', 'months', 'dateList', 'velocitie_dict', 'periodPlotSet', 'AreaList', 'GaussDatePointsList', 'gaussLocationList', "gaussIterationList", "gauss_ampList"]
             super().__init__()
             self.setWindowTitle("Monitoring")
             self._addWidget(self.createControlGroup(), 1, 1)
@@ -343,6 +343,7 @@ class Monitoring_View(PlotingView):
             self.GaussDatePointsList = GaussDatePointsList
             self.gaussLocationList = gaussLocationList
             self.gaussIterationList = gaussIterationList
+            self.gauss_ampList = gauss_ampList
             
         def setLineDict(self, lineDict):
             self.lineDict = lineDict
@@ -364,7 +365,12 @@ class Monitoring_View(PlotingView):
             self.gauss_view = Gauss_View(self.AreaList, self.source, self.GaussDatePointsList, self.gaussLocationList, self.gaussIterationList)
             self.gauss_view.plot()
             self.gauss_view.show()
-            
+
+        def createGaussAmplitudesView(self):
+            self.gauss_view = Gauss_View(self.gauss_ampList, self.source, self.GaussDatePointsList, self.gaussLocationList, self.gaussIterationList)
+            self.gauss_view.plot()
+            self.gauss_view.show()
+
         def createMapVew(self):
             os.system("perl " + "code/find_multiple.pl " + self.output_path + " " + self.source)
             self.maps_view = Maps_View(self.source)
@@ -384,16 +390,20 @@ class Monitoring_View(PlotingView):
             comboBox.activated[str].connect(self.getPolarization)    
                   
             controlGrid = QGridLayout()
-            controlGrid.addWidget(comboBox, 4, 0)
+            controlGrid.addWidget(comboBox, 5, 0)
             plotPeriodsbutton = QPushButton('Plot periods', self)
             plotPeriodsbutton.clicked.connect(self.createPeriodView)
             controlGrid.addWidget(plotPeriodsbutton, 1, 0)
             plotMapsbutton = QPushButton('Plot maps', self)
             plotMapsbutton.clicked.connect(self.createMapVew)
 
-            plotGaussAreasbutton = QPushButton('Plot Gauss Areas', self)
+            plotGaussAreasbutton = QPushButton('Plot Gauss areas', self)
             plotGaussAreasbutton.clicked.connect(self.createGaussAreaView)
             controlGrid.addWidget(plotGaussAreasbutton, 3, 0)
+
+            plotGaussAmplitudesbutton = QPushButton('Plot Gauss amplitudes', self)
+            plotGaussAmplitudesbutton.clicked.connect(self.createGaussAmplitudesView)
+            controlGrid.addWidget(plotGaussAmplitudesbutton, 4, 0)
 
             controlGrid.addWidget(plotMapsbutton, 2, 0)
             self.componentInput = QLineEdit()
@@ -564,6 +574,7 @@ class MonitoringApp(QWidget):
         
         self.location_list = list()
         labels2 = list()
+        badIteration = list()
         for experiment in results:
                 scanData = results[experiment]
                 date = scanData["Date"]
@@ -575,25 +586,38 @@ class MonitoringApp(QWidget):
                 specie = scanData["specie"]
                 type = scanData["type"]
                 modifiedJulianDays = scanData["modifiedJulianDays"]
+
+
                 if "areas" in scanData.keys():
                     areas = scanData["areas"]
                 else:
-                    print("No Gauss Area in result file with iteration ", iter_number)
+                    print("No Gauss areas in result file for iteration", iter_number)
+
+                if "gauss_amp" in scanData.keys():
+                    gauss_amp = scanData["gauss_amp"]
+                else:
+                    badIteration.append(iter_number)
+                    gauss_amp = np.zeros(len(getConfigs("gauss_lines", self.source).replace(" ", "").split(",")))
+                    print("No Gauss gauss_amp in result file for iteration", iter_number)
+
                 dates = date.split("_")
                 monthsNumber = dates[1]
                 dates[1] = self.months.getMonthNumber([monthsNumber][0])
                 date = scanData["time"].replace(":", " ") + " " +  " ".join(dates)
 
-                result = Result(location, datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number, specie, type, modifiedJulianDays, areas)
+                result = Result(location, datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number, specie, type, modifiedJulianDays, areas, gauss_amp)
                 result_list.append(dict(result))
-              
+
+        print("badIteration", badIteration)
         result_list = sorted(result_list, key=itemgetter('date'), reverse=False)
 
         self.AreaList = list()
         self.GaussDatePointsList = list()
         self.gaussLocationList = list()
         self.gaussIterationList = list()
+        self.gauss_ampList = list()
         modifiedJulianDaysList = list()
+
         for experiment in result_list:
             u1 = experiment["polarizationU1"]
             u9 = experiment["polarizationU9"]
@@ -603,6 +627,7 @@ class MonitoringApp(QWidget):
             location = experiment["location"]
             specie = experiment["specie"]
             areas = experiment["areas"]
+            gauss_amp = experiment["gauss_amp"]
 
             gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
             if len(areas) == len(gaussLines):
@@ -610,6 +635,7 @@ class MonitoringApp(QWidget):
                 self.GaussDatePointsList.append(experiment["date"])
                 self.gaussLocationList.append(location)
                 self.gaussIterationList.append(experiment["iteration_number"])
+                self.gauss_ampList.append(gauss_amp)
             self.location_list.append(location)
             
             for i in u1:
@@ -636,7 +662,7 @@ class MonitoringApp(QWidget):
         Symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
         colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
         
-        self.Monitoring_View = Monitoring_View(self.iteration_list, self.location_list, self.source, self.output_path, source_velocities, date_list, velocitie_dict, self.AreaList, self.GaussDatePointsList, self.gaussLocationList, self.gaussIterationList)
+        self.Monitoring_View = Monitoring_View(self.iteration_list, self.location_list, self.source, self.output_path, source_velocities, date_list, velocitie_dict, self.AreaList, self.GaussDatePointsList, self.gaussLocationList, self.gaussIterationList, self.gauss_ampList)
         self.monitoringPlot = Plot()
         self.monitoringPlot.creatPlot(self.Monitoring_View.getGrid(), "Time", "Flux density (Jy)", None, (1,0))
         
