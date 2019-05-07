@@ -15,6 +15,7 @@ logger = logging.getLogger('Main')
 def parseArguments():
     parser = argparse.ArgumentParser(description='''automatically call frequencyShiftingAnalyzer and totalSpectrumAnalyer. ''', epilog="""Main program.""")
     parser.add_argument("source", help="Source Name", type=str)
+    parser.add_argument("line", help="frequency", type=str)
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-m", "--manual", help="Set manual log data", action='store_true')
     parser.add_argument("-n", "--noGUI", help="Create smoothed and not smothed outputfiles", action='store_true')
@@ -60,7 +61,7 @@ def main():
     SDRpath = dataFilesPath + "SDR/"
 
     DBBC_iterations = createIterationList(DBBCpath + sourceName + "/")
-    SDR_iterations = createIterationList(SDRpath + sourceName + "/")
+    SDR_iterations = createIterationList(SDRpath + sourceName + "/f" + getArgs("line") + "/")
 
     DBBClogPath = logPath + "DBBC/"
     SDRlOGPath = logPath + "SDR/"
@@ -106,7 +107,7 @@ def main():
         else:
             for i in DBBC_iterations:
                 if i not in DBBCprocessed_iteration:
-                    frequencyShiftingParametr = sourceName + " " + i + " " + str(DBBClogfile_list[findLogFile(DBBClogfile_list, i)])
+                    frequencyShiftingParametr = sourceName  + " " + i + " " + str(DBBClogfile_list[findLogFile(DBBClogfile_list, i)])
                     logger.info("Executing python3 " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
                     os.system("python3 " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
 
@@ -147,13 +148,13 @@ def main():
         if args.manual:
             for i in SDR_iterations:
                 if i not in SDRprocessed_iteration:
-                    frequencyShiftingParametr = sourceName + " " + i + " " + str(SDRlogfile_list[findLogFile(SDRlogfile_list, i)])
+                    frequencyShiftingParametr = sourceName + " " + getArgs("line") + " " + i + " " + str(SDRlogfile_list[findLogFile(SDRlogfile_list, i)])
                     logger.info("Executing python3 " + "code/SDR_fs.py " + frequencyShiftingParametr + " -m")
                     os.system("python3  " + "code/SDR_fs.py " + frequencyShiftingParametr + " -m")
         else:
             for i in SDR_iterations:
                 if i not in SDRprocessed_iteration:
-                    frequencyShiftingParametr = sourceName + " " + i + " " + str(SDRlogfile_list[findLogFile(SDRlogfile_list, i)])
+                    frequencyShiftingParametr = sourceName + " " + getArgs("line") + " " + i + " " + str(SDRlogfile_list[findLogFile(SDRlogfile_list, i)])
                     logger.info("Executing python3 " + "code/SDR_fs.py " + frequencyShiftingParametr)
                     os.system("python3 " + "code/SDR_fs.py " + frequencyShiftingParametr)
 
