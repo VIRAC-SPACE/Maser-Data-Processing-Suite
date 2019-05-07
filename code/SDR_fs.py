@@ -23,10 +23,12 @@ from help import *
 def parseArguments():
     parser = argparse.ArgumentParser(description='''Creates input file for plotting tool. ''', epilog="""PRE PLOTTER.""")
     parser.add_argument("source", help="Experiment source", type=str, default="")
+    parser.add_argument("line", help="frequency", type=str)
     parser.add_argument("iteration_number", help="iteration number ", type=int)
     parser.add_argument("logFile", help="Experiment log file name", type=str)
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 1.0')
+
     args = parser.parse_args()
     return args
 
@@ -68,11 +70,10 @@ class Analyzer(QWidget):
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.setWindowTitle("SDR")
         self.center()
-        self.DataDir = getConfigs("paths", "dataFilePath")  + "SDR/" + getArgs("source") + "/" + getArgs("iteration_number") + "/"
+        self.DataDir = getConfigs("paths", "dataFilePath")  + "SDR/" + getArgs("source") + "/f" + getArgs("line")  + "/" + getArgs("iteration_number") + "/"
         self.DataFiles = os.listdir(self.DataDir)
         self.ScanPairs = self.createScanPairs()
         self.index = 0
-        self.f0 = 6668519200
         self.SfU1 = list()
         self.SfU9 = list()
         self.logs = LogReaderFactory.getLogReader(LogTypes.SDR, getConfigs("paths", "logPath") + "SDR/"+ getArgs("logFile"), getConfigs("paths", "prettyLogsPath") + getArgs("source") + "_" + getArgs("iteration_number")).getLogs()
@@ -331,28 +332,14 @@ class Analyzer(QWidget):
             self.max_yu1_index = self.SfU1[p].argmax(axis=0)
             self.max_yu9_index = self.SfU9[p].argmax(axis=0)
 
-            base_frequencies = getConfingItem('base_frequencies')
-            base_frequencies_list = list()
-
-            for value in base_frequencies:
-                base_frequencies_list.append(float(base_frequencies[value]))
-
-            LO = float(self.logs["header"]["Frst,LO,IF"][1])
-            self.freq_0_u1_index = ((np.abs(base_frequencies_list - (self.x[self.max_yu1_index] + LO) * (10 ** 6)).argmin()))
-            self.freq_0_u9_index = ((np.abs(base_frequencies_list - (self.x[self.max_yu9_index] + LO) * (10 ** 6)).argmin()))
-
-            self.freq_0_u1 = base_frequencies_list[self.freq_0_u1_index]
-            self.freq_0_u9 = base_frequencies_list[self.freq_0_u9_index]
-
-            print("base freqcvencie", self.freq_0_u1, self.freq_0_u9)
-
-            for key, value in base_frequencies.items():
-                if float(value) == self.freq_0_u1:
-                    specie = key
+            line = getConfigs('base_frequencies_SDR', "f" + getArgs("line")).replace(" ", "").split(",")
+            lineF = float(line[0]) * (10**9)
+            lineS = line[1]
+            specie = lineS
 
             print("specie", specie, "\n")
-
-            velocitys = dopler((self.x + LO) * (10 ** 6), VelTotal, self.freq_0_u1)
+            LO = float(self.logs["header"]["Frst,LO,IF"][1])
+            velocitys = dopler((self.x + LO) * (10 ** 6), VelTotal, lineF)
             y_u1_avg = y_u1_avg + self.SfU1[p]
             y_u9_avg = y_u9_avg + self.SfU9[p]
             velocitys_avg = velocitys_avg + velocitys
@@ -386,7 +373,6 @@ class Analyzer(QWidget):
         seconde = scan_1["date"].split("T")[1].split(":")[2]
         output_file_name =  getConfigs("paths", "dataFilePath")  + "SDR/" + getArgs("source") + "_" + day + "_" + month + "_" + year + "_"  + houre + ":" + minute + ":" + seconde + "_" + station + "_" + getArgs("iteration_number") + ".dat"
         print("output_file_name", output_file_name)
-        #output_file_name = getConfigs("paths", "dataFilePath")  + "SDR/" + getArgs("source") + "_" + scan_1["date"] + "_" + station + "_" + getArgs("iteration_number") + ".dat"
         output_file_name = output_file_name.replace(" ", "")
         result = Result(totalResults, specie)
         pickle.dump(result, open(output_file_name, 'wb'))

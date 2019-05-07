@@ -149,7 +149,6 @@ class Analyzer(QWidget):
         self.dataFileDir = dataPath + self.source + "/" + str(self.iteration_number) + "/"
         self.scanPairs = self.createScanPairs()
         self.datPairsCount = len(self.scanPairs)
-        self.f0 = 6668519200
         self.location = self.logs["header"]["location"]
         self.expername = self.source + self.date + "_" + self.location
         self.DPFU_max = DPFU_max
@@ -898,7 +897,7 @@ def main():
     coordinates = config.get('sources', source).replace(" ", "").split(",")
     cuts = config.get('cuts', source).split(";")
     cuts = [c.split(",") for c in cuts]
-    base_frequencies = dict(config.items('base_frequencies'))
+    base_frequencies = dict(config.items('base_frequencies_DBBC'))
 
     if args.manual:
         with open(prettyLogsPath + source + "_" + str(iteration_number) + "log.dat") as data_file:
