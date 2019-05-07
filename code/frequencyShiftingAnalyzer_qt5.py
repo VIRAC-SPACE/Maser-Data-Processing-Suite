@@ -878,7 +878,6 @@ class Analyzer(QWidget):
         self.plot_start_u9.fig.canvas.draw()
         self.plot_start_u9.fig.canvas.flush_events()
 
-
 def main():
     args = parseArguments()
     source = str(args.__dict__["source"])
