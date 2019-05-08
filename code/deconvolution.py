@@ -61,7 +61,6 @@ def main():
             orginalAmp = np.nan_to_num(deconvolve(amp, gauss)[0].astype('float64'))
 
             pad = (0, f.size - orginalAmp1.size)
-            #totalResults = [self.xarray, self.z1_NotSmoohtData, self.z2_NotSmoohtData, self.avg_y_NotSmoohtData]
             results = [f, np.pad( orginalAmp1, pad, 'constant'), np.pad(orginalAmp9, pad, 'constant'), np.pad(orginalAmp, pad, 'constant')]
             np.savetxt(notSmoothFile, np.transpose(results))
 
