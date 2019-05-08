@@ -5,7 +5,6 @@ import sys
 import os
 from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QDesktopWidget, QPushButton, QInputDialog)
 from PyQt5.QtGui import QIcon
-from PyQt5 import QtCore
 import argparse
 import re
 import numpy as np
@@ -28,18 +27,11 @@ def parseArguments():
     parser.add_argument("logFile", help="Experiment log file name", type=str)
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 1.0')
-
     args = parser.parse_args()
     return args
 
 def getArgs(key):
     return str(parseArguments().__dict__[key])
-
-def getConfingItem(item):
-    configFilePath = getArgs("config")
-    config = ConfigParser.getInstance()
-    config.CreateConfig(configFilePath)
-    return config.getItems(item)
 
 def getConfigs(key, value):
     configFilePath = getArgs("config")
