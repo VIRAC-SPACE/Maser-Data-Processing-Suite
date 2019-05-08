@@ -338,7 +338,7 @@ class Analyzer(QWidget):
             specie = lineS
 
             print("specie", specie, "\n")
-            LO = float(self.logs["header"]["Frst,LO,IF"][1])
+            LO = float(self.logs["header"]["f_obs,LO,IF"][1])
             velocitys = dopler((self.x + LO) * (10 ** 6), VelTotal, lineF)
             y_u1_avg = y_u1_avg + self.SfU1[p]
             y_u9_avg = y_u9_avg + self.SfU9[p]
