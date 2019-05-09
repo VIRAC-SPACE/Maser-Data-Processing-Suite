@@ -163,7 +163,7 @@ class Analyzer(QWidget):
         self.plot_start_u9B.plot(frequencyD, polarizationU9D, 'y', label=str(index+1) + "s1")
         self.grid.addWidget(self.plot_start_u9B, 0, 1)
 
-        df_div = 4
+        df_div = float(self.logs["header"]["df_div"])
         BW = float(self.logs["header"]["Fs,Ns,RBW"][0])
         f_shift = BW / df_div
         l_spec = len(frequencyA)
@@ -215,7 +215,6 @@ class Analyzer(QWidget):
         G_ELtmp[2] = G_El[0]
         G_El = G_ELtmp
 
-        #G_EL = G_El = [-0.0000333143, 0.0033676682, 0.9144626256]
         SfU1scan = TaU1 / (((-1) * float(self.logs["header"]["DPFU"][0])) * np.polyval(G_El, El))
         SfU9scan = TaU9 / (((-1) * float(self.logs["header"]["DPFU"][1])) * np.polyval(G_El, El))
 
@@ -280,6 +279,13 @@ class Analyzer(QWidget):
         y_u1_avg = np.zeros(len(self.x))
         y_u9_avg = np.zeros(len(self.x))
 
+        station = self.logs["header"]["station"]
+        if station == "RT-32":
+            station = "IRBENE"
+        else:
+            station = "IRBENE16"
+
+        stationCordinations = getConfigs("stations", station)
         for p in range(0, len(self.ScanPairs)):
             scanNumber = self.ScanPairs[p][0][0]
             scan_1 = self.logs[str(scanNumber)]
@@ -287,8 +293,6 @@ class Analyzer(QWidget):
             t = datetime.datetime.strptime(scan_1["date"], '%Y-%m-%dT%H:%M:%S')
             time = t.isoformat()
             date = Time(time, format='isot', scale='utc')
-            station = "IRBENE16"
-            stationCordinations = getConfigs("stations", "IRBENE16")
             x = np.float64(stationCordinations[0])
             y = np.float64(stationCordinations[1])
             z = np.float64(stationCordinations[2])
@@ -358,7 +362,6 @@ class Analyzer(QWidget):
         month = scan_1["date"].split("-")[1]
         months = {"Jan": "1", "Feb": "2", "Mar": "3", "Apr": "4", "May": "5", "Jun": "6", "Jul": "7", "Aug": "8", "Sep": "9", "Oct": "10", "Nov": "11", "Dec": "12"}
         month = list(months.keys())[int(month) -1]
-        print(month)
         year = scan_1["date"].split("-")[0]
         houre = scan_1["date"].split("T")[1].split(":")[0]
         minute = scan_1["date"].split("T")[1].split(":")[1]
@@ -413,7 +416,7 @@ class Analyzer(QWidget):
             polarizationU1D = np.fft.fftshift(polarizationU1D) #s1
             polarizationU9D = np.fft.fftshift(polarizationU9D) #s1
 
-            df_div = 4
+            df_div = float(self.logs["header"]["df_div"])
             BW = float(self.logs["header"]["Fs,Ns,RBW"][0])
             f_shift = BW / df_div
             l_spec = len(frequencyA)
