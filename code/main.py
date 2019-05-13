@@ -60,8 +60,15 @@ def main():
     DBBCpath = dataFilesPath + "DBBC/"
     SDRpath = dataFilesPath + "SDR/"
 
-    DBBC_iterations = createIterationList(DBBCpath + sourceName + "/")
-    SDR_iterations = createIterationList(SDRpath + sourceName + "/f" + getArgs("line") + "/")
+    if os.path.exists(DBBCpath + sourceName + "/"):
+        DBBC_iterations = createIterationList(DBBCpath + sourceName + "/")
+    else:
+        DBBC_iterations = []
+
+    if os.path.exists(SDRpath + sourceName + "/f" + getArgs("line") + "/"):
+        SDR_iterations = createIterationList(SDRpath + sourceName + "/f" + getArgs("line") + "/")
+    else:
+        SDR_iterations = []
 
     DBBClogPath = logPath + "DBBC/"
     SDRlOGPath = logPath + "SDR/"
@@ -70,12 +77,13 @@ def main():
     SDRlogfile_list = createLogFileList(SDRlOGPath, sourceName)
 
     resultFileName = resultPath + sourceName + ".json"
+    print(resultFileName)
 
     if os.path.isfile(resultFileName):
         pass
     else:
-        os.system("touch " + resultPath + resultFileName)
-        resultFile = open(resultPath + resultFileName, "w")
+        os.system("touch " + resultFileName)
+        resultFile = open(resultFileName, "w")
         resultFile.write("{ \n" + "\n}")
         resultFile.close()
 
