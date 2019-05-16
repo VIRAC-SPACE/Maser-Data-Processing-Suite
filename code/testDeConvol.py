@@ -22,6 +22,8 @@ amp1 = correctNumpyReadData(data1[:, [3]])
 v2 = correctNumpyReadData(data2[:, [0]])
 amp2 = correctNumpyReadData(data2[:, [3]])
 
+print(len(v2), len(amp2))
+
 plt.subplot(1,2,1)
 plt.plot(v1, amp1)
 plt.subplot(1,2,2)

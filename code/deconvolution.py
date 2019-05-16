@@ -55,13 +55,24 @@ def main():
             amp9 = correctNumpyReadData(data[:, [2]])
             amp = correctNumpyReadData(data[:, [3]])
 
-            gauss = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
+
+
+            gaussTest = Gaussian1DKernel(stddev=3, x_size=len(f), mode='center', factor=100)
+            ampTets = np.abs(np.fft.ifft(amp/np.fft.fft(gaussTest)))
+
+            gauss = np.exp(-((np.linspace(0, 50) - 25.) / float(12)) ** 2)
             orginalAmp1 = np.nan_to_num(deconvolve(amp1, gauss)[0].astype('float64'))
             orginalAmp9 = np.nan_to_num(deconvolve(amp9, gauss)[0].astype('float64'))
             orginalAmp = np.nan_to_num(deconvolve(amp, gauss)[0].astype('float64'))
 
+            n = len(f) - len(gauss) + 1
+            s = int((len(f) - n) / 2)
+            deconv_res = np.zeros(len(f))
+            deconv_res[s:len(f) - s - 1] = orginalAmp
+            orginalAmp = deconv_res
+
             pad = (0, f.size - orginalAmp1.size)
-            results = [f, np.pad( orginalAmp1, pad, 'constant'), np.pad(orginalAmp9, pad, 'constant'), np.pad(orginalAmp, pad, 'constant')]
+            results = [f, np.pad( orginalAmp1, pad, 'constant'), np.pad(orginalAmp9, pad, 'constant'), ampTets]
             np.savetxt(notSmoothFile, np.transpose(results))
 
     sys.exit(0)
