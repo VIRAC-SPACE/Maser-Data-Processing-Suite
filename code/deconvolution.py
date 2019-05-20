@@ -55,10 +55,17 @@ def main():
             amp9 = correctNumpyReadData(data[:, [2]])
             amp = correctNumpyReadData(data[:, [3]])
 
+            ampTets = np.ones(len(f))
+            gaussTest = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
+            b = np.fft.fft(gaussTest)  + 0.1 # np.finfo(np.float64).eps
 
-
-            gaussTest = Gaussian1DKernel(stddev=3, x_size=len(f), mode='center', factor=100)
-            ampTets = np.abs(np.fft.ifft(amp/np.fft.fft(gaussTest)))
+            i = 0
+            j = 19
+            while j<=len(f):
+                ampTets[i:j] = np.abs(np.fft.ifft(amp[i:j]/b))
+                #print(np.fft.fft(gaussTest))
+                i += 19
+                j += 19
 
             gauss = np.exp(-((np.linspace(0, 50) - 25.) / float(12)) ** 2)
             orginalAmp1 = np.nan_to_num(deconvolve(amp1, gauss)[0].astype('float64'))

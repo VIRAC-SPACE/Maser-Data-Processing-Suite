@@ -322,6 +322,7 @@ class Analyzer(QWidget):
             else:
                 DecStr = dec[0] + "d" + dec[1] + "m" + dec[2] + "s"
 
+            print("Vel Total params", RaStr, DecStr, date, stringTime, x, y, z)
             VelTotal = lsr(RaStr, DecStr, date, stringTime, x, y, z)
             print("VelTotal", VelTotal)
 

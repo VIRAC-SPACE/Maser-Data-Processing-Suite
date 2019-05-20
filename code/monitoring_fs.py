@@ -673,6 +673,8 @@ class MonitoringApp(QWidget):
         
         #.strftime("%H %M %d %m %Y")
         #x = [date.strftime("%H %M %d %m %Y") for date in date_list]
+
+        # MODIFICETS
         
         lineDict = {"u1":list(), "u9":list(), "avg":list()}
         lines = list()
@@ -688,7 +690,7 @@ class MonitoringApp(QWidget):
             lineDict["u1"].append(l1)
             lineDict["u9"].append(l2)
             lineDict["avg"].append(l3)
-            
+
         np.savetxt("monitoring/" + self.source + ".txt", np.transpose(monitoringResults))
         self.Monitoring_View._addWidget(self.monitoringPlot, 0, 0)
         #self.monitoringPlot.setXtics(date_list, [convertDatetimeObjectToMJD(date) for date in  date_list], '30')
