@@ -163,7 +163,7 @@ class Analyzer(QWidget):
         self.plot_start_u9B.plot(frequencyD, polarizationU9D, 'y', label=str(index+1) + "s1")
         self.grid.addWidget(self.plot_start_u9B, 0, 1)
 
-        df_div = float(self.logs["header"]["df_div"])
+        df_div = float(self.logs["header"]["df_div,df"][0])
         BW = float(self.logs["header"]["Fs,Ns,RBW"][0])
         f_shift = BW / df_div
         l_spec = len(frequencyA)
@@ -422,7 +422,7 @@ class Analyzer(QWidget):
             polarizationU1D = np.fft.fftshift(polarizationU1D) #s1
             polarizationU9D = np.fft.fftshift(polarizationU9D) #s1
 
-            df_div = float(self.logs["header"]["df_div"])
+            df_div = float(self.logs["header"]["df_div,df"][0])
             BW = float(self.logs["header"]["Fs,Ns,RBW"][0])
             f_shift = BW / df_div
             l_spec = len(frequencyA)
