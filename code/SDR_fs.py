@@ -286,6 +286,11 @@ class Analyzer(QWidget):
             station = "IRBENE16"
 
         stationCordinations = getConfigs("stations", station)
+        stationCordinations = stationCordinations.replace(" ", "").split(",")
+        x = np.float64(stationCordinations[0])
+        y = np.float64(stationCordinations[1])
+        z = np.float64(stationCordinations[2])
+
         for p in range(0, len(self.ScanPairs)):
             scanNumber = self.ScanPairs[p][0][0]
             scan_1 = self.logs[str(scanNumber)]
@@ -293,9 +298,9 @@ class Analyzer(QWidget):
             t = datetime.datetime.strptime(scan_1["date"], '%Y-%m-%dT%H:%M:%S')
             time = t.isoformat()
             date = Time(time, format='isot', scale='utc')
-            x = np.float64(stationCordinations[0])
-            y = np.float64(stationCordinations[1])
-            z = np.float64(stationCordinations[2])
+
+            print("stationCordinations", stationCordinations)
+
             sourceCordinations = getConfigs("sources",  getArgs("source")).split(",")
             sourceCordinations = [sc.strip() for sc in sourceCordinations]
             RA = sourceCordinations[0]
