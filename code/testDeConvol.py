@@ -33,7 +33,9 @@ plt.title("Befor convolation")
 
 plt.subplot(1,3,2)
 plt.plot(v2,amp2)
-plt.title("After deconvulatio")
+plt.title("After deconvulation")
+#ax2 = plt.twiny()
+#ax2.set_xticks(np.arange(0,80))
 
 plt.subplot(1,3,3)
 plt.plot(v3,amp3)
