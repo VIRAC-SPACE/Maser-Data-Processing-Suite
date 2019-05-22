@@ -57,13 +57,13 @@ def main():
             amp = correctNumpyReadData(data[:, [3]])
 
             ampTets = np.zeros(len(f))
-            gaussTest = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
+            gaussTest = Gaussian1DKernel(stddev=3, x_size=19, mode='linear_interp', factor=1)
             b = np.fft.fft(gaussTest)
             i = 0
             j = 19
 
             ampConvolvList = list()
-            while j<=len(f):
+            while j<len(f):
                 ampTetsTmp = np.abs(np.fft.ifft(np.fft.fft(amp[i:j])/b))
                 ampTetsTmp = np.pad(ampTetsTmp, (i, len(f) - j), 'constant', constant_values=(0, 0))
                 ampConvolvList.append(ampTetsTmp)
