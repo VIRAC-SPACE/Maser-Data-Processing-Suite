@@ -7,6 +7,7 @@ import argparse
 import numpy as np
 from scipy.signal import deconvolve
 from astropy.convolution import Gaussian1DKernel
+from functools import reduce
 
 from parsers._configparser import ConfigParser
 from help import *
@@ -61,12 +62,16 @@ def main():
             i = 0
             j = 19
 
+            ampConvolvList = list()
             while j<=len(f):
-                ampTets[i:j] = ampTets[i:j] + np.abs(np.fft.ifft(np.fft.fft(amp[i:j])/b))
+                ampTetsTmp = np.abs(np.fft.ifft(np.fft.fft(amp[i:j])/b))
+                ampTetsTmp = np.pad(ampTetsTmp, (i, len(f) - j), 'constant', constant_values=(0, 0))
+                ampConvolvList.append(ampTetsTmp)
                 i += 1
                 j += 1
 
-            ampTets /= 20
+            ampTets = reduce(lambda a,b : a+b,ampConvolvList)
+            ampTets = ampTets / len(ampConvolvList)
 
             gauss = np.exp(-((np.linspace(0, 50) - 25.) / float(12)) ** 2)
             orginalAmp1 = np.nan_to_num(deconvolve(amp1, gauss)[0].astype('float64'))
