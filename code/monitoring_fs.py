@@ -98,25 +98,34 @@ class Gauss_View2(PlotingView):
 
         i = 0
         colors = []
-        for index in range(2, len(gaussLines) + 2):
-            if index % 2:
-                index -= 1
-            else:
-                index += 1
-            colors.append("C" + str(index))
+        r = 0.25
+        g = 0.2
+        b = 0.15
+        a = 1
+
+        for index in range(0, len(gaussLines)):
+            r += 0.08
+            g += 0.01
+            b += 0.02
+            colors.append((r,g,b,a))
+
+        labels2 = ["Date is " + d.strftime('%d %m %Y') for d in self.GaussDatePointsList]
 
         for gl in (gaussLines):
-            self.gaussAreaPlot.plot(self.GaussDatePointsList, gaussLineDict[gl], colors[i] + "-.", fontsize=8, visible=True, picker=5, label=gl)
+            self.gaussAreaPlot.plot(self.GaussDatePointsList, gaussLineDict[gl], ".", color=colors[i], fontsize=8, visible=True, picker=5, label=gl)
+
             i += 1
 
         self.gaussAreaPlot.addPickEvent(self.chooseGaussFitt)
         self._addWidget(self.gaussAreaPlot, 0, 0)
+        self.gaussAreaPlot.addCursor(labels2)
 
     def chooseGaussFitt(self, event):
         thisline = event.artist
         xdata = thisline.get_xdata()
         ind = event.ind
         index = [ind][0]
+        gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
         fittFile = getConfigs("paths", "notSmoohtFilePath") + self.source + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.gaussLocationList, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.gaussIterationList, int(index[0])) + ".dat"
 
         gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
@@ -138,7 +147,7 @@ class Gauss_View2(PlotingView):
 
         self.fitPlotview = PlotingView()
         self.fitPlot = Plot()
-        self.fitPlot.creatPlot(self.fitPlotview .getGrid(), "Velocity", "Gauss Fits", None, (1, 0))
+        self.fitPlot.creatPlot(self.fitPlotview .getGrid(), "Velocity", "Gauss Fits", MonitoringViewHelper.formatDate(xdata, index), (1, 0))
         self.fitPlot.plot(velocity, ampvid, 'C0+', label="data")
         self.fitPlot.plot(velocity, gg_fit(velocity), "C1-", label="total fit", linewidth=4)
 
@@ -153,7 +162,7 @@ class Gauss_View2(PlotingView):
 
         c = 0
         for st in sts:
-            self.fitPlot.plot(velocity, st(velocity), colors[c], label="ST" + str(c))
+            self.fitPlot.plot(velocity, st(velocity), colors[c], label=gaussLines[c])
             c += 1
 
         self.fitPlot.plot(velocity, (gg_fit(velocity) - ampvid) * 1 - 35, "r")
@@ -190,26 +199,32 @@ class Gauss_View(PlotingView):
 
         i = 0
         colors = []
-        for index in range(2, len(gaussLines) + 2):
-            if index % 2:
-                index -= 1
-            else:
-                index += 1
-            colors.append("C" + str(index))
+        r = 0.25
+        g = 0.2
+        b = 0.15
+        a = 1
 
+        for index in range(0, len(gaussLines)):
+            r += 0.08
+            g += 0.01
+            b += 0.02
+            colors.append((r, g, b, a))
 
+        labels2 = ["Date is " + d.strftime('%d %m %Y') for d in self.GaussDatePointsList]
         for gl in (gaussLines):
-            self.gaussAreaPlot.plot(self.GaussDatePointsList, gaussLineDict[gl], colors[i] + "-.", fontsize=8, visible=True, picker=5, label=gl)
+            self.gaussAreaPlot.plot(self.GaussDatePointsList, gaussLineDict[gl], ".", fontsize=8, color=colors[i], visible=True, picker=5, label=gl)
             i += 1
 
         self.gaussAreaPlot.addPickEvent(self.chooseGaussFitt)
         self._addWidget(self.gaussAreaPlot, 0, 0)
+        self.gaussAreaPlot.addCursor(labels2)
 
     def chooseGaussFitt(self, event):
         thisline = event.artist
         xdata = thisline.get_xdata()
         ind = event.ind
         index = [ind][0]
+        gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
         fittFile = getConfigs("paths", "notSmoohtFilePath") + self.source + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.gaussLocationList, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.gaussIterationList, int(index[0])) + ".dat"
 
         gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
@@ -231,7 +246,7 @@ class Gauss_View(PlotingView):
 
         self.fitPlotview = PlotingView()
         self.fitPlot = Plot()
-        self.fitPlot.creatPlot(self.fitPlotview .getGrid(), "Velocity", "Gauss Fits", None, (1, 0))
+        self.fitPlot.creatPlot(self.fitPlotview .getGrid(), "Velocity", "Gauss Fits", MonitoringViewHelper.formatDate(xdata, index), (1, 0))
         self.fitPlot.plot(velocity, ampvid, 'C0+', label="data")
         self.fitPlot.plot(velocity, gg_fit(velocity), "C1-", label="total fit", linewidth=4)
 
@@ -246,7 +261,7 @@ class Gauss_View(PlotingView):
 
         c = 0
         for st in sts:
-            self.fitPlot.plot(velocity, st(velocity), colors[c], label="ST" + str(c))
+            self.fitPlot.plot(velocity, st(velocity), colors[c], label=gaussLines[c])
             c += 1
 
         self.fitPlot.plot(velocity, (gg_fit(velocity) - ampvid) * 1 - 35, "r")
