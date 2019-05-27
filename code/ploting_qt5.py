@@ -9,6 +9,9 @@ from matplotlib import rcParams
 rcParams['font.family'] = 'DejaVu Sans'
 rcParams['font.sans-serif'] = ['Time New Roman']
 rcParams['font.size'] = 12
+rcParams['ytick.major.size'] = 10
+rcParams['ytick.minor.size'] = 10
+
 import mplcursors
 import numpy as np
 from PyQt5 import QtWidgets
@@ -29,6 +32,12 @@ class Plot(FigureCanvas):
         self.graph.set_yscale("log")
         yTicks = [10, 100, 1000]
         self.graph.set_yticks(yTicks)
+
+        self.second_y_axis = self.graph.twinx()
+        self.second_y_axis.set_ylabel("")
+        self.graph.tick_params(axis=self.get_axes())
+        self.second_y_axis.set_yscale("log")
+        self.second_y_axis.set_yticklabels([1000, 100, 10])
         
         if "label" in options.keys():
             self.legend = self.graph.legend(prop={'size': fontsize})
@@ -57,8 +66,8 @@ class Plot(FigureCanvas):
         self.toolbar.update()
         self.grid.addWidget(self.toolbar, toolbarpos[0], toolbarpos[1])
         
-        self.graph.grid(True, which='major', color='b', linestyle='-')
-        self.graph.grid(True, which='minor', color='r', linestyle='--')
+        self.graph.grid(True, which='major', color='k', linestyle='-', axis="both", linewidth=0.5)
+        self.graph.grid(False, which='minor')
         if self.x_label != None:
             self.graph.set_xlabel(self.x_label)
         if self.y_label !=None:
