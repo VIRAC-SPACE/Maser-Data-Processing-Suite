@@ -9,7 +9,7 @@ from matplotlib import rcParams
 rcParams['font.family'] = 'DejaVu Sans'
 rcParams['font.sans-serif'] = ['Time New Roman']
 rcParams['font.size'] = 12
-rcParams['ytick.major.size'] = 10
+rcParams['ytick.major.size'] = 5
 rcParams['ytick.minor.size'] = 10
 
 import mplcursors
@@ -33,12 +33,13 @@ class Plot(FigureCanvas):
         yTicks = [10, 100, 1000]
         self.graph.set_yticks(yTicks)
 
-        self.second_y_axis = self.graph.twinx()
-        self.second_y_axis.set_ylabel("")
-        self.graph.tick_params(axis=self.get_axes())
-        self.second_y_axis.set_yscale("log")
-        self.second_y_axis.set_yticklabels([1000, 100, 10])
-        
+        self.graph2.yaxis.tick_right()
+        self.graph2.yaxis.set_label_position("right")
+        self.graph2.set_yscale("log")
+        self.graph2.set_yticks(yTicks)
+        mn, mx = self.graph.get_ylim()
+        self.graph2.set_ylim(mn, mx)
+
         if "label" in options.keys():
             self.legend = self.graph.legend(prop={'size': fontsize})
         return line
@@ -53,6 +54,7 @@ class Plot(FigureCanvas):
 
     def creatPlot(self, grid, x_label, y_label, title, toolbarpos):
         self.graph = self.fig.add_subplot(111)
+        self.graph2 = self.fig.add_subplot(111, sharex=self.graph, frameon=False)
         self.grid = grid
         
         self.x_label = x_label
@@ -66,7 +68,7 @@ class Plot(FigureCanvas):
         self.toolbar.update()
         self.grid.addWidget(self.toolbar, toolbarpos[0], toolbarpos[1])
         
-        self.graph.grid(True, which='major', color='k', linestyle='-', axis="both", linewidth=0.5)
+        self.graph.grid(True, which='major', color='k', linestyle='-', linewidth=0.5)
         self.graph.grid(False, which='minor')
         if self.x_label != None:
             self.graph.set_xlabel(self.x_label)
