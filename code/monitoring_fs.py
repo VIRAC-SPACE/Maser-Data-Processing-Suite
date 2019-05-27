@@ -70,8 +70,8 @@ class Spectre_View(PlotingView):
             self.setWindowTitle(" ")
 
 class Gauss_View2(PlotingView):
-    __slots__ = ['AreaList', 'source', 'GaussDatePointsList', 'gaussLocationList', 'velocitie_dict_componet']
-    def __init__(self, AreaList, source, GaussDatePointsList, gaussLocationList, gaussIterationList, velocitie_dict_componet):
+    __slots__ = ['AreaList', 'source', 'GaussDatePointsList', 'gaussLocationList', 'velocitie_dict_componet', "date_list"]
+    def __init__(self, AreaList, source, GaussDatePointsList, gaussLocationList, gaussIterationList, velocitie_dict_componet, date_list):
         super().__init__()
         self.setWindowTitle(" ")
         self.AreaList = AreaList
@@ -80,6 +80,7 @@ class Gauss_View2(PlotingView):
         self.gaussLocationList = gaussLocationList
         self.gaussIterationList = gaussIterationList
         self.velocitie_dict_componet = velocitie_dict_componet
+        self.date_list = date_list
 
     def plot(self):
         gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
@@ -124,8 +125,8 @@ class Gauss_View2(PlotingView):
         self.testView  = PlotingView()
         self.testPlot = Plot()
         self.testPlot.creatPlot(self.testView.getGrid(), "Time", "Gauss Amplitude", None, (1, 0))
-        #StestPlot.plot(self.velocitie_dict_componet, self.GaussDatePointsList, "r.")
-        self.testPlot.plot(self.GaussDatePointsList, gaussLineDict["-1.77"],  "g.")
+        self.testPlot.plot(self.date_list, self.velocitie_dict_componet, "r.", label="Orginal data")
+        self.testPlot.plot(self.GaussDatePointsList, gaussLineDict["-1.77"],  "g.", label="Gauss model")
         self.testView._addWidget(self.testPlot, 0, 0)
         self.testView.show()
 
@@ -134,7 +135,6 @@ class Gauss_View2(PlotingView):
         xdata = thisline.get_xdata()
         ind = event.ind
         index = [ind][0]
-        gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
         fittFile = getConfigs("paths", "notSmoohtFilePath") + self.source + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.gaussLocationList, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.gaussIterationList, int(index[0])) + ".dat"
 
         gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
@@ -486,7 +486,7 @@ class Monitoring_View(PlotingView):
             self.gauss_view.show()
 
         def createGaussAmplitudesView(self):
-            self.gauss_view2 = Gauss_View2(self.gauss_ampList, self.source, self.GaussDatePointsList, self.gaussLocationList, self.gaussIterationList, self.velocitie_dict_componet)
+            self.gauss_view2 = Gauss_View2(self.gauss_ampList, self.source, self.GaussDatePointsList, self.gaussLocationList, self.gaussIterationList, self.velocitie_dict_componet, self.dateList)
             self.gauss_view2.plot()
             self.gauss_view2.show()
 
