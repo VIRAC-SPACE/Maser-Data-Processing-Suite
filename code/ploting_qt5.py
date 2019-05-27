@@ -6,11 +6,18 @@ import matplotlib.backends.backend_qt5agg as qt5agg
 from matplotlib.widgets import Slider
 from matplotlib.figure import Figure
 from matplotlib import rcParams
-rcParams['font.family'] = 'DejaVu Sans'
-rcParams['font.sans-serif'] = ['Time New Roman']
-rcParams['font.size'] = 12
-rcParams['ytick.major.size'] = 5
-rcParams['ytick.minor.size'] = 10
+
+from parsers._configparser import ConfigParser
+
+def getConfigsItems():
+    configFilePath = "config/plot.cfg"
+    config = ConfigParser.getInstance()
+    config.CreateConfig(configFilePath)
+    return config.getItems("main")
+
+configItems = getConfigsItems()
+for key, value in configItems.items():
+    rcParams[key] = value
 
 import mplcursors
 import numpy as np
@@ -36,12 +43,13 @@ class Plot(FigureCanvas):
         self.graph2.yaxis.tick_right()
         self.graph2.yaxis.set_label_position("right")
         self.graph2.set_yscale("log")
-        self.graph2.set_yticks(yTicks)
+        self.graph2.set_yticks([])
         mn, mx = self.graph.get_ylim()
         self.graph2.set_ylim(mn, mx)
 
         if "label" in options.keys():
             self.legend = self.graph.legend(prop={'size': fontsize})
+            self.legend.set_draggable(True, update='loc')
         return line
     
     def contourf(self, x, y, z):
