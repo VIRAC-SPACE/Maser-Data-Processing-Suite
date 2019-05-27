@@ -10,6 +10,7 @@ rcParams['font.family'] = 'DejaVu Sans'
 rcParams['font.sans-serif'] = ['Time New Roman']
 rcParams['font.size'] = 12
 import mplcursors
+import numpy as np
 from PyQt5 import QtWidgets
 
 class Plot(FigureCanvas):
@@ -24,6 +25,10 @@ class Plot(FigureCanvas):
 
     def plot(self, x, y, line, fontsize=12, **options):
         line = self.graph.plot(x,y, line, **options)
+
+        self.graph.set_yscale("log")
+        yTicks = [10, 100, 1000]
+        self.graph.set_yticks(yTicks)
         
         if "label" in options.keys():
             self.legend = self.graph.legend(prop={'size': fontsize})
@@ -49,10 +54,11 @@ class Plot(FigureCanvas):
             self.graph.set_title(title,  y=1.08) 
         
         self.toolbar = qt5agg.NavigationToolbar2QT(self, self.parent)
-        self.toolbar.update()       
+        self.toolbar.update()
         self.grid.addWidget(self.toolbar, toolbarpos[0], toolbarpos[1])
         
-        self.graph.grid(True)
+        self.graph.grid(True, which='major', color='b', linestyle='-')
+        self.graph.grid(True, which='minor', color='r', linestyle='--')
         if self.x_label != None:
             self.graph.set_xlabel(self.x_label)
         if self.y_label !=None:
