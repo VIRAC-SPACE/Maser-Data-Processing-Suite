@@ -36,19 +36,6 @@ class Plot(FigureCanvas):
     def plot(self, x, y, line, fontsize=12, **options):
         line = self.graph.plot(x,y, line, **options)
 
-        self.graph.set_yscale("linear")
-        yTicks = [10, 100, 1000]
-        self.graph.set_yticks(yTicks)
-
-        ''' 
-        self.graph2.yaxis.tick_right()
-        self.graph2.yaxis.set_label_position("right")
-        self.graph2.set_yscale("linear")
-        self.graph2.set_yticks([])
-        mn, mx = self.graph.get_ylim()
-        self.graph2.set_ylim(mn, mx)
-        '''
-
         if "label" in options.keys():
             self.legend = self.graph.legend(prop={'size': fontsize})
             self.legend.set_draggable(True, update='loc')
@@ -62,9 +49,25 @@ class Plot(FigureCanvas):
         cbar = self.fig.colorbar(cs)
         return cbar
 
-    def creatPlot(self, grid, x_label, y_label, title, toolbarpos):
+    def creatPlot(self, grid, x_label, y_label, title, toolbarpos, type):
         self.graph = self.fig.add_subplot(111)
         #self.graph2 = self.fig.add_subplot(111, sharex=self.graph, frameon=False)
+
+        if type == "log":
+            self.graph.set_yscale("log")
+            yTicks = [10, 100, 1000]
+            self.graph.set_yticks(yTicks)
+
+
+        ''' 
+        self.graph2.yaxis.tick_right()
+        self.graph2.yaxis.set_label_position("right")
+        self.graph2.set_yscale("linear")
+        self.graph2.set_yticks([])
+        mn, mx = self.graph.get_ylim()
+        self.graph2.set_ylim(mn, mx)
+        '''
+
         self.grid = grid
         
         self.x_label = x_label

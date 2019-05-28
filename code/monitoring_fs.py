@@ -96,7 +96,7 @@ class Gauss_View2(PlotingView):
                 i += 1
 
         self.gaussAreaPlot = Plot()
-        self.gaussAreaPlot.creatPlot(self.getGrid(), "Time", "Gauss Amplitude", None, (1, 0))
+        self.gaussAreaPlot.creatPlot(self.getGrid(), "Time", "Gauss Amplitude", None, (1, 0), "linear")
 
         i = 0
         colors = []
@@ -124,7 +124,7 @@ class Gauss_View2(PlotingView):
 
         self.testView  = PlotingView()
         self.testPlot = Plot()
-        self.testPlot.creatPlot(self.testView.getGrid(), "Time", "Gauss Amplitude", None, (1, 0))
+        self.testPlot.creatPlot(self.testView.getGrid(), "Time", "Gauss Amplitude", None, (1, 0), "linear")
         self.testPlot.plot(self.date_list, self.velocitie_dict_componet, "r.", label="Orginal data")
         self.testPlot.plot(self.GaussDatePointsList, gaussLineDict["-1.77"],  "g.", label="Gauss model")
         self.testView._addWidget(self.testPlot, 0, 0)
@@ -156,7 +156,7 @@ class Gauss_View2(PlotingView):
 
         self.fitPlotview = PlotingView()
         self.fitPlot = Plot()
-        self.fitPlot.creatPlot(self.fitPlotview .getGrid(), "Velocity", "Gauss Fits", MonitoringViewHelper.formatDate(xdata, index), (1, 0))
+        self.fitPlot.creatPlot(self.fitPlotview .getGrid(), "Velocity", "Gauss Fits", MonitoringViewHelper.formatDate(xdata, index), (1, 0), "linear")
         self.fitPlot.plot(velocity, ampvid, 'C0+', label="data")
         self.fitPlot.plot(velocity, gg_fit(velocity), "C1-", label="total fit", linewidth=4)
 
@@ -204,7 +204,7 @@ class Gauss_View(PlotingView):
                 i += 1
 
         self.gaussAreaPlot = Plot()
-        self.gaussAreaPlot.creatPlot(self.getGrid(), "Time", "Gauss Areas", None, (1, 0))
+        self.gaussAreaPlot.creatPlot(self.getGrid(), "Time", "Gauss Areas", None, (1, 0), "linear")
 
         i = 0
         colors = []
@@ -255,7 +255,7 @@ class Gauss_View(PlotingView):
 
         self.fitPlotview = PlotingView()
         self.fitPlot = Plot()
-        self.fitPlot.creatPlot(self.fitPlotview .getGrid(), "Velocity", "Gauss Fits", MonitoringViewHelper.formatDate(xdata, index), (1, 0))
+        self.fitPlot.creatPlot(self.fitPlotview .getGrid(), "Velocity", "Gauss Fits", MonitoringViewHelper.formatDate(xdata, index), (1, 0), "linear")
         self.fitPlot.plot(velocity, ampvid, 'C0+', label="data")
         self.fitPlot.plot(velocity, gg_fit(velocity), "C1-", label="total fit", linewidth=4)
 
@@ -350,7 +350,7 @@ class Maps_View(PlotingView):
             #Z = matplotlib.mlab.griddata(velocity,observed_time,observed_flux, X, Y, interp='linear')
             Z = griddata((velocity, observed_time), observed_flux, (X[:], Y[:]), method='linear')
             self.mapPlot = Plot()
-            self.mapPlot.creatPlot(self.getGrid(), "Velocity (km/s)", "JD (days) -  " + str(jd_first), None, (1,0))
+            self.mapPlot.creatPlot(self.getGrid(), "Velocity (km/s)", "JD (days) -  " + str(jd_first), None, (1,0), "linear")
             CS = self.mapPlot.contourf(X, Y, Z)
     
             cbar = self.mapPlot.colorbar(CS)
@@ -430,7 +430,7 @@ class Period_View(PlotingView):
             print("Best period: {0:.2f} hours".format(24 * best_period))
             
             self.periodPlot = Plot()
-            self.periodPlot.creatPlot(self.getGrid(), "Period (days)", "Power", None, (1,0))
+            self.periodPlot.creatPlot(self.getGrid(), "Period (days)", "Power", None, (1,0), "linear")
             self.periodPlot.plot(period_days, power, plotSimbol, label="polarization AVG " + "Velocity " + source_velocities[velocityIndex], rasterized=True)
             self._addWidget(self.periodPlot, 0, 0)
             self.show()
@@ -626,7 +626,7 @@ class Monitoring_View(PlotingView):
                 self.Spectre_View = Spectre_View()
                 self.spectrumSet.add(self.Spectre_View)
                 self.spectrPlot = Plot()
-                self.spectrPlot.creatPlot(self.Spectre_View.getGrid(), "Velocity (km sec$^{-1}$)", "Flux density (Jy)", spectraFileName.split("/")[-1].split("_")[0], (1,0))
+                self.spectrPlot.creatPlot(self.Spectre_View.getGrid(), "Velocity (km sec$^{-1}$)", "Flux density (Jy)", spectraFileName.split("/")[-1].split("_")[0], (1,0), "linear")
                 self.Spectre_View._addWidget(self.spectrPlot, 0, 0)
                 self.Spectre_View.show()
                 self.new_spectre = False
@@ -784,7 +784,7 @@ class MonitoringApp(QWidget):
         
         self.Monitoring_View = Monitoring_View(self.iteration_list, self.location_list, self.source, self.output_path, source_velocities, date_list, velocitie_dict, self.AreaList, self.GaussDatePointsList, self.gaussLocationList, self.gaussIterationList, self.gauss_ampList, velocitie_dict["avg"][source_velocities[0]])
         self.monitoringPlot = Plot()
-        self.monitoringPlot.creatPlot(self.Monitoring_View.getGrid(), "Time", "Flux density (Jy)", self.source, (1,0))
+        self.monitoringPlot.creatPlot(self.Monitoring_View.getGrid(), "Time", "Flux density (Jy)", self.source, (1,0), "log")
         
         def convertDatetimeObjectToMJD(time):
             time=time.isoformat()
