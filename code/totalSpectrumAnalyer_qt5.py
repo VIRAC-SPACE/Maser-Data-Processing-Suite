@@ -20,6 +20,7 @@ from PyQt5.QtGui import QColor
 
 from ploting_qt5 import  Plot
 from help import *
+from velocityDensity import computeGauss
 
 def parseArguments():
     parser = argparse.ArgumentParser(description='''plotting tool. ''', epilog="""PRE PLOTTER.""")
@@ -905,6 +906,13 @@ class NoGUI(object):
             result[self.expername]["type"] = "SDR"
         else:
             result[self.expername]["type"] = "DBBC"
+
+        gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines, gaussianaAmplitudes, gaussianaMean, gaussianaSTD = computeGauss(self.xarray, self.avg_y_NotSmoohtData)
+
+        results[self.expername]["areas"] = gaussianAreas
+        results[self.expername]["gauss_amp"] = gaussianaAmplitudes
+        results[self.expername]["gauss_mean"] = gaussianaMean
+        results[self.expername]["gauss_STD"] = gaussianaSTD
 
         resultFile = open (self.resultFilePath +  resultFileName, "w")
         resultFile.write(json.dumps(result, indent=2))

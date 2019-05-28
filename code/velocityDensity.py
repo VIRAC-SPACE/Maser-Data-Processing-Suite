@@ -65,6 +65,30 @@ def computeGauss(file):
 
     return (gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines, gaussianaAmplitudes, gaussianaMean, gaussianaSTD)
 
+def computeGauss(velocity, ampvid):
+    ampvid = correctNumpyReadData(data[:, [3]])
+    indexies = [(np.abs(velocity - float(line))).argmin() for line in gaussLines]
+    mons = [max(ampvid[index - 5:index + 5]) for index in indexies]
+    gaussian = [models.Gaussian1D(mons[index], gaussLines[index], 0.05, bounds={'stddev': (None, 0.15)}) for index in range(0, len(mons))]
+
+    def sum(a, b):
+        return a + b
+
+    gg_init = reduce(sum, gaussian)
+    fitter = fitting.SLSQPLSQFitter()
+    fit = LevMarLSQFitter()
+    gg_fit = fit(gg_init, velocity, ampvid)
+    sts = [models.Gaussian1D(gg_fit[index].amplitude, gg_fit[index].mean, gg_fit[index].stddev) for index in range(0, len(gaussLines))]
+    gaussianAreas = []
+    gaussianaAmplitudes = [str(gg_fit[index].amplitude).split("=")[-1].replace(")", "") for index in range(0, len(gaussLines))]
+    gaussianaMean = [str(gg_fit[index].mean).split("=")[-1].replace(")", "") for index in range(0, len(gaussLines))]
+    gaussianaSTD = [str(gg_fit[index].stddev).split(",")[1].split("=")[-1] for index in range(0, len(gaussLines))]
+
+    for st in sts:
+        gaussianAreas.append(trapz(st(velocity), velocity))
+
+    return (gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines, gaussianaAmplitudes, gaussianaMean, gaussianaSTD)
+
 def addAreasToResultFiles(file, gaussianAreas, gaussianaAmplitudes, gaussianaMean, gaussianaSTD):
     with open(getConfigs("paths", "resultFilePath") + getArgs("source") + ".json", "r") as resultFile:
         results = json.load(resultFile)
@@ -73,7 +97,6 @@ def addAreasToResultFiles(file, gaussianAreas, gaussianaAmplitudes, gaussianaMea
         if int(results[experiment]["Iteration_number"]) == int(iterationFromDataFile(file)):
             results[experiment]["areas"] = gaussianAreas
             results[experiment]["gauss_amp"] = gaussianaAmplitudes
-            print("gaussianaAmplitudes", gaussianaAmplitudes)
             results[experiment]["gauss_mean"] = gaussianaMean
             results[experiment]["gauss_STD"] = gaussianaSTD
 
