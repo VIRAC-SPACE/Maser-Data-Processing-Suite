@@ -32,7 +32,7 @@ def parseArguments():
 def getAllOutputfiles(outputFilePath, source):
     outputFiles = list()
     
-    for file in os.listdir(outputFilePath):
+    for file in os.listdir(outputFilePath + source):
         if file.startswith(source):
             outputFiles.append(file)
             
@@ -40,7 +40,7 @@ def getAllOutputfiles(outputFilePath, source):
 
 def getAllDatafiles(dataFilePath, source):
     dataFiles = list()
-    
+
     for file in os.listdir(dataFilePath):
         if file.startswith(source + "_"):
             dataFiles.append(file)
@@ -66,15 +66,15 @@ def correctDataRead(input):
 def createData(datafile, outputfile, cuts, outputFilePath, source):
     output_Data = np.fromfile(outputfile, dtype="float64", count=-1, sep=" ").reshape((file_len(outputfile),4))    
     output_x_Data = output_Data[:, [0]]
-    
+
     output_x_first = output_x_Data[0][0]
     output_x_last = output_x_Data[-1][0]
-    
+
     result = pickle.load(open(datafile, "rb"))
     x = result.getMatrix()[:, [0]]
     x = correctDataRead(x)
     x = np.flip(x,0)
-    
+
     y_u1 = result.getMatrix()[:, [1]]
     y_u1 = correctDataRead(y_u1)
     y_u1 = np.flip(y_u1,0)
@@ -82,9 +82,9 @@ def createData(datafile, outputfile, cuts, outputFilePath, source):
     y_u9 = result.getMatrix()[:, [2]]
     y_u9 = correctDataRead(y_u9)
     y_u9 = np.flip(y_u9,0)
-        
-    indexFirst = indexies(x, output_x_first)[0]
-    indexLast = indexies(x, output_x_last)[0]
+
+    indexFirst = findNearestIndex(x, output_x_first)
+    indexLast = findNearestIndex(x, output_x_last)
 
     x = x[indexFirst:indexLast]
     y_u1 = y_u1[indexFirst:indexLast]
@@ -162,21 +162,30 @@ def main():
     configFilePath = str(args.__dict__["config"])
     config = ConfigParser.getInstance()
     config.CreateConfig(configFilePath)
-    outputFilePath= config.getConfig('paths', "outputFilePath")
-    dataFilePath = config.getConfig('paths', "dataFilePath")
     cuts = config.getConfig('cuts', source).split(";")
-    cuts = [c.split(",") for c in  cuts]
-    
+    cuts = [c.split(",") for c in cuts]
+
+    outputFilePath = config.getConfig('paths', "outputFilePath")
+    dataFilePathSDR = config.getConfig('paths', "dataFilePath") + "SDR/"
+    dataFilePathDBBC = config.getConfig('paths', "dataFilePath") + "DBBC/"
+
     outPutFiles = getAllOutputfiles(outputFilePath, source)
-    dataFiles = getAllDatafiles(dataFilePath, source)
-    
-    for dataFile in dataFiles:
+    dataFilesSDR = getAllDatafiles(dataFilePathSDR, source)
+    dataFilesDBBC = getAllDatafiles(dataFilePathDBBC, source)
+
+    for dataFile in dataFilesSDR:
         outputFile = findOutputFile(getIteration(dataFile), outPutFiles)
-        print (outputFile, dataFile)
-        createData(dataFilePath + dataFile, outputFilePath + outputFile, cuts, outputFilePath, source)
+
+        if "NoneType" not in str(type(outputFile)):
+            createData(dataFilePathSDR + dataFile, outputFilePath + source + "/" + outputFile, cuts, outputFilePath, source)
+
+    for dataFile in dataFilesDBBC:
+        outputFile = findOutputFile(getIteration(dataFile), outPutFiles)
+        if "NoneType" not in str(type(outputFile)):
+            createData(dataFilePathDBBC + dataFile, outputFilePath + source + "/" + outputFile, cuts, outputFilePath, source)
     
     sys.exit(0)
     
 if __name__=="__main__":
     main()
-    
+    sys.exit(0)

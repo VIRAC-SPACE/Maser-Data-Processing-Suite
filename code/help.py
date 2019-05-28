@@ -14,6 +14,11 @@ def indexies(array, value):
             indexs.append(i)
     return indexs
 
+def findNearestIndex(array, value):
+    array = np.asarray(array)
+    index = (np.abs(array - value)).argmin()
+    return index
+
 def correctNumpyReadData(data):
     correctedData = list()
     for d in data:

@@ -28,7 +28,7 @@ def getIerattion(file):
     return file.split(".")[0].split("_")[-1]
     
 def getFileIterations(source, path):
-    return [getIerattion(file) for file in [file for file in os.listdir(getConfigs("paths", path)) if file.startswith(source + "_")]]
+    return [getIerattion(file) for file in [file for file in os.listdir(getConfigs("paths", path) + "/" + source) if file.startswith(source + "_")]]
 
 def findLogFile(logList, iteration):
     for l in range(0, len(logList)):
@@ -38,26 +38,46 @@ def main():
     smoohtIndexies = getFileIterations(getArgs("source"), "outputFilePath")
     notSmoohtIndexies = getFileIterations(getArgs("source"), "notSmoohtFilePath")
     hasNoNotSmoohtIndexies = [index for index in smoohtIndexies if index not in notSmoohtIndexies]
-    dataFilePathForSource = getConfigs("paths", "dataFilePath") + getArgs("source") + "/"
-    dataFileIterations = [iteration for iteration in os.listdir(dataFilePathForSource)]
-    logfile_list = [log for log in os.listdir(getConfigs("paths", "logPath")) if log.startswith(getArgs("source"))]
-        
+    dataFilePathForSourceSDR = getConfigs("paths", "dataFilePath") + "SDR/" + getArgs("source") + "/"
+    dataFilePathForSourceDBBC = getConfigs("paths", "dataFilePath") + "DBBC/" + getArgs("source") + "/"
+    dataFileIterationsSDR = [iteration for iteration in os.listdir(dataFilePathForSourceSDR)]
+    dataFileIterationsDBBC = [iteration for iteration in os.listdir(dataFilePathForSourceDBBC)]
+
+    logfile_listSDR = [log for log in os.listdir(getConfigs("paths", "logPath") + "/SDR") if log.startswith(getArgs("source"))]
+    logfile_listDBBC = [log for log in os.listdir(getConfigs("paths", "logPath") + "/DBBC") if log.startswith(getArgs("source"))]
+
     for iteration in hasNoNotSmoohtIndexies:
-        if iteration not in dataFileIterations:
-            print("Iteration", iteration, "do not exist in data files")
+        if iteration in dataFileIterationsSDR:
+            frequencyShiftingParametr =  getArgs("source") + " " + getArgs("line") + " " + iteration + " " + str(logfile_listSDR[findLogFile(logfile_listSDR, iteration)])
+            print("\033[1;31;47mExecute ","python3  " + "code/SDR_fs.py " + frequencyShiftingParametr + " \033[0;29;39m")
+            os.system("python3 " + "code/SDR_fs.py " + frequencyShiftingParametr)
         else:
-            frequencyShiftingParametr = getArgs("source") + " " + iteration + " " + str(logfile_list[findLogFile(logfile_list, iteration)])
-            print ("\033[1;31;47mExecute ",  "python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr +  " \033[0;29;39m")
+            print("Iteration", iteration, "do not exist in SDR data files")
+
+        if iteration in dataFileIterationsDBBC:
+            frequencyShiftingParametr = getArgs("source") + " " + iteration + " " + str(logfile_listDBBC[findLogFile(logfile_listDBBC, iteration)])
+            print("\033[1;31;47mExecute ","python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr + " \033[0;29;39m")
             os.system("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
-            
-    data_files = [d for d in os.listdir(getConfigs("paths", "dataFilePath")) if d.startswith(getArgs("source")) and getIerattion(d) in hasNoNotSmoohtIndexies]
+        else:
+            print("Iteration", iteration, "do not exist in DBBC data files")
+
+    data_filesSDR = [d for d in os.listdir(getConfigs("paths", "dataFilePath") + "/SDR") if d.startswith(getArgs("source") + "_") and getIerattion(d) in hasNoNotSmoohtIndexies]
+    data_filesDBBC = [d for d in os.listdir(getConfigs("paths", "dataFilePath") + "/DBBC") if d.startswith(getArgs("source") + "_") and getIerattion(d) in hasNoNotSmoohtIndexies]
                 
-    for d in data_files:
+    for d in data_filesSDR:
         if getArgs("noGUI"):
             print ("\033[1;31;47mExecute ",  "python3  " + "code/totalSpectrumAnalyer_qt5.py " + d  +  " -n \033[0;29;39m") 
             os.system("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d + " -n")
         else:
             print ("\033[1;31;47mExecute ",  "python3  " + "code/totalSpectrumAnalyer_qt5.py " + d  +  " \033[0;29;39m") 
+            os.system("python3 " + "code/totalSpectrumAnalyer_qt5.py " + d)
+
+    for d in data_filesDBBC:
+        if getArgs("noGUI"):
+            print("\033[1;31;47mExecute ", "python3  " + "code/totalSpectrumAnalyer_qt5.py " + d + " -n \033[0;29;39m")
+            os.system("python3  " + "code/totalSpectrumAnalyer_qt5.py " + d + " -n")
+        else:
+            print("\033[1;31;47mExecute ", "python3  " + "code/totalSpectrumAnalyer_qt5.py " + d + " \033[0;29;39m")
             os.system("python3 " + "code/totalSpectrumAnalyer_qt5.py " + d)
            
 if __name__=="__main__":
