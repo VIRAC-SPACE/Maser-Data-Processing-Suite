@@ -171,11 +171,11 @@ class Analyzer(QWidget):
         self.grid.addWidget(self.plotSmoothDataButton, 5, 4)
          
         self.plot_1 = Plot()
-        self.plot_1.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization", (1, 0))
+        self.plot_1.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization", (1, 0), "linear")
         self.plot_1.plot(self.xarray, self.y1array, 'ko', label='Data Points', markersize=1)
             
         self.plot_2 = Plot()
-        self.plot_2.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization", (1, 1))
+        self.plot_2.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization", (1, 1), "linear")
         self.plot_2.plot(self.xarray, self.y2array, 'ko', label='Data Points', markersize=1)
             
         self.grid.addWidget(self.plot_1, 0, 0)
@@ -392,12 +392,12 @@ class Analyzer(QWidget):
         
         #u1 plot
         self.plot_10 = Plot()
-        self.plot_10.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0))
+        self.plot_10.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0), "linear")
         self.plot_10.plot(self.xarray, self.y1array, 'ko', label='Data Points',  markersize=1)
         
         #u9 plot
         self.plot_11 = Plot()
-        self.plot_11.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1))
+        self.plot_11.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1), "linear")
         self.plot_11.plot(self.xarray, self.y2array, 'ko', label='Data Points',  markersize=1)
         
         self.grid.addWidget(self.plot_10, 0, 0)
@@ -482,14 +482,14 @@ class Analyzer(QWidget):
         
         #u1 plot
         self.plot_5 = Plot()
-        self.plot_5.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0))
+        self.plot_5.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0), "linear")
         self.plot_5.plot(self.polyx, self.polyu1, 'ko', label='Data Points',  markersize=1)
         #self.plot_5.plot(self.xarray[self.m:self.n], self.ceb_1(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
         self.plot_5.plot(self.xarray, self.p_u1(self.xarray), 'b', label='Numpy polyfit', markersize=1)
         
         #u9 plot
         self.plot_6 = Plot()
-        self.plot_6.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1))
+        self.plot_6.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1), "linear")
         self.plot_6.plot(self.polyx, self.polyu9, 'ko', label='Data Points',  markersize=1)
         #self.plot_6.plot(self.xarray[self.m:self.n], self.ceb_2(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
         self.plot_6.plot(self.xarray, self.p_u9(self.xarray), 'b', label='Numpy polyfit', markersize=1)
@@ -569,21 +569,21 @@ class Analyzer(QWidget):
         
         #u1
         self.plot_7 = Plot()
-        self.plot_7.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0))
+        self.plot_7.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0), "linear")
         self.plot_7.plot(self.xarray, self.z1, 'b', label='Signal - polynomial', markersize=1)
         self.plot_7.plot(self.xarray[indexes_for_ceb], self.z1[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2)
         self.plot_7.annotations(self.xarray[indexes_for_ceb], self.z1[indexes_for_ceb])
         
         #u9
         self.plot_8 = Plot()
-        self.plot_8.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1))
+        self.plot_8.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1), "linear")
         self.plot_8.plot(self.xarray, self.z2, 'b', label='Signal - polynomial', markersize=1)
         self.plot_8.plot(self.xarray[indexes_for_ceb2], self.z2[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2)
         self.plot_8.annotations(self.xarray[indexes_for_ceb2], self.z2[indexes_for_ceb2])
         
         #uAVG
         self.plot_9 = Plot()
-        self.plot_9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Average Polarization", (1, 2))
+        self.plot_9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Average Polarization", (1, 2), "linear")
         self.plot_9.plot(self.xarray, self.avg_y, 'b', label='Signal - polynomial', markersize=1)
         self.plot_9.plot(self.xarray[indexes_for_avg], self.avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2)
         self.plot_9.annotations(self.xarray[indexes_for_avg], self.avg_y[indexes_for_avg])

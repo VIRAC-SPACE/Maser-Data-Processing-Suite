@@ -147,7 +147,7 @@ class Analyzer(QWidget):
 
         #plot1
         self.plot_start_u1A = Plot()
-        self.plot_start_u1A.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u1 Polarization", (1, 0))
+        self.plot_start_u1A.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u1 Polarization", (1, 0), "linear")
         self.plot_start_u1A.plot(frequencyA, polarizationU1A, 'b', label=str(index+1) + "r0")
         self.plot_start_u1A.plot(frequencyB, polarizationU1B, 'g', label=str(index+1) + "s0")
         self.plot_start_u1A.plot(frequencyC, polarizationU1C, 'r', label=str(index+1) + "r1")
@@ -156,7 +156,7 @@ class Analyzer(QWidget):
 
         #plot2
         self.plot_start_u9B = Plot()
-        self.plot_start_u9B.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u9 Polarization", (1, 1))
+        self.plot_start_u9B.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u9 Polarization", (1, 1), "linear")
         self.plot_start_u9B.plot(frequencyA, polarizationU9A, 'b', label=str(index+1) + "r0")
         self.plot_start_u9B.plot(frequencyB, polarizationU9B, 'g', label=str(index+1) + "s0")
         self.plot_start_u9B.plot(frequencyC, polarizationU9C, 'r', label=str(index+1) + "r1")
@@ -226,14 +226,14 @@ class Analyzer(QWidget):
 
         # plot3
         self.total_u1 = Plot()
-        self.total_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "", (4, 0))
+        self.total_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "", (4, 0), "linear")
         self.x = frequencyA[self.si:self.ei]
         self.total_u1.plot(frequencyA[self.si:self.ei], SfU1scan[self.si:self.ei], 'b', label=str(index + 1))
         self.grid.addWidget(self.total_u1, 3, 0)
 
         # plot4
         self.total_u9 = Plot()
-        self.total_u9.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "", (4, 1))
+        self.total_u9.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "", (4, 1), "linear")
         self.total_u9.plot(frequencyA[self.si:self.ei], SfU9scan[self.si:self.ei], 'b', label=str(index + 1))
         self.grid.addWidget(self.total_u9, 3, 1)
 
@@ -351,11 +351,11 @@ class Analyzer(QWidget):
         y_u9_avg = y_u9_avg / len(self.ScanPairs)
 
         self.plot_velocity_u1 = Plot()
-        self.plot_velocity_u1.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization",(1, 0))
+        self.plot_velocity_u1.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization",(1, 0), "linear")
         self.plot_velocity_u1.plot(velocitys_avg, y_u1_avg, 'b')
 
         self.plot_velocity_u9 = Plot()
-        self.plot_velocity_u9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization",(1, 1))
+        self.plot_velocity_u9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization",(1, 1), "linear")
         self.plot_velocity_u9.plot(velocitys_avg, y_u9_avg, 'b')
 
         self.grid.addWidget(self.plot_velocity_u1, 0, 0)

@@ -152,11 +152,11 @@ class MaserPlot(Frame):
                 self.infoInputField.pack(fill=BOTH)
                 
         self.plot_1 = Plot(6,6, self.masterFrame, self.plotFrame)
-        self.plot_1.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization")
+        self.plot_1.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization", "linear")
         self.plot_1.plot(self.xarray, self.y1array, 'ko', label='Data Points', markersize=1, picker=5)
         
         self.plot_2 = Plot(6,6, self.masterFrame, self.plotFrame)
-        self.plot_2.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization")
+        self.plot_2.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization", "linear")
         self.plot_2.plot(self.xarray, self.y2array, 'ko', label='Data Points', markersize=1, picker=5)
                 
     def changeData(self):
@@ -311,7 +311,7 @@ class MaserPlot(Frame):
 
         #u1
         self.plot_3 = Plot(6,6, self.masterFrame, self.plotFrame)
-        self.plot_3.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization")
+        self.plot_3.creatPlot(LEFT, 'Frequency Mhz', 'Flux density (Jy)', "1u Polarization", "linear")
         self.plot_3.plot(self.xarray, self.z1, 'ko', label='Data Points', markersize=1, picker=5)
         self.plot_3.addPickEvent(self.onpickU1)
         self.plot_3.addSecondAxis("x", "Data points", 0, self.dataPoints + 512, 1024)
@@ -319,7 +319,7 @@ class MaserPlot(Frame):
 
         #u9
         self.plot_4 = Plot(6,6, self.masterFrame, self.plotFrame)
-        self.plot_4.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization")
+        self.plot_4.creatPlot(None, 'Frequency Mhz', 'Flux density (Jy)', "9u Polarization", "linear")
         self.plot_4.plot(self.xarray, self.z2, 'ko', label='Data Points', markersize=1, picker=5)
         self.plot_4.addPickEvent(self.onpickU9)
         self.plot_4.addSecondAxis("x", "Data points", 0, self.dataPoints + 512, 1024)
@@ -550,14 +550,14 @@ class MaserPlot(Frame):
         
         #u1 plot
         self.plot_5 = Plot(6,6, self.masterFrame, self.plotFrame)
-        self.plot_5.creatPlot(LEFT, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization")
+        self.plot_5.creatPlot(LEFT, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", "linear")
         self.plot_5.plot(np.append(self.x_u1[self.m:self.a_u1], self.x_u1[self.b_u1:self.n]), np.append(self.z1[self.m:self.a_u1], self.z1[self.b_u1:self.n]), 'ko', label='Data Points',  markersize=1)
         self.plot_5.plot(self.x_u1[self.m:self.n], self.ceb_1(self.x_u1[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
         #self.plot_5.plot(self.x_u1[self.m:self.n], p_u1(self.x_u1[self.m:self.n]), 'b', label='Numpy polyfit', markersize=1)
         
         #u9 plot
         self.plot_6 = Plot(6,6, self.masterFrame, self.plotFrame)
-        self.plot_6.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization")
+        self.plot_6.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", "linear")
         self.plot_6.plot(np.append(self.x_u9[self.m:self.a_u9], self.x_u9[self.b_u9:self.n]), np.append(self.z2[self.m:self.a_u9], self.z2[self.b_u9:self.n]), 'ko', label='Data Points',  markersize=1)
         self.plot_6.plot(self.x_u9[self.m:self.n], self.ceb_2(self.x_u9[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
         #self.plot_6.plot(self.x_u9[self.m:self.n], p_u9(self.x_u9[self.m:self.n]), 'b', label='Numpy polyfit', markersize=1)
@@ -601,7 +601,7 @@ class MaserPlot(Frame):
         
         #u1
         self.plot_7 = Plot(5,5, self.masterFrame, self.plotFrame)
-        self.plot_7.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization")
+        self.plot_7.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", "linear")
         self.plot_7.plot(self.x_u1[self.m:self.n], y1values, 'b', label='Signal - polynomial', markersize=1)
         self.plot_7.plot(self.x_u1[self.m:self.n][indexes_for_ceb], y1values[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
         self.plot_7.addPickEvent(self.onpick_maxU1)
@@ -609,7 +609,7 @@ class MaserPlot(Frame):
         
         #u9
         self.plot_8 = Plot(5,5, self.masterFrame, self.plotFrame)
-        self.plot_8.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization")
+        self.plot_8.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", "linear")
         self.plot_8.plot(self.x_u9[self.m:self.n], y1values, 'b', label='Signal - polynomial', markersize=1)
         self.plot_8.plot(self.x_u9[self.m:self.n][indexes_for_ceb2], y2values[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
         self.plot_8.addPickEvent(self.onpick_maxU9)
@@ -621,7 +621,7 @@ class MaserPlot(Frame):
         indexes_for_avg = peakutils.indexes(avg_y, thres=thres, min_dist=10)
         
         self.plot_9 = Plot(5,5, self.masterFrame, self.plotFrame)
-        self.plot_9.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Average Polarization")
+        self.plot_9.creatPlot(None, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Average Polarization", "linear")
         self.plot_9.plot(avg_x, avg_y, 'b', label='Signal - polynomial', markersize=1)
         self.plot_9.plot(avg_x[indexes_for_avg], avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2, picker=5)
         self.plot_9.addPickEvent(self.onpick_maxAVG)
