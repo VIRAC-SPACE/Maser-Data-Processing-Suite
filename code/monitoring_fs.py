@@ -784,7 +784,7 @@ class MonitoringApp(QWidget):
         
         self.Monitoring_View = Monitoring_View(self.iteration_list, self.location_list, self.source, self.output_path, source_velocities, date_list, velocitie_dict, self.AreaList, self.GaussDatePointsList, self.gaussLocationList, self.gaussIterationList, self.gauss_ampList, velocitie_dict["avg"][source_velocities[0]])
         self.monitoringPlot = Plot()
-        self.monitoringPlot.creatPlot(self.Monitoring_View.getGrid(), "Time", "Flux density (Jy)", self.source, (1,0), "log")
+        self.monitoringPlot.creatPlot(self.Monitoring_View.getGrid(), "Time", "Flux density (Jy)", getConfigs("Full_source_name", self.source), (1,0), "log")
         
         def convertDatetimeObjectToMJD(time):
             time=time.isoformat()

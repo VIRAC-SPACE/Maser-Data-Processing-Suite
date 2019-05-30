@@ -35,6 +35,25 @@ class Plot(FigureCanvas):
 
     def plot(self, x, y, line, fontsize=12, **options):
         line = self.graph.plot(x,y, line, **options)
+        #self.graph.set_ylim(np.min(y), np.max(y))
+        #self.graph.set_ylim(0, 1)
+
+        if self.type == "log":
+            self.graph.set_yscale("log")
+            yTicks = []
+
+            ytick = 0
+            while ytick > np.max(y):
+                yTicks.append(ytick)
+                ytick += 1
+
+            self.graph.set_yticks(yTicks)
+
+        elif self.type == "linear":
+            self.graph.set_yscale("linear")
+
+        else:
+            print("Wrong plot type")
 
         if "label" in options.keys():
             self.legend = self.graph.legend(prop={'size': fontsize})
@@ -53,13 +72,9 @@ class Plot(FigureCanvas):
         self.graph = self.fig.add_subplot(111)
         #self.graph2 = self.fig.add_subplot(111, sharex=self.graph, frameon=False)
 
-        if type == "log":
-            self.graph.set_yscale("log")
-            yTicks = [10, 100, 1000]
-            self.graph.set_yticks(yTicks)
+        self.type = type
 
-
-        ''' 
+        '''
         self.graph2.yaxis.tick_right()
         self.graph2.yaxis.set_label_position("right")
         self.graph2.set_yscale("linear")
@@ -92,8 +107,8 @@ class Plot(FigureCanvas):
         return self.graph.get_label()
 
     def setAxiesText(self, x, y, s,  **options):
-        self.graph.axes.text( x, y, s,  **options)
-        
+        self.graph.axes.text(x, y, s,  **options)
+
     def get_axes(self):
         return self.graph.axes
     
