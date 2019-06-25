@@ -66,8 +66,8 @@ class Analyzer(QWidget):
         self.DataFiles = os.listdir(self.DataDir)
         self.ScanPairs = self.createScanPairs()
         self.index = 0
-        self.SfU1 = list()
-        self.SfU9 = list()
+        self.Sf_first = list()
+        self.Sf_second = list()
         self.logs = LogReaderFactory.getLogReader(LogTypes.SDR, getConfigs("paths", "logPath") + "SDR/"+ getArgs("logFile"), getConfigs("paths", "prettyLogsPath") + getArgs("source") + "_" + getArgs("iteration_number")).getLogs()
         self.grid = QGridLayout()
         self.setLayout(self.grid)
@@ -87,9 +87,9 @@ class Analyzer(QWidget):
     def __getData(self, dataFileName):
         data = np.fromfile(dataFileName, dtype="float64", count=-1, sep=" ").reshape((file_len(dataFileName), 3))
         frequency = correctNumpyReadData(data[:, [0]])
-        polarizationU1 = correctNumpyReadData(data[:, [1]])
-        polarizationU9 = correctNumpyReadData(data[:, [2]])
-        return(frequency, polarizationU1, polarizationU9)
+        polarization_first = correctNumpyReadData(data[:, [1]])
+        polarization_second = correctNumpyReadData(data[:, [2]])
+        return(frequency, polarization_first, polarization_second)
 
     def __getDataFileForScan__(self, scanName):
         fileName = ""
@@ -120,48 +120,48 @@ class Analyzer(QWidget):
         file4 = self.DataDir + self.__getDataFileForScan__(pair[1][1]) #s1
 
         frequencyA = self.__getData(file1)[0] #r0
-        polarizationU1A = self.__getData(file1)[1] #r0
-        polarizationU9A = self.__getData(file1)[2] #r0
+        p_sig_first = self.__getData(file1)[1] #r0
+        p_sig_second  = self.__getData(file1)[2] #r0
 
         frequencyB = self.__getData(file2)[0] #s0
-        polarizationU1B = self.__getData(file2)[1] #s0
-        polarizationU9B = self.__getData(file2)[2] #s0
+        p_ref_first = self.__getData(file2)[1] #s0
+        p_ref_second = self.__getData(file2)[2] #s0
 
         frequencyC = self.__getData(file3)[0] #r1
-        polarizationU1C = self.__getData(file3)[1] #r1
-        polarizationU9C = self.__getData(file3)[2] #r1
+        p_sig_on_first = self.__getData(file3)[1] #r1
+        p_sig_on_second = self.__getData(file3)[2] #r1
 
         frequencyD = self.__getData(file4)[0] #s1
-        polarizationU1D = self.__getData(file4)[1] #s1
-        polarizationU9D = self.__getData(file4)[2] #s1
+        p_ref_on_first = self.__getData(file4)[1] #s1
+        p_ref_on_second = self.__getData(file4)[2] #s1
 
         # fft shift
-        polarizationU1A = np.fft.fftshift(polarizationU1A) #r0
-        polarizationU9A = np.fft.fftshift(polarizationU9A) #r0
-        polarizationU1B = np.fft.fftshift(polarizationU1B) #s0
-        polarizationU9B = np.fft.fftshift(polarizationU9B) #s0
-        polarizationU1C = np.fft.fftshift(polarizationU1C) #r1
-        polarizationU9C = np.fft.fftshift(polarizationU9C) #r1
-        polarizationU1D = np.fft.fftshift(polarizationU1D) #s1
-        polarizationU9D = np.fft.fftshift(polarizationU9D) #s1
+        p_sig_first = np.fft.fftshift(p_sig_first) #r0
+        p_sig_second  = np.fft.fftshift(p_sig_second) #r0
+        p_ref_first = np.fft.fftshift(p_ref_first) #s0
+        p_ref_second = np.fft.fftshift(p_ref_second) #s0
+        p_sig_on_first = np.fft.fftshift(p_sig_on_first) #r1
+        p_sig_on_second = np.fft.fftshift(p_sig_on_second) #r1
+        p_ref_on_first = np.fft.fftshift(p_ref_on_first) #s1
+        p_ref_on_second = np.fft.fftshift(p_ref_on_second) #s1
 
         #plot1
-        self.plot_start_u1A = Plot()
-        self.plot_start_u1A.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u1 Polarization", (1, 0), "linear")
-        self.plot_start_u1A.plot(frequencyA, polarizationU1A, 'b', label=str(index+1) + "r0")
-        self.plot_start_u1A.plot(frequencyB, polarizationU1B, 'g', label=str(index+1) + "s0")
-        self.plot_start_u1A.plot(frequencyC, polarizationU1C, 'r', label=str(index+1) + "r1")
-        self.plot_start_u1A.plot(frequencyD, polarizationU1D, 'y', label=str(index+1) + "s1")
-        self.grid.addWidget(self.plot_start_u1A, 0, 0)
+        self.plot_start__firstA = Plot()
+        self.plot_start__firstA.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "First Polarization", (1, 0), "linear")
+        self.plot_start__firstA.plot(frequencyA, p_sig_first, 'b', label=str(index+1) + "r0")
+        self.plot_start__firstA.plot(frequencyB, p_ref_first, 'g', label=str(index+1) + "s0")
+        self.plot_start__firstA.plot(frequencyC, p_sig_on_first, 'r', label=str(index+1) + "r1")
+        self.plot_start__firstA.plot(frequencyD, p_ref_on_first, 'y', label=str(index+1) + "s1")
+        self.grid.addWidget(self.plot_start__firstA, 0, 0)
 
         #plot2
-        self.plot_start_u9B = Plot()
-        self.plot_start_u9B.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u9 Polarization", (1, 1), "linear")
-        self.plot_start_u9B.plot(frequencyA, polarizationU9A, 'b', label=str(index+1) + "r0")
-        self.plot_start_u9B.plot(frequencyB, polarizationU9B, 'g', label=str(index+1) + "s0")
-        self.plot_start_u9B.plot(frequencyC, polarizationU9C, 'r', label=str(index+1) + "r1")
-        self.plot_start_u9B.plot(frequencyD, polarizationU9D, 'y', label=str(index+1) + "s1")
-        self.grid.addWidget(self.plot_start_u9B, 0, 1)
+        self.plot_start__secondB = Plot()
+        self.plot_start__secondB.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "Second Polarization", (1, 1), "linear")
+        self.plot_start__secondB.plot(frequencyA, p_sig_second , 'b', label=str(index+1) + "r0")
+        self.plot_start__secondB.plot(frequencyB, p_ref_second, 'g', label=str(index+1) + "s0")
+        self.plot_start__secondB.plot(frequencyC, p_sig_on_second, 'r', label=str(index+1) + "r1")
+        self.plot_start__secondB.plot(frequencyD, p_ref_on_second, 'y', label=str(index+1) + "s1")
+        self.grid.addWidget(self.plot_start__secondB, 0, 1)
 
         df_div = float(self.logs["header"]["df_div,df"][0])
         BW = float(self.logs["header"]["Fs,Ns,RBW"][0])
@@ -173,38 +173,38 @@ class Analyzer(QWidget):
         si = int(l_spec / 2 - l_spec * avg_interval / 2)
         ei = int(l_spec / 2 + l_spec * avg_interval / 2)
 
-        Tsys_off_1U1 = float(self.logs["header"]["Tcal"][0]) * ((polarizationU1D + polarizationU1B) - np.mean(polarizationU1D[si:ei] - polarizationU1B[si:ei])) / (2 * np.mean(polarizationU1D[si:ei] - polarizationU1B[si:ei]))
-        Tsys_off_2U1 = float(self.logs["header"]["Tcal"][1]) * ((polarizationU1C + polarizationU1A) - np.mean(polarizationU1C[si:ei] - polarizationU1A[si:ei])) / (2 * np.mean(polarizationU1C[si:ei] - polarizationU1A[si:ei]))
+        Tsys_off_1_first = float(self.logs["header"]["Tcal"][0]) * ((p_ref_on_first + p_ref_first) - np.mean(p_ref_on_first[si:ei] - p_ref_first[si:ei])) / (2 * np.mean(p_ref_on_first[si:ei] - p_ref_first[si:ei]))
+        Tsys_off_2_first = float(self.logs["header"]["Tcal"][1]) * ((p_sig_on_first + p_sig_first) - np.mean(p_sig_on_first[si:ei] - p_sig_first[si:ei])) / (2 * np.mean(p_sig_on_first[si:ei] - p_sig_first[si:ei]))
 
-        Tsys_off_1U9 = float(self.logs["header"]["Tcal"][0]) * ((polarizationU9D + polarizationU9B) - np.mean(polarizationU9D[si:ei] - polarizationU9B[si:ei])) / (2 * np.mean(polarizationU9D[si:ei] - polarizationU9B[si:ei]))
-        Tsys_off_2U9 = float(self.logs["header"]["Tcal"][1]) * ((polarizationU9C + polarizationU9A) - np.mean(polarizationU9C[si:ei] - polarizationU9A[si:ei])) / (2 * np.mean(polarizationU9C[si:ei] - polarizationU9A[si:ei]))
+        Tsys_off_1_second = float(self.logs["header"]["Tcal"][0]) * ((p_ref_on_second + p_ref_second) - np.mean(p_ref_on_second[si:ei] - p_ref_second[si:ei])) / (2 * np.mean(p_ref_on_second[si:ei] - p_ref_second[si:ei]))
+        Tsys_off_2_second = float(self.logs["header"]["Tcal"][1]) * ((p_sig_on_second + p_sig_second ) - np.mean(p_sig_on_second[si:ei] - p_sig_second [si:ei])) / (2 * np.mean(p_sig_on_second[si:ei] - p_sig_second [si:ei]))
 
-        Ta_1_caloffU1 = Tsys_off_1U1 * (polarizationU1A - polarizationU1B) / polarizationU1B # non-cal phase
-        Ta_1_caloffU9 = Tsys_off_1U9 * (polarizationU9A - polarizationU9B) / polarizationU9B  # non-cal phase
+        Ta_1_caloff_first = Tsys_off_1_first * (p_sig_first - p_ref_first) / p_ref_first # non-cal phase
+        Ta_1_caloff_second = Tsys_off_1_second * (p_sig_second - p_ref_second) / p_ref_second  # non-cal phase
 
-        Ta_1_calonU1 = (Tsys_off_1U1 + float(self.logs["header"]["Tcal"][0])) * (polarizationU1C - polarizationU1D) / polarizationU1D  # cal phase
-        Ta_1_calonU9 = (Tsys_off_1U9 + float(self.logs["header"]["Tcal"][1])) * (polarizationU9C - polarizationU9D) / polarizationU9D  # cal phase
+        Ta_1_calon_first = (Tsys_off_1_first + float(self.logs["header"]["Tcal"][0])) * (p_sig_on_first - p_ref_on_first) / p_ref_on_first  # cal phase
+        Ta_1_calon_second = (Tsys_off_1_second + float(self.logs["header"]["Tcal"][1])) * (p_sig_on_second - p_ref_on_second) / p_ref_on_second  # cal phase
 
-        Ta_sigU1 = (Ta_1_caloffU1 + Ta_1_calonU1) / 2
-        Ta_sigU9 = (Ta_1_caloffU9 + Ta_1_calonU9) / 2
+        Ta_sig_first = (Ta_1_caloff_first + Ta_1_calon_first) / 2
+        Ta_sig_second = (Ta_1_caloff_second + Ta_1_calon_second) / 2
 
-        Ta_2_caloffU1 = Tsys_off_2U1 * (polarizationU1A - polarizationU1A) / polarizationU1A  # non-cal phase
-        Ta_2_caloffU9 = Tsys_off_2U9 * (polarizationU9A - polarizationU9A) / polarizationU9A  # non-cal phase
+        Ta_2_caloff_first = Tsys_off_2_first * (p_ref_first - p_sig_first) / p_sig_first  # non-cal phase
+        Ta_2_caloff_second = Tsys_off_2_second * (p_ref_second - p_sig_second ) / p_sig_second   # non-cal phase
 
-        Ta_2_calonU1 = (Tsys_off_2U1 + float(self.logs["header"]["Tcal"][0])) * (polarizationU1D - polarizationU1C) / polarizationU1C  # cal phase
-        Ta_2_calonU9 = (Tsys_off_2U9 + float(self.logs["header"]["Tcal"][1])) * (polarizationU9D - polarizationU9C) / polarizationU9C  # cal phase
+        Ta_2_calon_first = (Tsys_off_2_first + float(self.logs["header"]["Tcal"][0])) * (p_ref_on_first - p_sig_on_first) / p_sig_on_first  # cal phase
+        Ta_2_calon_second = (Tsys_off_2_second + float(self.logs["header"]["Tcal"][1])) * (p_ref_on_second - p_sig_on_second) / p_sig_on_second  # cal phase
 
-        Ta_refU1 = (Ta_2_caloffU1 + Ta_2_calonU1) / 2
-        Ta_refU9 = (Ta_2_caloffU9 + Ta_2_calonU9) / 2
+        Ta_ref_first = (Ta_2_caloff_first + Ta_2_calon_first) / 2
+        Ta_ref_second = (Ta_2_caloff_second + Ta_2_calon_second) / 2
 
-        Ta_sigU1 = np.roll(Ta_sigU1, +n_shift)
-        Ta_sigU9 = np.roll(Ta_sigU9, +n_shift)
+        Ta_sig_first = np.roll(Ta_sig_first, +n_shift)
+        Ta_sig_second = np.roll(Ta_sig_second, +n_shift)
 
-        Ta_refU1 = np.roll(Ta_refU1, -n_shift)
-        Ta_refU9 = np.roll(Ta_refU9, -n_shift)
+        Ta_ref_first = np.roll(Ta_ref_first, -n_shift)
+        Ta_ref_second = np.roll(Ta_ref_second, -n_shift)
 
-        TaU1 = (Ta_sigU1 + Ta_refU1) / 2
-        TaU9 = (Ta_sigU9 + Ta_refU9) / 2
+        Ta_first = (Ta_sig_first + Ta_ref_first) / 2
+        Ta_second = (Ta_sig_second + Ta_ref_second) / 2
 
         El = (float(self.logs[pair[0][0]]["AzEl"][1]) + float(self.logs[pair[0][1]]["AzEl"][1]) + float(self.logs[pair[1][0]]["AzEl"][1]) + float(self.logs[pair[1][1]]["AzEl"][1]))/ 4
         G_El = self.logs["header"]["Elev_poly"]
@@ -215,57 +215,57 @@ class Analyzer(QWidget):
         G_ELtmp[2] = G_El[0]
         G_El = G_ELtmp
 
-        SfU1scan = TaU1 / (((-1) * float(self.logs["header"]["DPFU"][0])) * np.polyval(G_El, El))
-        SfU9scan = TaU9 / (((-1) * float(self.logs["header"]["DPFU"][1])) * np.polyval(G_El, El))
+        Sf_firstscan = Ta_first / (((-1) * float(self.logs["header"]["DPFU"][0])) * np.polyval(G_El, El))
+        Sf_secondscan = Ta_second / (((-1) * float(self.logs["header"]["DPFU"][1])) * np.polyval(G_El, El))
 
         self.si = si
         self.ei = ei
 
-        self.SfU1.append(SfU1scan[self.si:self.ei])
-        self.SfU9.append(SfU9scan[self.si:self.ei])
+        self.Sf_first.append(Sf_firstscan[self.si:self.ei])
+        self.Sf_second.append(Sf_secondscan[self.si:self.ei])
 
         # plot3
-        self.total_u1 = Plot()
-        self.total_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "", (4, 0), "linear")
+        self.total__first = Plot()
+        self.total__first.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "", (4, 0), "linear")
         self.x = frequencyA[self.si:self.ei]
-        self.total_u1.plot(frequencyA[self.si:self.ei], SfU1scan[self.si:self.ei], 'b', label=str(index + 1))
-        self.grid.addWidget(self.total_u1, 3, 0)
+        self.total__first.plot(frequencyA[self.si:self.ei], Sf_firstscan[self.si:self.ei], 'b', label=str(index + 1))
+        self.grid.addWidget(self.total__first, 3, 0)
 
         # plot4
-        self.total_u9 = Plot()
-        self.total_u9.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "", (4, 1), "linear")
-        self.total_u9.plot(frequencyA[self.si:self.ei], SfU9scan[self.si:self.ei], 'b', label=str(index + 1))
-        self.grid.addWidget(self.total_u9, 3, 1)
+        self.total__second = Plot()
+        self.total__second.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "", (4, 1), "linear")
+        self.total__second.plot(frequencyA[self.si:self.ei], Sf_secondscan[self.si:self.ei], 'b', label=str(index + 1))
+        self.grid.addWidget(self.total__second, 3, 1)
 
         if index == len(self.ScanPairs) - 1:
             self.nextPairButton.setText('Move to total results')
             self.nextPairButton.clicked.connect(self.plotTotalResults)
 
     def plotTotalResults(self):
-        self.grid.removeWidget(self.plot_start_u1A)
-        self.grid.removeWidget(self.plot_start_u9B)
-        self.grid.removeWidget(self.total_u1)
-        self.grid.removeWidget(self.total_u9)
+        self.grid.removeWidget(self.plot_start__firstA)
+        self.grid.removeWidget(self.plot_start__secondB)
+        self.grid.removeWidget(self.total__first)
+        self.grid.removeWidget(self.total__second)
 
-        self.plot_start_u1A.hide()
-        self.plot_start_u9B.hide()
-        self.total_u1.hide()
-        self.total_u9.hide()
+        self.plot_start__firstA.hide()
+        self.plot_start__secondB.hide()
+        self.total__first.hide()
+        self.total__second.hide()
 
-        self.plot_start_u1A.close()
-        self.plot_start_u9B.close()
-        self.total_u1.close()
-        self.total_u9.close()
+        self.plot_start__firstA.close()
+        self.plot_start__secondB.close()
+        self.total__first.close()
+        self.total__second.close()
 
-        self.plot_start_u1A.removePolt()
-        self.plot_start_u9B.removePolt()
-        self.total_u1.removePolt()
-        self.total_u9.removePolt()
+        self.plot_start__firstA.removePolt()
+        self.plot_start__secondB.removePolt()
+        self.total__first.removePolt()
+        self.total__second.removePolt()
 
-        del self.plot_start_u1A
-        del self.plot_start_u9B
-        del self.total_u1
-        del self.total_u9
+        del self.plot_start__firstA
+        del self.plot_start__secondB
+        del self.total__first
+        del self.total__second
 
         self.grid.removeWidget(self.nextPairButton)
         self.nextPairButton.hide()
@@ -276,8 +276,8 @@ class Analyzer(QWidget):
             self.grid.itemAt(i).widget().deleteLater()
 
         velocitys_avg = np.zeros(len(self.x))
-        y_u1_avg = np.zeros(len(self.x))
-        y_u9_avg = np.zeros(len(self.x))
+        y__first_avg = np.zeros(len(self.x))
+        y__second_avg = np.zeros(len(self.x))
 
         station = self.logs["header"]["station"]
         if station == "RT-32":
@@ -331,8 +331,8 @@ class Analyzer(QWidget):
             VelTotal = lsr(RaStr, DecStr, date, stringTime, x, y, z)
             print("VelTotal", VelTotal)
 
-            self.max_yu1_index = self.SfU1[p].argmax(axis=0)
-            self.max_yu9_index = self.SfU9[p].argmax(axis=0)
+            self.max_y_first_index = self.Sf_first[p].argmax(axis=0)
+            self.max_y_second_index = self.Sf_second[p].argmax(axis=0)
 
             line = getConfigs('base_frequencies_SDR', "f" + getArgs("line")).replace(" ", "").split(",")
             lineF = float(line[0]) * (10**9)
@@ -342,26 +342,26 @@ class Analyzer(QWidget):
             print("specie", specie, "\n")
             LO = float(self.logs["header"]["f_obs,LO,IF"][1])
             velocitys = dopler((self.x + LO) * (10 ** 6), VelTotal, lineF)
-            y_u1_avg = y_u1_avg + self.SfU1[p]
-            y_u9_avg = y_u9_avg + self.SfU9[p]
+            y__first_avg = y__first_avg + self.Sf_first[p]
+            y__second_avg = y__second_avg + self.Sf_second[p]
             velocitys_avg = velocitys_avg + velocitys
 
         velocitys_avg = velocitys_avg / len(self.ScanPairs)
-        y_u1_avg = y_u1_avg / len(self.ScanPairs)
-        y_u9_avg = y_u9_avg / len(self.ScanPairs)
+        y__first_avg = y__first_avg / len(self.ScanPairs)
+        y__second_avg = y__second_avg / len(self.ScanPairs)
 
-        self.plot_velocity_u1 = Plot()
-        self.plot_velocity_u1.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization",(1, 0), "linear")
-        self.plot_velocity_u1.plot(velocitys_avg, y_u1_avg, 'b')
+        self.plot_velocity__first = Plot()
+        self.plot_velocity__first.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "First Polarization",(1, 0), "linear")
+        self.plot_velocity__first.plot(velocitys_avg, y__first_avg, 'b')
 
-        self.plot_velocity_u9 = Plot()
-        self.plot_velocity_u9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization",(1, 1), "linear")
-        self.plot_velocity_u9.plot(velocitys_avg, y_u9_avg, 'b')
+        self.plot_velocity__second = Plot()
+        self.plot_velocity__second.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Second Polarization",(1, 1), "linear")
+        self.plot_velocity__second.plot(velocitys_avg, y__second_avg, 'b')
 
-        self.grid.addWidget(self.plot_velocity_u1, 0, 0)
-        self.grid.addWidget(self.plot_velocity_u9, 0, 1)
+        self.grid.addWidget(self.plot_velocity__first, 0, 0)
+        self.grid.addWidget(self.plot_velocity__second, 0, 1)
 
-        totalResults = np.transpose(np.array([np.transpose(velocitys_avg), np.transpose(y_u1_avg), np.transpose(y_u9_avg)]))
+        totalResults = np.transpose(np.array([np.transpose(velocitys_avg), np.transpose(y__first_avg), np.transpose(y__second_avg)]))
 
         # source_day_Month_year_houre:minute:seconde_station_iteration.dat
         day = scan_1["date"].split("-")[2][0:2]
@@ -383,8 +383,8 @@ class Analyzer(QWidget):
             pass
 
         else:
-            self.plot_start_u1A.removePolt()
-            self.plot_start_u9B.removePolt()
+            self.plot_start__firstA.removePolt()
+            self.plot_start__secondB.removePolt()
             self.index = self.index + 1
             self.plotPair(self.index)
 
@@ -397,30 +397,30 @@ class Analyzer(QWidget):
             file4 = self.DataDir + self.__getDataFileForScan__(pair[1][1]) #s1
 
             frequencyA = self.__getData(file1)[0] #r0
-            polarizationU1A = self.__getData(file1)[1] #r0
-            polarizationU9A = self.__getData(file1)[2] #r0
+            p_sig_first = self.__getData(file1)[1] #r0
+            p_sig_second  = self.__getData(file1)[2] #r0
 
             frequencyB = self.__getData(file2)[0] #s0
-            polarizationU1B = self.__getData(file2)[1] #s0
-            polarizationU9B = self.__getData(file2)[2] #s0
+            p_ref_first = self.__getData(file2)[1] #s0
+            p_ref_second = self.__getData(file2)[2] #s0
 
             frequencyC = self.__getData(file3)[0] #r1
-            polarizationU1C = self.__getData(file3)[1] #r1
-            polarizationU9C = self.__getData(file3)[2] #r1
+            p_sig_on_first = self.__getData(file3)[1] #r1
+            p_sig_on_second = self.__getData(file3)[2] #r1
 
             frequencyD = self.__getData(file4)[0] #s1
-            polarizationU1D = self.__getData(file4)[1] #s1
-            polarizationU9D = self.__getData(file4)[2] #s1
+            p_ref_on_first = self.__getData(file4)[1] #s1
+            p_ref_on_second = self.__getData(file4)[2] #s1
 
             # fft shift
-            polarizationU1A = np.fft.fftshift(polarizationU1A) #r0
-            polarizationU9A = np.fft.fftshift(polarizationU9A) #r0
-            polarizationU1B = np.fft.fftshift(polarizationU1B) #s0
-            polarizationU9B = np.fft.fftshift(polarizationU9B) #s0
-            polarizationU1C = np.fft.fftshift(polarizationU1C) #r1
-            polarizationU9C = np.fft.fftshift(polarizationU9C) #r1
-            polarizationU1D = np.fft.fftshift(polarizationU1D) #s1
-            polarizationU9D = np.fft.fftshift(polarizationU9D) #s1
+            p_sig_first = np.fft.fftshift(p_sig_first) #r0
+            p_sig_second = np.fft.fftshift(p_sig_second) #r0
+            p_ref_first = np.fft.fftshift(p_ref_first) #s0
+            p_ref_second = np.fft.fftshift(p_ref_second) #s0
+            p_sig_on_first = np.fft.fftshift(p_sig_on_first) #r1
+            p_sig_on_second = np.fft.fftshift(p_sig_on_second) #r1
+            p_ref_on_first = np.fft.fftshift(p_ref_on_first) #s1
+            p_ref_on_second = np.fft.fftshift(p_ref_on_second) #s1
 
             df_div = float(self.logs["header"]["df_div,df"][0])
             BW = float(self.logs["header"]["Fs,Ns,RBW"][0])
@@ -432,38 +432,38 @@ class Analyzer(QWidget):
             si = int(l_spec / 2 - l_spec * avg_interval / 2)
             ei = int(l_spec / 2 + l_spec * avg_interval / 2)
 
-            Tsys_off_1U1 = float(self.logs["header"]["Tcal"][0]) * ((polarizationU1D + polarizationU1B) - np.mean(polarizationU1D[si:ei] - polarizationU1B[si:ei])) / (2 * np.mean(polarizationU1D[si:ei] - polarizationU1B[si:ei]))
-            Tsys_off_2U1 = float(self.logs["header"]["Tcal"][1]) * ((polarizationU1C + polarizationU1A) - np.mean(polarizationU1C[si:ei] - polarizationU1A[si:ei])) / (2 * np.mean(polarizationU1C[si:ei] - polarizationU1A[si:ei]))
+            Tsys_off_1_first = float(self.logs["header"]["Tcal"][0]) * ((p_ref_on_first + p_ref_first) - np.mean(p_ref_on_first[si:ei] - p_ref_first[si:ei])) / (2 * np.mean(p_ref_on_first[si:ei] - p_ref_first[si:ei]))
+            Tsys_off_2_first = float(self.logs["header"]["Tcal"][1]) * ((p_sig_on_first + p_sig_first) - np.mean(p_sig_on_first[si:ei] - p_sig_first[si:ei])) / (2 * np.mean(p_sig_on_first[si:ei] - p_sig_first[si:ei]))
 
-            Tsys_off_1U9 = float(self.logs["header"]["Tcal"][0]) * ((polarizationU9D + polarizationU9B) - np.mean(polarizationU9D[si:ei] - polarizationU9B[si:ei])) / (2 * np.mean(polarizationU9D[si:ei] - polarizationU9B[si:ei]))
-            Tsys_off_2U9 = float(self.logs["header"]["Tcal"][1]) * ((polarizationU9C + polarizationU9A) - np.mean(polarizationU9C[si:ei] - polarizationU9A[si:ei])) / (2 * np.mean(polarizationU9C[si:ei] - polarizationU9A[si:ei]))
+            Tsys_off_1_second = float(self.logs["header"]["Tcal"][0]) * ((p_ref_on_second + p_ref_second) - np.mean(p_ref_on_second[si:ei] - p_ref_second[si:ei])) / (2 * np.mean(p_ref_on_second[si:ei] - p_ref_second[si:ei]))
+            Tsys_off_2_second = float(self.logs["header"]["Tcal"][1]) * ((p_sig_on_second + p_sig_second ) - np.mean(p_sig_on_second[si:ei] - p_sig_second [si:ei])) / (2 * np.mean(p_sig_on_second[si:ei] - p_sig_second [si:ei]))
 
-            Ta_1_caloffU1 = Tsys_off_1U1 * (polarizationU1A - polarizationU1B) / polarizationU1B # non-cal phase
-            Ta_1_caloffU9 = Tsys_off_1U9 * (polarizationU9A - polarizationU9B) / polarizationU9B  # non-cal phase
+            Ta_1_caloff_first = Tsys_off_1_first * (p_sig_first - p_ref_first) / p_ref_first # non-cal phase
+            Ta_1_caloff_second = Tsys_off_1_second * (p_sig_second - p_ref_second) / p_ref_second  # non-cal phase
 
-            Ta_1_calonU1 = (Tsys_off_1U1 + float(self.logs["header"]["Tcal"][0])) * (polarizationU1C - polarizationU1D) / polarizationU1D  # cal phase
-            Ta_1_calonU9 = (Tsys_off_1U9 + float(self.logs["header"]["Tcal"][1])) * (polarizationU9C - polarizationU9D) / polarizationU9D  # cal phase
+            Ta_1_calon_first = (Tsys_off_1_first + float(self.logs["header"]["Tcal"][0])) * (p_sig_on_first - p_ref_on_first) / p_ref_on_first  # cal phase
+            Ta_1_calon_second = (Tsys_off_1_second + float(self.logs["header"]["Tcal"][1])) * (p_sig_on_second - p_ref_on_second) / p_ref_on_second  # cal phase
 
-            Ta_sigU1 = (Ta_1_caloffU1 + Ta_1_calonU1) / 2
-            Ta_sigU9 = (Ta_1_caloffU9 + Ta_1_calonU9) / 2
+            Ta_sig_first = (Ta_1_caloff_first + Ta_1_calon_first) / 2
+            Ta_sig_second = (Ta_1_caloff_second + Ta_1_calon_second) / 2
 
-            Ta_2_caloffU1 = Tsys_off_2U1 * (polarizationU1A - polarizationU1A) / polarizationU1A  # non-cal phase
-            Ta_2_caloffU9 = Tsys_off_2U9 * (polarizationU9A - polarizationU9A) / polarizationU9A  # non-cal phase
+            Ta_2_caloff_first = Tsys_off_2_first * (p_sig_first - p_sig_first) / p_sig_first  # non-cal phase
+            Ta_2_caloff_second = Tsys_off_2_second * (p_sig_second - p_sig_second ) / p_sig_second   # non-cal phase
 
-            Ta_2_calonU1 = (Tsys_off_2U1 + float(self.logs["header"]["Tcal"][0])) * (polarizationU1D - polarizationU1C) / polarizationU1C  # cal phase
-            Ta_2_calonU9 = (Tsys_off_2U9 + float(self.logs["header"]["Tcal"][1])) * (polarizationU9D - polarizationU9C) / polarizationU9C  # cal phase
+            Ta_2_calon_first = (Tsys_off_2_first + float(self.logs["header"]["Tcal"][0])) * (p_ref_on_first - p_sig_on_first) / p_sig_on_first  # cal phase
+            Ta_2_calon_second = (Tsys_off_2_second + float(self.logs["header"]["Tcal"][1])) * (p_ref_on_second - p_sig_on_second) / p_sig_on_second  # cal phase
 
-            Ta_refU1 = (Ta_2_caloffU1 + Ta_2_calonU1) / 2
-            Ta_refU9 = (Ta_2_caloffU9 + Ta_2_calonU9) / 2
+            Ta_ref_first = (Ta_2_caloff_first + Ta_2_calon_first) / 2
+            Ta_ref_second = (Ta_2_caloff_second + Ta_2_calon_second) / 2
 
-            Ta_sigU1 = np.roll(Ta_sigU1, +n_shift)
-            Ta_sigU9 = np.roll(Ta_sigU9, +n_shift)
+            Ta_sig_first = np.roll(Ta_sig_first, +n_shift)
+            Ta_sig_second = np.roll(Ta_sig_second, +n_shift)
 
-            Ta_refU1 = np.roll(Ta_refU1, -n_shift)
-            Ta_refU9 = np.roll(Ta_refU9, -n_shift)
+            Ta_ref_first = np.roll(Ta_ref_first, -n_shift)
+            Ta_ref_second = np.roll(Ta_ref_second, -n_shift)
 
-            TaU1 = (Ta_sigU1 + Ta_refU1) / 2
-            TaU9 = (Ta_sigU9 + Ta_refU9) / 2
+            Ta_first = (Ta_sig_first + Ta_ref_first) / 2
+            Ta_second = (Ta_sig_second + Ta_ref_second) / 2
 
             El = (float(self.logs[pair[0][0]]["AzEl"][1]) + float(self.logs[pair[0][1]]["AzEl"][1]) + float(self.logs[pair[1][0]]["AzEl"][1]) + float(self.logs[pair[1][1]]["AzEl"][1]))/ 4
             G_El = self.logs["header"]["Elev_poly"]
@@ -474,11 +474,11 @@ class Analyzer(QWidget):
             G_ELtmp[2] = G_El[0]
             G_El = G_ELtmp
 
-            SfU1scan = TaU1 / (((-1) * (float(self.logs["header"]["DPFU"][0])) ) * np.polyval(G_El, El))
-            SfU9scan = TaU9 / (((-1) * (float(self.logs["header"]["DPFU"][1])) ) * np.polyval(G_El, El))
+            Sf_firstscan = Ta_first / (((-1) * (float(self.logs["header"]["DPFU"][0])) ) * np.polyval(G_El, El))
+            Sf_secondscan = Ta_second / (((-1) * (float(self.logs["header"]["DPFU"][1])) ) * np.polyval(G_El, El))
 
-            self.SfU1.append(SfU1scan[self.si:self.ei])
-            self.SfU9.append(SfU9scan[self.si:self.ei])
+            self.Sf_first.append(Sf_firstscan[self.si:self.ei])
+            self.Sf_second.append(Sf_secondscan[self.si:self.ei])
             self.x = frequencyA[self.si:self.ei]
 
             self.si = si
