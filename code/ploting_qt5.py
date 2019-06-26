@@ -44,8 +44,9 @@ class Plot(FigureCanvas):
 
             ytick = 0
             while ytick > np.max(y):
-                yTicks.append(ytick)
-                ytick += 1
+                if ytick >= np.min(y):
+                    yTicks.append(ytick)
+                ytick += 10
 
             self.graph.set_yticks(yTicks)
 
