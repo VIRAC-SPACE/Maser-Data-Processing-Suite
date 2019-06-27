@@ -418,14 +418,13 @@ class Analyzer(QWidget):
             data_1 = np.delete(data_1, (0), axis=0)  # izdzes masiva primo elementu
             data_2 = np.delete(data_2, (0), axis=0)  # izdzes masiva primo elementu
 
-            self.xdata, self.ydata_1_u1, self.ydata_2_u1, self.ydata_1_u9, self.ydata_2_u9 = self.__getDataForPolarization__(
-                data_1, data_2, self.filter)
+            self.xdata, self.ydata_1_u1, self.ydata_2_u1, self.ydata_1_u9, self.ydata_2_u9 = self.__getDataForPolarization__(data_1, data_2, self.filter)
 
             self.plot_start_u1 = Plot()
 
             self.plot_start_u1.setFocusPolicy(QtCore.Qt.ClickFocus)
             self.plot_start_u1.setFocus()
-            self.plot_start_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u1 Polarization", (1, 0))
+            self.plot_start_u1.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u1 Polarization", (1, 0), "linear")
             self.line_1_u1 = self.plot_start_u1.plot(self.xdata, self.ydata_1_u1, 'b', label=pair[0], picker=3)
             self.line_2_u1 = self.plot_start_u1.plot(self.xdata, self.ydata_2_u1, 'r', label=pair[1], picker=3)
 
@@ -440,7 +439,7 @@ class Analyzer(QWidget):
 
             self.plot_start_u9.setFocusPolicy(QtCore.Qt.ClickFocus)
             self.plot_start_u9.setFocus()
-            self.plot_start_u9.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u9 Polarization", (1, 1))
+            self.plot_start_u9.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "u9 Polarization", (1, 1), "linear")
             self.line_1_u9 = self.plot_start_u9.plot(self.xdata, self.ydata_1_u9, 'b', label=pair[0], picker=3)
             self.line_2_u9 = self.plot_start_u9.plot(self.xdata, self.ydata_2_u9, 'r', label=pair[1], picker=3)
 
@@ -475,11 +474,11 @@ class Analyzer(QWidget):
             self.totalResults_u9.append(self.total_u9)
 
             self.plot_total_u1 = Plot()
-            self.plot_total_u1.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (5, 0))
+            self.plot_total_u1.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (5, 0), "linear")
             self.line_total_u1 = self.plot_total_u1.plot(self.x, self.total_u1, 'b')
 
             self.plot_total_u9 = Plot()
-            self.plot_total_u9.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (5, 1))
+            self.plot_total_u9.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', None, (5, 1), "linear")
             self.line_total_u9 = self.plot_total_u9.plot(self.x, self.total_u9, 'b')
 
             self.grid.addWidget(self.plot_total_u1, 4, 0)
@@ -696,14 +695,12 @@ class Analyzer(QWidget):
         y_u9_avg = y_u9_avg / len(self.totalResults_u9)
 
         self.plot_velocity_u1 = Plot()
-        self.plot_velocity_u1.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization",
-                                        (1, 0))
+        self.plot_velocity_u1.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization", (1, 0), "linear")
         self.plot_velocity_u1.plot(velocitys_avg, y_u1_avg, 'b')
         # self.plot_velocity_u1.plot(x, y, 'r')
 
         self.plot_velocity_u9 = Plot()
-        self.plot_velocity_u9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization",
-                                        (1, 1))
+        self.plot_velocity_u9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization", (1, 1), "linear")
         self.plot_velocity_u9.plot(velocitys_avg, y_u9_avg, 'b')
 
         # self.plot_velocity_uAVG = Plot()
@@ -712,7 +709,7 @@ class Analyzer(QWidget):
 
         ston_x = np.arange(0, len(self.STON_list_u1))
         self.plot_STON = Plot()
-        self.plot_STON.creatPlot(self.grid, 'Pair', 'Ratio', "Signal to Noise", (3, 0))
+        self.plot_STON.creatPlot(self.grid, 'Pair', 'Ratio', "Signal to Noise", (3, 0), "linear")
         self.plot_STON.plot(ston_x, self.STON_list_u1, '*r', label="u1 Polarization")
         self.plot_STON.plot(ston_x, self.STON_list_u9, 'og', label="u9 Polarization")
         self.plot_STON.plot(ston_x, self.STON_list_AVG, 'vb', label="AVG Polarization")
@@ -940,7 +937,7 @@ def main():
     if threshold <= 0.0:
         raise Exception("Threshold cannot be negative or zero")
 
-        # Create App
+    # Create App
     qApp = QApplication(sys.argv)
     aw = Analyzer(source, iteration_number, filter, threshold, badPointRange, dataFilesPath, resultPath, logs, DPFU_max,  G_El, Tcal, k, fstart, cuts, firstScanStartTime, base_frequencies, stationCordinations)
     aw.show()
@@ -950,4 +947,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
