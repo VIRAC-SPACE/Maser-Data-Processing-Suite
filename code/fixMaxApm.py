@@ -12,6 +12,7 @@ from help import *
 def parseArguments():
     parser = argparse.ArgumentParser(description='''Fix Amplitudes in output file. ''', epilog="""Fix.""")
     parser.add_argument("source", help="source name", type=str, default="")
+    parser.add_argument("type", help="source name", type=str, default="SDR")
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 0.1')
     args = parser.parse_args()
@@ -59,7 +60,7 @@ def getLocalMax(outputfile, outputFilePath, source_velocities, index_range_for_l
     return (max_apmlitudes_u1, max_apmlitudes_u9, max_apmlitudes_uavg)
 
 
-def chanegResultAmplitudes(outputfiles, resutlFile, outputFilePath, source_velocities, index_range_for_local_maxima, source): 
+def chanegResultAmplitudes(outputfiles, resutlFile, outputFilePath, source_velocities, index_range_for_local_maxima, source, type):
   
     with open(resutlFile) as result:
         result_json = json.load(result)
@@ -70,9 +71,10 @@ def chanegResultAmplitudes(outputfiles, resutlFile, outputFilePath, source_veloc
         
         for key in result_json.keys():
             if key.endswith("_" + itarration):
-                result_json[key]["polarizationU1"] =  max_apmlitudes_u1
-                result_json[key]["polarizationU9"] = max_apmlitudes_u9
-                result_json[key]["polarizationAVG"] = max_apmlitudes_uavg
+                if result_json[key]["type"] == type:
+                    result_json[key]["polarizationU1"] = max_apmlitudes_u1
+                    result_json[key]["polarizationU9"] = max_apmlitudes_u9
+                    result_json[key]["polarizationAVG"] = max_apmlitudes_uavg
             
     resultFile = open (resutlFile, "w")
     resultFile.write(json.dumps(result_json, indent=2))
@@ -94,16 +96,17 @@ def getAllOutputfiles(outputFilePath, source):
 def main():
     args = parseArguments()
     source= str(args.__dict__["source"])
+    type = str(args.__dict__["type"])
     configFilePath = str(args.__dict__["config"])
     config = configparser.RawConfigParser()
     config.read(configFilePath)
-    outputFilePath =  config.get('paths', "outputFilePath")
-    resultFilePath =  config.get('paths', "resultFilePath")
+    outputFilePath = config.get('paths', "outputFilePath")
+    resultFilePath = config.get('paths', "resultFilePath")
     source_velocities = config.get('velocities', source).replace(" ", "").split(",")
     index_range_for_local_maxima = int(config.get('parameters', "index_range_for_local_maxima"))
     resutlFile = resultFilePath + source + ".json"
     outputfiles = getAllOutputfiles(outputFilePath, source)
-    chanegResultAmplitudes(outputfiles, resutlFile, outputFilePath, source_velocities, index_range_for_local_maxima, source)
+    chanegResultAmplitudes(outputfiles, resutlFile, outputFilePath, source_velocities, index_range_for_local_maxima, source, type)
          
 if __name__=="__main__":
     main()

@@ -706,7 +706,6 @@ class MonitoringApp(QWidget):
                 type = scanData["type"]
                 modifiedJulianDays = scanData["modifiedJulianDays"]
 
-
                 if "areas" in scanData.keys():
                     areas = scanData["areas"]
                 else:
@@ -722,7 +721,7 @@ class MonitoringApp(QWidget):
                 dates = date.split("_")
                 monthsNumber = dates[1]
                 dates[1] = self.months.getMonthNumber([monthsNumber][0])
-                date = scanData["time"].replace(":", " ") + " " +  " ".join(dates)
+                date = scanData["time"].replace(":", " ") + " " + " ".join(dates)
 
                 result = Result(location, datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number, specie, type, modifiedJulianDays, areas, gauss_amp)
                 result_list.append(dict(result))
