@@ -53,6 +53,7 @@ def getConfigs(key, value):
 class PlotingView(QWidget):
     __slots__ = ['grid']
     def __init__(self):
+
         super().__init__()
         self.grid = QGridLayout()
         self.grid.setSpacing(10)
@@ -72,6 +73,7 @@ class Spectre_View(PlotingView):
 class Gauss_View2(PlotingView):
     __slots__ = ['AreaList', 'source', 'GaussDatePointsList', 'gaussLocationList', 'velocitie_dict_componet', "date_list"]
     def __init__(self, AreaList, source, GaussDatePointsList, gaussLocationList, gaussIterationList, velocitie_dict_componet, date_list):
+
         super().__init__()
         self.setWindowTitle(" ")
         self.AreaList = AreaList
@@ -122,7 +124,7 @@ class Gauss_View2(PlotingView):
         self._addWidget(self.gaussAreaPlot, 0, 0)
         self.gaussAreaPlot.addCursor(labels2)
 
-        self.testView  = PlotingView()
+        self.testView = PlotingView()
         self.testPlot = Plot()
         self.testPlot.creatPlot(self.testView.getGrid(), "Time", "Gauss Amplitude", None, (1, 0), "linear")
         self.testPlot.plot(self.date_list, self.velocitie_dict_componet, "r.", label="Orginal data")
@@ -597,14 +599,35 @@ class Monitoring_View(PlotingView):
                 self.new_spectre = True
                 
         def chooseSpectrum(self, event):
+
             thisline = event.artist
             xdata = thisline.get_xdata()
             ind = event.ind
             index = [ind][0]
-            spectraFileName = self.source + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.location_list, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.iteration_list, int(index[0])) + ".dat"
-            self.plotSpecter(spectraFileName, self.polarization)
+
+            if event.mouseevent.button == 3:
+                iteration = MonitoringViewHelper.getIteration(self.iteration_list, int(index[0]))
+                resultFileName = self.source + ".json"
+
+                with open(getConfigs("paths", "resultFilePath") + resultFileName) as result_data:
+                    results = json.load(result_data)
+
+                for experiment in results:
+                    if experiment.endswith("_" + iteration):
+                        results[experiment]["flag"] = True
+
+                with open(getConfigs("paths", "resultFilePath") + resultFileName, "w") as result_data:
+                    result_data.write(json.dumps(results, indent=2))
+
+            elif event.mouseevent.button == 1:
+                spectraFileName = self.source + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.location_list, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.iteration_list, int(index[0])) + ".dat"
+                self.plotSpecter(spectraFileName, self.polarization)
+
+        def flagPoint(self, event):
+            pass
 
         def plotSpecter(self, spectraFileName, polarization):
+
             amplitude_colon = 3
             if polarization == "U1":
                 amplitude_colon = 1
@@ -669,7 +692,12 @@ class MonitoringApp(QWidget):
         chooseSourceButton = QPushButton("Ok", self)
         chooseSourceButton.clicked.connect(self.plot)
         chooseSourceButton.setStyleSheet("background-color: green")
-        self.__addWidget(chooseSourceButton, 1, 1)
+        self.__addWidget(chooseSourceButton, 1, 2)
+
+        comboBox2 = QComboBox(self)
+        comboBox2.addItem("All")
+        comboBox2.addItem("Not Flag")
+        self.__addWidget(comboBox2, 1, 1)
         
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Return:
@@ -822,6 +850,7 @@ class MonitoringApp(QWidget):
         self.Monitoring_View.setLabels(labels)
         self.Monitoring_View.setLines(lines)
         self.monitoringPlot.addPickEvent(self.Monitoring_View.chooseSpectrum)
+        self.monitoringPlot.addClickEvent(self.Monitoring_View.flagPoint)
         self.Monitoring_View.showMaximized()
         self.Monitoring_View.show()
         

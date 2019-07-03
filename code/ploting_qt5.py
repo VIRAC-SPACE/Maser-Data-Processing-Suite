@@ -142,9 +142,15 @@ class Plot(FigureCanvas):
     
     def addPickEvent(self, callback):
         self.cidPick = FigureCanvas.mpl_connect(self, 'pick_event', callback)
-    
+
+    def addClickEvent(self, callback):
+        self.cidClick = FigureCanvas.mpl_connect(self, 'button_press_event', callback)
+
     def removePickEvent(self):
         FigureCanvas.mpl_disconnect(self, self.cidPick)
+
+    def removeClickEvent(self):
+        FigureCanvas.mpl_disconnect(self, self.cidClick)
         
     def addKeyPressEvent(self, callback):
         self.cidKeyPress = FigureCanvas.mpl_connect(self, 'key_press_event', callback)

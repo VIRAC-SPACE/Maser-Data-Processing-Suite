@@ -902,6 +902,7 @@ class NoGUI(object):
         result[self.expername]["polarizationU1"] =  max_apmlitudes_u1
         result[self.expername]["polarizationU9"] = max_apmlitudes_u9
         result[self.expername]["polarizationAVG"] = max_apmlitudes_uavg
+        result[self.expername]["flag"] = False
         if self.calibType == "SDR":
             result[self.expername]["type"] = "SDR"
         else:
@@ -914,7 +915,7 @@ class NoGUI(object):
         results[self.expername]["gauss_mean"] = gaussianaMean
         results[self.expername]["gauss_STD"] = gaussianaSTD
 
-        resultFile = open (self.resultFilePath +  resultFileName, "w")
+        resultFile = open(self.resultFilePath +  resultFileName, "w")
         resultFile.write(json.dumps(result, indent=2))
         resultFile.close()
 
@@ -925,6 +926,7 @@ class NoGUI(object):
         
 class Main(object):
     __slots__ = ('datafile', 'dataFilesPath', 'resultFilePath', 'output', 'cuts', 'source_velocities', 'index_range_for_local_maxima', 'noGUI', 'skipsmooth', 'calibType')
+
     def __init__(self):
         args = parseArguments()
         self.datafile = str(args.__dict__["datafile"])
@@ -964,4 +966,3 @@ def main():
                 
 if __name__=="__main__":
     main()
-    
