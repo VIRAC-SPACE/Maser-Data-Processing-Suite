@@ -661,7 +661,7 @@ class Monitoring_View(PlotingView):
                 self.spectrPlot.canvasShow()
                         
 class MonitoringApp(QWidget):
-    __slots__ = ['configFilePath', 'grid', 'months', 'new_spectre']
+    __slots__ = ['configFilePath', 'grid', 'months', 'new_spectre', 'flag']
     def __init__(self, configFilePath):
         super().__init__()
         self.setWindowIcon(QIcon('viraclogo.png'))
@@ -673,6 +673,7 @@ class MonitoringApp(QWidget):
         self.chooseSource()
         self.new_spectre = True
         self.months = Months()
+        self.flag = "All"
         
     def center(self):
         qr = self.frameGeometry()
@@ -710,7 +711,7 @@ class MonitoringApp(QWidget):
                                                                                                                                                         
     def plotMonitoring(self, resultDir, source_velocities, source):
         result_list = list()
-        velocitie_dict = {"u1":dict(), "u9":dict(), "avg":dict()}
+        velocitie_dict = {"u1": dict(), "u9": dict(), "avg": dict()}
         iteration_list = list()
         date_list = list()
         
@@ -756,8 +757,13 @@ class MonitoringApp(QWidget):
                 dates[1] = self.months.getMonthNumber([monthsNumber][0])
                 date = scanData["time"].replace(":", " ") + " " + " ".join(dates)
 
-                if flag == False:
-                    result = Result(location, datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number, specie, type, modifiedJulianDays, areas, gauss_amp)
+                if self.flag == "Not Flag":
+                    if flag == False:
+                        result = Result(location, datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number, specie, type, modifiedJulianDays, areas, gauss_amp)
+                        result_list.append(dict(result))
+
+                elif self.flag == "All":
+                    result = Result(location, datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), amplitudes_for_u1,amplitudes_for_u9, amplitudes_for_uAVG, iter_number, specie, type, modifiedJulianDays, areas, gauss_amp)
                     result_list.append(dict(result))
 
         print("badIteration", badIteration)
