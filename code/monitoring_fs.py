@@ -697,7 +697,11 @@ class MonitoringApp(QWidget):
         comboBox2 = QComboBox(self)
         comboBox2.addItem("All")
         comboBox2.addItem("Not Flag")
+        comboBox2.activated[str].connect(self.getFlags)
         self.__addWidget(comboBox2, 1, 1)
+
+    def getFlags(self, flag):
+        self.flag = flag
         
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Return:
@@ -733,6 +737,7 @@ class MonitoringApp(QWidget):
                 specie = scanData["specie"]
                 type = scanData["type"]
                 modifiedJulianDays = scanData["modifiedJulianDays"]
+                flag = scanData["flag"]
 
                 if "areas" in scanData.keys():
                     areas = scanData["areas"]
@@ -751,8 +756,9 @@ class MonitoringApp(QWidget):
                 dates[1] = self.months.getMonthNumber([monthsNumber][0])
                 date = scanData["time"].replace(":", " ") + " " + " ".join(dates)
 
-                result = Result(location, datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number, specie, type, modifiedJulianDays, areas, gauss_amp)
-                result_list.append(dict(result))
+                if flag == False:
+                    result = Result(location, datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), amplitudes_for_u1, amplitudes_for_u9, amplitudes_for_uAVG, iter_number, specie, type, modifiedJulianDays, areas, gauss_amp)
+                    result_list.append(dict(result))
 
         print("badIteration", badIteration)
         result_list = sorted(result_list, key=itemgetter('date'), reverse=False)
