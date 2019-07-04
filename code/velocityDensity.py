@@ -65,8 +65,11 @@ def computeGauss(file):
 
     return (gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines, gaussianaAmplitudes, gaussianaMean, gaussianaSTD)
 
-def computeGauss(velocity, ampvid):
+def computeGauss(file):
+    gaussLines = getConfigs("gauss_lines", getArgs("source")).replace(" ", "").split(",")
+    data = np.fromfile(file, dtype="float64", count=-1, sep=" ").reshape((file_len(file), 4))
     ampvid = correctNumpyReadData(data[:, [3]])
+    velocity = correctNumpyReadData(data[:, [0]])
     indexies = [(np.abs(velocity - float(line))).argmin() for line in gaussLines]
     mons = [max(ampvid[index - 5:index + 5]) for index in indexies]
     gaussian = [models.Gaussian1D(mons[index], gaussLines[index], 0.05, bounds={'stddev': (None, 0.15)}) for index in range(0, len(mons))]
@@ -105,7 +108,7 @@ def addAreasToResultFiles(file, gaussianAreas, gaussianaAmplitudes, gaussianaMea
 
 if __name__ == "__main__":
     if getArgs("output") != "":
-        gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines, gaussianaAmplitudes, gaussianaMean, gaussianaSTD = computeGauss(getArgs("output"))
+        gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines, gaussianaAmplitudes, gaussianaMean, gaussianaSTD = computeGauss(getConfigs("paths", "notSmoohtFilePath") + getArgs("source") + "/" + getArgs("output"))
 
         plt.figure("Gausian fits")
         plt.plot(velocity, ampvid, 'C0+', label="data")
