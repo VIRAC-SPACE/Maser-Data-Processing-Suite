@@ -3,7 +3,6 @@
 
 import sys
 import os
-import time
 import argparse
 import json
 import numpy as np
@@ -145,9 +144,7 @@ class Gauss_View2(PlottingView):
         ind = event.ind
         index = [ind][0]
         fittFile = getConfigs("paths", "notSmoohtFilePath") + self.source + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.gaussLocationList, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.gaussIterationList, int(index[0])) + ".dat"
-
         gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
-
         data = np.fromfile(fittFile, dtype="float64", count=-1, sep=" ").reshape((file_len(fittFile), 4))
         velocity = correctNumpyReadData(data[:, [0]])
         ampvid = correctNumpyReadData(data[:, [3]])
@@ -388,7 +385,8 @@ class Maps_View(PlottingView):
             self.mapPlot.setAxiesText(0.01,1.01, dates[len(dates_days)-1], fontsize=5, color='black', horizontalalignment='left', alpha= 1.0)
             print ("Done")
             self._addWidget(self.mapPlot, 0, 0)
-                                    
+
+
 class Period_View(PlottingView):
         def __init__(self):
             super().__init__()
@@ -445,7 +443,8 @@ class Period_View(PlottingView):
             self.periodPlot.plot(period_days, power, plotSimbol, label="polarization AVG " + "Velocity " + source_velocities[velocityIndex], rasterized=True)
             self._addWidget(self.periodPlot, 0, 0)
             self.show()
-            
+
+
 class Monitoring_View(PlottingView):
         def __init__(self, iteration_list, location_list, source, output_path, source_velocities, date_list, velocitie_dict, AreaList, GaussDatePointsList, gaussLocationList, gaussIterationList, gauss_ampList, velocitie_dict_componet):
             __slots__ = ['grid', 'polarization', 'labels', 'lines', 'iteration_list', 'location_list', 'source', 'output_path', 'new_spectre', 'spectrumSet', 'plotList', 'months', 'dateList', 'velocitie_dict', 'periodPlotSet', 'AreaList', 'GaussDatePointsList', 'gaussLocationList', "gaussIterationList", "gauss_ampList", "velocitie_dict_componet", "bad_points"]
@@ -619,15 +618,34 @@ class Monitoring_View(PlottingView):
             ind = event.ind
             index = [ind][0]
 
-            if event.mouseevent.button == 3:
-                iteration = MonitoringViewHelper.getIteration(self.iteration_list, int(index[0]))
-                resultFileName = self.source + ".json"
+            line = None
 
-                with open(getConfigs("paths", "resultFilePath") + resultFileName) as result_data:
-                    results = json.load(result_data)
+            iteration = MonitoringViewHelper.getIteration(self.iteration_list, int(index[0]))
+            resultFileName = self.source + ".json"
 
-                p = tuple(zip(xdata[ind], ydata[ind]))
-                #print(self.bad_points)
+            with open(getConfigs("paths", "resultFilePath") + resultFileName) as result_data:
+                results = json.load(result_data)
+
+            p = tuple(zip(xdata[ind], ydata[ind]))
+
+            if event.mouseevent.button == 1:
+                spectraFileName = self.source + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.location_list, int(index[0])) + "_" + MonitoringViewHelper.getIteration(self.iteration_list,int(index[0])) + ".dat"
+                self.plotSpecter(spectraFileName, self.polarization)
+
+            elif event.mouseevent.button == 2:
+
+                print(line)
+                self.monitoringPlot.canvasShow()
+
+                for experiment in results:
+                    if experiment.endswith("_" + iteration):
+                        results[experiment]["flag"] = False
+
+                with open(getConfigs("paths", "resultFilePath") + resultFileName, "w") as result_data:
+                    result_data.write(json.dumps(results, indent=2))
+
+            elif event.mouseevent.button == 3:
+
                 self.monitoringPlot.plot(p[0][0], p[0][1], "rx", markersize=10)
                 self.monitoringPlot.canvasShow()
 
@@ -635,33 +653,8 @@ class Monitoring_View(PlottingView):
                     if experiment.endswith("_" + iteration):
                         results[experiment]["flag"] = True
 
-                '''
-
-                if p in self.bad_points:
-                    self.bad_points.remove(p)
-                    print(self.bad_points)
-
-                    for experiment in results:
-                        if experiment.endswith("_" + iteration):
-                            results[experiment]["flag"] = False
-                            print("yes2")
-                else:
-                    self.bad_points.add(p)
-                    print(self.bad_points)
-                    self.monitoringPlot.plot(p[0][0], p[0][1], "rx", markersize=10)
-                    self.monitoringPlot.canvasShow()
-
-                    for experiment in results:
-                        if experiment.endswith("_" + iteration):
-                            results[experiment]["flag"] = True
-                            print("yes")
-                '''
                 with open(getConfigs("paths", "resultFilePath") + resultFileName, "w") as result_data:
                     result_data.write(json.dumps(results, indent=2))
-
-            elif event.mouseevent.button == 1:
-                spectraFileName = self.source + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.location_list, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.iteration_list, int(index[0])) + ".dat"
-                self.plotSpecter(spectraFileName, self.polarization)
 
         def plotSpecter(self, spectraFileName, polarization):
 
@@ -696,9 +689,11 @@ class Monitoring_View(PlottingView):
                 self.plotList.append(plot_name)
                 self.spectrPlot.plot(x,y, "-", label=plot_name)
                 self.spectrPlot.canvasShow()
-                        
+
+
 class MonitoringApp(QWidget):
     __slots__ = ['configFilePath', 'grid', 'months', 'new_spectre', 'flag']
+
     def __init__(self, configFilePath):
         super().__init__()
         self.setWindowIcon(QIcon('viraclogo.png'))
@@ -912,14 +907,15 @@ class MonitoringApp(QWidget):
         source_velocities = config.getConfig('velocities', self.source).split(",")
         source_velocities = [x.strip() for x in source_velocities]
         self.plotMonitoring(resultDir, source_velocities, self.source)
-        
+
+
 class Main(object):
     
-    def __parseArguments(self):
+    def __parse_arguments(self):
         self.args = parseArguments()
         self.configFilePath = str(self.args.__dict__["config"])
         
-    def __CreateApp(self): 
+    def __create_app(self):
         qApp = QApplication(sys.argv)
         aw = MonitoringApp(self.configFilePath)
         aw.show()
@@ -927,14 +923,16 @@ class Main(object):
         sys.exit(0)
     
     @classmethod
-    def run(self):
-        Main.__parseArguments(self)
-        Main.__CreateApp(self)
-        
+    def run(cls):
+        Main.__parse_arguments(cls)
+        Main.__create_app(cls)
+
+
 def main():
     Main().run()
-    
-if __name__=="__main__":
+
+
+if __name__ == "__main__":
     p = Process(target=main,)
     p.start()
     p.join()

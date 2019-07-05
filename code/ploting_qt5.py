@@ -64,6 +64,10 @@ class Plot(FigureCanvas):
     def contourf(self, x, y, z):
         cs = self.graph.contourf(x, y, z, 500, cmap='jet')
         return cs
+
+    def remove_markers(self):
+        for line in self.graph.lines:
+            line.set_marker(None)
     
     def colorbar(self, cs):
         cbar = self.fig.colorbar(cs)

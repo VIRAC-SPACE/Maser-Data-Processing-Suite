@@ -12,6 +12,7 @@ from parsers._configparser import ConfigParser
 coloredlogs.install(level='PRODUCTION')
 logger = logging.getLogger('Main')
 
+
 def parseArguments():
     parser = argparse.ArgumentParser(description='''automatically call frequencyShiftingAnalyzer and totalSpectrumAnalyer. ''', epilog="""Main program.""")
     parser.add_argument("source", help="Source Name", type=str)
@@ -23,6 +24,7 @@ def parseArguments():
     args = parser.parse_args()
     return args
 
+
 def getArgs(key):
     return str(parseArguments().__dict__[key])
 
@@ -31,6 +33,7 @@ def getConfigs(key, value):
     config = ConfigParser.getInstance()
     config.CreateConfig(configFilePath)
     return config.getConfig(key, value)
+
 
 def findLogFile(logList, iteration):
     tmpL = -1
@@ -41,6 +44,20 @@ def findLogFile(logList, iteration):
     if tmpL == -1:
         logger.warning("Warning " + "log for iteration " + iteration + " do not exist log file " + logList[-1] + " will be used instead!")
     return tmpL
+
+
+def findLogFileSDR(logList, iteration, line):
+    tmpL = -1
+    for l in range(0, len(logList)):
+        iter = logList[l].split("/")[-1].split(".")[0].split("_")[-1]
+        lin = logList[l].split("/")[-1].split(".")[0].split("_")[-2]
+        if lin + "_" + iter == line + "_" +iteration:
+            tmpL = l
+            break
+    if tmpL == -1:
+        logger.warning("Warning " + "log for iteration " + iteration + " do not exist log file " + logList[-1] + " will be used instead!")
+    return tmpL
+
 
 def createIterationList(path):
     iterations = [iteration for iteration in os.listdir(path)]
@@ -156,13 +173,13 @@ def main():
         if args.manual:
             for i in SDR_iterations:
                 if i not in SDRprocessed_iteration:
-                    frequencyShiftingParametr = sourceName + " " + getArgs("line") + " " + i + " " + str(SDRlogfile_list[findLogFile(SDRlogfile_list, i)])
+                    frequencyShiftingParametr = sourceName + " " + getArgs("line") + " " + i + " " + str(SDRlogfile_list[findLogFileSDR(SDRlogfile_list, i, getArgs("line"))])
                     logger.info("Executing python3 " + "code/SDR_fs.py " + frequencyShiftingParametr + " -m")
                     os.system("python3  " + "code/SDR_fs.py " + frequencyShiftingParametr + " -m")
         else:
             for i in SDR_iterations:
                 if i not in SDRprocessed_iteration:
-                    frequencyShiftingParametr = sourceName + " " + getArgs("line") + " " + i + " " + str(SDRlogfile_list[findLogFile(SDRlogfile_list, i)])
+                    frequencyShiftingParametr = sourceName + " " + getArgs("line") + " " + i + " " + str(SDRlogfile_list[findLogFileSDR(SDRlogfile_list, i, getArgs("line"))])
                     logger.info("Executing python3 " + "code/SDR_fs.py " + frequencyShiftingParametr)
                     os.system("python3 " + "code/SDR_fs.py " + frequencyShiftingParametr)
 
@@ -198,6 +215,7 @@ def main():
     except:
         print("Unexpected error:", sys.exc_info()[0])
         sys.exit(1)
+
 
 if __name__=="__main__":
     main()
