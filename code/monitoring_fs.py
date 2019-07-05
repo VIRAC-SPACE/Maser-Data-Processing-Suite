@@ -447,7 +447,7 @@ class Period_View(PlottingView):
 
 class Monitoring_View(PlottingView):
         def __init__(self, iteration_list, location_list, source, output_path, source_velocities, date_list, velocitie_dict, AreaList, GaussDatePointsList, gaussLocationList, gaussIterationList, gauss_ampList, velocitie_dict_componet):
-            __slots__ = ['grid', 'polarization', 'labels', 'lines', 'iteration_list', 'location_list', 'source', 'output_path', 'new_spectre', 'spectrumSet', 'plotList', 'months', 'dateList', 'velocitie_dict', 'periodPlotSet', 'AreaList', 'GaussDatePointsList', 'gaussLocationList', "gaussIterationList", "gauss_ampList", "velocitie_dict_componet", "bad_points"]
+            __slots__ = ['grid', 'polarization', 'labels', 'lines', 'iteration_list', 'location_list', 'source', 'output_path', 'new_spectre', 'spectrumSet', 'plotList', 'months', 'dateList', 'velocitie_dict', 'periodPlotSet', 'AreaList', 'GaussDatePointsList', 'gaussLocationList', "gaussIterationList", "gauss_ampList", "velocitie_dict_componet", "bad_points", "selected_points"]
             super().__init__()
             self.setWindowTitle("Monitoring")
             self._addWidget(self.createControlGroup(), 1, 1)
@@ -473,7 +473,8 @@ class Monitoring_View(PlottingView):
             self.gaussIterationList = gaussIterationList
             self.gauss_ampList = gauss_ampList
             self.velocitie_dict_componet = velocitie_dict_componet
-            self.bad_points = set()
+            self.bad_points = list()
+            self.selected_points = list()
             
         def setLineDict(self, lineDict):
             self.lineDict = lineDict
@@ -617,8 +618,8 @@ class Monitoring_View(PlottingView):
             ydata = thisline.get_ydata()
             ind = event.ind
             index = [ind][0]
-
-            line = None
+            selected_point = (xdata[ind], ydata[ind])
+            self.selected_points.append(selected_point)
 
             iteration = MonitoringViewHelper.getIteration(self.iteration_list, int(index[0]))
             resultFileName = self.source + ".json"
@@ -633,8 +634,8 @@ class Monitoring_View(PlottingView):
                 self.plotSpecter(spectraFileName, self.polarization)
 
             elif event.mouseevent.button == 2:
-
-                print(line)
+                good_index = self.selected_points.index(selected_point)
+                self.bad_points[good_index].set_marker(None)
                 self.monitoringPlot.canvasShow()
 
                 for experiment in results:
@@ -645,8 +646,8 @@ class Monitoring_View(PlottingView):
                     result_data.write(json.dumps(results, indent=2))
 
             elif event.mouseevent.button == 3:
-
-                self.monitoringPlot.plot(p[0][0], p[0][1], "rx", markersize=10)
+                line = self.monitoringPlot.plot(p[0][0], p[0][1], "rx", markersize=10)
+                self.bad_points.append(line[0])
                 self.monitoringPlot.canvasShow()
 
                 for experiment in results:
