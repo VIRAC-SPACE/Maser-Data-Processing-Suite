@@ -5,14 +5,18 @@ import sys
 import os
 import argparse
 import matplotlib
+import datetime
 
-from PyQt5.QtWidgets import QWidget, QGridLayout, QApplication, QDesktopWidget, QToolButton
+from PyQt5.QtWidgets import QWidget, QGridLayout, QApplication, QDesktopWidget, QToolButton, QLabel
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 
 from ploting_qt5 import  Plot
 from parsers._configparser import ConfigParser
 from help import *
+from result import  Result
+from monitor.months import Months
+from monitor.monitoringViewHelper import MonitoringViewHelper
 
 matplotlib.use('Qt5Agg')
 
@@ -45,6 +49,7 @@ class SpectreTime(QWidget):
         self.output_path = getConfigs("paths", "notSmoohtFilePath") + "/" + self.source + "/"
         self.output_files = [file for file in os.listdir(self.output_path) if file.startswith(self.source + "_")]
         self.index = 0
+        self.months = Months()
 
 
         self.setWindowIcon(QIcon('viraclogo.png'))
@@ -58,8 +63,8 @@ class SpectreTime(QWidget):
         self.next = QToolButton(arrowType=Qt.RightArrow)
         self.previous.clicked.connect(self.previous_spectre)
         self.next.clicked.connect(self.next_spectre)
-        self.__addWidget(self.previous, 0, 0)
-        self.__addWidget(self.next, 0, 2)
+        self.__addWidget(self.previous, 1, 0)
+        self.__addWidget(self.next, 1, 2)
         self.plot()
 
     def __addWidget(self, widget, row, colomn):
@@ -90,12 +95,16 @@ class SpectreTime(QWidget):
 
 
     def plot(self):
+        plot_name = ""
         file_name = self.output_path  + self.output_files [self.index]
         data = np.fromfile(file_name, dtype="float64", count=-1, sep=" ").reshape((file_len(file_name), 4))
 
-        #tmpDate = spectraFileName.split("/")[-1].split("_")
-        #tmpDate[-4] = self.months.getMonthNumber([tmpDate[-4]][0])
-        #plot_name = datetime.datetime.strptime(" ".join(tmpDate[1:-2]), "%H %M %S %d %m %Y")
+        tmpDate = file_name.split("/")[-1].split("_")
+        tmpDate[-4] = self.months.getMonthNumber([tmpDate[-4]][0])
+        plot_name = datetime.datetime.strptime(" ".join(tmpDate[1:-2]), "%H %M %S %d %m %Y")
+
+        date = QLabel("Date " + str(plot_name))
+        self.__addWidget(date, 0, 2)
 
         x = data[:, [0]]
         y = data[:, [3]]
@@ -131,6 +140,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
