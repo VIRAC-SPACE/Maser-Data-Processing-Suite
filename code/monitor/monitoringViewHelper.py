@@ -4,6 +4,7 @@ class MonitoringViewHelper():
         
         @staticmethod 
         def formatDate(xdata, index):
+            #print("index", index, "\n")
             date = xdata[index][0].strftime("%H %M %S %d %m %Y").split()
             month = datetime.date(1900, int(date[-2]), 1).strftime('%B')[0:3].title().replace("ū", "u").replace("i", "y").replace("k", "c")
             date[-2] = month

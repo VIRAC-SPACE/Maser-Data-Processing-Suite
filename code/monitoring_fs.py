@@ -447,7 +447,7 @@ class Period_View(PlottingView):
 
 class Monitoring_View(PlottingView):
         def __init__(self, iteration_list, location_list, source, output_path, source_velocities, date_list, velocitie_dict, AreaList, GaussDatePointsList, gaussLocationList, gaussIterationList, gauss_ampList, velocitie_dict_componet):
-            __slots__ = ['grid', 'polarization', 'labels', 'lines', 'iteration_list', 'location_list', 'source', 'output_path', 'new_spectre', 'spectrumSet', 'plotList', 'months', 'dateList', 'velocitie_dict', 'periodPlotSet', 'AreaList', 'GaussDatePointsList', 'gaussLocationList', "gaussIterationList", "gauss_ampList", "velocitie_dict_componet", "bad_points", "selected_points"]
+            __slots__ = ['grid', 'polarization', 'labels', 'lines', 'iteration_list', 'location_list', 'source', 'output_path', 'new_spectre', 'spectrumSet', 'plotList', 'months', 'dateList', 'velocitie_dict', 'periodPlotSet', 'AreaList', 'GaussDatePointsList', 'gaussLocationList', "gaussIterationList", "gauss_ampList", "velocitie_dict_componet", "bad_points", "selected_points", "multiple_spectre"]
             super().__init__()
             self.setWindowTitle("Monitoring")
             self._addWidget(self.createControlGroup(), 1, 1)
@@ -475,6 +475,7 @@ class Monitoring_View(PlottingView):
             self.velocitie_dict_componet = velocitie_dict_componet
             self.bad_points = list()
             self.selected_points = list()
+            self.multiple_spectre = False
             
         def setLineDict(self, lineDict):
             self.lineDict = lineDict
@@ -608,6 +609,13 @@ class Monitoring_View(PlottingView):
             if e.key() == Qt.Key_Shift:
                 self.new_spectre = True
 
+            elif e.key() == Qt.Key_Alt:
+                if self.multiple_spectre:
+                    self.multiple_spectre = False
+                else:
+                    self.multiple_spectre = True
+
+
         def setMonitoringPlot(self, plot):
             self.monitoringPlot = plot
                 
@@ -630,8 +638,30 @@ class Monitoring_View(PlottingView):
             p = tuple(zip(xdata[ind], ydata[ind]))
 
             if event.mouseevent.button == 1:
-                spectraFileName = self.source + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.location_list, int(index[0])) + "_" + MonitoringViewHelper.getIteration(self.iteration_list,int(index[0])) + ".dat"
-                self.plotSpecter(spectraFileName, self.polarization)
+                if self.multiple_spectre:
+
+                    date1 = MonitoringViewHelper.formatDate(xdata, [int(index) - 1])
+                    location1 = MonitoringViewHelper.getLocation(self.location_list, int(index[0]) - 1)
+                    iteration1 = str(int(MonitoringViewHelper.getIteration(self.iteration_list, int(index[0]) -1)))
+
+                    date2 = MonitoringViewHelper.formatDate(xdata, [int(index)])
+                    location2 = MonitoringViewHelper.getLocation(self.location_list, int(index[0]))
+                    iteration2 = str(int(MonitoringViewHelper.getIteration(self.iteration_list, int(index[0]))))
+
+                    date3 = MonitoringViewHelper.formatDate(xdata, [int(index) + 1])
+                    location3 = MonitoringViewHelper.getLocation(self.location_list, int(index[0]) + 1)
+                    iteration3 = str(int(MonitoringViewHelper.getIteration(self.iteration_list, int(index[0]) + 1)))
+
+                    source_path = self.source + "/" + self.source + "_"
+
+                    spectra_file_name1 = source_path + date1 + "_" + location1 + "_" + iteration1 + ".dat"
+                    spectra_file_name2 = source_path + date2 + "_" + location2 + "_" + iteration2 + ".dat"
+                    spectra_file_name3 = source_path + date3 + "_" + location3 + "_" + iteration3 + ".dat"
+                    self.plotSpecter([spectra_file_name1, spectra_file_name2, spectra_file_name3], self.polarization)
+
+                else:
+                    spectraFileName = self.source + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.location_list, int(index[0])) + "_" + MonitoringViewHelper.getIteration(self.iteration_list,int(index[0])) + ".dat"
+                    self.plotSpecter(spectraFileName, self.polarization)
 
             elif event.mouseevent.button == 2:
                 good_index = self.selected_points.index(selected_point)
@@ -666,30 +696,50 @@ class Monitoring_View(PlottingView):
                 amplitude_colon = 2
             elif polarization == "AVG" or polarization=="ALL":
                 amplitude_colon = 3
-                
-            spectraFileName = self.output_path + spectraFileName
-            data = np.fromfile(spectraFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(spectraFileName),4))
-            tmpDate = spectraFileName.split("/")[-1].split("_")
-            tmpDate[-4] = self.months.getMonthNumber([tmpDate[-4]][0])
-            plot_name = datetime.datetime.strptime( " ".join(tmpDate[1:-2]), "%H %M %S %d %m %Y") 
-            
-            x = data[:, [0]]
-            y = data[:, [amplitude_colon]]
-            
+
             if self.new_spectre:
                 self.Spectre_View = Spectre_View()
                 self.spectrumSet.add(self.Spectre_View)
                 self.spectrPlot = Plot()
-                self.spectrPlot.creatPlot(self.Spectre_View.getGrid(), "Velocity (km sec$^{-1}$)", "Flux density (Jy)", spectraFileName.split("/")[-1].split("_")[0], (1,0), "linear")
+                if isinstance(spectraFileName, list):
+                    self.spectrPlot.creatPlot(self.Spectre_View.getGrid(), "Velocity (km sec$^{-1}$)", "Flux density (Jy)", spectraFileName[0].split("/")[-1].split("_")[0], (1, 0), "linear")
+                else:
+                    self.spectrPlot.creatPlot(self.Spectre_View.getGrid(), "Velocity (km sec$^{-1}$)","Flux density (Jy)", spectraFileName.split("/")[-1].split("_")[0], (1, 0), "linear")
                 self.Spectre_View._addWidget(self.spectrPlot, 0, 0)
                 self.Spectre_View.show()
                 self.new_spectre = False
                 self.plotList.clear()
-            
-            if plot_name not in self.plotList:
-                self.plotList.append(plot_name)
-                self.spectrPlot.plot(x,y, "-", label=plot_name)
-                self.spectrPlot.canvasShow()
+
+            if self.multiple_spectre:
+                for sf in spectraFileName:
+                    file_name = self.output_path + sf
+                    data = np.fromfile(file_name, dtype="float64", count=-1, sep=" ").reshape((file_len(file_name), 4))
+                    tmpDate = sf.split("/")[-1].split("_")
+                    tmpDate[-4] = self.months.getMonthNumber([tmpDate[-4]][0])
+                    plot_name = datetime.datetime.strptime(" ".join(tmpDate[1:-2]), "%H %M %S %d %m %Y")
+
+                    x = data[:, [0]]
+                    y = data[:, [amplitude_colon]]
+
+                    if plot_name not in self.plotList:
+                        self.plotList.append(plot_name)
+                        self.spectrPlot.plot(x, y, "-", label=plot_name)
+                        self.spectrPlot.canvasShow()
+
+            else:
+                spectraFileName = self.output_path + spectraFileName
+                data = np.fromfile(spectraFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(spectraFileName),4))
+                tmpDate = spectraFileName.split("/")[-1].split("_")
+                tmpDate[-4] = self.months.getMonthNumber([tmpDate[-4]][0])
+                plot_name = datetime.datetime.strptime( " ".join(tmpDate[1:-2]), "%H %M %S %d %m %Y")
+
+                x = data[:, [0]]
+                y = data[:, [amplitude_colon]]
+
+                if plot_name not in self.plotList:
+                    self.plotList.append(plot_name)
+                    self.spectrPlot.plot(x, y, "-", label=plot_name)
+                    self.spectrPlot.canvasShow()
 
 
 class MonitoringApp(QWidget):
