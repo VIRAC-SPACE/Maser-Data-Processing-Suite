@@ -702,9 +702,11 @@ class Monitoring_View(PlottingView):
                 self.spectrumSet.add(self.Spectre_View)
                 self.spectrPlot = Plot()
                 if isinstance(spectraFileName, list):
-                    self.spectrPlot.creatPlot(self.Spectre_View.getGrid(), "Velocity (km sec$^{-1}$)", "Flux density (Jy)", spectraFileName[0].split("/")[-1].split("_")[0], (1, 0), "linear")
+                    source_name = getConfigs("Full_source_name", spectraFileName[0].split("/")[-1].split("_")[0])
+                    self.spectrPlot.creatPlot(self.Spectre_View.getGrid(), "Velocity (km sec$^{-1}$)", "Flux density (Jy)", source_name, (1, 0), "linear")
                 else:
-                    self.spectrPlot.creatPlot(self.Spectre_View.getGrid(), "Velocity (km sec$^{-1}$)","Flux density (Jy)", spectraFileName.split("/")[-1].split("_")[0], (1, 0), "linear")
+                    source_name = getConfigs("Full_source_name", spectraFileName.split("/")[-1].split("_")[0])
+                    self.spectrPlot.creatPlot(self.Spectre_View.getGrid(), "Velocity (km sec$^{-1}$)","Flux density (Jy)", source_name, (1, 0), "linear")
                 self.Spectre_View._addWidget(self.spectrPlot, 0, 0)
                 self.Spectre_View.show()
                 self.new_spectre = False
@@ -731,7 +733,7 @@ class Monitoring_View(PlottingView):
                 data = np.fromfile(spectraFileName, dtype="float64", count=-1, sep=" ") .reshape((file_len(spectraFileName),4))
                 tmpDate = spectraFileName.split("/")[-1].split("_")
                 tmpDate[-4] = self.months.getMonthNumber([tmpDate[-4]][0])
-                plot_name = datetime.datetime.strptime( " ".join(tmpDate[1:-2]), "%H %M %S %d %m %Y")
+                plot_name = datetime.datetime.strptime(" ".join(tmpDate[1:-2]), "%H %M %S %d %m %Y")
 
                 x = data[:, [0]]
                 y = data[:, [amplitude_colon]]

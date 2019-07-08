@@ -51,7 +51,8 @@ def findLogFileSDR(logList, iteration, line):
     for l in range(0, len(logList)):
         iter = logList[l].split("/")[-1].split(".")[0].split("_")[-1]
         lin = logList[l].split("/")[-1].split(".")[0].split("_")[-2]
-        if lin + "_" + iter == line + "_" +iteration:
+
+        if lin + "_" + iter == "f" + line + "_" +iteration:
             tmpL = l
             break
     if tmpL == -1:
