@@ -6,6 +6,7 @@ import os
 import argparse
 import matplotlib
 import datetime
+import json
 
 from PyQt5.QtWidgets import QWidget, QGridLayout, QApplication, QDesktopWidget, QToolButton, QLabel
 from PyQt5.QtGui import QIcon
@@ -52,7 +53,6 @@ class SpectreTime(QWidget):
         self.months = Months()
         dates = [self.__create_date(file_name) for file_name in output_files]
         dates = sorted(dates)
-
         self.sorted_file_names = []
 
         for f in range(0, len(dates)):
@@ -60,6 +60,10 @@ class SpectreTime(QWidget):
                 if self.__create_date(file_name) == dates[f]:
                     self.sorted_file_names.append(file_name)
 
+        __result_file = getConfigs("paths", "resultFilePath") + "/"  + self.source + ".json"
+
+        with open(__result_file) as result_data:
+            self.results = json.load(result_data)
 
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.center()
@@ -115,8 +119,24 @@ class SpectreTime(QWidget):
         data = np.fromfile(file_name, dtype="float64", count=-1, sep=" ").reshape((file_len(file_name), 4))
 
         date = self.__create_date(file_name)
+        date = str(date)
+        time = date.split(" ")[1]
+        tmp_date = date.split(" ")[0].split("_")[0]
+        tmp_date = tmp_date[2] + "_" + tmp_date[1] + "_" + tmp_date[0]
         iteration = file_name.split("/")[-1].split("_")[-1].split(".")[0]
-        self.InformationLb.setText("Date " + str(date) + "\n" + "Iteration " + str(iteration))
+        experiment = file_name.split("/")[-1].split(".")[0]
+
+        exper_name = ""
+        for exper in self.results:
+            experiment = self.results[exper]
+            if experiment["time"] == time or experiment["Date"] == tmp_date:
+                exper_name = exper
+
+        if len(exper_name) > 0:
+            type = self.results[exper_name]["type"]
+            modifiedJulianDays = self.results[exper_name]["modifiedJulianDays"]
+
+        self.InformationLb.setText("Date " + str(date) + "\n" + "Iteration " + str(iteration)+ "\n" + "Modified Julian Days "+ str(modifiedJulianDays) + "\n" + "Type " + type)
 
         x = data[:, [0]]
         y = data[:, [3]]
