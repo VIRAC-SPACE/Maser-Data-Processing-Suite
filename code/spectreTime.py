@@ -47,10 +47,19 @@ class SpectreTime(QWidget):
         self.source = source
         self.source_name = getConfigs("Full_source_name", self.source)
         self.output_path = getConfigs("paths", "notSmoohtFilePath") + "/" + self.source + "/"
-        self.output_files = [file for file in os.listdir(self.output_path) if file.startswith(self.source + "_")]
-        #self.output_files
+        output_files = [file for file in os.listdir(self.output_path) if file.startswith(self.source + "_")]
         self.index = 0
         self.months = Months()
+        dates = [self.__create_date(file_name) for file_name in output_files]
+        dates = sorted(dates)
+
+        self.sorted_file_names = []
+
+        for f in range(0, len(dates)):
+            for file_name in output_files:
+                if self.__create_date(file_name) == dates[f]:
+                    self.sorted_file_names.append(file_name)
+
 
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.center()
@@ -78,9 +87,15 @@ class SpectreTime(QWidget):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
+    def __create_date(self, file_name):
+        tmpDate = file_name.split("/")[-1].split("_")
+        tmpDate[-4] = self.months.getMonthNumber([tmpDate[-4]][0])
+        date = datetime.datetime.strptime(" ".join(tmpDate[1:-2]), "%H %M %S %d %m %Y")
+        return date
+
 
     def next_spectre(self, event):
-        if self.index < len(self.output_files) +1:
+        if self.index < len(self.sorted_file_names) +1:
             self.index += 1
         else:
             self.index = 0
@@ -91,20 +106,16 @@ class SpectreTime(QWidget):
         if self.index > 0:
             self.index -= 1
         else:
-            self.index = len(self.output_files) -1
+            self.index = len(self.sorted_file_names) -1
         self.plot()
 
 
     def plot(self):
-        plot_name = ""
-        file_name = self.output_path  + self.output_files [self.index]
+        file_name = self.output_path  + self.sorted_file_names [self.index]
         data = np.fromfile(file_name, dtype="float64", count=-1, sep=" ").reshape((file_len(file_name), 4))
 
-        tmpDate = file_name.split("/")[-1].split("_")
-        tmpDate[-4] = self.months.getMonthNumber([tmpDate[-4]][0])
-        date = datetime.datetime.strptime(" ".join(tmpDate[1:-2]), "%H %M %S %d %m %Y")
+        date = self.__create_date(file_name)
         iteration = file_name.split("/")[-1].split("_")[-1].split(".")[0]
-
         self.InformationLb.setText("Date " + str(date) + "\n" + "Iteration " + str(iteration))
 
         x = data[:, [0]]
