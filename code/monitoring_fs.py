@@ -612,8 +612,10 @@ class Monitoring_View(PlottingView):
             elif e.key() == Qt.Key_Alt:
                 if self.multiple_spectre:
                     self.multiple_spectre = False
+                    print("single spectre")
                 else:
                     self.multiple_spectre = True
+                    print("multiple spectre")
 
 
         def setMonitoringPlot(self, plot):
@@ -671,6 +673,7 @@ class Monitoring_View(PlottingView):
                 for experiment in results:
                     if experiment.endswith("_" + iteration):
                         results[experiment]["flag"] = False
+                        print(experiment, "is un flag")
 
                 with open(getConfigs("paths", "resultFilePath") + resultFileName, "w") as result_data:
                     result_data.write(json.dumps(results, indent=2))
@@ -683,6 +686,7 @@ class Monitoring_View(PlottingView):
                 for experiment in results:
                     if experiment.endswith("_" + iteration):
                         results[experiment]["flag"] = True
+                        print(experiment, "is flag")
 
                 with open(getConfigs("paths", "resultFilePath") + resultFileName, "w") as result_data:
                     result_data.write(json.dumps(results, indent=2))
@@ -806,8 +810,8 @@ class MonitoringApp(QWidget):
                                 
         resultFileName = source + ".json"
         
-        with open(resultDir + resultFileName) as result_data:    
-                results = json.load(result_data)
+        with open(resultDir + resultFileName) as result_data:
+            results = json.load(result_data)
         
         self.location_list = list()
         labels2 = list()
