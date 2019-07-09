@@ -48,9 +48,9 @@ class SpectreTime(QWidget):
         self.source_name = getConfigs("Full_source_name", self.source)
         self.output_path = getConfigs("paths", "notSmoohtFilePath") + "/" + self.source + "/"
         self.output_files = [file for file in os.listdir(self.output_path) if file.startswith(self.source + "_")]
+        #self.output_files
         self.index = 0
         self.months = Months()
-
 
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.center()
@@ -58,7 +58,8 @@ class SpectreTime(QWidget):
         self.grid.setSpacing(10)
         self.setLayout(self.grid)
         self.setWindowTitle(self.source_name)
-
+        self.InformationLb = QLabel("")
+        self.__addWidget(self.InformationLb, 0, 2)
         self.previous = QToolButton(arrowType=Qt.LeftArrow)
         self.next = QToolButton(arrowType=Qt.RightArrow)
         self.previous.clicked.connect(self.previous_spectre)
@@ -101,10 +102,10 @@ class SpectreTime(QWidget):
 
         tmpDate = file_name.split("/")[-1].split("_")
         tmpDate[-4] = self.months.getMonthNumber([tmpDate[-4]][0])
-        plot_name = datetime.datetime.strptime(" ".join(tmpDate[1:-2]), "%H %M %S %d %m %Y")
+        date = datetime.datetime.strptime(" ".join(tmpDate[1:-2]), "%H %M %S %d %m %Y")
+        iteration = file_name.split("/")[-1].split("_")[-1].split(".")[0]
 
-        date = QLabel("Date " + str(plot_name))
-        self.__addWidget(date, 0, 2)
+        self.InformationLb.setText("Date " + str(date) + "\n" + "Iteration " + str(iteration))
 
         x = data[:, [0]]
         y = data[:, [3]]
