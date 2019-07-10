@@ -5,11 +5,13 @@ import sys
 import os
 import argparse
 import matplotlib
+import matplotlib.pyplot as plt
 import numpy as np
 import datetime
 import json
+import subprocess
 
-from PyQt5.QtWidgets import QWidget, QGridLayout, QApplication, QDesktopWidget, QToolButton, QLabel
+from PyQt5.QtWidgets import QWidget, QGridLayout, QApplication, QDesktopWidget, QToolButton, QLabel, QPushButton
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 
@@ -79,11 +81,13 @@ class SpectreTime(QWidget):
         self.next.clicked.connect(self.next_spectre)
         self.__addWidget(self.previous, 1, 0)
         self.__addWidget(self.next, 1, 2)
+        create_movie_button = QPushButton('Create movie', self)
+        create_movie_button.clicked.connect(self.create_movie)
+        self.__addWidget(create_movie_button, 1, 3)
         self.plot()
 
     def __addWidget(self, widget, row, colomn):
         self.grid.addWidget(widget, row, colomn)
-
 
     def center(self):
         qr = self.frameGeometry()
@@ -97,6 +101,31 @@ class SpectreTime(QWidget):
         date = datetime.datetime.strptime(" ".join(tmpDate[1:-2]), "%H %M %S %d %m %Y")
         return date
 
+    def create_movie(self):
+        np.random.seed(19680801)
+        files = []
+
+        i = 0
+        for file_name in self.sorted_file_names:
+            data = np.fromfile(self.output_path + file_name, dtype="float64", count=-1, sep=" ").reshape((file_len(self.output_path + file_name), 4))
+            plt.cla()
+            x = data[:, [0]]
+            y = data[:, [3]]
+            plt.plot(x,y, label=file_name)
+            plt.legend()
+            plt.grid(True)
+            fname = '_tmp%03d.png' % i
+            i += 1
+            print('Saving frame', fname)
+            plt.savefig(fname)
+            files.append(fname)
+
+        print('Making movie animation.mpg - this may take a while')
+        subprocess.call("mencoder 'mf://_tmp*.png' -mf type=png:fps=10 -ovc lavc "
+                        "-lavcopts vcodec=wmv2 -oac copy -o animation.mpg", shell=True)
+
+        for fname in files:
+            os.remove(fname)
 
     def next_spectre(self, event):
         if self.index < len(self.sorted_file_names) +1:
@@ -105,7 +134,6 @@ class SpectreTime(QWidget):
             self.index = 0
         self.plot()
 
-
     def previous_spectre(self, event):
         if self.index > 0:
             self.index -= 1
@@ -113,9 +141,8 @@ class SpectreTime(QWidget):
             self.index = len(self.sorted_file_names) -1
         self.plot()
 
-
     def plot(self):
-        file_name = self.output_path  + self.sorted_file_names [self.index]
+        file_name = self.output_path + self.sorted_file_names[self.index]
         data = np.fromfile(file_name, dtype="float64", count=-1, sep=" ").reshape((file_len(file_name), 4))
 
         date = self.__create_date(file_name)
