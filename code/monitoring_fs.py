@@ -630,6 +630,7 @@ class Monitoring_View(PlottingView):
             index = [ind][0]
             selected_point = (xdata[ind], ydata[ind])
             self.selected_points.append(selected_point)
+            date = MonitoringViewHelper.formatDate(xdata, index)
 
             iteration = MonitoringViewHelper.getIteration(self.iteration_list, int(index[0]))
             resultFileName = self.source + ".json"
@@ -671,7 +672,7 @@ class Monitoring_View(PlottingView):
                 self.monitoringPlot.canvasShow()
 
                 for experiment in results:
-                    if experiment.endswith("_" + iteration):
+                    if experiment.endswith("_" + iteration) and results[experiment]["time"].replace(":", "_") + "_" + results[experiment]["Date"] == date:
                         results[experiment]["flag"] = False
                         print(experiment, "is un flag")
 
@@ -684,7 +685,7 @@ class Monitoring_View(PlottingView):
                 self.monitoringPlot.canvasShow()
 
                 for experiment in results:
-                    if experiment.endswith("_" + iteration):
+                    if experiment.endswith("_" + iteration) and results[experiment]["time"].replace(":", "_") + "_" + results[experiment]["Date"] == date:
                         results[experiment]["flag"] = True
                         print(experiment, "is flag")
 

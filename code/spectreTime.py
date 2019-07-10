@@ -5,6 +5,7 @@ import sys
 import os
 import argparse
 import matplotlib
+import numpy as np
 import datetime
 import json
 
@@ -15,9 +16,7 @@ from PyQt5.QtCore import Qt
 from ploting_qt5 import  Plot
 from parsers._configparser import ConfigParser
 from help import *
-from result import  Result
 from monitor.months import Months
-from monitor.monitoringViewHelper import MonitoringViewHelper
 
 matplotlib.use('Qt5Agg')
 
@@ -27,6 +26,7 @@ def parseArguments():
     parser.add_argument("source", help="Source Name", type=str)
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
+    parser.add_argument("-i", "--index", help="Configuration cfg file", type=int, default=0)
     args = parser.parse_args()
     return args
 
@@ -49,7 +49,7 @@ class SpectreTime(QWidget):
         self.source_name = getConfigs("Full_source_name", self.source)
         self.output_path = getConfigs("paths", "notSmoohtFilePath") + "/" + self.source + "/"
         output_files = [file for file in os.listdir(self.output_path) if file.startswith(self.source + "_")]
-        self.index = 0
+        self.index = int(getArgs("index"))
         self.months = Months()
         dates = [self.__create_date(file_name) for file_name in output_files]
         dates = sorted(dates)
@@ -124,7 +124,6 @@ class SpectreTime(QWidget):
         tmp_date = date.split(" ")[0].split("_")[0]
         tmp_date = tmp_date[2] + "_" + tmp_date[1] + "_" + tmp_date[0]
         iteration = file_name.split("/")[-1].split("_")[-1].split(".")[0]
-        experiment = file_name.split("/")[-1].split(".")[0]
 
         exper_name = ""
         for exper in self.results:
@@ -135,8 +134,9 @@ class SpectreTime(QWidget):
         if len(exper_name) > 0:
             type = self.results[exper_name]["type"]
             modifiedJulianDays = self.results[exper_name]["modifiedJulianDays"]
+            flag = self.results[exper_name]["flag"]
 
-        self.InformationLb.setText("Date " + str(date) + "\n" + "Iteration " + str(iteration)+ "\n" + "Modified Julian Days "+ str(modifiedJulianDays) + "\n" + "Type " + type)
+        self.InformationLb.setText("Date " + str(date) + "\n" + "Iteration " + str(iteration)+ "\n" + "Modified Julian Days "+ str(modifiedJulianDays) + "\n" + "Type " + type + "\n" + "Flag " + str(flag))
 
         x = data[:, [0]]
         y = data[:, [3]]
