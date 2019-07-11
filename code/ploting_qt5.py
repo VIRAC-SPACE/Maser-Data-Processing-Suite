@@ -60,6 +60,18 @@ class Plot(FigureCanvas):
             self.legend = self.graph.legend(prop={'size': fontsize})
             self.legend.set_draggable(True, update='loc')
         return line
+
+    def get_xlim(self):
+        return self.graph.get_xlim()
+
+    def set_xlim(self, new_x_lim):
+        self.graph.set_xlim(new_x_lim)
+
+    def get_ylim(self):
+        return self.graph.get_ylim()
+
+    def set_ylim(self, new_y_lim):
+        self.graph.set_ylim(new_y_lim)
     
     def contourf(self, x, y, z):
         cs = self.graph.contourf(x, y, z, 500, cmap='jet')
@@ -143,6 +155,10 @@ class Plot(FigureCanvas):
         
     def canvasShow(self):
         FigureCanvas.draw(self)
+
+    def addZoomEvent(self, callback):
+        self.zoom = self.graph.callbacks.connect('xlim_changed', callback)
+        self.zoom = self.graph.callbacks.connect('ylim_changed', callback)
     
     def addPickEvent(self, callback):
         self.cidPick = FigureCanvas.mpl_connect(self, 'pick_event', callback)

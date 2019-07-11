@@ -84,6 +84,13 @@ class SpectreTime(QWidget):
         create_movie_button = QPushButton('Create movie', self)
         create_movie_button.clicked.connect(self.create_movie)
         self.__addWidget(create_movie_button, 1, 3)
+        self.x_lim = None
+        self.y_lim = None
+        self.previous_line = None
+        self.first_plot = False
+        self.spectre_plot = Plot()
+        self.spectre_plot.creatPlot(self.grid, "Velocity (km sec$^{-1}$)", "Flux density (Jy)", getConfigs("Full_source_name", self.source), (1, 1), "linear")
+        self.spectre_plot.addZoomEvent(self.zoom_callback)
         self.plot()
 
     def __addWidget(self, widget, row, colomn):
@@ -111,7 +118,7 @@ class SpectreTime(QWidget):
             plt.cla()
             x = data[:, [0]]
             y = data[:, [3]]
-            plt.plot(x,y, label=file_name)
+            plt.plot(x,y, label=self.__create_date(file_name))
             plt.legend()
             plt.grid(True)
             fname = '_tmp%03d.png' % i
@@ -122,7 +129,7 @@ class SpectreTime(QWidget):
 
         print('Making movie animation.mpg - this may take a while')
         subprocess.call("mencoder 'mf://_tmp*.png' -mf type=png:fps=10 -ovc lavc "
-                        "-lavcopts vcodec=wmv2 -oac copy -o animation.mpg", shell=True)
+                        "-lavcopts vcodec=wmv2 -oac copy -o spectre_movie.mpg", shell=True)
 
         for fname in files:
             os.remove(fname)
@@ -140,6 +147,11 @@ class SpectreTime(QWidget):
         else:
             self.index = len(self.sorted_file_names) -1
         self.plot()
+        
+    def zoom_callback(self, event):
+        if self.first_plot:
+            self.x_lim = event.get_xlim()
+            self.y_lim = event.get_ylim()
 
     def plot(self):
         file_name = self.output_path + self.sorted_file_names[self.index]
@@ -168,10 +180,26 @@ class SpectreTime(QWidget):
         x = data[:, [0]]
         y = data[:, [3]]
 
-        plot = Plot()
-        plot.creatPlot(self.grid, "Velocity (km sec$^{-1}$)", "Flux density (Jy)", getConfigs("Full_source_name", self.source), (1, 1), "linear")
-        plot.plot(x, y, "-")
-        self.__addWidget(plot, 0,1)
+        line = self.spectre_plot.plot(x, y, "-")
+
+        if self.previous_line:
+            self.previous_line[0].remove()
+
+        self.previous_line = line
+
+        self.first_plot = True
+
+        if self.x_lim:
+            self.spectre_plot.set_xlim(self.x_lim)
+        else:
+            self.x_lim = self.spectre_plot.get_xlim()
+
+        if self.y_lim:
+            self.spectre_plot.set_ylim(self.y_lim)
+        else:
+            self.y_lim = self.spectre_plot.get_ylim()
+
+        self.__addWidget(self.spectre_plot, 0,1)
 
 
 class Main():
