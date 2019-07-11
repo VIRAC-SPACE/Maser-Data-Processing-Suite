@@ -118,18 +118,24 @@ class SpectreTime(QWidget):
             plt.cla()
             x = data[:, [0]]
             y = data[:, [3]]
+            plt.rc('xtick', labelsize=8)
+            plt.rc('ytick', labelsize=8)
             plt.plot(x,y, label=self.__create_date(file_name))
-            plt.legend()
+            plt.xlim(self.x_lim)
+            plt.ylim(self.y_lim)
+            plt.legend(loc=1, prop={'size': 12})
+            plt.xlabel("Velocity (km sec$^{-1}$)", fontsize=6)
+            plt.ylabel("Flux density (Jy)", fontsize=6)
             plt.grid(True)
             fname = '_tmp%03d.png' % i
             i += 1
             print('Saving frame', fname)
-            plt.savefig(fname)
+            plt.savefig(fname, dpi=300, quality=100, format="png")
             files.append(fname)
 
         print('Making movie animation.mpg - this may take a while')
-        subprocess.call("mencoder 'mf://_tmp*.png' -mf type=png:fps=10 -ovc lavc "
-                        "-lavcopts vcodec=wmv2 -oac copy -o spectre_movie.mpg", shell=True)
+        subprocess.call("mencoder 'mf://_tmp*.png' -mf w=800:h=600:type=png:fps=10 -ovc lavc "
+                        "-lavcopts vcodec=wmv2 -oac copy -o " + self.source + "_spectre_movie.mpg", shell=True)
 
         for fname in files:
             os.remove(fname)
