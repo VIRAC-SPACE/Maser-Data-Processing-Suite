@@ -25,6 +25,7 @@ from velocityDensity import computeGauss
 def parseArguments():
     parser = argparse.ArgumentParser(description='''plotting tool. ''', epilog="""PRE PLOTTER.""")
     parser.add_argument("datafile", help="Experiment correlation file name", type=str)
+    parser.add_argument("line", help="Experiment correlation file name", type=int)
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-n", "--noGUI", help="Create smoothed and not smothed outputfiles", action='store_true')
     parser.add_argument("-r", "--rawdata", help="Use raw data, skip smoothing", action='store_true')
@@ -392,12 +393,12 @@ class Analyzer(QWidget):
         
         #u1 plot
         self.plot_10 = Plot()
-        self.plot_10.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0), "linear")
+        self.plot_10.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "First Polarization", (1, 0), "linear")
         self.plot_10.plot(self.xarray, self.y1array, 'ko', label='Data Points',  markersize=1)
         
         #u9 plot
         self.plot_11 = Plot()
-        self.plot_11.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1), "linear")
+        self.plot_11.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Second Polarization", (1, 1), "linear")
         self.plot_11.plot(self.xarray, self.y2array, 'ko', label='Data Points',  markersize=1)
         
         self.grid.addWidget(self.plot_10, 0, 0)
@@ -482,14 +483,14 @@ class Analyzer(QWidget):
         
         #u1 plot
         self.plot_5 = Plot()
-        self.plot_5.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0), "linear")
+        self.plot_5.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "First Polarization", (1, 0), "linear")
         self.plot_5.plot(self.polyx, self.polyu1, 'ko', label='Data Points',  markersize=1)
         #self.plot_5.plot(self.xarray[self.m:self.n], self.ceb_1(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
         self.plot_5.plot(self.xarray, self.p_u1(self.xarray), 'b', label='Numpy polyfit', markersize=1)
         
         #u9 plot
         self.plot_6 = Plot()
-        self.plot_6.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1), "linear")
+        self.plot_6.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Second Polarization", (1, 1), "linear")
         self.plot_6.plot(self.polyx, self.polyu9, 'ko', label='Data Points',  markersize=1)
         #self.plot_6.plot(self.xarray[self.m:self.n], self.ceb_2(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
         self.plot_6.plot(self.xarray, self.p_u9(self.xarray), 'b', label='Numpy polyfit', markersize=1)
@@ -569,14 +570,14 @@ class Analyzer(QWidget):
         
         #u1
         self.plot_7 = Plot()
-        self.plot_7.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "1u Polarization", (1, 0), "linear")
+        self.plot_7.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "First Polarization", (1, 0), "linear")
         self.plot_7.plot(self.xarray, self.z1, 'b', label='Signal - polynomial', markersize=1)
         self.plot_7.plot(self.xarray[indexes_for_ceb], self.z1[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2)
         self.plot_7.annotations(self.xarray[indexes_for_ceb], self.z1[indexes_for_ceb])
         
         #u9
         self.plot_8 = Plot()
-        self.plot_8.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "9u Polarization", (1, 1), "linear")
+        self.plot_8.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Second Polarization", (1, 1), "linear")
         self.plot_8.plot(self.xarray, self.z2, 'b', label='Signal - polynomial', markersize=1)
         self.plot_8.plot(self.xarray[indexes_for_ceb2], self.z2[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2)
         self.plot_8.annotations(self.xarray[indexes_for_ceb2], self.z2[indexes_for_ceb2])
@@ -930,6 +931,7 @@ class Main(object):
     def __init__(self):
         args = parseArguments()
         self.datafile = str(args.__dict__["datafile"])
+        line = str(args.__dict__["line"])
         configFilePath = str(args.__dict__["config"])
     
         if args.rawdata:
@@ -943,9 +945,9 @@ class Main(object):
         self.resultFilePath = config.get('paths', "resultFilePath")
         self.output = config.get('paths', "outputFilePath")
         source = self.datafile.split("/")[-1].split(".")[0].split("_")[0]
-        cuts = config.get('cuts', source).split(";")
-        self.cuts = [c.split(",") for c in  cuts]
-        self.source_velocities = config.get('velocities', source).replace(" ", "").split(",")
+        cuts = config.get('cuts', source + "_" + str(line)).split(";")
+        self.cuts = [c.split(",") for c in cuts]
+        self.source_velocities = config.get('velocities', source + "_" +  str(line)).replace(" ", "").split(",")
         self.index_range_for_local_maxima = int(config.get('parameters', "index_range_for_local_maxima"))
         self.noGUI = args.noGUI
         self.calibType = str(args.__dict__["calibType"])
@@ -961,8 +963,10 @@ class Main(object):
             sys.exit(qApp.exec_())
         sys.exit(0)
 
+
 def main():
     Main().execute()
-                
+
+
 if __name__=="__main__":
     main()

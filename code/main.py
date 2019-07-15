@@ -16,7 +16,7 @@ logger = logging.getLogger('Main')
 def parseArguments():
     parser = argparse.ArgumentParser(description='''automatically call frequencyShiftingAnalyzer and totalSpectrumAnalyer. ''', epilog="""Main program.""")
     parser.add_argument("source", help="Source Name", type=str)
-    parser.add_argument("line", help="frequency", type=str)
+    parser.add_argument("line", help="frequency", type=int)
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-m", "--manual", help="Set manual log data", action='store_true')
     parser.add_argument("-n", "--noGUI", help="Create smoothed and not smothed outputfiles", action='store_true')
@@ -144,11 +144,11 @@ def main():
         for d in data_files:
             if d.split(".")[0].split("_")[-1] not in DBBCprocessed_iteration:
                 if args.noGUI:
-                    logger.info("Executing python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " -n " + " -t DBBC")
-                    os.system("python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " -n " + " -t DBBC")
+                    logger.info("Executing python3 " + "code/totalSpectrumAnalyer_qt5.py " + " " + d + " " + getArgs("line") + " -n " + " -t DBBC")
+                    os.system("python3 " + "code/totalSpectrumAnalyer_qt5.py " + " " + d + " " + getArgs("line") + " -n " + " -t DBBC")
                 else:
-                    logger.info("Executing python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " -t DBBC")
-                    os.system("python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " -t DBBC")
+                    logger.info("Executing python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " " + getArgs("line")  + " -t DBBC")
+                    os.system("python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " " + getArgs("line")  + " -t DBBC")
 
     except IOError as e:
         print("IO Error", e)
@@ -192,11 +192,11 @@ def main():
         for d in data_files:
             if d.split(".")[0].split("_")[-1] not in SDRprocessed_iteration:
                 if args.noGUI:
-                    logger.info("Executing python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " -n")
-                    os.system("python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " -n")
+                    logger.info("Executing python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " " + getArgs("line") + " " + " -n")
+                    os.system("python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " " + getArgs("line") + " " + " -n")
                 else:
-                    logger.info("Executing python3 " + "code/totalSpectrumAnalyer_qt5.py " + d)
-                    os.system("python3 " + "code/totalSpectrumAnalyer_qt5.py " + d)
+                    logger.info("Executing python3 " + "code/totalSpectrumAnalyer_qt5.py " + d  + " " + getArgs("line"))
+                    os.system("python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " " + getArgs("line"))
 
     except IOError as e:
         print("IO Error", e)

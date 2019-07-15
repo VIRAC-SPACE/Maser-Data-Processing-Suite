@@ -62,7 +62,7 @@ class Analyzer(QWidget):
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.setWindowTitle("SDR")
         self.center()
-        self.DataDir = getConfigs("paths", "dataFilePath")  + "SDR/" + getArgs("source") + "/f" + getArgs("line")  + "/" + getArgs("iteration_number") + "/"
+        self.DataDir = getConfigs("paths", "dataFilePath") + "SDR/" + getArgs("source") + "/f" + getArgs("line") + "/" + getArgs("iteration_number") + "/"
         self.DataFiles = os.listdir(self.DataDir)
         self.ScanPairs = self.createScanPairs()
         self.index = 0
