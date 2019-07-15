@@ -94,7 +94,7 @@ def main():
     DBBClogfile_list = createLogFileList(DBBClogPath, sourceName)
     SDRlogfile_list = createLogFileList(SDRlOGPath, sourceName)
 
-    resultFileName = resultPath + sourceName + ".json"
+    resultFileName = resultPath + sourceName + "_" + getArgs("line") + ".json"
     print(resultFileName)
 
     if os.path.isfile(resultFileName):

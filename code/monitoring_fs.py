@@ -77,8 +77,8 @@ class Spectre_View(PlottingView):
 
 
 class Gauss_View2(PlottingView):
-    __slots__ = ['AreaList', 'source', 'GaussDatePointsList', 'gaussLocationList', 'velocitie_dict_componet', "date_list"]
-    def __init__(self, AreaList, source, GaussDatePointsList, gaussLocationList, gaussIterationList, velocitie_dict_componet, date_list):
+    __slots__ = ['AreaList', 'source', 'GaussDatePointsList', 'gaussLocationList', 'velocitie_dict_componet', "date_list", "line"]
+    def __init__(self, AreaList, source, GaussDatePointsList, gaussLocationList, gaussIterationList, velocitie_dict_componet, date_list, line):
 
         super().__init__()
         self.setWindowTitle(" ")
@@ -89,9 +89,10 @@ class Gauss_View2(PlottingView):
         self.gaussIterationList = gaussIterationList
         self.velocitie_dict_componet = velocitie_dict_componet
         self.date_list = date_list
+        self.line = line
 
     def plot(self):
-        gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
+        gaussLines = getConfigs("gauss_lines", self.source + "_" + self.line).replace(" ", "").split(",")
         gaussLineDict = dict()
 
         for l in gaussLines:
@@ -144,7 +145,7 @@ class Gauss_View2(PlottingView):
         ind = event.ind
         index = [ind][0]
         fittFile = getConfigs("paths", "notSmoohtFilePath") + self.source + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.gaussLocationList, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.gaussIterationList, int(index[0])) + ".dat"
-        gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
+        gaussLines = getConfigs("gauss_lines", self.source + "_" + self.line).replace(" ", "").split(",")
         data = np.fromfile(fittFile, dtype="float64", count=-1, sep=" ").reshape((file_len(fittFile), 4))
         velocity = correctNumpyReadData(data[:, [0]])
         ampvid = correctNumpyReadData(data[:, [3]])
@@ -187,9 +188,9 @@ class Gauss_View2(PlottingView):
 
 
 class Gauss_View(PlottingView):
-    __slots__ = ['AreaList', 'source', 'GaussDatePointsList', 'gaussLocationList']
+    __slots__ = ['AreaList', 'source', 'GaussDatePointsList', 'gaussLocationList', 'line']
 
-    def __init__(self, AreaList, source, GaussDatePointsList, gaussLocationList, gaussIterationList):
+    def __init__(self, AreaList, source, GaussDatePointsList, gaussLocationList, gaussIterationList, line):
         super().__init__()
         self.setWindowTitle(" ")
         self.AreaList = AreaList
@@ -197,9 +198,10 @@ class Gauss_View(PlottingView):
         self.GaussDatePointsList = GaussDatePointsList
         self.gaussLocationList = gaussLocationList
         self.gaussIterationList = gaussIterationList
+        self.line = line
 
     def plot(self):
-        gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
+        gaussLines = getConfigs("gauss_lines", self.source + "_" + self.line).replace(" ", "").split(",")
         gaussLineDict = dict()
 
         for l in gaussLines:
@@ -241,10 +243,10 @@ class Gauss_View(PlottingView):
         xdata = thisline.get_xdata()
         ind = event.ind
         index = [ind][0]
-        gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
+        gaussLines = getConfigs("gauss_lines", self.source + "_" + self.line).replace(" ", "").split(",")
         fittFile = getConfigs("paths", "notSmoohtFilePath") + self.source + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.gaussLocationList, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.gaussIterationList, int(index[0])) + ".dat"
 
-        gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
+        gaussLines = getConfigs("gauss_lines", self.source + "_" + self.line).replace(" ", "").split(",")
 
         data = np.fromfile(fittFile, dtype="float64", count=-1, sep=" ").reshape((file_len(fittFile), 4))
         velocity = correctNumpyReadData(data[:, [0]])
@@ -446,8 +448,8 @@ class Period_View(PlottingView):
 
 
 class Monitoring_View(PlottingView):
-        def __init__(self, iteration_list, location_list, source, output_path, source_velocities, date_list, velocitie_dict, AreaList, GaussDatePointsList, gaussLocationList, gaussIterationList, gauss_ampList, velocitie_dict_componet):
-            __slots__ = ['grid', 'polarization', 'labels', 'lines', 'iteration_list', 'location_list', 'source', 'output_path', 'new_spectre', 'spectrumSet', 'plotList', 'months', 'dateList', 'velocitie_dict', 'periodPlotSet', 'AreaList', 'GaussDatePointsList', 'gaussLocationList', "gaussIterationList", "gauss_ampList", "velocitie_dict_componet", "bad_points", "selected_points", "multiple_spectre"]
+        def __init__(self, iteration_list, location_list, source, output_path, source_velocities, date_list, velocitie_dict, AreaList, GaussDatePointsList, gaussLocationList, gaussIterationList, gauss_ampList, velocitie_dict_componet, line):
+            __slots__ = ['grid', 'polarization', 'labels', 'lines', 'iteration_list', 'location_list', 'source', 'output_path', 'new_spectre', 'spectrumSet', 'plotList', 'months', 'dateList', 'velocitie_dict', 'periodPlotSet', 'AreaList', 'GaussDatePointsList', 'gaussLocationList', "gaussIterationList", "gauss_ampList", "velocitie_dict_componet", "bad_points", "selected_points", "multiple_spectre", "line"]
             super().__init__()
             self.setWindowTitle("Monitoring")
             self._addWidget(self.createControlGroup(), 1, 1)
@@ -476,6 +478,7 @@ class Monitoring_View(PlottingView):
             self.bad_points = list()
             self.selected_points = list()
             self.multiple_spectre = False
+            self.line = line
             
         def setLineDict(self, lineDict):
             self.lineDict = lineDict
@@ -494,12 +497,12 @@ class Monitoring_View(PlottingView):
                 print("No velocity choosed")
 
         def createGaussAreaView(self):
-            self.gauss_view = Gauss_View(self.AreaList, self.source, self.GaussDatePointsList, self.gaussLocationList, self.gaussIterationList)
+            self.gauss_view = Gauss_View(self.AreaList, self.source, self.GaussDatePointsList, self.gaussLocationList, self.gaussIterationList, self.line)
             self.gauss_view.plot()
             self.gauss_view.show()
 
         def createGaussAmplitudesView(self):
-            self.gauss_view2 = Gauss_View2(self.gauss_ampList, self.source, self.GaussDatePointsList, self.gaussLocationList, self.gaussIterationList, self.velocitie_dict_componet, self.dateList)
+            self.gauss_view2 = Gauss_View2(self.gauss_ampList, self.source, self.GaussDatePointsList, self.gaussLocationList, self.gaussIterationList, self.velocitie_dict_componet, self.dateList, self.line)
             self.gauss_view2.plot()
             self.gauss_view2.show()
 
@@ -777,19 +780,22 @@ class MonitoringApp(QWidget):
     def chooseSource(self):
         self.setWindowTitle("Choose Source")
         chooseLabel = QLabel("Choose source")
+        choose_line_label = QLabel("Choose line")
         self.__addWidget(chooseLabel, 0, 0)
+        self.__addWidget(choose_line_label, 0, 1)
         self.sourceInput = QLineEdit()
         self.__addWidget(self.sourceInput, 1, 0)
+        self.source_line_input = QLineEdit()
+        self.__addWidget(self.source_line_input, 1, 1)
         chooseSourceButton = QPushButton("Ok", self)
         chooseSourceButton.clicked.connect(self.plot)
         chooseSourceButton.setStyleSheet("background-color: green")
-        self.__addWidget(chooseSourceButton, 1, 2)
-
+        self.__addWidget(chooseSourceButton, 1, 3)
         comboBox2 = QComboBox(self)
         comboBox2.addItem("All")
         comboBox2.addItem("Not Flag")
         comboBox2.activated[str].connect(self.setFlags)
-        self.__addWidget(comboBox2, 1, 1)
+        self.__addWidget(comboBox2, 1, 2)
 
     def setFlags(self, flag):
         self.flag = flag
@@ -809,7 +815,7 @@ class MonitoringApp(QWidget):
             for vel in source_velocities:
                 velocitie_dict[velocitie][vel] = list()
                                 
-        resultFileName = source + ".json"
+        resultFileName = source + "_" + self.line + ".json"
         
         with open(resultDir + resultFileName) as result_data:
             results = json.load(result_data)
@@ -839,7 +845,7 @@ class MonitoringApp(QWidget):
                     gauss_amp = scanData["gauss_amp"]
                 else:
                     badIteration.append(iter_number)
-                    gauss_amp = np.zeros(len(getConfigs("gauss_lines", self.source).replace(" ", "").split(",")))
+                    gauss_amp = np.zeros(len(getConfigs("gauss_lines", self.source + "_" + self.line).replace(" ", "").split(",")))
                     print("No Gauss gauss_amp in result file for iteration", iter_number)
 
                 dates = date.split("_")
@@ -878,7 +884,7 @@ class MonitoringApp(QWidget):
             gauss_amp = experiment["gauss_amp"]
             gauss_amp = [float(g) for g in gauss_amp]
 
-            gaussLines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
+            gaussLines = getConfigs("gauss_lines", self.source + "_" + self.line).replace(" ", "").split(",")
             if len(areas) == len(gaussLines):
                 self.AreaList.append(areas)
                 self.GaussDatePointsList.append(experiment["date"])
@@ -911,7 +917,7 @@ class MonitoringApp(QWidget):
         Symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
         colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
         
-        self.Monitoring_View = Monitoring_View(self.iteration_list, self.location_list, self.source, self.output_path, source_velocities, date_list, velocitie_dict, self.AreaList, self.GaussDatePointsList, self.gaussLocationList, self.gaussIterationList, self.gauss_ampList, velocitie_dict["avg"][source_velocities[0]])
+        self.Monitoring_View = Monitoring_View(self.iteration_list, self.location_list, self.source, self.output_path, source_velocities, date_list, velocitie_dict, self.AreaList, self.GaussDatePointsList, self.gaussLocationList, self.gaussIterationList, self.gauss_ampList, velocitie_dict["avg"][source_velocities[0]], self.line)
         self.monitoringPlot = Plot()
         self.monitoringPlot.creatPlot(self.Monitoring_View.getGrid(), "Time", "Flux density (Jy)", getConfigs("Full_source_name", self.source), (1,0), "log")
         self.Monitoring_View.setMonitoringPlot(self.monitoringPlot)
@@ -942,7 +948,7 @@ class MonitoringApp(QWidget):
             lineDict["u9"].append(l2)
             lineDict["avg"].append(l3)
 
-        np.savetxt("monitoring/" + self.source + ".txt", np.transpose(monitoringResults))
+        np.savetxt("monitoring/" + self.source + "_" + self.line + ".txt", np.transpose(monitoringResults))
         self.Monitoring_View._addWidget(self.monitoringPlot, 0, 0)
         #self.monitoringPlot.setXtics(date_list, [convertDatetimeObjectToMJD(date) for date in  date_list], '30')
         
@@ -962,7 +968,8 @@ class MonitoringApp(QWidget):
         resultDir = config.getConfig('paths', "resultFilePath")
         self.output_path = config.getConfig('paths', "outputFilePath")
         self.source = self.sourceInput.text()
-        source_velocities = config.getConfig('velocities', self.source).split(",")
+        self.line = self.source_line_input.text()
+        source_velocities = config.getConfig('velocities', self.source + "_" + self.line).split(",")
         source_velocities = [x.strip() for x in source_velocities]
         self.plotMonitoring(resultDir, source_velocities, self.source)
 

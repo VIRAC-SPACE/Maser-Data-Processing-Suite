@@ -46,7 +46,7 @@ class Result():
         return self.specie
 
 class Analyzer(QWidget):
-    def __init__(self, datafile, resultFilePath, source_velocities, cuts, output, index_range_for_local_maxima, skipsmooth, calibType):
+    def __init__(self, datafile, resultFilePath, source_velocities, cuts, output, index_range_for_local_maxima, skipsmooth, calibType, line):
         super().__init__()
         self.skipsmoothing = skipsmooth
         self.setWindowIcon(QIcon('viraclogo.png'))
@@ -67,6 +67,7 @@ class Analyzer(QWidget):
         self.infoSet_2 = list()
         self.changeParms = False
         self.calibType = calibType
+        self.line = line
         
         try:
             result = pickle.load(open(datafile, "rb"))
@@ -835,14 +836,14 @@ class NoGUI(object):
         output_file_name = output_file_name.replace(" ", "")
         np.savetxt(output_file_name, np.transpose(totalResults))
         
-        resultFileName = self.source + ".json"
+        resultFileName = self.source + "_" + self.line + ".json"
         
         if os.path.isfile(self.resultFilePath + resultFileName):
             pass
         else:
-            os.system("touch " + self.resultFilePath +  resultFileName)
+            os.system("touch " + self.resultFilePath + resultFileName)
             
-            resultFile = open (self.resultFilePath +  resultFileName, "w")
+            resultFile = open (self.resultFilePath + resultFileName, "w")
             resultFile.write("{ \n" + "\n}")
             resultFile.close()
         
@@ -926,12 +927,12 @@ class NoGUI(object):
         self.writeResult()
         
 class Main(object):
-    __slots__ = ('datafile', 'dataFilesPath', 'resultFilePath', 'output', 'cuts', 'source_velocities', 'index_range_for_local_maxima', 'noGUI', 'skipsmooth', 'calibType')
+    __slots__ = ('datafile', 'dataFilesPath', 'resultFilePath', 'output', 'cuts', 'source_velocities', 'index_range_for_local_maxima', 'noGUI', 'skipsmooth', 'calibType', 'line')
 
     def __init__(self):
         args = parseArguments()
         self.datafile = str(args.__dict__["datafile"])
-        line = str(args.__dict__["line"])
+        self.line = str(args.__dict__["line"])
         configFilePath = str(args.__dict__["config"])
     
         if args.rawdata:
@@ -947,17 +948,17 @@ class Main(object):
         source = self.datafile.split("/")[-1].split(".")[0].split("_")[0]
         cuts = config.get('cuts', source + "_" + str(line)).split(";")
         self.cuts = [c.split(",") for c in cuts]
-        self.source_velocities = config.get('velocities', source + "_" +  str(line)).replace(" ", "").split(",")
+        self.source_velocities = config.get('velocities', source + "_" + str(self.line)).replace(" ", "").split(",")
         self.index_range_for_local_maxima = int(config.get('parameters', "index_range_for_local_maxima"))
         self.noGUI = args.noGUI
         self.calibType = str(args.__dict__["calibType"])
     
     def execute(self):
         if self.noGUI:
-            NoGUI(self.dataFilesPath + "/" + self.calibType + "/" + self.datafile, self.cuts, self.output, self.resultFilePath, self.source_velocities, self.index_range_for_local_maxima, self.calibType).run()
+            NoGUI(self.dataFilesPath + "/" + self.calibType + "/" + self.datafile, self.cuts, self.output, self.resultFilePath, self.source_velocities, self.index_range_for_local_maxima, self.calibType, self.line).run()
         else:
             qApp = QApplication(sys.argv)
-            aw = Analyzer(self.dataFilesPath + "/" + self.calibType + "/" + self.datafile, self.resultFilePath, self.source_velocities, self.cuts, self.output, self.index_range_for_local_maxima, self.skipsmooth, self.calibType)
+            aw = Analyzer(self.dataFilesPath + "/" + self.calibType + "/" + self.datafile, self.resultFilePath, self.source_velocities, self.cuts, self.output, self.index_range_for_local_maxima, self.skipsmooth, self.calibType, self.line)
             aw.show()
             aw.showMaximized() 
             sys.exit(qApp.exec_())
