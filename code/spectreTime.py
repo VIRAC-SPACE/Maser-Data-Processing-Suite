@@ -137,7 +137,7 @@ class SpectreTime(QWidget):
 
         print('Making movie animation.mpg - this may take a while')
         subprocess.call("mencoder 'mf://_tmp*.png' -mf w=800:h=600:type=png:fps=10 -ovc lavc "
-                        "-lavcopts vcodec=mpeg4:mbd=2:trell:autoaspect -oac copy -o " + self.source + "_spectre_movie.mpg", shell=True)
+                        "-lavcopts vcodec=mpeg4:mbd=2:trell:autoaspect -oac copy -o " + self.source + "_" + getArgs("line") + "_spectre_movie.mpg", shell=True)
 
         for fname in files:
             os.remove(fname)
