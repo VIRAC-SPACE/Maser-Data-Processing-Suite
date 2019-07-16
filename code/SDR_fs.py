@@ -66,8 +66,8 @@ class Analyzer(QWidget):
         self.DataFiles = os.listdir(self.DataDir)
         self.ScanPairs = self.createScanPairs()
         self.index = 0
-        self.Sf_first = list()
-        self.Sf_second = list()
+        self.Sf_left = list()
+        self.Sf_right = list()
         self.logs = LogReaderFactory.getLogReader(LogTypes.SDR, getConfigs("paths", "logPath") + "SDR/"+ getArgs("logFile"), getConfigs("paths", "prettyLogsPath") + getArgs("source") + "_" + getArgs("iteration_number")).getLogs()
         self.grid = QGridLayout()
         self.setLayout(self.grid)
@@ -87,15 +87,15 @@ class Analyzer(QWidget):
     def __getData(self, dataFileName):
         data = np.fromfile(dataFileName, dtype="float64", count=-1, sep=" ").reshape((file_len(dataFileName), 3))
         frequency = correctNumpyReadData(data[:, [0]])
-        polarization_first = correctNumpyReadData(data[:, [1]])
-        polarization_second = correctNumpyReadData(data[:, [2]])
-        return(frequency, polarization_first, polarization_second)
+        polarization_left = correctNumpyReadData(data[:, [1]])
+        polarization_right = correctNumpyReadData(data[:, [2]])
+        return(frequency, polarization_left, polarization_right)
 
     def __getDataFileForScan__(self, scanName):
         fileName = ""
 
         for file in self.DataFiles:
-            if  self.__getScanName__(file) == scanName:
+            if self.__getScanName__(file) == scanName:
                 fileName = file
                 break
 
@@ -120,48 +120,48 @@ class Analyzer(QWidget):
         file4 = self.DataDir + self.__getDataFileForScan__(pair[1][1]) #s1
 
         frequencyA = self.__getData(file1)[0] #r0
-        p_sig_first = self.__getData(file1)[1] #r0
-        p_sig_second  = self.__getData(file1)[2] #r0
+        p_sig_left = self.__getData(file1)[1] #r0
+        p_sig_right = self.__getData(file1)[2] #r0
 
         frequencyB = self.__getData(file2)[0] #s0
-        p_ref_first = self.__getData(file2)[1] #s0
-        p_ref_second = self.__getData(file2)[2] #s0
+        p_ref_left = self.__getData(file2)[1] #s0
+        p_ref_right = self.__getData(file2)[2] #s0
 
         frequencyC = self.__getData(file3)[0] #r1
-        p_sig_on_first = self.__getData(file3)[1] #r1
-        p_sig_on_second = self.__getData(file3)[2] #r1
+        p_sig_on_left = self.__getData(file3)[1] #r1
+        p_sig_on_right = self.__getData(file3)[2] #r1
 
         frequencyD = self.__getData(file4)[0] #s1
-        p_ref_on_first = self.__getData(file4)[1] #s1
-        p_ref_on_second = self.__getData(file4)[2] #s1
+        p_ref_on_left = self.__getData(file4)[1] #s1
+        p_ref_on_right = self.__getData(file4)[2] #s1
 
         # fft shift
-        p_sig_first = np.fft.fftshift(p_sig_first) #r0
-        p_sig_second  = np.fft.fftshift(p_sig_second) #r0
-        p_ref_first = np.fft.fftshift(p_ref_first) #s0
-        p_ref_second = np.fft.fftshift(p_ref_second) #s0
-        p_sig_on_first = np.fft.fftshift(p_sig_on_first) #r1
-        p_sig_on_second = np.fft.fftshift(p_sig_on_second) #r1
-        p_ref_on_first = np.fft.fftshift(p_ref_on_first) #s1
-        p_ref_on_second = np.fft.fftshift(p_ref_on_second) #s1
+        p_sig_left = np.fft.fftshift(p_sig_left) #r0
+        p_sig_right  = np.fft.fftshift(p_sig_right) #r0
+        p_ref_left = np.fft.fftshift(p_ref_left) #s0
+        p_ref_right = np.fft.fftshift(p_ref_right) #s0
+        p_sig_on_left = np.fft.fftshift(p_sig_on_left) #r1
+        p_sig_on_right = np.fft.fftshift(p_sig_on_right) #r1
+        p_ref_on_left = np.fft.fftshift(p_ref_on_left) #s1
+        p_ref_on_right = np.fft.fftshift(p_ref_on_right) #s1
 
         #plot1
-        self.plot_start__firstA = Plot()
-        self.plot_start__firstA.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "First Polarization", (1, 0), "linear")
-        self.plot_start__firstA.plot(frequencyA, p_sig_first, 'b', label=str(index+1) + "r0")
-        self.plot_start__firstA.plot(frequencyB, p_ref_first, 'g', label=str(index+1) + "s0")
-        self.plot_start__firstA.plot(frequencyC, p_sig_on_first, 'r', label=str(index+1) + "r1")
-        self.plot_start__firstA.plot(frequencyD, p_ref_on_first, 'y', label=str(index+1) + "s1")
-        self.grid.addWidget(self.plot_start__firstA, 0, 0)
+        self.plot_start__leftA = Plot()
+        self.plot_start__leftA.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "Left Polarization", (1, 0), "linear")
+        self.plot_start__leftA.plot(frequencyA, p_sig_left, 'b', label=str(index+1) + "r0")
+        self.plot_start__leftA.plot(frequencyB, p_ref_left, 'g', label=str(index+1) + "s0")
+        self.plot_start__leftA.plot(frequencyC, p_sig_on_left, 'r', label=str(index+1) + "r1")
+        self.plot_start__leftA.plot(frequencyD, p_ref_on_left, 'y', label=str(index+1) + "s1")
+        self.grid.addWidget(self.plot_start__leftA, 0, 0)
 
         #plot2
-        self.plot_start__secondB = Plot()
-        self.plot_start__secondB.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "Second Polarization", (1, 1), "linear")
-        self.plot_start__secondB.plot(frequencyA, p_sig_second , 'b', label=str(index+1) + "r0")
-        self.plot_start__secondB.plot(frequencyB, p_ref_second, 'g', label=str(index+1) + "s0")
-        self.plot_start__secondB.plot(frequencyC, p_sig_on_second, 'r', label=str(index+1) + "r1")
-        self.plot_start__secondB.plot(frequencyD, p_ref_on_second, 'y', label=str(index+1) + "s1")
-        self.grid.addWidget(self.plot_start__secondB, 0, 1)
+        self.plot_start__rightB = Plot()
+        self.plot_start__rightB.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "Right Polarization", (1, 1), "linear")
+        self.plot_start__rightB.plot(frequencyA, p_sig_right , 'b', label=str(index+1) + "r0")
+        self.plot_start__rightB.plot(frequencyB, p_ref_right, 'g', label=str(index+1) + "s0")
+        self.plot_start__rightB.plot(frequencyC, p_sig_on_right, 'r', label=str(index+1) + "r1")
+        self.plot_start__rightB.plot(frequencyD, p_ref_on_right, 'y', label=str(index+1) + "s1")
+        self.grid.addWidget(self.plot_start__rightB, 0, 1)
 
         df_div = float(self.logs["header"]["df_div,df"][0])
         BW = float(self.logs["header"]["Fs,Ns,RBW"][0])
@@ -173,38 +173,38 @@ class Analyzer(QWidget):
         si = int(l_spec / 2 - l_spec * avg_interval / 2)
         ei = int(l_spec / 2 + l_spec * avg_interval / 2)
 
-        Tsys_off_1_first = float(self.logs["header"]["Tcal"][0]) * ((p_ref_on_first + p_ref_first) - np.mean(p_ref_on_first[si:ei] - p_ref_first[si:ei])) / (2 * np.mean(p_ref_on_first[si:ei] - p_ref_first[si:ei]))
-        Tsys_off_2_first = float(self.logs["header"]["Tcal"][1]) * ((p_sig_on_first + p_sig_first) - np.mean(p_sig_on_first[si:ei] - p_sig_first[si:ei])) / (2 * np.mean(p_sig_on_first[si:ei] - p_sig_first[si:ei]))
+        Tsys_off_1_left = float(self.logs["header"]["Tcal"][0]) * ((p_ref_on_left + p_ref_left) - np.mean(p_ref_on_left[si:ei] - p_ref_left[si:ei])) / (2 * np.mean(p_ref_on_left[si:ei] - p_ref_left[si:ei]))
+        Tsys_off_2_left = float(self.logs["header"]["Tcal"][1]) * ((p_sig_on_left + p_sig_left) - np.mean(p_sig_on_left[si:ei] - p_sig_left[si:ei])) / (2 * np.mean(p_sig_on_left[si:ei] - p_sig_left[si:ei]))
 
-        Tsys_off_1_second = float(self.logs["header"]["Tcal"][0]) * ((p_ref_on_second + p_ref_second) - np.mean(p_ref_on_second[si:ei] - p_ref_second[si:ei])) / (2 * np.mean(p_ref_on_second[si:ei] - p_ref_second[si:ei]))
-        Tsys_off_2_second = float(self.logs["header"]["Tcal"][1]) * ((p_sig_on_second + p_sig_second ) - np.mean(p_sig_on_second[si:ei] - p_sig_second [si:ei])) / (2 * np.mean(p_sig_on_second[si:ei] - p_sig_second [si:ei]))
+        Tsys_off_1_right = float(self.logs["header"]["Tcal"][0]) * ((p_ref_on_right + p_ref_right) - np.mean(p_ref_on_right[si:ei] - p_ref_right[si:ei])) / (2 * np.mean(p_ref_on_right[si:ei] - p_ref_right[si:ei]))
+        Tsys_off_2_right = float(self.logs["header"]["Tcal"][1]) * ((p_sig_on_right + p_sig_right ) - np.mean(p_sig_on_right[si:ei] - p_sig_right [si:ei])) / (2 * np.mean(p_sig_on_right[si:ei] - p_sig_right [si:ei]))
 
-        Ta_1_caloff_first = Tsys_off_1_first * (p_sig_first - p_ref_first) / p_ref_first # non-cal phase
-        Ta_1_caloff_second = Tsys_off_1_second * (p_sig_second - p_ref_second) / p_ref_second  # non-cal phase
+        Ta_1_caloff_left = Tsys_off_1_left * (p_sig_left - p_ref_left) / p_ref_left # non-cal phase
+        Ta_1_caloff_right = Tsys_off_1_right * (p_sig_right - p_ref_right) / p_ref_right  # non-cal phase
 
-        Ta_1_calon_first = (Tsys_off_1_first + float(self.logs["header"]["Tcal"][0])) * (p_sig_on_first - p_ref_on_first) / p_ref_on_first  # cal phase
-        Ta_1_calon_second = (Tsys_off_1_second + float(self.logs["header"]["Tcal"][1])) * (p_sig_on_second - p_ref_on_second) / p_ref_on_second  # cal phase
+        Ta_1_calon_left = (Tsys_off_1_left + float(self.logs["header"]["Tcal"][0])) * (p_sig_on_left - p_ref_on_left) / p_ref_on_left  # cal phase
+        Ta_1_calon_right = (Tsys_off_1_right + float(self.logs["header"]["Tcal"][1])) * (p_sig_on_right - p_ref_on_right) / p_ref_on_right  # cal phase
 
-        Ta_sig_first = (Ta_1_caloff_first + Ta_1_calon_first) / 2
-        Ta_sig_second = (Ta_1_caloff_second + Ta_1_calon_second) / 2
+        Ta_sig_left = (Ta_1_caloff_left + Ta_1_calon_left) / 2
+        Ta_sig_right = (Ta_1_caloff_right + Ta_1_calon_right) / 2
 
-        Ta_2_caloff_first = Tsys_off_2_first * (p_ref_first - p_sig_first) / p_sig_first  # non-cal phase
-        Ta_2_caloff_second = Tsys_off_2_second * (p_ref_second - p_sig_second ) / p_sig_second   # non-cal phase
+        Ta_2_caloff_left = Tsys_off_2_left * (p_ref_left - p_sig_left) / p_sig_left  # non-cal phase
+        Ta_2_caloff_right = Tsys_off_2_right * (p_ref_right - p_sig_right ) / p_sig_right   # non-cal phase
 
-        Ta_2_calon_first = (Tsys_off_2_first + float(self.logs["header"]["Tcal"][0])) * (p_ref_on_first - p_sig_on_first) / p_sig_on_first  # cal phase
-        Ta_2_calon_second = (Tsys_off_2_second + float(self.logs["header"]["Tcal"][1])) * (p_ref_on_second - p_sig_on_second) / p_sig_on_second  # cal phase
+        Ta_2_calon_left = (Tsys_off_2_left + float(self.logs["header"]["Tcal"][0])) * (p_ref_on_left - p_sig_on_left) / p_sig_on_left  # cal phase
+        Ta_2_calon_right = (Tsys_off_2_right + float(self.logs["header"]["Tcal"][1])) * (p_ref_on_right - p_sig_on_right) / p_sig_on_right  # cal phase
 
-        Ta_ref_first = (Ta_2_caloff_first + Ta_2_calon_first) / 2
-        Ta_ref_second = (Ta_2_caloff_second + Ta_2_calon_second) / 2
+        Ta_ref_left = (Ta_2_caloff_left + Ta_2_calon_left) / 2
+        Ta_ref_right = (Ta_2_caloff_right + Ta_2_calon_right) / 2
 
-        Ta_sig_first = np.roll(Ta_sig_first, +n_shift)
-        Ta_sig_second = np.roll(Ta_sig_second, +n_shift)
+        Ta_sig_left = np.roll(Ta_sig_left, +n_shift)
+        Ta_sig_right = np.roll(Ta_sig_right, +n_shift)
 
-        Ta_ref_first = np.roll(Ta_ref_first, -n_shift)
-        Ta_ref_second = np.roll(Ta_ref_second, -n_shift)
+        Ta_ref_left = np.roll(Ta_ref_left, -n_shift)
+        Ta_ref_right = np.roll(Ta_ref_right, -n_shift)
 
-        Ta_first = (Ta_sig_first + Ta_ref_first) / 2
-        Ta_second = (Ta_sig_second + Ta_ref_second) / 2
+        Ta_left = (Ta_sig_left + Ta_ref_left) / 2
+        Ta_right = (Ta_sig_right + Ta_ref_right) / 2
 
         El = (float(self.logs[pair[0][0]]["AzEl"][1]) + float(self.logs[pair[0][1]]["AzEl"][1]) + float(self.logs[pair[1][0]]["AzEl"][1]) + float(self.logs[pair[1][1]]["AzEl"][1]))/ 4
         G_El = self.logs["header"]["Elev_poly"]
@@ -215,57 +215,57 @@ class Analyzer(QWidget):
         G_ELtmp[2] = G_El[0]
         G_El = G_ELtmp
 
-        Sf_firstscan = Ta_first / (((-1) * float(self.logs["header"]["DPFU"][0])) * np.polyval(G_El, El))
-        Sf_secondscan = Ta_second / (((-1) * float(self.logs["header"]["DPFU"][1])) * np.polyval(G_El, El))
+        Sf_leftscan = Ta_left / (((-1) * float(self.logs["header"]["DPFU"][0])) * np.polyval(G_El, El))
+        Sf_rightscan = Ta_right / (((-1) * float(self.logs["header"]["DPFU"][1])) * np.polyval(G_El, El))
 
         self.si = si
         self.ei = ei
 
-        self.Sf_first.append(Sf_firstscan[self.si:self.ei])
-        self.Sf_second.append(Sf_secondscan[self.si:self.ei])
+        self.Sf_left.append(Sf_leftscan[self.si:self.ei])
+        self.Sf_right.append(Sf_rightscan[self.si:self.ei])
 
         # plot3
-        self.total__first = Plot()
-        self.total__first.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "", (4, 0), "linear")
+        self.total__left = Plot()
+        self.total__left.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "", (4, 0), "linear")
         self.x = frequencyA[self.si:self.ei]
-        self.total__first.plot(frequencyA[self.si:self.ei], Sf_firstscan[self.si:self.ei], 'b', label=str(index + 1))
-        self.grid.addWidget(self.total__first, 3, 0)
+        self.total__left.plot(frequencyA[self.si:self.ei], Sf_leftscan[self.si:self.ei], 'b', label=str(index + 1))
+        self.grid.addWidget(self.total__left, 3, 0)
 
         # plot4
-        self.total__second = Plot()
-        self.total__second.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "", (4, 1), "linear")
-        self.total__second.plot(frequencyA[self.si:self.ei], Sf_secondscan[self.si:self.ei], 'b', label=str(index + 1))
-        self.grid.addWidget(self.total__second, 3, 1)
+        self.total__right = Plot()
+        self.total__right.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "", (4, 1), "linear")
+        self.total__right.plot(frequencyA[self.si:self.ei], Sf_rightscan[self.si:self.ei], 'b', label=str(index + 1))
+        self.grid.addWidget(self.total__right, 3, 1)
 
         if index == len(self.ScanPairs) - 1:
             self.nextPairButton.setText('Move to total results')
             self.nextPairButton.clicked.connect(self.plotTotalResults)
 
     def plotTotalResults(self):
-        self.grid.removeWidget(self.plot_start__firstA)
-        self.grid.removeWidget(self.plot_start__secondB)
-        self.grid.removeWidget(self.total__first)
-        self.grid.removeWidget(self.total__second)
+        self.grid.removeWidget(self.plot_start__leftA)
+        self.grid.removeWidget(self.plot_start__rightB)
+        self.grid.removeWidget(self.total__left)
+        self.grid.removeWidget(self.total__right)
 
-        self.plot_start__firstA.hide()
-        self.plot_start__secondB.hide()
-        self.total__first.hide()
-        self.total__second.hide()
+        self.plot_start__leftA.hide()
+        self.plot_start__rightB.hide()
+        self.total__left.hide()
+        self.total__right.hide()
 
-        self.plot_start__firstA.close()
-        self.plot_start__secondB.close()
-        self.total__first.close()
-        self.total__second.close()
+        self.plot_start__leftA.close()
+        self.plot_start__rightB.close()
+        self.total__left.close()
+        self.total__right.close()
 
-        self.plot_start__firstA.removePolt()
-        self.plot_start__secondB.removePolt()
-        self.total__first.removePolt()
-        self.total__second.removePolt()
+        self.plot_start__leftA.removePolt()
+        self.plot_start__rightB.removePolt()
+        self.total__left.removePolt()
+        self.total__right.removePolt()
 
-        del self.plot_start__firstA
-        del self.plot_start__secondB
-        del self.total__first
-        del self.total__second
+        del self.plot_start__leftA
+        del self.plot_start__rightB
+        del self.total__left
+        del self.total__right
 
         self.grid.removeWidget(self.nextPairButton)
         self.nextPairButton.hide()
@@ -276,8 +276,8 @@ class Analyzer(QWidget):
             self.grid.itemAt(i).widget().deleteLater()
 
         velocitys_avg = np.zeros(len(self.x))
-        y__first_avg = np.zeros(len(self.x))
-        y__second_avg = np.zeros(len(self.x))
+        y__left_avg = np.zeros(len(self.x))
+        y__right_avg = np.zeros(len(self.x))
 
         station = self.logs["header"]["station"]
         if station == "RT-32":
@@ -331,8 +331,8 @@ class Analyzer(QWidget):
             VelTotal = lsr(RaStr, DecStr, date, stringTime, x, y, z)
             print("VelTotal", VelTotal)
 
-            self.max_y_first_index = self.Sf_first[p].argmax(axis=0)
-            self.max_y_second_index = self.Sf_second[p].argmax(axis=0)
+            self.max_y_left_index = self.Sf_left[p].argmax(axis=0)
+            self.max_y_right_index = self.Sf_right[p].argmax(axis=0)
 
             line = getConfigs('base_frequencies_SDR', "f" + getArgs("line")).replace(" ", "").split(",")
             lineF = float(line[0]) * (10**9)
@@ -342,28 +342,28 @@ class Analyzer(QWidget):
             print("specie", specie, "\n")
             LO = float(self.logs["header"]["f_obs,LO,IF"][1])
             velocitys = dopler((self.x + LO) * (10 ** 6), VelTotal, lineF)
-            y__first_avg = y__first_avg + self.Sf_first[p]
-            y__second_avg = y__second_avg + self.Sf_second[p]
+            y__left_avg = y__left_avg + self.Sf_left[p]
+            y__right_avg = y__right_avg + self.Sf_right[p]
             velocitys_avg = velocitys_avg + velocitys
 
         velocitys_avg = velocitys_avg / len(self.ScanPairs)
-        y__first_avg = y__first_avg / len(self.ScanPairs)
-        y__second_avg = y__second_avg / len(self.ScanPairs)
+        y__left_avg = y__left_avg / len(self.ScanPairs)
+        y__right_avg = y__right_avg / len(self.ScanPairs)
 
-        self.plot_velocity__first = Plot()
-        self.plot_velocity__first.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "First Polarization",(1, 0), "linear")
-        self.plot_velocity__first.plot(velocitys_avg, y__first_avg, 'b')
+        self.plot_velocity__left = Plot()
+        self.plot_velocity__left.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Left Polarization",(1, 0), "linear")
+        self.plot_velocity__left.plot(velocitys_avg, y__left_avg, 'b')
 
-        self.plot_velocity__second = Plot()
-        self.plot_velocity__second.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Second Polarization",(1, 1), "linear")
-        self.plot_velocity__second.plot(velocitys_avg, y__second_avg, 'b')
+        self.plot_velocity__right = Plot()
+        self.plot_velocity__right.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Right Polarization",(1, 1), "linear")
+        self.plot_velocity__right.plot(velocitys_avg, y__right_avg, 'b')
 
-        self.grid.addWidget(self.plot_velocity__first, 0, 0)
-        self.grid.addWidget(self.plot_velocity__second, 0, 1)
+        self.grid.addWidget(self.plot_velocity__left, 0, 0)
+        self.grid.addWidget(self.plot_velocity__right, 0, 1)
 
-        totalResults = np.transpose(np.array([np.transpose(velocitys_avg), np.transpose(y__first_avg), np.transpose(y__second_avg)]))
+        totalResults = np.transpose(np.array([np.transpose(velocitys_avg), np.transpose(y__left_avg), np.transpose(y__right_avg)]))
 
-        # source_day_Month_year_houre:minute:seconde_station_iteration.dat
+        # source_day_Month_year_houre:minute:righte_station_iteration.dat
         day = scan_1["date"].split("-")[2][0:2]
         month = scan_1["date"].split("-")[1]
         months = {"Jan": "1", "Feb": "2", "Mar": "3", "Apr": "4", "May": "5", "Jun": "6", "Jul": "7", "Aug": "8", "Sep": "9", "Oct": "10", "Nov": "11", "Dec": "12"}
@@ -371,8 +371,8 @@ class Analyzer(QWidget):
         year = scan_1["date"].split("-")[0]
         houre = scan_1["date"].split("T")[1].split(":")[0]
         minute = scan_1["date"].split("T")[1].split(":")[1]
-        seconde = scan_1["date"].split("T")[1].split(":")[2]
-        output_file_name =  getConfigs("paths", "dataFilePath")  + "SDR/" + getArgs("source") + "_" + day + "_" + month + "_" + year + "_"  + houre + ":" + minute + ":" + seconde + "_" + station + "_" + getArgs("iteration_number") + ".dat"
+        righte = scan_1["date"].split("T")[1].split(":")[2]
+        output_file_name =  getConfigs("paths", "dataFilePath")  + "SDR/" + getArgs("source") + "_" + day + "_" + month + "_" + year + "_"  + houre + ":" + minute + ":" + righte + "_" + station + "_" + getArgs("iteration_number") + ".dat"
         print("output_file_name", output_file_name)
         output_file_name = output_file_name.replace(" ", "")
         result = Result(totalResults, specie)
@@ -383,8 +383,8 @@ class Analyzer(QWidget):
             pass
 
         else:
-            self.plot_start__firstA.removePolt()
-            self.plot_start__secondB.removePolt()
+            self.plot_start__leftA.removePolt()
+            self.plot_start__rightB.removePolt()
             self.index = self.index + 1
             self.plotPair(self.index)
 
@@ -397,30 +397,30 @@ class Analyzer(QWidget):
             file4 = self.DataDir + self.__getDataFileForScan__(pair[1][1]) #s1
 
             frequencyA = self.__getData(file1)[0] #r0
-            p_sig_first = self.__getData(file1)[1] #r0
-            p_sig_second  = self.__getData(file1)[2] #r0
+            p_sig_left = self.__getData(file1)[1] #r0
+            p_sig_right  = self.__getData(file1)[2] #r0
 
             frequencyB = self.__getData(file2)[0] #s0
-            p_ref_first = self.__getData(file2)[1] #s0
-            p_ref_second = self.__getData(file2)[2] #s0
+            p_ref_left = self.__getData(file2)[1] #s0
+            p_ref_right = self.__getData(file2)[2] #s0
 
             frequencyC = self.__getData(file3)[0] #r1
-            p_sig_on_first = self.__getData(file3)[1] #r1
-            p_sig_on_second = self.__getData(file3)[2] #r1
+            p_sig_on_left = self.__getData(file3)[1] #r1
+            p_sig_on_right = self.__getData(file3)[2] #r1
 
             frequencyD = self.__getData(file4)[0] #s1
-            p_ref_on_first = self.__getData(file4)[1] #s1
-            p_ref_on_second = self.__getData(file4)[2] #s1
+            p_ref_on_left = self.__getData(file4)[1] #s1
+            p_ref_on_right = self.__getData(file4)[2] #s1
 
             # fft shift
-            p_sig_first = np.fft.fftshift(p_sig_first) #r0
-            p_sig_second = np.fft.fftshift(p_sig_second) #r0
-            p_ref_first = np.fft.fftshift(p_ref_first) #s0
-            p_ref_second = np.fft.fftshift(p_ref_second) #s0
-            p_sig_on_first = np.fft.fftshift(p_sig_on_first) #r1
-            p_sig_on_second = np.fft.fftshift(p_sig_on_second) #r1
-            p_ref_on_first = np.fft.fftshift(p_ref_on_first) #s1
-            p_ref_on_second = np.fft.fftshift(p_ref_on_second) #s1
+            p_sig_left = np.fft.fftshift(p_sig_left) #r0
+            p_sig_right = np.fft.fftshift(p_sig_right) #r0
+            p_ref_left = np.fft.fftshift(p_ref_left) #s0
+            p_ref_right = np.fft.fftshift(p_ref_right) #s0
+            p_sig_on_left = np.fft.fftshift(p_sig_on_left) #r1
+            p_sig_on_right = np.fft.fftshift(p_sig_on_right) #r1
+            p_ref_on_left = np.fft.fftshift(p_ref_on_left) #s1
+            p_ref_on_right = np.fft.fftshift(p_ref_on_right) #s1
 
             df_div = float(self.logs["header"]["df_div,df"][0])
             BW = float(self.logs["header"]["Fs,Ns,RBW"][0])
@@ -432,38 +432,38 @@ class Analyzer(QWidget):
             si = int(l_spec / 2 - l_spec * avg_interval / 2)
             ei = int(l_spec / 2 + l_spec * avg_interval / 2)
 
-            Tsys_off_1_first = float(self.logs["header"]["Tcal"][0]) * ((p_ref_on_first + p_ref_first) - np.mean(p_ref_on_first[si:ei] - p_ref_first[si:ei])) / (2 * np.mean(p_ref_on_first[si:ei] - p_ref_first[si:ei]))
-            Tsys_off_2_first = float(self.logs["header"]["Tcal"][1]) * ((p_sig_on_first + p_sig_first) - np.mean(p_sig_on_first[si:ei] - p_sig_first[si:ei])) / (2 * np.mean(p_sig_on_first[si:ei] - p_sig_first[si:ei]))
+            Tsys_off_1_left = float(self.logs["header"]["Tcal"][0]) * ((p_ref_on_left + p_ref_left) - np.mean(p_ref_on_left[si:ei] - p_ref_left[si:ei])) / (2 * np.mean(p_ref_on_left[si:ei] - p_ref_left[si:ei]))
+            Tsys_off_2_left = float(self.logs["header"]["Tcal"][1]) * ((p_sig_on_left + p_sig_left) - np.mean(p_sig_on_left[si:ei] - p_sig_left[si:ei])) / (2 * np.mean(p_sig_on_left[si:ei] - p_sig_left[si:ei]))
 
-            Tsys_off_1_second = float(self.logs["header"]["Tcal"][0]) * ((p_ref_on_second + p_ref_second) - np.mean(p_ref_on_second[si:ei] - p_ref_second[si:ei])) / (2 * np.mean(p_ref_on_second[si:ei] - p_ref_second[si:ei]))
-            Tsys_off_2_second = float(self.logs["header"]["Tcal"][1]) * ((p_sig_on_second + p_sig_second ) - np.mean(p_sig_on_second[si:ei] - p_sig_second [si:ei])) / (2 * np.mean(p_sig_on_second[si:ei] - p_sig_second [si:ei]))
+            Tsys_off_1_right = float(self.logs["header"]["Tcal"][0]) * ((p_ref_on_right + p_ref_right) - np.mean(p_ref_on_right[si:ei] - p_ref_right[si:ei])) / (2 * np.mean(p_ref_on_right[si:ei] - p_ref_right[si:ei]))
+            Tsys_off_2_right = float(self.logs["header"]["Tcal"][1]) * ((p_sig_on_right + p_sig_right ) - np.mean(p_sig_on_right[si:ei] - p_sig_right [si:ei])) / (2 * np.mean(p_sig_on_right[si:ei] - p_sig_right [si:ei]))
 
-            Ta_1_caloff_first = Tsys_off_1_first * (p_sig_first - p_ref_first) / p_ref_first # non-cal phase
-            Ta_1_caloff_second = Tsys_off_1_second * (p_sig_second - p_ref_second) / p_ref_second  # non-cal phase
+            Ta_1_caloff_left = Tsys_off_1_left * (p_sig_left - p_ref_left) / p_ref_left # non-cal phase
+            Ta_1_caloff_right = Tsys_off_1_right * (p_sig_right - p_ref_right) / p_ref_right  # non-cal phase
 
-            Ta_1_calon_first = (Tsys_off_1_first + float(self.logs["header"]["Tcal"][0])) * (p_sig_on_first - p_ref_on_first) / p_ref_on_first  # cal phase
-            Ta_1_calon_second = (Tsys_off_1_second + float(self.logs["header"]["Tcal"][1])) * (p_sig_on_second - p_ref_on_second) / p_ref_on_second  # cal phase
+            Ta_1_calon_left = (Tsys_off_1_left + float(self.logs["header"]["Tcal"][0])) * (p_sig_on_left - p_ref_on_left) / p_ref_on_left  # cal phase
+            Ta_1_calon_right = (Tsys_off_1_right + float(self.logs["header"]["Tcal"][1])) * (p_sig_on_right - p_ref_on_right) / p_ref_on_right  # cal phase
 
-            Ta_sig_first = (Ta_1_caloff_first + Ta_1_calon_first) / 2
-            Ta_sig_second = (Ta_1_caloff_second + Ta_1_calon_second) / 2
+            Ta_sig_left = (Ta_1_caloff_left + Ta_1_calon_left) / 2
+            Ta_sig_right = (Ta_1_caloff_right + Ta_1_calon_right) / 2
 
-            Ta_2_caloff_first = Tsys_off_2_first * (p_sig_first - p_sig_first) / p_sig_first  # non-cal phase
-            Ta_2_caloff_second = Tsys_off_2_second * (p_sig_second - p_sig_second ) / p_sig_second   # non-cal phase
+            Ta_2_caloff_left = Tsys_off_2_left * (p_sig_left - p_sig_left) / p_sig_left  # non-cal phase
+            Ta_2_caloff_right = Tsys_off_2_right * (p_sig_right - p_sig_right ) / p_sig_right   # non-cal phase
 
-            Ta_2_calon_first = (Tsys_off_2_first + float(self.logs["header"]["Tcal"][0])) * (p_ref_on_first - p_sig_on_first) / p_sig_on_first  # cal phase
-            Ta_2_calon_second = (Tsys_off_2_second + float(self.logs["header"]["Tcal"][1])) * (p_ref_on_second - p_sig_on_second) / p_sig_on_second  # cal phase
+            Ta_2_calon_left = (Tsys_off_2_left + float(self.logs["header"]["Tcal"][0])) * (p_ref_on_left - p_sig_on_left) / p_sig_on_left  # cal phase
+            Ta_2_calon_right = (Tsys_off_2_right + float(self.logs["header"]["Tcal"][1])) * (p_ref_on_right - p_sig_on_right) / p_sig_on_right  # cal phase
 
-            Ta_ref_first = (Ta_2_caloff_first + Ta_2_calon_first) / 2
-            Ta_ref_second = (Ta_2_caloff_second + Ta_2_calon_second) / 2
+            Ta_ref_left = (Ta_2_caloff_left + Ta_2_calon_left) / 2
+            Ta_ref_right = (Ta_2_caloff_right + Ta_2_calon_right) / 2
 
-            Ta_sig_first = np.roll(Ta_sig_first, +n_shift)
-            Ta_sig_second = np.roll(Ta_sig_second, +n_shift)
+            Ta_sig_left = np.roll(Ta_sig_left, +n_shift)
+            Ta_sig_right = np.roll(Ta_sig_right, +n_shift)
 
-            Ta_ref_first = np.roll(Ta_ref_first, -n_shift)
-            Ta_ref_second = np.roll(Ta_ref_second, -n_shift)
+            Ta_ref_left = np.roll(Ta_ref_left, -n_shift)
+            Ta_ref_right = np.roll(Ta_ref_right, -n_shift)
 
-            Ta_first = (Ta_sig_first + Ta_ref_first) / 2
-            Ta_second = (Ta_sig_second + Ta_ref_second) / 2
+            Ta_left = (Ta_sig_left + Ta_ref_left) / 2
+            Ta_right = (Ta_sig_right + Ta_ref_right) / 2
 
             El = (float(self.logs[pair[0][0]]["AzEl"][1]) + float(self.logs[pair[0][1]]["AzEl"][1]) + float(self.logs[pair[1][0]]["AzEl"][1]) + float(self.logs[pair[1][1]]["AzEl"][1]))/ 4
             G_El = self.logs["header"]["Elev_poly"]
@@ -474,11 +474,11 @@ class Analyzer(QWidget):
             G_ELtmp[2] = G_El[0]
             G_El = G_ELtmp
 
-            Sf_firstscan = Ta_first / (((-1) * (float(self.logs["header"]["DPFU"][0])) ) * np.polyval(G_El, El))
-            Sf_secondscan = Ta_second / (((-1) * (float(self.logs["header"]["DPFU"][1])) ) * np.polyval(G_El, El))
+            Sf_leftscan = Ta_left / (((-1) * (float(self.logs["header"]["DPFU"][0])) ) * np.polyval(G_El, El))
+            Sf_rightscan = Ta_right / (((-1) * (float(self.logs["header"]["DPFU"][1])) ) * np.polyval(G_El, El))
 
-            self.Sf_first.append(Sf_firstscan[self.si:self.ei])
-            self.Sf_second.append(Sf_secondscan[self.si:self.ei])
+            self.Sf_left.append(Sf_leftscan[self.si:self.ei])
+            self.Sf_right.append(Sf_rightscan[self.si:self.ei])
             self.x = frequencyA[self.si:self.ei]
 
             self.si = si
