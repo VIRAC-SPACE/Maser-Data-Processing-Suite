@@ -144,7 +144,7 @@ class Gauss_View2(PlottingView):
         xdata = thisline.get_xdata()
         ind = event.ind
         index = [ind][0]
-        fittFile = getConfigs("paths", "notSmoohtFilePath") + self.source + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.gaussLocationList, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.gaussIterationList, int(index[0])) + ".dat"
+        fittFile = getConfigs("paths", "notSmoohtFilePath") + self.source + "/"  + self.line + "/"+ self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.gaussLocationList, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.gaussIterationList, int(index[0])) + ".dat"
         gaussLines = getConfigs("gauss_lines", self.source + "_" + self.line).replace(" ", "").split(",")
         data = np.fromfile(fittFile, dtype="float64", count=-1, sep=" ").reshape((file_len(fittFile), 4))
         velocity = correctNumpyReadData(data[:, [0]])
@@ -244,7 +244,7 @@ class Gauss_View(PlottingView):
         ind = event.ind
         index = [ind][0]
         gaussLines = getConfigs("gauss_lines", self.source + "_" + self.line).replace(" ", "").split(",")
-        fittFile = getConfigs("paths", "notSmoohtFilePath") + self.source + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.gaussLocationList, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.gaussIterationList, int(index[0])) + ".dat"
+        fittFile = getConfigs("paths", "notSmoohtFilePath") + self.source + "/" + self.line + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.gaussLocationList, int(index[0])) + "_"  + MonitoringViewHelper.getIteration(self.gaussIterationList, int(index[0])) + ".dat"
 
         gaussLines = getConfigs("gauss_lines", self.source + "_" + self.line).replace(" ", "").split(",")
 
@@ -289,15 +289,17 @@ class Gauss_View(PlottingView):
         self.fitPlotview.show()
 
 class Maps_View(PlottingView):
-        __slots__ = ['source', 'label']            
-        def __init__(self, source):
+        __slots__ = ['source', 'label', 'line']
+        def __init__(self, source, line):
+
             super().__init__()
             self.setWindowTitle(" ")
             self.source = source
+            self.line = line
             
         def plotMaps(self, output_path):
             parametrs = json.load(open("python.txt", "r"))
-            fin = open(output_path + self.source + "/" + "3d.txt","r")
+            fin = open(output_path + self.source + "/" + self.line + "/" + "3d.txt","r")
             max_flux_limit = 9999
             JD_shift = 0
             jd_min = 0
@@ -368,7 +370,7 @@ class Maps_View(PlottingView):
             cbar.ax.set_ylabel(r'$Flux~(\mathrm{Jy})$')
             cbar.locator = MaxNLocator(nbins = 50)
             
-            text_file = open(output_path + self.source + "/" + "labels.txt", "r")
+            text_file = open(output_path + self.source + "/" + self.line + "/" +  "labels.txt", "r")
             days = text_file.readline().rstrip().split(',')
             days = [float(i) for i in days]
             dates = text_file.readline().rstrip().split(',')
@@ -507,8 +509,9 @@ class Monitoring_View(PlottingView):
             self.gauss_view2.show()
 
         def createMapVew(self):
-            os.system("perl " + "code/find_multiple.pl " + self.output_path + " " + self.source)
-            self.maps_view = Maps_View(self.source)
+            os.system("perl " + "code/find_multiple.pl " + self.output_path + "/" + self.source + "/"+ self.line + " " + self.source)
+            print("perl " + "code/find_multiple.pl " + self.output_path + "/" + self.source + "/"+ self.line + " " + self.source)
+            self.maps_view = Maps_View(self.source, self.line)
             self.maps_view.plotMaps(self.output_path)
             self.maps_view.show()
         
@@ -636,7 +639,7 @@ class Monitoring_View(PlottingView):
             date = MonitoringViewHelper.formatDate(xdata, index)
 
             iteration = MonitoringViewHelper.getIteration(self.iteration_list, int(index[0]))
-            resultFileName = self.source + ".json"
+            resultFileName = self.source + "_" + self.line + ".json"
 
             with open(getConfigs("paths", "resultFilePath") + resultFileName) as result_data:
                 results = json.load(result_data)
@@ -658,7 +661,7 @@ class Monitoring_View(PlottingView):
                     location3 = MonitoringViewHelper.getLocation(self.location_list, int(index[0]) + 1)
                     iteration3 = str(int(MonitoringViewHelper.getIteration(self.iteration_list, int(index[0]) + 1)))
 
-                    source_path = self.source + "/" + self.source + "_"
+                    source_path = self.source + "/" + self.line + "/" + self.source + "_"
 
                     spectra_file_name1 = source_path + date1 + "_" + location1 + "_" + iteration1 + ".dat"
                     spectra_file_name2 = source_path + date2 + "_" + location2 + "_" + iteration2 + ".dat"
@@ -666,7 +669,7 @@ class Monitoring_View(PlottingView):
                     self.plotSpecter([spectra_file_name1, spectra_file_name2, spectra_file_name3], self.polarization)
 
                 else:
-                    spectraFileName = self.source + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.location_list, int(index[0])) + "_" + MonitoringViewHelper.getIteration(self.iteration_list,int(index[0])) + ".dat"
+                    spectraFileName = self.source + "/" + self.line + "/" + self.source + "_" + MonitoringViewHelper.formatDate(xdata, index) + "_" + MonitoringViewHelper.getLocation(self.location_list, int(index[0])) + "_" + MonitoringViewHelper.getIteration(self.iteration_list,int(index[0])) + ".dat"
                     self.plotSpecter(spectraFileName, self.polarization)
 
             elif event.mouseevent.button == 2:
@@ -702,7 +705,7 @@ class Monitoring_View(PlottingView):
                 amplitude_colon = 1
             elif polarization == "U9":
                 amplitude_colon = 2
-            elif polarization == "AVG" or polarization=="ALL":
+            elif polarization == "AVG" or polarization == "ALL":
                 amplitude_colon = 3
 
             if self.new_spectre:
@@ -786,6 +789,7 @@ class MonitoringApp(QWidget):
         self.sourceInput = QLineEdit()
         self.__addWidget(self.sourceInput, 1, 0)
         self.source_line_input = QLineEdit()
+        self.source_line_input.setText("6668")
         self.__addWidget(self.source_line_input, 1, 1)
         chooseSourceButton = QPushButton("Ok", self)
         chooseSourceButton.clicked.connect(self.plot)

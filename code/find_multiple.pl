@@ -4,10 +4,10 @@ use File::Copy;
 use List::Util qw( min max );
 use Data::Dumper qw(Dumper);
  
-my @source = @ARGV[0];
-my @outputDir = @ARGV[1];
+my @source = @ARGV[1];
+my @outputDir = @ARGV[0];
 
-my $directory = "@source/@outputDir";
+my $directory = "@outputDir";
 
 open(DB,">DB.csv");
 open(PYTHON,">python.txt");

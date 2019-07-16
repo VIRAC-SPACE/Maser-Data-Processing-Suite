@@ -147,8 +147,8 @@ def main():
                     logger.info("Executing python3 " + "code/totalSpectrumAnalyer_qt5.py " + " " + d + " " + getArgs("line") + " -n " + " -t DBBC")
                     os.system("python3 " + "code/totalSpectrumAnalyer_qt5.py " + " " + d + " " + getArgs("line") + " -n " + " -t DBBC")
                 else:
-                    logger.info("Executing python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " " + getArgs("line")  + " -t DBBC")
-                    os.system("python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " " + getArgs("line")  + " -t DBBC")
+                    logger.info("Executing python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " " + getArgs("line") + " -t DBBC")
+                    os.system("python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " " + getArgs("line") + " -t DBBC")
 
     except IOError as e:
         print("IO Error", e)

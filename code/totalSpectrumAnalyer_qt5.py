@@ -201,7 +201,7 @@ class Analyzer(QWidget):
         self.a = ((np.abs(self.xarray-float(self.cuts[0][0]))).argmin())
         self.b = ((np.abs(self.xarray-float(self.cuts[-1][1]))).argmin())
         
-        print ("self.a, self.b", self.a, self.b)
+        print("self.a, self.b", self.a, self.b)
                
         #sliders
         self.previousM = self.m
@@ -825,14 +825,15 @@ class NoGUI(object):
         self.z1_SmoohtData = convolve(self.localMax_Array_u1, g1, boundary='extend')
         self.z2_SmoohtData = convolve(self.localMax_Array_u9, g2, boundary='extend')
         self.avg_y_SmoohtData = (self.z1_SmoohtData + self.z2_SmoohtData) / 2
-        
+
+        args = parseArguments()
         totalResults = [self.xarray,  self.z1_SmoohtData,  self.z2_SmoohtData,  self.avg_y_SmoohtData]
-        output_file_name = self.output + self.source +  "/" + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
+        output_file_name = self.output + self.source + "/" + str(args.__dict__["line"]) + "/" + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
         np.savetxt(output_file_name, np.transpose(totalResults))
         
         totalResults = [self.xarray,  self.z1_NotSmoohtData,  self.z2_NotSmoohtData,  self.avg_y_NotSmoohtData]
-        output_file_name = self.output + "/NotSmooht/" + self.source +  "/"  + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
+        output_file_name = self.output + "/NotSmooht/" + self.source + "/" + str(args.__dict__["line"]) + "/" + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
         np.savetxt(output_file_name, np.transpose(totalResults))
         
@@ -912,10 +913,10 @@ class NoGUI(object):
 
         gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines, gaussianaAmplitudes, gaussianaMean, gaussianaSTD = computeGauss(self.xarray, self.avg_y_NotSmoohtData)
 
-        results[self.expername]["areas"] = gaussianAreas
-        results[self.expername]["gauss_amp"] = gaussianaAmplitudes
-        results[self.expername]["gauss_mean"] = gaussianaMean
-        results[self.expername]["gauss_STD"] = gaussianaSTD
+        result[self.expername]["areas"] = gaussianAreas
+        result[self.expername]["gauss_amp"] = gaussianaAmplitudes
+        result[self.expername]["gauss_mean"] = gaussianaMean
+        result[self.expername]["gauss_STD"] = gaussianaSTD
 
         resultFile = open(self.resultFilePath +  resultFileName, "w")
         resultFile.write(json.dumps(result, indent=2))
@@ -946,7 +947,7 @@ class Main(object):
         self.resultFilePath = config.get('paths', "resultFilePath")
         self.output = config.get('paths', "outputFilePath")
         source = self.datafile.split("/")[-1].split(".")[0].split("_")[0]
-        cuts = config.get('cuts', source + "_" + str(line)).split(";")
+        cuts = config.get('cuts', source + "_" + str(self.line)).split(";")
         self.cuts = [c.split(",") for c in cuts]
         self.source_velocities = config.get('velocities', source + "_" + str(self.line)).replace(" ", "").split(",")
         self.index_range_for_local_maxima = int(config.get('parameters', "index_range_for_local_maxima"))

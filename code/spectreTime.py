@@ -26,6 +26,7 @@ matplotlib.use('Qt5Agg')
 def parseArguments():
     parser = argparse.ArgumentParser(description='''Monitoring spectre change in time. ''', epilog="""Monitor Spectre.""")
     parser.add_argument("source", help="Source Name", type=str)
+    parser.add_argument("line", help="line", type=int)
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 1.0')
     parser.add_argument("-i", "--index", help="Configuration cfg file", type=int, default=0)
@@ -49,7 +50,7 @@ class SpectreTime(QWidget):
         super().__init__()
         self.source = source
         self.source_name = getConfigs("Full_source_name", self.source)
-        self.output_path = getConfigs("paths", "notSmoohtFilePath") + "/" + self.source + "/"
+        self.output_path = getConfigs("paths", "notSmoohtFilePath") + "/" + self.source + "/" + getArgs("line") + "/"
         output_files = [file for file in os.listdir(self.output_path) if file.startswith(self.source + "_")]
         self.index = int(getArgs("index"))
         self.months = Months()
@@ -62,7 +63,7 @@ class SpectreTime(QWidget):
                 if self.__create_date(file_name) == dates[f]:
                     self.sorted_file_names.append(file_name)
 
-        __result_file = getConfigs("paths", "resultFilePath") + "/"  + self.source + ".json"
+        __result_file = getConfigs("paths", "resultFilePath") + "/" + self.source + "_" + getArgs("line") + ".json"
 
         with open(__result_file) as result_data:
             self.results = json.load(result_data)
@@ -120,7 +121,7 @@ class SpectreTime(QWidget):
             y = data[:, [3]]
             plt.rc('xtick', labelsize=8)
             plt.rc('ytick', labelsize=8)
-            plt.plot(x,y, label=self.__create_date(file_name))
+            plt.plot(x, y, label=self.__create_date(file_name))
             plt.xlim(self.x_lim)
             plt.ylim(self.y_lim)
             plt.legend(loc=1, prop={'size': 12})
@@ -132,6 +133,7 @@ class SpectreTime(QWidget):
             print('Saving frame', fname)
             plt.savefig(fname, dpi=300, quality=100, format="png")
             files.append(fname)
+
 
         print('Making movie animation.mpg - this may take a while')
         subprocess.call("mencoder 'mf://_tmp*.png' -mf w=800:h=600:type=png:fps=10 -ovc lavc "
