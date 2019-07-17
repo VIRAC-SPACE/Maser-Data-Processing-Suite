@@ -41,13 +41,19 @@ class Plot(FigureCanvas):
         if self.type == "log":
             self.graph.set_yscale("log")
             yTicks = []
+            y_min = np.min(y)
+            if y_min < 0:
+                ymin = 10
 
-            ytick = 0
-            while ytick > np.max(y):
-                if ytick >= np.min(y):
+            ytick = 1
+            n = 1
+            while ytick < np.max(y) + 100:
+                if ytick > y_min:
                     yTicks.append(ytick)
-                ytick += 10
+                n +=1
+                ytick = 10**n
 
+            yTicks.append(np.max(y))
             self.graph.set_yticks(yTicks)
 
         elif self.type == "linear":
