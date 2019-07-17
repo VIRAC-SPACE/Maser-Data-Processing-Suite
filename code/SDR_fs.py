@@ -372,7 +372,10 @@ class Analyzer(QWidget):
         houre = scan_1["date"].split("T")[1].split(":")[0]
         minute = scan_1["date"].split("T")[1].split(":")[1]
         righte = scan_1["date"].split("T")[1].split(":")[2]
-        output_file_name =  getConfigs("paths", "dataFilePath")  + "SDR/" + getArgs("source") + "_" + day + "_" + month + "_" + year + "_"  + houre + ":" + minute + ":" + righte + "_" + station + "_" + getArgs("iteration_number") + ".dat"
+        if not os.path.exists(getConfigs("paths", "dataFilePath")  + "SDR/" + getArgs("line") + "/"):
+            os.makedirs(getConfigs("paths", "dataFilePath")  + "SDR/" + getArgs("line") + "/")
+
+        output_file_name =  getConfigs("paths", "dataFilePath")  + "SDR/" + getArgs("line") + "/" + getArgs("source") + "_" + day + "_" + month + "_" + year + "_"  + houre + ":" + minute + ":" + righte + "_" + station + "_" + getArgs("iteration_number") + ".dat"
         print("output_file_name", output_file_name)
         output_file_name = output_file_name.replace(" ", "")
         result = Result(totalResults, specie)

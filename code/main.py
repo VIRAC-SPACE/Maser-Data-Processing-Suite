@@ -29,9 +29,9 @@ def getArgs(key):
     return str(parseArguments().__dict__[key])
 
 def getConfigs(key, value):
-    configFilePath = getArgs("config")
+    config_file_path = getArgs("config")
     config = ConfigParser.getInstance()
-    config.CreateConfig(configFilePath)
+    config.CreateConfig(config_file_path)
     return config.getConfig(key, value)
 
 
@@ -185,7 +185,7 @@ def main():
                     os.system("python3 " + "code/SDR_fs.py " + frequencyShiftingParametr)
 
         data_files = list()
-        for data in os.listdir(SDRpath):
+        for data in os.listdir(SDRpath + "/" + getArgs("line")):
             if data.startswith(sourceName) and data.endswith(".dat"):
                 data_files.append(data)
 

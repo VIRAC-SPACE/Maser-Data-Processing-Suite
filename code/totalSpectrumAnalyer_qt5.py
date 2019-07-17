@@ -18,7 +18,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QColor
 
-from ploting_qt5 import  Plot
+from ploting_qt5 import Plot
 from help import *
 from velocityDensity import computeGauss
 
@@ -963,10 +963,10 @@ class Main(object):
     
     def execute(self):
         if self.noGUI:
-            NoGUI(self.dataFilesPath + "/" + self.calibType + "/" + self.datafile, self.cuts, self.output, self.resultFilePath, self.source_velocities, self.index_range_for_local_maxima, self.calibType, self.line).run()
+            NoGUI(self.dataFilesPath + "/" + self.calibType + "/" + self.line + "/" + self.datafile, self.cuts, self.output, self.resultFilePath, self.source_velocities, self.index_range_for_local_maxima, self.calibType, self.line).run()
         else:
             qApp = QApplication(sys.argv)
-            aw = Analyzer(self.dataFilesPath + "/" + self.calibType + "/" + self.datafile, self.resultFilePath, self.source_velocities, self.cuts, self.output, self.index_range_for_local_maxima, self.skipsmooth, self.calibType, self.line)
+            aw = Analyzer(self.dataFilesPath + "/" + self.calibType + "/" + self.line + "/" + self.datafile, self.resultFilePath, self.source_velocities, self.cuts, self.output, self.index_range_for_local_maxima, self.skipsmooth, self.calibType, self.line)
             aw.show()
             aw.showMaximized() 
             sys.exit(qApp.exec_())
