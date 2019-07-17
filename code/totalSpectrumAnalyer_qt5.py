@@ -657,7 +657,7 @@ class Analyzer(QWidget):
             MJD = t.mjd
             result[self.expername]["modifiedJulianDays"] = MJD
         except ValueError as e:
-            print ("Cannot crate modified Julian Days",  e)
+            print("Cannot crate modified Julian Days",  e)
         except:
             print("Unexpected error:", sys.exc_info()[0])                                       
             
@@ -681,8 +681,9 @@ class Analyzer(QWidget):
         resultFile.close()
         
         totalResults = [self.xarray,  self.z1_SmoohtData,  self.z2_SmoohtData,  self.avg_y_SmoohtData]
-        output_file_name = self.output + self.source +  "/" + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
+        output_file_name = self.output + self.source + "/" + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
+
         np.savetxt(output_file_name, np.transpose(totalResults))
         
         totalResults = [self.xarray,  self.z1_NotSmoohtData,  self.z2_NotSmoohtData,  self.avg_y_NotSmoohtData]
@@ -830,11 +831,17 @@ class NoGUI(object):
         totalResults = [self.xarray,  self.z1_SmoohtData,  self.z2_SmoohtData,  self.avg_y_SmoohtData]
         output_file_name = self.output + self.source + "/" + str(args.__dict__["line"]) + "/" + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
+        if not os.path.exists(self.output + self.source + "/" + str(args.__dict__["line"])):
+            os.makedirs(self.output + self.source + "/" + str(args.__dict__["line"]))
+
         np.savetxt(output_file_name, np.transpose(totalResults))
         
         totalResults = [self.xarray,  self.z1_NotSmoohtData,  self.z2_NotSmoohtData,  self.avg_y_NotSmoohtData]
         output_file_name = self.output + "/NotSmooht/" + self.source + "/" + str(args.__dict__["line"]) + "/" + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
+        if not os.path.exists(self.output + "/NotSmooht/" + self.source + "/" + str(args.__dict__["line"])):
+            os.makedirs(self.output + "/NotSmooht/" + self.source + "/" + str(args.__dict__["line"]))
+
         np.savetxt(output_file_name, np.transpose(totalResults))
         
         resultFileName = self.source + "_" + self.line + ".json"
