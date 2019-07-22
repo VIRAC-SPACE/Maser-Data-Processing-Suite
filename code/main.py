@@ -138,7 +138,7 @@ def main():
                     os.system("python3 " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
 
         data_files = list()
-        for data in os.listdir(DBBCpath):
+        for data in os.listdir(DBBCpath + "/" + getArgs("line")):
             if data.startswith(sourceName) and data.endswith(".dat"):
                 data_files.append(data)
         for d in data_files:

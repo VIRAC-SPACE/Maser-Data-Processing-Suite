@@ -119,6 +119,8 @@ class Analyzer(QWidget):
         file3 = self.DataDir + self.__getDataFileForScan__(pair[1][0]) #r1
         file4 = self.DataDir + self.__getDataFileForScan__(pair[1][1]) #s1
 
+        print("data files", file1, file2, file3, file4)
+
         frequencyA = self.__getData(file1)[0] #r0
         p_sig_left = self.__getData(file1)[1] #r0
         p_sig_right = self.__getData(file1)[2] #r0
@@ -226,7 +228,7 @@ class Analyzer(QWidget):
 
         # plot3
         self.total__left = Plot()
-        self.total__left.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "", (4, 0), "linear")
+        self.total__left.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "", (4, 0), "linear")
         self.x = frequencyA[self.si:self.ei]
         self.total__left.plot(frequencyA[self.si:self.ei], Sf_leftscan[self.si:self.ei], 'b', label=str(index + 1))
         self.grid.addWidget(self.total__left, 3, 0)

@@ -25,6 +25,7 @@ from help import *
 def parseArguments():
     parser = argparse.ArgumentParser(description='''Creates input file for plotting tool. ''', epilog="""PRE PLOTTER.""")
     parser.add_argument("source", help="Experiment source", type=str, default="")
+    parser.add_argument("line", help="frequency", type=int)
     parser.add_argument("iteration_number", help="iteration number ", type=int)
     parser.add_argument("logFile", help="Experiment log file name", type=str)
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
@@ -34,6 +35,9 @@ def parseArguments():
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 1.0')
     args = parser.parse_args()
     return args
+
+def getArgs(key):
+    return str(parseArguments().__dict__[key])
 
 def is_outlier(points, threshold):
     if len(points.shape) == 1:
@@ -135,7 +139,7 @@ class Analyzer(QWidget):
         self.threshold = threshold
         self.filter = filter
         self.badPointRange = badPointRange
-        self.dataFilesPath = dataPath
+        self.dataFilesPath = dataPath + "/" + getArgs("line") + "/"
         self.resultPath = resultPath
         self.index = 0
         self.totalResults_u1 = list()
@@ -720,7 +724,7 @@ class Analyzer(QWidget):
         self.grid.addWidget(self.plot_STON, 2, 0)
 
         totalResults = np.concatenate((velocitys_avg, y_u1_avg, y_u9_avg), axis=1)
-        output_file_name = self.dataFilesPath + self.source + "_" + self.date.replace(" ","_") + "_" + self.firstScanStartTime + "_" + self.logs["header"]["location"] + "_" + str(self.iteration_number) + ".dat"
+        output_file_name = self.dataFilesPath + + self.source + "_" + self.date.replace(" ","_") + "_" + self.firstScanStartTime + "_" + self.logs["header"]["location"] + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
 
         result = Result(totalResults, specie)

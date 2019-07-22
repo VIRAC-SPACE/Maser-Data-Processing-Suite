@@ -855,7 +855,8 @@ class NoGUI(object):
             resultFile.write("{ \n" + "\n}")
             resultFile.close()
         
-        with open(self.resultFilePath + resultFileName) as result_data:    
+        with open(self.resultFilePath + resultFileName) as result_data:
+            print(self.resultFilePath + resultFileName)
             result = json.load(result_data)
         
         if self.expername not in result:
