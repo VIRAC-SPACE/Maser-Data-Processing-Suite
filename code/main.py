@@ -127,13 +127,13 @@ def main():
         if args.manual:
             for i in DBBC_iterations:
                 if i not in DBBCprocessed_iteration:
-                    frequencyShiftingParametr = sourceName + " " + i + " " + str(DBBClogfile_list[findLogFile(DBBClogfile_list, i)])
+                    frequencyShiftingParametr = sourceName + " " + getArgs("line") + " " + i + " " + str(DBBClogfile_list[findLogFile(DBBClogfile_list, i)])
                     logger.info("Executing python3 " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr + " -m")
                     os.system("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr + " -m")
         else:
             for i in DBBC_iterations:
                 if i not in DBBCprocessed_iteration:
-                    frequencyShiftingParametr = sourceName  + " " + i + " " + str(DBBClogfile_list[findLogFile(DBBClogfile_list, i)])
+                    frequencyShiftingParametr = sourceName + " " + getArgs("line") + " " + i + " " + str(DBBClogfile_list[findLogFile(DBBClogfile_list, i)])
                     logger.info("Executing python3 " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
                     os.system("python3 " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
 

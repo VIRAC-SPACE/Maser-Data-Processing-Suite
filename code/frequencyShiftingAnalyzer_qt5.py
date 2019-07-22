@@ -724,10 +724,12 @@ class Analyzer(QWidget):
         self.grid.addWidget(self.plot_STON, 2, 0)
 
         totalResults = np.concatenate((velocitys_avg, y_u1_avg, y_u9_avg), axis=1)
-        output_file_name = self.dataFilesPath + + self.source + "_" + self.date.replace(" ","_") + "_" + self.firstScanStartTime + "_" + self.logs["header"]["location"] + "_" + str(self.iteration_number) + ".dat"
+        output_file_name = self.dataFilesPath +  self.source + "_" + self.date.replace(" ","_") + "_" + self.firstScanStartTime + "_" + self.logs["header"]["location"] + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
-
         result = Result(totalResults, specie)
+
+        if not os.path.exists(self.dataFilesPath):
+            os.makedirs(self.dataFilesPath)
         pickle.dump(result, open(output_file_name, 'wb'))
 
     def __UI__(self):
