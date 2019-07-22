@@ -79,7 +79,7 @@ def main():
     SDRpath = dataFilesPath + "SDR/"
 
     if os.path.exists(DBBCpath + sourceName + "/"):
-        DBBC_iterations = createIterationList(DBBCpath + sourceName + "/")
+        DBBC_iterations = createIterationList(DBBCpath + sourceName + "/f" + getArgs("line") + "/")
     else:
         DBBC_iterations = []
 

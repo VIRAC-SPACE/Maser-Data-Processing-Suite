@@ -150,7 +150,7 @@ class Analyzer(QWidget):
         self.iteration_number = iteration_number
         self.logs = logs
         self.date = self.logs["header"]["dates"]
-        self.dataFileDir = dataPath + self.source + "/" + str(self.iteration_number) + "/"
+        self.dataFileDir = dataPath + self.source + "/" + "f" + getArgs("line") + "/"  + str(self.iteration_number) + "/"
         self.scanPairs = self.createScanPairs()
         self.datPairsCount = len(self.scanPairs)
         self.location = self.logs["header"]["location"]
@@ -373,6 +373,7 @@ class Analyzer(QWidget):
             self.plotingPairs(self.index)
 
     def plotingPairs(self, index):
+        print(self.scanPairs)
         pair = self.scanPairs[index]
 
         scanNUmber1 = self.dataFileDir + "/" + pair[0]
