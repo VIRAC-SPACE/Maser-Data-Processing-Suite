@@ -660,12 +660,6 @@ class Analyzer(QWidget):
             print("Cannot crate modified Julian Days",  e)
         except:
             print("Unexpected error:", sys.exc_info()[0])
-
-        else:
-            time3 = datetime.strptime(self.time, "%H:%M:%S").isoformat()
-            t = Time(time3, format='isot')
-            MJD = t.mjd
-            result[self.expername]["modifiedJulianDays"] = MJD
             
         result[self.expername]["location"] = self.location
         result[self.expername]["Date"] = self.date
