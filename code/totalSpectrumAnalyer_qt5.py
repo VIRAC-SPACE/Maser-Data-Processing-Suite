@@ -648,18 +648,24 @@ class Analyzer(QWidget):
             max_apmlitudes_u1[max] = [self.source_velocities[max], max_apmlitudes_u1[max]]
             max_apmlitudes_u9[max] = [self.source_velocities[max], max_apmlitudes_u9[max]]
             max_apmlitudes_uavg[max] = [self.source_velocities[max], max_apmlitudes_uavg[max]]
-            
-        time = self.time + self.date.replace(" ", "_")
-        
+
+        time = self.time + "_" + self.date.replace(" ", "_")
+
         try:
-            time=datetime.strptime(time, "%H:%M:%S%d_%b_%Y" ).isoformat()
-            t=Time(time, format='isot')
+            time2=datetime.strptime(time, "%H:%M:%S_%d_%b_%Y" ).isoformat()
+            t=Time(time2, format='isot')
             MJD = t.mjd
             result[self.expername]["modifiedJulianDays"] = MJD
         except ValueError as e:
             print("Cannot crate modified Julian Days",  e)
         except:
-            print("Unexpected error:", sys.exc_info()[0])                                       
+            print("Unexpected error:", sys.exc_info()[0])
+
+        else:
+            time3 = datetime.strptime(self.time, "%H:%M:%S").isoformat()
+            t = Time(time3, format='isot')
+            MJD = t.mjd
+            result[self.expername]["modifiedJulianDays"] = MJD
             
         result[self.expername]["location"] = self.location
         result[self.expername]["Date"] = self.date
@@ -892,11 +898,11 @@ class NoGUI(object):
             max_apmlitudes_u9[max] = [self.source_velocities[max], max_apmlitudes_u9[max]]
             max_apmlitudes_uavg[max] = [self.source_velocities[max], max_apmlitudes_uavg[max]]
             
-        time = self.time + self.date.replace(" ", "_")
+        time = self.time + "_" + self.date.replace(" ", "_")
         
         try:
-            time=datetime.strptime(time, "%H:%M:%S%d_%b_%Y" ).isoformat()
-            t=Time(time, format='isot')
+            time2=datetime.strptime(time, "%H:%M:%S_%d_%b_%Y" ).isoformat()
+            t=Time(time2, format='isot')
             MJD = t.mjd
             result[self.expername]["modifiedJulianDays"] = MJD
         except ValueError as e:
