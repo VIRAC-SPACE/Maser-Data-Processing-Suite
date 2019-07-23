@@ -373,7 +373,6 @@ class Analyzer(QWidget):
             self.plotingPairs(self.index)
 
     def plotingPairs(self, index):
-        print(self.scanPairs)
         pair = self.scanPairs[index]
 
         scanNUmber1 = self.dataFileDir + "/" + pair[0]

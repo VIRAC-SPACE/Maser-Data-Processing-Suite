@@ -602,7 +602,7 @@ class Analyzer(QWidget):
         self.maxavg_index = list()
         
     def createResult(self):
-        resultFileName = self.source + ".json"
+        resultFileName = self.source + "_" + self.line + ".json"
         
         if os.path.isfile(self.resultFilePath + resultFileName):
             pass
@@ -845,7 +845,7 @@ class NoGUI(object):
         np.savetxt(output_file_name, np.transpose(totalResults))
         
         resultFileName = self.source + "_" + self.line + ".json"
-        
+        self.resultFilePath + resultFileName
         if os.path.isfile(self.resultFilePath + resultFileName):
             pass
         else:
