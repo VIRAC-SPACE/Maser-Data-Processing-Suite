@@ -65,11 +65,9 @@ def computeGauss(file):
 
     return (gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines, gaussianaAmplitudes, gaussianaMean, gaussianaSTD)
 
-def computeGauss(file):
-    gaussLines = getConfigs("gauss_lines", getArgs("source")).replace(" ", "").split(",")
-    data = np.fromfile(file, dtype="float64", count=-1, sep=" ").reshape((file_len(file), 4))
-    ampvid = correctNumpyReadData(data[:, [3]])
-    velocity = correctNumpyReadData(data[:, [0]])
+def computeGauss2(xarray, avg_y_NotSmoohtData, gaussLines):
+    ampvid = avg_y_NotSmoohtData
+    velocity = xarray
     indexies = [(np.abs(velocity - float(line))).argmin() for line in gaussLines]
     mons = [max(ampvid[index - 5:index + 5]) for index in indexies]
     gaussian = [models.Gaussian1D(mons[index], gaussLines[index], 0.05, bounds={'stddev': (None, 0.15)}) for index in range(0, len(mons))]
