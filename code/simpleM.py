@@ -51,11 +51,19 @@ def main():
     data = np.array(np.concatenate((old_data, new_data), axis=0), dtype="float64")
     print("total time in years", (np.max(x) - np.min(x)) / 365)
 
+    fig = plt.figure("Monitoring")
+    ax1 = fig.add_subplot(111)
     for component in components:
         index = components.index(component)
-        plt.plot(x, correctNumpyReadData(data[:, [index + 1]]), label=velocity[index])
-        plt.legend()
-        plt.grid(True)
+        ax1.plot(x, correctNumpyReadData(data[:, [index + 1]]), label=velocity[index])
+        ax1.legend()
+        ax1.grid(True)
+
+    plt.title(get_configs("Full_source_name", get_args("source")))
+    ax1.set_xlabel("MJD")
+    ax1.set_ylabel("Flux density (Jy)")
+    ax2 = ax1.twiny()
+    #ax2.set_xticks(new_tick_locations)
     plt.show()
 
     sys.exit(0)

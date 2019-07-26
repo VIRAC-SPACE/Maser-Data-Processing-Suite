@@ -23,7 +23,7 @@ def read_raw(file_name):
     # Fs = 125e6
     # print("Expect: %d samples" % (int(Tint*Fs)));
 
-    Ns = 2048  # 32768/16;
+    Ns = 4096  # 32768/16;
     Nint = int(Ns_tot / Ns);
 
     spec = np.zeros(Ns)
@@ -169,15 +169,6 @@ def main():
         file6 = dir + "cepa_f6668_95_no00" + str(scan) + "s0_ch2.raw"
         file7 = dir + "cepa_f6668_95_no00" + str(scan) + "r1_ch2.raw"
         file8 = dir + "cepa_f6668_95_no00" + str(scan) + "s1_ch2.raw"
-
-        read_raw(file1)
-        read_raw(file2)
-        read_raw(file3)
-        read_raw(file4)
-        read_raw(file5)
-        read_raw(file6)
-        read_raw(file7)
-        read_raw(file8)
 
         p_sig_left = read_raw(file1)
         p_ref_left = read_raw(file2)
