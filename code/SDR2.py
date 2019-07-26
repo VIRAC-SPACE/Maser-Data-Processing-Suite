@@ -298,6 +298,7 @@ class Analyzer(QWidget):
         maximums_right = []
         minimums_right = []
 
+        velocitys = []
         for p in range(0, len(self.ScanPairs)):
             scanNumber = self.ScanPairs[p][0][0]
             scan_1 = self.logs[str(scanNumber)]
@@ -348,16 +349,17 @@ class Analyzer(QWidget):
 
             print("specie", specie, "\n")
             LO = float(self.logs["header"]["f_obs,LO,IF"][1])
-            velocitys = dopler((self.x + LO) * (10 ** 6), VelTotal, lineF)
+            velocity = dopler((self.x + LO) * (10 ** 6), VelTotal, lineF)
+            velocitys.append(velocity)
 
             maximums_left.append(np.max(self.Sf_left[p]))
             minimums_left.append(np.min(self.Sf_left[p]))
             maximums_right.append(np.max(self.Sf_right[p]))
             minimums_right.append(np.min(self.Sf_right[p]))
 
-            y__left_avg = y__left_avg + self.Sf_left[p]
-            y__right_avg = y__right_avg + self.Sf_right[p]
-            velocitys_avg = velocitys_avg + velocitys
+            #y__left_avg = y__left_avg + self.Sf_left[p]
+            #y__right_avg = y__right_avg + self.Sf_right[p]
+            #velocitys_avg = velocitys_avg + velocitys
 
         print("maximums_left", maximums_left, "minimums_left", minimums_left, "maximums_right", maximums_right, "minimums_right", minimums_right, "\n")
         maximums_left = np.min(maximums_left)
@@ -366,22 +368,32 @@ class Analyzer(QWidget):
         minimums_right = np.max(minimums_right)
         print("maximums_left", maximums_left, "minimums_left", minimums_left, "maximums_right", maximums_right, "minimums_right", minimums_right, "\n")
 
+        #velocitys_avg = velocitys_avg / len(self.ScanPairs)
+        #y__left_avg = y__left_avg / len(self.ScanPairs)
+        #y__right_avg = y__right_avg / len(self.ScanPairs)
+
+        for p in range(0, len(self.ScanPairs)):
+            index_min_left = findNearestIndex(self.Sf_left[p], minimums_left)
+            index_max_left = findNearestIndex(self.Sf_left[p], maximums_left)
+            index_min_right = findNearestIndex(self.Sf_right[p], minimums_right)
+            index_max_right = findNearestIndex(self.Sf_right[p], maximums_right)
+
+            print("index", index_min_left, index_max_left, index_min_right, index_max_right)
+
+            y__left_avg = y__left_avg + self.Sf_left[p][index_min_left:index_max_left]
+            y__right_avg = y__right_avg + self.Sf_right[p][index_min_right:index_max_right]
+            velocitys_avg = velocitys_avg + velocitys[p][index_min_right:index_max_right]
+
         velocitys_avg = velocitys_avg / len(self.ScanPairs)
         y__left_avg = y__left_avg / len(self.ScanPairs)
         y__right_avg = y__right_avg / len(self.ScanPairs)
 
-        index_min_left = (np.abs(y__left_avg - minimums_left)).argmin()
-        index_max_left = (np.abs(y__left_avg - maximums_left)).argmin()
-        index_min_right = (np.abs(y__right_avg - minimums_right)).argmin()
-        index_max_right = (np.abs(y__right_avg - maximums_right)).argmin()
 
-        print("index", index_min_left, index_max_left, index_min_right, index_max_right)
+        #velocitys_avg_left = velocitys_avg[index_min_left:index_max_left]
+        #y__left_avg = y__left_avg[index_min_left:index_max_left]
 
-        velocitys_avg_left = velocitys_avg[index_min_left:index_max_left]
-        y__left_avg = y__left_avg[index_min_left:index_max_left]
-
-        velocitys_avg_right = velocitys_avg[index_min_right:index_max_right]
-        y__right_avg = y__right_avg[index_min_right:index_max_right]
+        #velocitys_avg_right = velocitys_avg[index_min_right:index_max_right]
+        #y__right_avg = y__right_avg[index_min_right:index_max_right]
 
         self.plot_velocity__left = Plot()
         self.plot_velocity__left.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Left Polarization",(1, 0), "linear")
