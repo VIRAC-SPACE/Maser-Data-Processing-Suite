@@ -113,7 +113,7 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
 
 def main():
     dir = "/home/janis/g111p26_f6668_22/"
-    scans = [i for i in range(2, 16)]
+    scans = [i for i in range(3, 16)]
     logs = LogReaderFactory.getLogReader(LogTypes.SDR, "/home/janis/Downloads/g111p26_f6668_22.log", "/home/janis/").getLogs()
 
     Sf_lefts = []
