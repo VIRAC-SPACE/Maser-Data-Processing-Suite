@@ -37,8 +37,10 @@ def get_configs(key, value):
 
 
 def main():
-    years = mdates.YearLocator()  # every year
-    months = mdates.MonthLocator()  # every month
+    years = mdates.YearLocator()
+    months = mdates.MonthLocator()
+    weeks = mdates.WeekdayLocator()
+
     years_fmt = mdates.DateFormatter('%Y-%m')
 
     old_monitoring_file = "old_monitoring/" + get_args("source") + ".dat"
@@ -67,8 +69,6 @@ def main():
         index = components.index(component)
         y = correctNumpyReadData(data[:, [index + 1]])
         ax1.plot(x, y,  symbols[index]+colors[index], label=velocity[index], linewidth=2, markersize=5)
-        ax1.legend()
-        ax1.grid(True)
 
         y_min = np.min(y)
         if y_min < 0:
@@ -96,9 +96,9 @@ def main():
     newpos = x
     ax2.set_xticks(newpos)
     ax2.set_xticklabels(newvalues)
-    ax2.xaxis.set_major_locator(years)
+    ax2.xaxis.set_major_locator(months)
     ax2.xaxis.set_major_formatter(years_fmt)
-    ax2.xaxis.set_minor_locator(months)
+    ax2.xaxis.set_minor_locator(weeks)
 
     # round to nearest years.
     datemin = np.datetime64(newvalues[0], 'Y')
@@ -111,13 +111,15 @@ def main():
 
     # rotates and right aligns the x labels, and moves the bottom of the
     # axes up to make room for them
-    #fig.autofmt_xdate()
+    fig.autofmt_xdate()
 
     plt.yscale("log")
     yTicks = list(set(yTicks))
     ax1.set_yticks(yTicks)
-    #ax1.text(x[0], correctNumpyReadData(data[:, [1]])[0] , "Šeit sākas jaunais monitorings", fontsize=48)
     ax1.axvline(x=new_data[0][0], linewidth=4, color='r', linestyle='--', label="New Monitoring")
+    ax1.legend()
+    ax1.grid(True)
+    ax2.grid(True)
     plt.show()
     sys.exit(0)
 
