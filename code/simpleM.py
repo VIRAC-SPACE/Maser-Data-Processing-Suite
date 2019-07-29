@@ -3,11 +3,13 @@
 
 import sys
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import matplotlib
 matplotlib.use("Qt5Agg")
 import numpy as np
 import argparse
 from datetime import datetime
+from astropy.time import Time
 
 from help import *
 from parsers._configparser import ConfigParser
@@ -35,6 +37,10 @@ def get_configs(key, value):
 
 
 def main():
+    years = mdates.YearLocator()  # every year
+    months = mdates.MonthLocator()  # every month
+    years_fmt = mdates.DateFormatter('%Y-%m-%d')
+
     old_monitoring_file = "old_monitoring/" + get_args("source") + ".dat"
     new_monitoring_file = "monitoring/" + get_args("source") + "_6668" + ".txt"
     compunet_count = len(get_configs("velocities", get_args("source") + "_6668").replace(" ", "").split(","))
@@ -53,6 +59,7 @@ def main():
 
     fig = plt.figure("Monitoring")
     ax1 = fig.add_subplot(111)
+
     for component in components:
         index = components.index(component)
         ax1.plot(x, correctNumpyReadData(data[:, [index + 1]]), label=velocity[index])
@@ -62,10 +69,35 @@ def main():
     plt.title(get_configs("Full_source_name", get_args("source")))
     ax1.set_xlabel("MJD")
     ax1.set_ylabel("Flux density (Jy)")
-    ax2 = ax1.twiny()
-    #ax2.set_xticks(new_tick_locations)
-    plt.show()
 
+    ax2 = ax1.twiny()
+    ax2.set_xlabel("Time in UTC")
+    t = Time(x, format='mjd', scale='utc', out_subfmt='date')
+    t.format = 'isot'
+    newvalues = [datetime.strptime(i.value, "%Y-%m-%d") for i in t]
+    newpos = [i for i in range(0,len(newvalues))]
+    ax2.set_xticks(newpos)
+    ax2.set_xticklabels(newvalues)
+    ax2.xaxis.set_major_locator(years)
+    ax2.xaxis.set_major_formatter(years_fmt)
+    ax2.xaxis.set_minor_locator(months)
+
+    # round to nearest years.
+    datemin = np.datetime64(newvalues[0], 'Y')
+    datemax = np.datetime64(newvalues[-1], 'Y')
+    ax2.set_xlim(datemin, datemax)
+
+    # format the coords message box
+    ax2.format_xdata = mdates.DateFormatter('%Y-%m-%d')
+    ax2.grid(True)
+
+    # rotates and right aligns the x labels, and moves the bottom of the
+    # axes up to make room for them
+    fig.autofmt_xdate()
+
+    #plt.yscale("log")
+    ax1.text(x[0], correctNumpyReadData(data[:, [1]])[0] , "Šeit sākas jaunais monitorings", fontsize=48)
+    plt.show()
     sys.exit(0)
 
 

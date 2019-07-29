@@ -112,9 +112,9 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
 
 
 def main():
-    dir = "/home/janis/Documents/cepa_f6668_95/"
-    scans = [1,2,3,4,5]
-    logs = LogReaderFactory.getLogReader(LogTypes.SDR, "/home/janis/Downloads/cepa_f6668_95.log", "/home/janis/").getLogs()
+    dir = "/home/janis/g111p26_f6668_22/"
+    scans = [i for i in range(2, 16)]
+    logs = LogReaderFactory.getLogReader(LogTypes.SDR, "/home/janis/Downloads/g111p26_f6668_22.log", "/home/janis/").getLogs()
 
     Sf_lefts = []
     Sf_rights = []
@@ -125,10 +125,14 @@ def main():
     for scan in scans:
         # process data file
 
-        file1 = dir + "cepa_f6668_95_no00" + str(scan) + "r0.dat"
-        file2 = dir + "cepa_f6668_95_no00" + str(scan) + "s0.dat"
-        file3 = dir + "cepa_f6668_95_no00" + str(scan) + "r1.dat"
-        file4 = dir + "cepa_f6668_95_no00" + str(scan) + "s1.dat"
+        if len(str(scan)) == 1:
+            scan_number = "no00" + str(scan)
+        else:
+            scan_number = "no0" + str(scan)
+        file1 = dir + "g111p26_f6668_22_" + scan_number + "r0.dat"
+        file2 = dir + "g111p26_f6668_22_" + scan_number + "s0.dat"
+        file3 = dir + "g111p26_f6668_22_" + scan_number + "r1.dat"
+        file4 = dir + "g111p26_f6668_22_" + scan_number + "s1.dat"
 
         frequencyA = read_dat(file1)[0]  # r0
         p_sig_left = read_dat(file1)[1]  # r0
@@ -160,15 +164,15 @@ def main():
         Sf_rights.append(Sf_right)
 
         # process raw files
-        file1 = dir + "cepa_f6668_95_no00" + str(scan) + "r0_ch1.raw"
-        file2 = dir + "cepa_f6668_95_no00" + str(scan) + "s0_ch1.raw"
-        file3 = dir + "cepa_f6668_95_no00" + str(scan) + "r1_ch1.raw"
-        file4 = dir + "cepa_f6668_95_no00" + str(scan) + "s1_ch1.raw"
+        file1 = dir + "g111p26_f6668_22_" + scan_number + "r0_ch1.raw"
+        file2 = dir + "g111p26_f6668_22_" + scan_number + "s0_ch1.raw"
+        file3 = dir + "g111p26_f6668_22_" + scan_number + "r1_ch1.raw"
+        file4 = dir + "g111p26_f6668_22_" + scan_number + "s1_ch1.raw"
 
-        file5 = dir + "cepa_f6668_95_no00" + str(scan) + "r0_ch2.raw"
-        file6 = dir + "cepa_f6668_95_no00" + str(scan) + "s0_ch2.raw"
-        file7 = dir + "cepa_f6668_95_no00" + str(scan) + "r1_ch2.raw"
-        file8 = dir + "cepa_f6668_95_no00" + str(scan) + "s1_ch2.raw"
+        file5 = dir + "g111p26_f6668_22_" + scan_number + "r0_ch2.raw"
+        file6 = dir + "g111p26_f6668_22_" + scan_number + "s0_ch2.raw"
+        file7 = dir + "g111p26_f6668_22_" + scan_number + "r1_ch2.raw"
+        file8 = dir + "g111p26_f6668_22_" + scan_number + "s1_ch2.raw"
 
         p_sig_left = read_raw(file1)
         p_ref_left = read_raw(file2)
