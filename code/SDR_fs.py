@@ -19,6 +19,7 @@ from ploting_qt5 import Plot
 from vlsr import lsr
 from help import *
 
+
 def parseArguments():
     parser = argparse.ArgumentParser(description='''Creates input file for plotting tool. ''', epilog="""PRE PLOTTER.""")
     parser.add_argument("source", help="Experiment source", type=str, default="")
@@ -30,8 +31,10 @@ def parseArguments():
     args = parser.parse_args()
     return args
 
+
 def getArgs(key):
     return str(parseArguments().__dict__[key])
+
 
 def getConfigs(key, value):
     configFilePath = getArgs("config")
@@ -44,6 +47,7 @@ def dopler(ObservedFrequency, velocityReceiver, f0):
     velocitySoure = (-((ObservedFrequency / f0) - 1) * c + (velocityReceiver * 1000)) / 1000
     return velocitySoure
 
+
 class Result(object):
     __slots__ = ('matrix', 'specie')
     def __init__(self, matrix, specie):
@@ -55,6 +59,86 @@ class Result(object):
 
     def getSpecie(self):
         return self.specie
+
+
+def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left, p_sig_on_right, p_ref_on_left, p_ref_on_right, frequencyA, logs, pair):
+    df_div = float(logs["header"]["df_div,df"][0])
+    BW = float(logs["header"]["Fs,Ns,RBW"][0])
+    f_shift = BW / df_div
+    l_spec = len(frequencyA)
+    f_step = (frequencyA[l_spec - 1] - frequencyA[0]) / (l_spec - 1)
+    n_shift = int(np.rint(f_shift / f_step))
+    avg_interval = 0.5  # inner 50%
+    si = int(l_spec / 2 - l_spec * avg_interval / 2)
+    ei = int(l_spec / 2 + l_spec * avg_interval / 2)
+
+    Tsys_off_1_left = float(logs["header"]["Tcal"][0]) * ((p_ref_on_left + p_ref_left) - np.mean(p_ref_on_left[si:ei] - p_ref_left[si:ei])) / (2 * np.mean(p_ref_on_left[si:ei] - p_ref_left[si:ei]))
+    Tsys_off_2_left = float(logs["header"]["Tcal"][1]) * ((p_sig_on_left + p_sig_left) - np.mean(p_sig_on_left[si:ei] - p_sig_left[si:ei])) / (2 * np.mean(p_sig_on_left[si:ei] - p_sig_left[si:ei]))
+
+    Tsys_off_1_right = float(logs["header"]["Tcal"][0]) * ((p_ref_on_right + p_ref_right) - np.mean(p_ref_on_right[si:ei] - p_ref_right[si:ei])) / (2 * np.mean(p_ref_on_right[si:ei] - p_ref_right[si:ei]))
+    Tsys_off_2_right = float(logs["header"]["Tcal"][1]) * ((p_sig_on_right + p_sig_right) - np.mean(p_sig_on_right[si:ei] - p_sig_right[si:ei])) / (2 * np.mean(p_sig_on_right[si:ei] - p_sig_right[si:ei]))
+
+    print("Tsys_off", Tsys_off_1_left, Tsys_off_2_left, Tsys_off_1_right, Tsys_off_2_right)
+
+    Ta_1_caloff_left = Tsys_off_1_left * (p_sig_left - p_ref_left) / p_ref_left  # non-cal phase
+    Ta_1_caloff_right = Tsys_off_1_right * (p_sig_right - p_ref_right) / p_ref_right  # non-cal phase
+
+    print("Ta_1_caloff", Ta_1_caloff_left, Ta_1_caloff_right)
+
+    Ta_1_calon_left = (Tsys_off_1_left + float(logs["header"]["Tcal"][0])) * (p_sig_on_left - p_ref_on_left) / p_ref_on_left  # cal phase
+    Ta_1_calon_right = (Tsys_off_1_right + float(logs["header"]["Tcal"][1])) * (p_sig_on_right - p_ref_on_right) / p_ref_on_right  # cal phase
+
+    print("Ta_1_calon", Ta_1_calon_left, Ta_1_calon_right)
+
+    Ta_sig_left = (Ta_1_caloff_left + Ta_1_calon_left) / 2
+    Ta_sig_right = (Ta_1_caloff_right + Ta_1_calon_right) / 2
+
+    print("Ta_sig", Ta_sig_left, Ta_sig_right)
+
+    Ta_2_caloff_left = Tsys_off_2_left * (p_ref_left - p_sig_left) / p_sig_left  # non-cal phase
+    Ta_2_caloff_right = Tsys_off_2_right * (p_ref_right - p_sig_right) / p_sig_right  # non-cal phase
+
+    print("Ta_2_caloff", Ta_2_caloff_left, Ta_2_caloff_right)
+
+    Ta_2_calon_left = (Tsys_off_2_left + float(logs["header"]["Tcal"][0])) * (p_ref_on_left - p_sig_on_left) / p_sig_on_left  # cal phase
+    Ta_2_calon_right = (Tsys_off_2_right + float(logs["header"]["Tcal"][1])) * (p_ref_on_right - p_sig_on_right) / p_sig_on_right  # cal phase
+
+    print("Ta_2_calon", Ta_2_calon_left, Ta_2_calon_right)
+
+    Ta_ref_left = (Ta_2_caloff_left + Ta_2_calon_left) / 2
+    Ta_ref_right = (Ta_2_caloff_right + Ta_2_calon_right) / 2
+
+    print("Ta_ref", Ta_ref_left, Ta_ref_right)
+
+    Ta_sig_left = np.roll(Ta_sig_left, +n_shift)
+    Ta_sig_right = np.roll(Ta_sig_right, +n_shift)
+
+    print ("Ta_sig", Ta_sig_left, Ta_sig_right)
+
+    Ta_ref_left = np.roll(Ta_ref_left, -n_shift)
+    Ta_ref_right = np.roll(Ta_ref_right, -n_shift)
+
+    print("Ta_ref", Ta_ref_left, Ta_ref_right)
+
+    Ta_left = (Ta_sig_left + Ta_ref_left) / 2
+    Ta_right = (Ta_sig_right + Ta_ref_right) / 2
+
+    print("Ta", Ta_left, Ta_right)
+
+    El = (float(logs[pair[0][0]]["AzEl"][1]) + float(logs[pair[0][1]]["AzEl"][1]) + float(logs[pair[1][0]]["AzEl"][1]) + float(logs[pair[1][1]]["AzEl"][1])) / 4
+    G_El = logs["header"]["Elev_poly"]
+    G_El = [float(gel) for gel in G_El]
+    G_ELtmp = [0, 0, 0]
+    G_ELtmp[0] = G_El[2]
+    G_ELtmp[1] = G_El[1]
+    G_ELtmp[2] = G_El[0]
+    G_El = G_ELtmp
+
+    Sf_left = Ta_left / (((-1) * float(logs["header"]["DPFU"][0])) * np.polyval(G_El, El))
+    Sf_right = Ta_right / (((-1) * float(logs["header"]["DPFU"][1])) * np.polyval(G_El, El))
+
+    return (Sf_left[si:ei], Sf_right[si:ei], frequencyA[si:ei])
+
 
 class Analyzer(QWidget):
     def __init__(self):
@@ -165,78 +249,21 @@ class Analyzer(QWidget):
         self.plot_start__rightB.plot(frequencyD, p_ref_on_right, 'y', label=str(index+1) + "s1")
         self.grid.addWidget(self.plot_start__rightB, 0, 1)
 
-        df_div = float(self.logs["header"]["df_div,df"][0])
-        BW = float(self.logs["header"]["Fs,Ns,RBW"][0])
-        f_shift = BW / df_div
-        l_spec = len(frequencyA)
-        f_step = (frequencyA[l_spec - 1] - frequencyA[0]) / (l_spec - 1)
-        n_shift = int(np.rint(f_shift / f_step))
-        avg_interval = 0.5 # inner 50%
-        si = int(l_spec / 2 - l_spec * avg_interval / 2)
-        ei = int(l_spec / 2 + l_spec * avg_interval / 2)
-
-        Tsys_off_1_left = float(self.logs["header"]["Tcal"][0]) * ((p_ref_on_left + p_ref_left) - np.mean(p_ref_on_left[si:ei] - p_ref_left[si:ei])) / (2 * np.mean(p_ref_on_left[si:ei] - p_ref_left[si:ei]))
-        Tsys_off_2_left = float(self.logs["header"]["Tcal"][1]) * ((p_sig_on_left + p_sig_left) - np.mean(p_sig_on_left[si:ei] - p_sig_left[si:ei])) / (2 * np.mean(p_sig_on_left[si:ei] - p_sig_left[si:ei]))
-
-        Tsys_off_1_right = float(self.logs["header"]["Tcal"][0]) * ((p_ref_on_right + p_ref_right) - np.mean(p_ref_on_right[si:ei] - p_ref_right[si:ei])) / (2 * np.mean(p_ref_on_right[si:ei] - p_ref_right[si:ei]))
-        Tsys_off_2_right = float(self.logs["header"]["Tcal"][1]) * ((p_sig_on_right + p_sig_right ) - np.mean(p_sig_on_right[si:ei] - p_sig_right [si:ei])) / (2 * np.mean(p_sig_on_right[si:ei] - p_sig_right [si:ei]))
-
-        Ta_1_caloff_left = Tsys_off_1_left * (p_sig_left - p_ref_left) / p_ref_left # non-cal phase
-        Ta_1_caloff_right = Tsys_off_1_right * (p_sig_right - p_ref_right) / p_ref_right  # non-cal phase
-
-        Ta_1_calon_left = (Tsys_off_1_left + float(self.logs["header"]["Tcal"][0])) * (p_sig_on_left - p_ref_on_left) / p_ref_on_left  # cal phase
-        Ta_1_calon_right = (Tsys_off_1_right + float(self.logs["header"]["Tcal"][1])) * (p_sig_on_right - p_ref_on_right) / p_ref_on_right  # cal phase
-
-        Ta_sig_left = (Ta_1_caloff_left + Ta_1_calon_left) / 2
-        Ta_sig_right = (Ta_1_caloff_right + Ta_1_calon_right) / 2
-
-        Ta_2_caloff_left = Tsys_off_2_left * (p_ref_left - p_sig_left) / p_sig_left  # non-cal phase
-        Ta_2_caloff_right = Tsys_off_2_right * (p_ref_right - p_sig_right ) / p_sig_right   # non-cal phase
-
-        Ta_2_calon_left = (Tsys_off_2_left + float(self.logs["header"]["Tcal"][0])) * (p_ref_on_left - p_sig_on_left) / p_sig_on_left  # cal phase
-        Ta_2_calon_right = (Tsys_off_2_right + float(self.logs["header"]["Tcal"][1])) * (p_ref_on_right - p_sig_on_right) / p_sig_on_right  # cal phase
-
-        Ta_ref_left = (Ta_2_caloff_left + Ta_2_calon_left) / 2
-        Ta_ref_right = (Ta_2_caloff_right + Ta_2_calon_right) / 2
-
-        Ta_sig_left = np.roll(Ta_sig_left, +n_shift)
-        Ta_sig_right = np.roll(Ta_sig_right, +n_shift)
-
-        Ta_ref_left = np.roll(Ta_ref_left, -n_shift)
-        Ta_ref_right = np.roll(Ta_ref_right, -n_shift)
-
-        Ta_left = (Ta_sig_left + Ta_ref_left) / 2
-        Ta_right = (Ta_sig_right + Ta_ref_right) / 2
-
-        El = (float(self.logs[pair[0][0]]["AzEl"][1]) + float(self.logs[pair[0][1]]["AzEl"][1]) + float(self.logs[pair[1][0]]["AzEl"][1]) + float(self.logs[pair[1][1]]["AzEl"][1]))/ 4
-        G_El = self.logs["header"]["Elev_poly"]
-        G_El = [float(gel) for gel in G_El]
-        G_ELtmp = [0,0,0]
-        G_ELtmp[0] = G_El[2]
-        G_ELtmp[1] = G_El[1]
-        G_ELtmp[2] = G_El[0]
-        G_El = G_ELtmp
-
-        Sf_leftscan = Ta_left / (((-1) * float(self.logs["header"]["DPFU"][0])) * np.polyval(G_El, El))
-        Sf_rightscan = Ta_right / (((-1) * float(self.logs["header"]["DPFU"][1])) * np.polyval(G_El, El))
-
-        self.si = si
-        self.ei = ei
-
-        self.Sf_left.append(Sf_leftscan[self.si:self.ei])
-        self.Sf_right.append(Sf_rightscan[self.si:self.ei])
+        Sf_left, Sf_right, frequencyA1 = frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right,p_sig_on_left, p_sig_on_right, p_ref_on_left, p_ref_on_right, frequencyA, self.logs, pair)
+        self.Sf_left.append(Sf_left)
+        self.Sf_right.append(Sf_right)
+        self.x = frequencyA1
 
         # plot3
         self.total__left = Plot()
         self.total__left.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "", (4, 0), "linear")
-        self.x = frequencyA[self.si:self.ei]
-        self.total__left.plot(frequencyA[self.si:self.ei], Sf_leftscan[self.si:self.ei], 'b', label=str(index + 1))
+        self.total__left.plot(self.x, Sf_left, 'b', label=str(index + 1))
         self.grid.addWidget(self.total__left, 3, 0)
 
         # plot4
         self.total__right = Plot()
         self.total__right.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "", (4, 1), "linear")
-        self.total__right.plot(frequencyA[self.si:self.ei], Sf_rightscan[self.si:self.ei], 'b', label=str(index + 1))
+        self.total__right.plot(self.x, Sf_right, 'b', label=str(index + 1))
         self.grid.addWidget(self.total__right, 3, 1)
 
         if index == len(self.ScanPairs) - 1:
@@ -349,6 +376,7 @@ class Analyzer(QWidget):
             y__right_avg = y__right_avg + self.Sf_right[p]
             velocitys_avg = velocitys_avg + velocitys
 
+        print("Scan count", len(self.ScanPairs))
         velocitys_avg = velocitys_avg / len(self.ScanPairs)
         y__left_avg = y__left_avg / len(self.ScanPairs)
         y__right_avg = y__right_avg / len(self.ScanPairs)
@@ -428,67 +456,10 @@ class Analyzer(QWidget):
             p_ref_on_left = np.fft.fftshift(p_ref_on_left) #s1
             p_ref_on_right = np.fft.fftshift(p_ref_on_right) #s1
 
-            df_div = float(self.logs["header"]["df_div,df"][0])
-            BW = float(self.logs["header"]["Fs,Ns,RBW"][0])
-            f_shift = BW / df_div
-            l_spec = len(frequencyA)
-            f_step = (frequencyA[l_spec - 1] - frequencyA[0]) / (l_spec - 1)
-            n_shift = int(np.rint(f_shift/f_step))
-            avg_interval = 0.5 # inner 50%
-            si = int(l_spec / 2 - l_spec * avg_interval / 2)
-            ei = int(l_spec / 2 + l_spec * avg_interval / 2)
-
-            Tsys_off_1_left = float(self.logs["header"]["Tcal"][0]) * ((p_ref_on_left + p_ref_left) - np.mean(p_ref_on_left[si:ei] - p_ref_left[si:ei])) / (2 * np.mean(p_ref_on_left[si:ei] - p_ref_left[si:ei]))
-            Tsys_off_2_left = float(self.logs["header"]["Tcal"][1]) * ((p_sig_on_left + p_sig_left) - np.mean(p_sig_on_left[si:ei] - p_sig_left[si:ei])) / (2 * np.mean(p_sig_on_left[si:ei] - p_sig_left[si:ei]))
-
-            Tsys_off_1_right = float(self.logs["header"]["Tcal"][0]) * ((p_ref_on_right + p_ref_right) - np.mean(p_ref_on_right[si:ei] - p_ref_right[si:ei])) / (2 * np.mean(p_ref_on_right[si:ei] - p_ref_right[si:ei]))
-            Tsys_off_2_right = float(self.logs["header"]["Tcal"][1]) * ((p_sig_on_right + p_sig_right ) - np.mean(p_sig_on_right[si:ei] - p_sig_right [si:ei])) / (2 * np.mean(p_sig_on_right[si:ei] - p_sig_right [si:ei]))
-
-            Ta_1_caloff_left = Tsys_off_1_left * (p_sig_left - p_ref_left) / p_ref_left # non-cal phase
-            Ta_1_caloff_right = Tsys_off_1_right * (p_sig_right - p_ref_right) / p_ref_right  # non-cal phase
-
-            Ta_1_calon_left = (Tsys_off_1_left + float(self.logs["header"]["Tcal"][0])) * (p_sig_on_left - p_ref_on_left) / p_ref_on_left  # cal phase
-            Ta_1_calon_right = (Tsys_off_1_right + float(self.logs["header"]["Tcal"][1])) * (p_sig_on_right - p_ref_on_right) / p_ref_on_right  # cal phase
-
-            Ta_sig_left = (Ta_1_caloff_left + Ta_1_calon_left) / 2
-            Ta_sig_right = (Ta_1_caloff_right + Ta_1_calon_right) / 2
-
-            Ta_2_caloff_left = Tsys_off_2_left * (p_sig_left - p_sig_left) / p_sig_left  # non-cal phase
-            Ta_2_caloff_right = Tsys_off_2_right * (p_sig_right - p_sig_right ) / p_sig_right   # non-cal phase
-
-            Ta_2_calon_left = (Tsys_off_2_left + float(self.logs["header"]["Tcal"][0])) * (p_ref_on_left - p_sig_on_left) / p_sig_on_left  # cal phase
-            Ta_2_calon_right = (Tsys_off_2_right + float(self.logs["header"]["Tcal"][1])) * (p_ref_on_right - p_sig_on_right) / p_sig_on_right  # cal phase
-
-            Ta_ref_left = (Ta_2_caloff_left + Ta_2_calon_left) / 2
-            Ta_ref_right = (Ta_2_caloff_right + Ta_2_calon_right) / 2
-
-            Ta_sig_left = np.roll(Ta_sig_left, +n_shift)
-            Ta_sig_right = np.roll(Ta_sig_right, +n_shift)
-
-            Ta_ref_left = np.roll(Ta_ref_left, -n_shift)
-            Ta_ref_right = np.roll(Ta_ref_right, -n_shift)
-
-            Ta_left = (Ta_sig_left + Ta_ref_left) / 2
-            Ta_right = (Ta_sig_right + Ta_ref_right) / 2
-
-            El = (float(self.logs[pair[0][0]]["AzEl"][1]) + float(self.logs[pair[0][1]]["AzEl"][1]) + float(self.logs[pair[1][0]]["AzEl"][1]) + float(self.logs[pair[1][1]]["AzEl"][1]))/ 4
-            G_El = self.logs["header"]["Elev_poly"]
-            G_El = [float(gel) for gel in G_El]
-            G_ELtmp = [0,0,0]
-            G_ELtmp[0] = G_El[2]
-            G_ELtmp[1] = G_El[1]
-            G_ELtmp[2] = G_El[0]
-            G_El = G_ELtmp
-
-            Sf_leftscan = Ta_left / (((-1) * (float(self.logs["header"]["DPFU"][0])) ) * np.polyval(G_El, El))
-            Sf_rightscan = Ta_right / (((-1) * (float(self.logs["header"]["DPFU"][1])) ) * np.polyval(G_El, El))
-
-            self.Sf_left.append(Sf_leftscan[self.si:self.ei])
-            self.Sf_right.append(Sf_rightscan[self.si:self.ei])
-            self.x = frequencyA[self.si:self.ei]
-
-            self.si = si
-            self.ei = ei
+            Sf_left, Sf_right, frequencyA1 = frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left, p_sig_on_right, p_ref_on_left, p_ref_on_right, frequencyA, self.logs, pair)
+            self.Sf_left.append(Sf_left)
+            self.Sf_right.append(Sf_right)
+            self.x = frequencyA1
 
             if self.index == len(self.ScanPairs) - 1:
                 self.nextPairButton.setText('Move to total results')
