@@ -68,7 +68,7 @@ def main():
     for component in components:
         index = components.index(component)
         y = correctNumpyReadData(data[:, [index + 1]])
-        ax1.plot(x, y,  symbols[index]+colors[index], label=velocity[index], linewidth=2, markersize=5)
+        ax1.plot(x, y,  symbols[index]+colors[index], label=velocity[index], linewidth=0.5, markersize=5)
 
         y_min = np.min(y)
         if y_min < 0:
@@ -113,7 +113,7 @@ def main():
     # axes up to make room for them
     fig.autofmt_xdate()
 
-    plt.yscale("log")
+    #plt.yscale("log")
     yTicks = list(set(yTicks))
     ax1.set_yticks(yTicks)
     ax1.axvline(x=new_data[0][0], linewidth=4, color='r', linestyle='--', label="New Monitoring")

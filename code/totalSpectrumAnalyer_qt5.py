@@ -724,14 +724,15 @@ class Analyzer(QWidget):
         resultFile.write(json.dumps(result, indent=2))
         resultFile.close()
 
+        args = parseArguments()
         totalResults = [self.xarray, self.z1_SmoohtData, self.z2_SmoohtData, self.avg_y_SmoohtData]
-        output_file_name = self.output + self.source + "/" + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
+        output_file_name = self.output + self.source + "/"  + str(args.__dict__["line"]) + "/" + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
 
         np.savetxt(output_file_name, np.transpose(totalResults))
 
         totalResults = [self.xarray, self.z1_NotSmoohtData, self.z2_NotSmoohtData, self.avg_y_NotSmoohtData]
-        output_file_name = self.output + "/NotSmooht/" + self.source + "/" + self.source + "_" + self.time.replace(":","_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
+        output_file_name = self.output + "/NotSmooht/" +self.source + "/"  + str(args.__dict__["line"]) + "/" + self.source + "_" + self.time.replace(":","_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
         np.savetxt(output_file_name, np.transpose(totalResults))
 
