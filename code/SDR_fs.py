@@ -21,7 +21,8 @@ from help import *
 
 
 def parseArguments():
-    parser = argparse.ArgumentParser(description='''Creates input file for plotting tool. ''', epilog="""PRE PLOTTER.""")
+    parser = argparse.ArgumentParser(description='''Creates input file for plotting tool. ''',
+                                     epilog="""PRE PLOTTER.""")
     parser.add_argument("source", help="Experiment source", type=str, default="")
     parser.add_argument("line", help="frequency", type=str)
     parser.add_argument("iteration_number", help="iteration number ", type=int)
@@ -42,6 +43,7 @@ def getConfigs(key, value):
     config.CreateConfig(configFilePath)
     return config.getConfig(key, value)
 
+
 def dopler(ObservedFrequency, velocityReceiver, f0):
     c = scipy.constants.speed_of_light
     velocitySoure = (-((ObservedFrequency / f0) - 1) * c + (velocityReceiver * 1000)) / 1000
@@ -50,6 +52,7 @@ def dopler(ObservedFrequency, velocityReceiver, f0):
 
 class Result(object):
     __slots__ = ('matrix', 'specie')
+
     def __init__(self, matrix, specie):
         self.matrix = matrix
         self.specie = specie
@@ -61,10 +64,12 @@ class Result(object):
         return self.specie
 
 
-def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left, p_sig_on_right, p_ref_on_left, p_ref_on_right, frequencyA, logs, pair):
+def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left, p_sig_on_right, p_ref_on_left,
+                       p_ref_on_right, frequencyA, logs, pair):
     df_div = float(logs["header"]["df_div,df"][0])
     BW = float(logs["header"]["Fs,Ns,RBW"][0])
     f_shift = BW / df_div
+
     l_spec = len(frequencyA)
     f_step = (frequencyA[l_spec - 1] - frequencyA[0]) / (l_spec - 1)
     n_shift = int(np.rint(f_shift / f_step))
@@ -72,60 +77,54 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
     si = int(l_spec / 2 - l_spec * avg_interval / 2)
     ei = int(l_spec / 2 + l_spec * avg_interval / 2)
 
-    Tsys_off_1_left = float(logs["header"]["Tcal"][0]) * ((p_ref_on_left + p_ref_left) - np.mean(p_ref_on_left[si:ei] - p_ref_left[si:ei])) / (2 * np.mean(p_ref_on_left[si:ei] - p_ref_left[si:ei]))
-    Tsys_off_2_left = float(logs["header"]["Tcal"][1]) * ((p_sig_on_left + p_sig_left) - np.mean(p_sig_on_left[si:ei] - p_sig_left[si:ei])) / (2 * np.mean(p_sig_on_left[si:ei] - p_sig_left[si:ei]))
+    Tsys_off_1_left = float(logs["header"]["Tcal"][0]) * (
+                (p_ref_on_left + p_ref_left) - np.mean(p_ref_on_left[si:ei] - p_ref_left[si:ei])) / (
+                                  2 * np.mean(p_ref_on_left[si:ei] - p_ref_left[si:ei]))
+    Tsys_off_2_left = float(logs["header"]["Tcal"][1]) * (
+                (p_sig_on_left + p_sig_left) - np.mean(p_sig_on_left[si:ei] - p_sig_left[si:ei])) / (
+                                  2 * np.mean(p_sig_on_left[si:ei] - p_sig_left[si:ei]))
 
-    Tsys_off_1_right = float(logs["header"]["Tcal"][0]) * ((p_ref_on_right + p_ref_right) - np.mean(p_ref_on_right[si:ei] - p_ref_right[si:ei])) / (2 * np.mean(p_ref_on_right[si:ei] - p_ref_right[si:ei]))
-    Tsys_off_2_right = float(logs["header"]["Tcal"][1]) * ((p_sig_on_right + p_sig_right) - np.mean(p_sig_on_right[si:ei] - p_sig_right[si:ei])) / (2 * np.mean(p_sig_on_right[si:ei] - p_sig_right[si:ei]))
-
-    print("Tsys_off", Tsys_off_1_left, Tsys_off_2_left, Tsys_off_1_right, Tsys_off_2_right)
+    Tsys_off_1_right = float(logs["header"]["Tcal"][0]) * (
+                (p_ref_on_right + p_ref_right) - np.mean(p_ref_on_right[si:ei] - p_ref_right[si:ei])) / (
+                                   2 * np.mean(p_ref_on_right[si:ei] - p_ref_right[si:ei]))
+    Tsys_off_2_right = float(logs["header"]["Tcal"][1]) * (
+                (p_sig_on_right + p_sig_right) - np.mean(p_sig_on_right[si:ei] - p_sig_right[si:ei])) / (
+                                   2 * np.mean(p_sig_on_right[si:ei] - p_sig_right[si:ei]))
 
     Ta_1_caloff_left = Tsys_off_1_left * (p_sig_left - p_ref_left) / p_ref_left  # non-cal phase
     Ta_1_caloff_right = Tsys_off_1_right * (p_sig_right - p_ref_right) / p_ref_right  # non-cal phase
 
-    print("Ta_1_caloff", Ta_1_caloff_left, Ta_1_caloff_right)
-
-    Ta_1_calon_left = (Tsys_off_1_left + float(logs["header"]["Tcal"][0])) * (p_sig_on_left - p_ref_on_left) / p_ref_on_left  # cal phase
-    Ta_1_calon_right = (Tsys_off_1_right + float(logs["header"]["Tcal"][1])) * (p_sig_on_right - p_ref_on_right) / p_ref_on_right  # cal phase
-
-    print("Ta_1_calon", Ta_1_calon_left, Ta_1_calon_right)
+    Ta_1_calon_left = (Tsys_off_1_left + float(logs["header"]["Tcal"][0])) * (
+                p_sig_on_left - p_ref_on_left) / p_ref_on_left  # cal phase
+    Ta_1_calon_right = (Tsys_off_1_right + float(logs["header"]["Tcal"][1])) * (
+                p_sig_on_right - p_ref_on_right) / p_ref_on_right  # cal phase
 
     Ta_sig_left = (Ta_1_caloff_left + Ta_1_calon_left) / 2
     Ta_sig_right = (Ta_1_caloff_right + Ta_1_calon_right) / 2
 
-    print("Ta_sig", Ta_sig_left, Ta_sig_right)
-
     Ta_2_caloff_left = Tsys_off_2_left * (p_ref_left - p_sig_left) / p_sig_left  # non-cal phase
     Ta_2_caloff_right = Tsys_off_2_right * (p_ref_right - p_sig_right) / p_sig_right  # non-cal phase
 
-    print("Ta_2_caloff", Ta_2_caloff_left, Ta_2_caloff_right)
-
-    Ta_2_calon_left = (Tsys_off_2_left + float(logs["header"]["Tcal"][0])) * (p_ref_on_left - p_sig_on_left) / p_sig_on_left  # cal phase
-    Ta_2_calon_right = (Tsys_off_2_right + float(logs["header"]["Tcal"][1])) * (p_ref_on_right - p_sig_on_right) / p_sig_on_right  # cal phase
-
-    print("Ta_2_calon", Ta_2_calon_left, Ta_2_calon_right)
+    Ta_2_calon_left = (Tsys_off_2_left + float(logs["header"]["Tcal"][0])) * (
+                p_ref_on_left - p_sig_on_left) / p_sig_on_left  # cal phase
+    Ta_2_calon_right = (Tsys_off_2_right + float(logs["header"]["Tcal"][1])) * (
+                p_ref_on_right - p_sig_on_right) / p_sig_on_right  # cal phase
 
     Ta_ref_left = (Ta_2_caloff_left + Ta_2_calon_left) / 2
     Ta_ref_right = (Ta_2_caloff_right + Ta_2_calon_right) / 2
 
-    print("Ta_ref", Ta_ref_left, Ta_ref_right)
-
     Ta_sig_left = np.roll(Ta_sig_left, +n_shift)
     Ta_sig_right = np.roll(Ta_sig_right, +n_shift)
-
-    print ("Ta_sig", Ta_sig_left, Ta_sig_right)
 
     Ta_ref_left = np.roll(Ta_ref_left, -n_shift)
     Ta_ref_right = np.roll(Ta_ref_right, -n_shift)
 
-    print("Ta_ref", Ta_ref_left, Ta_ref_right)
-
     Ta_left = (Ta_sig_left + Ta_ref_left) / 2
     Ta_right = (Ta_sig_right + Ta_ref_right) / 2
 
-    print("Ta", Ta_left, Ta_right)
+    El = (float(logs[pair[0][0]]["AzEl"][1]) + float(logs[pair[0][1]]["AzEl"][1]) + float(
+        logs[pair[1][0]]["AzEl"][1]) + float(logs[pair[1][1]]["AzEl"][1])) / 4
 
-    El = (float(logs[pair[0][0]]["AzEl"][1]) + float(logs[pair[0][1]]["AzEl"][1]) + float(logs[pair[1][0]]["AzEl"][1]) + float(logs[pair[1][1]]["AzEl"][1])) / 4
     G_El = logs["header"]["Elev_poly"]
     G_El = [float(gel) for gel in G_El]
     G_ELtmp = [0, 0, 0]
@@ -134,8 +133,8 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
     G_ELtmp[2] = G_El[0]
     G_El = G_ELtmp
 
-    Sf_left = Ta_left / (((-1) * float(logs["header"]["DPFU"][0])) * np.polyval(G_El, El))
-    Sf_right = Ta_right / (((-1) * float(logs["header"]["DPFU"][1])) * np.polyval(G_El, El))
+    Sf_left = Ta_left / ((float(logs["header"]["DPFU"][0])) * np.polyval(G_El, El))
+    Sf_right = Ta_right / ((float(logs["header"]["DPFU"][1])) * np.polyval(G_El, El))
 
     return (Sf_left[si:ei], Sf_right[si:ei], frequencyA[si:ei])
 
@@ -146,13 +145,17 @@ class Analyzer(QWidget):
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.setWindowTitle("SDR")
         self.center()
-        self.DataDir = getConfigs("paths", "dataFilePath") + "SDR/" + getArgs("source") + "/f" + getArgs("line") + "/" + getArgs("iteration_number") + "/"
+        self.DataDir = getConfigs("paths", "dataFilePath") + "SDR/" + getArgs("source") + "/f" + getArgs(
+            "line") + "/" + getArgs("iteration_number") + "/"
         self.DataFiles = os.listdir(self.DataDir)
         self.ScanPairs = self.createScanPairs()
         self.index = 0
         self.Sf_left = list()
         self.Sf_right = list()
-        self.logs = LogReaderFactory.getLogReader(LogTypes.SDR, getConfigs("paths", "logPath") + "SDR/"+ getArgs("logFile"), getConfigs("paths", "prettyLogsPath") + getArgs("source") + "_" + getArgs("iteration_number")).getLogs()
+        self.logs = LogReaderFactory.getLogReader(LogTypes.SDR,
+                                                  getConfigs("paths", "logPath") + "SDR/" + getArgs("logFile"),
+                                                  getConfigs("paths", "prettyLogsPath") + getArgs(
+                                                      "source") + "_" + getArgs("iteration_number")).getLogs()
         self.grid = QGridLayout()
         self.setLayout(self.grid)
         self.grid.setSpacing(10)
@@ -169,11 +172,10 @@ class Analyzer(QWidget):
         return dataFileName.split(".")[0].split("_")[3][2:len(dataFileName.split(".")[0].split("_")[3])].lstrip('0')
 
     def __getData(self, dataFileName):
-        data = np.fromfile(dataFileName, dtype="float64", count=-1, sep=" ").reshape((file_len(dataFileName), 3))
-        frequency = correctNumpyReadData(data[:, [0]])
-        polarization_left = correctNumpyReadData(data[:, [1]])
-        polarization_right = correctNumpyReadData(data[:, [2]])
-        return(frequency, polarization_left, polarization_right)
+        frequency = np.loadtxt(dataFileName, usecols=(0,), unpack=True)
+        polarization_left = np.loadtxt(dataFileName, usecols=(1,), unpack=True)
+        polarization_right = np.loadtxt(dataFileName, usecols=(2,), unpack=True)
+        return (frequency, polarization_left, polarization_right)
 
     def __getDataFileForScan__(self, scanName):
         fileName = ""
@@ -192,64 +194,57 @@ class Analyzer(QWidget):
         scanPairs = []
 
         for scan in scansNumbers:
-            scanPairs.append( ((str(scan) + "r" + "0", str(scan) + "s" + "0"), (str(scan) + "r" + "1", str(scan) + "s" + "1")) )
+            scanPairs.append(
+                ((str(scan) + "r" + "0", str(scan) + "s" + "0"), (str(scan) + "r" + "1", str(scan) + "s" + "1")))
 
         return scanPairs
 
     def plotPair(self, index):
         pair = self.ScanPairs[index]
-        file1 = self.DataDir + self.__getDataFileForScan__(pair[0][0]) #r0
-        file2 = self.DataDir + self.__getDataFileForScan__(pair[0][1]) #s0
-        file3 = self.DataDir + self.__getDataFileForScan__(pair[1][0]) #r1
-        file4 = self.DataDir + self.__getDataFileForScan__(pair[1][1]) #s1
+        file1 = self.DataDir + self.__getDataFileForScan__(pair[0][1])  # s0
+        file2 = self.DataDir + self.__getDataFileForScan__(pair[0][0])  # r0
+        file3 = self.DataDir + self.__getDataFileForScan__(pair[1][1])  # s1
+        file4 = self.DataDir + self.__getDataFileForScan__(pair[1][0])  # r1
 
         print("data files", file1, file2, file3, file4)
 
-        frequencyA = self.__getData(file1)[0] #r0
-        p_sig_left = self.__getData(file1)[1] #r0
-        p_sig_right = self.__getData(file1)[2] #r0
-
-        frequencyB = self.__getData(file2)[0] #s0
-        p_ref_left = self.__getData(file2)[1] #s0
-        p_ref_right = self.__getData(file2)[2] #s0
-
-        frequencyC = self.__getData(file3)[0] #r1
-        p_sig_on_left = self.__getData(file3)[1] #r1
-        p_sig_on_right = self.__getData(file3)[2] #r1
-
-        frequencyD = self.__getData(file4)[0] #s1
-        p_ref_on_left = self.__getData(file4)[1] #s1
-        p_ref_on_right = self.__getData(file4)[2] #s1
+        frequencyA, p_sig_left, p_sig_right = self.__getData(file1)  # s0
+        frequencyB, p_ref_left, p_ref_right = self.__getData(file2)  # r0
+        frequencyC, p_sig_on_left, p_sig_on_right = self.__getData(file3)  # s1
+        frequencyD, p_ref_on_left, p_ref_on_right = self.__getData(file4)  # r1
 
         # fft shift
-        p_sig_left = np.fft.fftshift(p_sig_left) #r0
-        p_sig_right  = np.fft.fftshift(p_sig_right) #r0
-        p_ref_left = np.fft.fftshift(p_ref_left) #s0
-        p_ref_right = np.fft.fftshift(p_ref_right) #s0
-        p_sig_on_left = np.fft.fftshift(p_sig_on_left) #r1
-        p_sig_on_right = np.fft.fftshift(p_sig_on_right) #r1
-        p_ref_on_left = np.fft.fftshift(p_ref_on_left) #s1
-        p_ref_on_right = np.fft.fftshift(p_ref_on_right) #s1
+        p_sig_left = np.fft.fftshift(p_sig_left)  # s0
+        p_sig_right = np.fft.fftshift(p_sig_right)  # s0
+        p_ref_left = np.fft.fftshift(p_ref_left)  # r0
+        p_ref_right = np.fft.fftshift(p_ref_right)  # r0
+        p_sig_on_left = np.fft.fftshift(p_sig_on_left)  # s1
+        p_sig_on_right = np.fft.fftshift(p_sig_on_right)  # s1
+        p_ref_on_left = np.fft.fftshift(p_ref_on_left)  # r1
+        p_ref_on_right = np.fft.fftshift(p_ref_on_right)  # r1
 
-        #plot1
+        # plot1
         self.plot_start__leftA = Plot()
         self.plot_start__leftA.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "Left Polarization", (1, 0), "linear")
-        self.plot_start__leftA.plot(frequencyA, p_sig_left, 'b', label=str(index+1) + "r0")
-        self.plot_start__leftA.plot(frequencyB, p_ref_left, 'g', label=str(index+1) + "s0")
-        self.plot_start__leftA.plot(frequencyC, p_sig_on_left, 'r', label=str(index+1) + "r1")
-        self.plot_start__leftA.plot(frequencyD, p_ref_on_left, 'y', label=str(index+1) + "s1")
+        self.plot_start__leftA.plot(frequencyA, p_sig_left, 'b', label=str(index + 1) + "s0")
+        self.plot_start__leftA.plot(frequencyB, p_ref_left, 'g', label=str(index + 1) + "r0")
+        self.plot_start__leftA.plot(frequencyC, p_sig_on_left, 'r', label=str(index + 1) + "s1")
+        self.plot_start__leftA.plot(frequencyD, p_ref_on_left, 'y', label=str(index + 1) + "r1")
         self.grid.addWidget(self.plot_start__leftA, 0, 0)
 
-        #plot2
+        # plot2
         self.plot_start__rightB = Plot()
-        self.plot_start__rightB.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "Right Polarization", (1, 1), "linear")
-        self.plot_start__rightB.plot(frequencyA, p_sig_right , 'b', label=str(index+1) + "r0")
-        self.plot_start__rightB.plot(frequencyB, p_ref_right, 'g', label=str(index+1) + "s0")
-        self.plot_start__rightB.plot(frequencyC, p_sig_on_right, 'r', label=str(index+1) + "r1")
-        self.plot_start__rightB.plot(frequencyD, p_ref_on_right, 'y', label=str(index+1) + "s1")
+        self.plot_start__rightB.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "Right Polarization", (1, 1),
+                                          "linear")
+        self.plot_start__rightB.plot(frequencyA, p_sig_right, 'b', label=str(index + 1) + "s0")
+        self.plot_start__rightB.plot(frequencyB, p_ref_right, 'g', label=str(index + 1) + "r0")
+        self.plot_start__rightB.plot(frequencyC, p_sig_on_right, 'r', label=str(index + 1) + "s1")
+        self.plot_start__rightB.plot(frequencyD, p_ref_on_right, 'y', label=str(index + 1) + "r1")
         self.grid.addWidget(self.plot_start__rightB, 0, 1)
 
-        Sf_left, Sf_right, frequencyA1 = frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right,p_sig_on_left, p_sig_on_right, p_ref_on_left, p_ref_on_right, frequencyA, self.logs, pair)
+        Sf_left, Sf_right, frequencyA1 = frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right,
+                                                            p_sig_on_left, p_sig_on_right, p_ref_on_left,
+                                                            p_ref_on_right, frequencyA, self.logs, pair)
         self.Sf_left.append(Sf_left)
         self.Sf_right.append(Sf_right)
         self.x = frequencyA1
@@ -330,7 +325,7 @@ class Analyzer(QWidget):
 
             print("stationCordinations", stationCordinations)
 
-            sourceCordinations = getConfigs("sources",  getArgs("source")).split(",")
+            sourceCordinations = getConfigs("sources", getArgs("source")).split(",")
             sourceCordinations = [sc.strip() for sc in sourceCordinations]
             RA = sourceCordinations[0]
             DEC = sourceCordinations[1]
@@ -360,11 +355,11 @@ class Analyzer(QWidget):
             VelTotal = lsr(RaStr, DecStr, date, stringTime, x, y, z)
             print("VelTotal", VelTotal)
 
-            self.max_y_left_index = self.Sf_left[p].argmax(axis=0)
-            self.max_y_right_index = self.Sf_right[p].argmax(axis=0)
+            # self.max_y_left_index = self.Sf_left[p].argmax(axis=0)
+            # self.max_y_right_index = self.Sf_right[p].argmax(axis=0)
 
             line = getConfigs('base_frequencies_SDR', "f" + getArgs("line")).replace(" ", "").split(",")
-            lineF = float(line[0]) * (10**9)
+            lineF = float(line[0]) * (10 ** 9)
             lineS = line[1]
             specie = lineS
 
@@ -382,38 +377,44 @@ class Analyzer(QWidget):
         y__right_avg = y__right_avg / len(self.ScanPairs)
 
         self.plot_velocity__left = Plot()
-        self.plot_velocity__left.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Left Polarization",(1, 0), "linear")
+        self.plot_velocity__left.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)',
+                                           "Left Polarization", (1, 0), "linear")
         self.plot_velocity__left.plot(velocitys_avg, y__left_avg, 'b')
 
         self.plot_velocity__right = Plot()
-        self.plot_velocity__right.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Right Polarization",(1, 1), "linear")
+        self.plot_velocity__right.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)',
+                                            "Right Polarization", (1, 1), "linear")
         self.plot_velocity__right.plot(velocitys_avg, y__right_avg, 'b')
 
         self.grid.addWidget(self.plot_velocity__left, 0, 0)
         self.grid.addWidget(self.plot_velocity__right, 0, 1)
 
-        totalResults = np.transpose(np.array([np.transpose(velocitys_avg), np.transpose(y__left_avg), np.transpose(y__right_avg)]))
+        totalResults = np.transpose(
+            np.array([np.transpose(velocitys_avg), np.transpose(y__left_avg), np.transpose(y__right_avg)]))
 
         # source_day_Month_year_houre:minute:righte_station_iteration.dat
         day = scan_1["date"].split("-")[2][0:2]
         month = scan_1["date"].split("-")[1]
-        months = {"Jan": "1", "Feb": "2", "Mar": "3", "Apr": "4", "May": "5", "Jun": "6", "Jul": "7", "Aug": "8", "Sep": "9", "Oct": "10", "Nov": "11", "Dec": "12"}
-        month = list(months.keys())[int(month) -1]
+        months = {"Jan": "1", "Feb": "2", "Mar": "3", "Apr": "4", "May": "5", "Jun": "6", "Jul": "7", "Aug": "8",
+                  "Sep": "9", "Oct": "10", "Nov": "11", "Dec": "12"}
+        month = list(months.keys())[int(month) - 1]
         year = scan_1["date"].split("-")[0]
         houre = scan_1["date"].split("T")[1].split(":")[0]
         minute = scan_1["date"].split("T")[1].split(":")[1]
         righte = scan_1["date"].split("T")[1].split(":")[2]
-        if not os.path.exists(getConfigs("paths", "dataFilePath")  + "SDR/" + getArgs("line") + "/"):
-            os.makedirs(getConfigs("paths", "dataFilePath")  + "SDR/" + getArgs("line") + "/")
+        if not os.path.exists(getConfigs("paths", "dataFilePath") + "SDR/" + getArgs("line") + "/"):
+            os.makedirs(getConfigs("paths", "dataFilePath") + "SDR/" + getArgs("line") + "/")
 
-        output_file_name =  getConfigs("paths", "dataFilePath")  + "SDR/" + getArgs("line") + "/" + getArgs("source") + "_" + day + "_" + month + "_" + year + "_"  + houre + ":" + minute + ":" + righte + "_" + station + "_" + getArgs("iteration_number") + ".dat"
+        output_file_name = getConfigs("paths", "dataFilePath") + "SDR/" + getArgs("line") + "/" + getArgs(
+            "source") + "_" + day + "_" + month + "_" + year + "_" + houre + ":" + minute + ":" + righte + "_" + station + "_" + getArgs(
+            "iteration_number") + ".dat"
         print("output_file_name", output_file_name)
         output_file_name = output_file_name.replace(" ", "")
         result = Result(totalResults, specie)
         pickle.dump(result, open(output_file_name, 'wb'))
 
     def nextPair(self):
-        if self.index == len(self.ScanPairs)- 1:
+        if self.index == len(self.ScanPairs) - 1:
             pass
 
         else:
@@ -425,38 +426,43 @@ class Analyzer(QWidget):
     def skipAll(self):
         while self.index < len(self.ScanPairs):
             pair = self.ScanPairs[self.index]
-            file1 = self.DataDir + self.__getDataFileForScan__(pair[0][0]) #r0
-            file2 = self.DataDir + self.__getDataFileForScan__(pair[0][1]) #s0
-            file3 = self.DataDir + self.__getDataFileForScan__(pair[1][0]) #r1
-            file4 = self.DataDir + self.__getDataFileForScan__(pair[1][1]) #s1
 
-            frequencyA = self.__getData(file1)[0] #r0
-            p_sig_left = self.__getData(file1)[1] #r0
-            p_sig_right  = self.__getData(file1)[2] #r0
+            file1 = self.DataDir + self.__getDataFileForScan__(pair[0][1])  # s0
+            file2 = self.DataDir + self.__getDataFileForScan__(pair[0][0])  # r0
+            file3 = self.DataDir + self.__getDataFileForScan__(pair[1][1])  # s1
+            file4 = self.DataDir + self.__getDataFileForScan__(pair[1][0])  # r1
 
-            frequencyB = self.__getData(file2)[0] #s0
-            p_ref_left = self.__getData(file2)[1] #s0
-            p_ref_right = self.__getData(file2)[2] #s0
+            print("data files", file1, file2, file3, file4)
 
-            frequencyC = self.__getData(file3)[0] #r1
-            p_sig_on_left = self.__getData(file3)[1] #r1
-            p_sig_on_right = self.__getData(file3)[2] #r1
+            frequencyA = self.__getData(file1)[0]  # r0
+            p_sig_left = self.__getData(file1)[1]  # r0
+            p_sig_right = self.__getData(file1)[2]  # r0
 
-            frequencyD = self.__getData(file4)[0] #s1
-            p_ref_on_left = self.__getData(file4)[1] #s1
-            p_ref_on_right = self.__getData(file4)[2] #s1
+            frequencyB = self.__getData(file2)[0]  # s0
+            p_ref_left = self.__getData(file2)[1]  # s0
+            p_ref_right = self.__getData(file2)[2]  # s0
+
+            frequencyC = self.__getData(file3)[0]  # r1
+            p_sig_on_left = self.__getData(file3)[1]  # r1
+            p_sig_on_right = self.__getData(file3)[2]  # r1
+
+            frequencyD = self.__getData(file4)[0]  # s1
+            p_ref_on_left = self.__getData(file4)[1]  # s1
+            p_ref_on_right = self.__getData(file4)[2]  # s1
 
             # fft shift
-            p_sig_left = np.fft.fftshift(p_sig_left) #r0
-            p_sig_right = np.fft.fftshift(p_sig_right) #r0
-            p_ref_left = np.fft.fftshift(p_ref_left) #s0
-            p_ref_right = np.fft.fftshift(p_ref_right) #s0
-            p_sig_on_left = np.fft.fftshift(p_sig_on_left) #r1
-            p_sig_on_right = np.fft.fftshift(p_sig_on_right) #r1
-            p_ref_on_left = np.fft.fftshift(p_ref_on_left) #s1
-            p_ref_on_right = np.fft.fftshift(p_ref_on_right) #s1
+            p_sig_left = np.fft.fftshift(p_sig_left)  # r0
+            p_sig_right = np.fft.fftshift(p_sig_right)  # r0
+            p_ref_left = np.fft.fftshift(p_ref_left)  # s0
+            p_ref_right = np.fft.fftshift(p_ref_right)  # s0
+            p_sig_on_left = np.fft.fftshift(p_sig_on_left)  # r1
+            p_sig_on_right = np.fft.fftshift(p_sig_on_right)  # r1
+            p_ref_on_left = np.fft.fftshift(p_ref_on_left)  # s1
+            p_ref_on_right = np.fft.fftshift(p_ref_on_right)  # s1
 
-            Sf_left, Sf_right, frequencyA1 = frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left, p_sig_on_right, p_ref_on_left, p_ref_on_right, frequencyA, self.logs, pair)
+            Sf_left, Sf_right, frequencyA1 = frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right,
+                                                                p_sig_on_left, p_sig_on_right, p_ref_on_left,
+                                                                p_ref_on_right, frequencyA, self.logs, pair)
             self.Sf_left.append(Sf_left)
             self.Sf_right.append(Sf_right)
             self.x = frequencyA1
@@ -465,7 +471,7 @@ class Analyzer(QWidget):
                 self.nextPairButton.setText('Move to total results')
                 self.nextPairButton.clicked.connect(self.plotTotalResults)
 
-            self.index +=1
+            self.index += 1
 
         self.plotTotalResults()
 
@@ -481,12 +487,14 @@ class Analyzer(QWidget):
 
         self.plotPair(self.index)
 
+
 def main():
     qApp = QApplication(sys.argv)
     a = Analyzer()
     a.show()
     sys.exit(qApp.exec_())
     sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

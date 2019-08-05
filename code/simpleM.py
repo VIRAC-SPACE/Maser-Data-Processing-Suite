@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import os
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib
@@ -47,16 +48,25 @@ def main():
     new_monitoring_file = "monitoring/" + get_args("source") + "_6668" + ".txt"
     compunet_count = len(get_configs("velocities", get_args("source") + "_6668").replace(" ", "").split(","))
     velocity = get_configs("velocities", get_args("source") + "_6668").replace(" ", "").split(",")
-    old_data = np.loadtxt(old_monitoring_file, dtype=str).reshape((file_len(old_monitoring_file), compunet_count + 1))
+
     new_data = np.fromfile(new_monitoring_file, dtype="float64", count=-1, sep=" ").reshape((file_len(new_monitoring_file), compunet_count + 1))
     new_x = correctNumpyReadData(new_data[:, [0]])
-    old_x = correctNumpyReadData(old_data[:, [0]])
-    old_x = [convertDatetimeObjectToMJD(datetime.strptime(x, "%Y-%m-%d%H:%M:%S")) for x in old_x]
-    x = old_x + list(new_x)
     components = [i for i in range(1, compunet_count + 1)]
-    old_data[:, [0]] = old_x[0]
 
-    data = np.array(np.concatenate((old_data, new_data), axis=0), dtype="float64")
+    if os.path.isfile(old_monitoring_file):
+        old_data = np.loadtxt(old_monitoring_file, dtype=str).reshape((file_len(old_monitoring_file), compunet_count + 1))
+        old_x = correctNumpyReadData(old_data[:, [0]])
+        old_x = [convertDatetimeObjectToMJD(datetime.strptime(x, "%Y-%m-%d%H:%M:%S")) for x in old_x]
+        old_data[:, [0]] = old_x[0]
+        x = old_x + list(new_x)
+
+        data = np.array(np.concatenate((old_data, new_data), axis=0), dtype="float64")
+
+    else:
+        data = new_data
+        x = list(new_x)
+
+
     print("total time in years", (np.max(x) - np.min(x)) / 365)
 
     fig = plt.figure("Monitoring")

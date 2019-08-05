@@ -362,7 +362,7 @@ class Maps_View(PlottingView):
             #Z = matplotlib.mlab.griddata(velocity,observed_time,observed_flux, X, Y, interp='linear')
             Z = griddata((velocity, observed_time), observed_flux, (X[:], Y[:]), method='linear')
             self.mapPlot = Plot()
-            self.mapPlot.creatPlot(self.getGrid(), "Velocity (km/s)", "JD (days) -  " + str(jd_first), None, (1,0), "linear")
+            self.mapPlot.creatPlot(self.getGrid(), "Velocity (km/s)", "JD (days) -  " + str(jd_first), None, (1,0), "log")
             CS = self.mapPlot.contourf(X, Y, Z)
     
             cbar = self.mapPlot.colorbar(CS)
