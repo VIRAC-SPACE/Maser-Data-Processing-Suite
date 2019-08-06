@@ -61,10 +61,12 @@ def main():
         x = old_x + list(new_x)
 
         data = np.array(np.concatenate((old_data, new_data), axis=0), dtype="float64")
+        old = True
 
     else:
         data = new_data
         x = list(new_x)
+        old = False
 
 
     print("total time in years", (np.max(x) - np.min(x)) / 365)
@@ -104,6 +106,8 @@ def main():
     t.format = 'isot'
     newvalues = [datetime.strptime(i.value, "%Y-%m-%d") for i in t]
     newpos = x
+
+    newpos = [p for p in range(0, len(x))]
     ax2.set_xticks(newpos)
     ax2.set_xticklabels(newvalues)
     ax2.xaxis.set_major_locator(months)
@@ -111,8 +115,8 @@ def main():
     ax2.xaxis.set_minor_locator(weeks)
 
     # round to nearest years.
-    datemin = np.datetime64(newvalues[0], 'Y')
-    datemax = np.datetime64(newvalues[-1], 'Y')
+    datemin = np.datetime64(newvalues[0], 'D')
+    datemax = np.datetime64(newvalues[-1], 'D')
     ax2.set_xlim(datemin, datemax)
 
     # format the coords message box
@@ -126,7 +130,9 @@ def main():
     #plt.yscale("log")
     yTicks = list(set(yTicks))
     ax1.set_yticks(yTicks)
-    ax1.axvline(x=new_data[0][0], linewidth=4, color='r', linestyle='--', label="New Monitoring")
+    if old:
+        ax1.axvline(x=new_data[0][0], linewidth=4, color='r', linestyle='--', label="New Monitoring")
+
     ax1.legend()
     ax1.grid(True)
     ax2.grid(True)
