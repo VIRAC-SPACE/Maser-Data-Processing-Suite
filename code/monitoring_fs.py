@@ -941,6 +941,7 @@ class MonitoringApp(QWidget):
         monitoringResults = [[convertDatetimeObjectToMJD(d) for d in date_list]]
 
         for i in range(0, len(source_velocities)):
+            print(len(date_list), len(velocitie_dict["u1"][source_velocities[i]]))
             l1, = self.monitoringPlot.plot(date_list, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+colors[i], fontsize=8, visible=False, picker=False)
             l2, = self.monitoringPlot.plot(date_list, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+colors[i], fontsize=8, visible=False, picker=False)
             l3, = self.monitoringPlot.plot(date_list, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+colors[i], fontsize=8, label="Velocity " + source_velocities[i], visible=True, picker=5)

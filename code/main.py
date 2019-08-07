@@ -28,6 +28,7 @@ def parseArguments():
 def getArgs(key):
     return str(parseArguments().__dict__[key])
 
+
 def getConfigs(key, value):
     config_file_path = getArgs("config")
     config = ConfigParser.getInstance()
@@ -65,9 +66,11 @@ def createIterationList(path):
     iterations.sort(key=int, reverse=False)
     return iterations
 
+
 def createLogFileList(path, source):
     return [log for log in os.listdir(path) if log.startswith(source)]
-    
+
+
 def main():
     args = parseArguments()
     sourceName = getArgs("source")
@@ -115,9 +118,15 @@ def main():
         if experiment.split("_")[-1] in DBBC_iterations and experiment.split("_")[-1] not in DBBCprocessed_iteration and result[experiment]["type"] == "DBBC":
             DBBCprocessed_iteration.append(experiment.split("_")[-1])
 
+        if experiment.split("_")[-1] in DBBC_iterations and experiment.split("_")[-1] in DBBCprocessed_iteration and result[experiment]["type"] == "DBBC" and result[experiment]["flag"] == True:
+            DBBCprocessed_iteration.remove(experiment.split("_")[-1])
+
     for experiment in result:
         if experiment.split("_")[-1] in SDR_iterations and experiment.split("_")[-1] not in SDRprocessed_iteration and result[experiment]["type"] == "SDR":
             SDRprocessed_iteration.append(experiment.split("_")[-1])
+
+        if experiment.split("_")[-1] in SDRprocessed_iteration and experiment.split("_")[-1] in SDRprocessed_iteration and result[experiment]["type"] == "SDR" and result[experiment]["flag"] == True:
+            SDRprocessed_iteration.remove(experiment.split("_")[-1])
 
     DBBCprocessed_iteration.sort(key=int, reverse=False)
     SDRprocessed_iteration.sort(key=int, reverse=False)
