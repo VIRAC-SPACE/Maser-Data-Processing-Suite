@@ -50,6 +50,41 @@ def dopler(ObservedFrequency, velocityReceiver, f0):
     return velocitySoure
 
 
+def STON(xarray, yarray, cuts):
+    cutsIndex = list()
+    cutsIndex.append(0)
+
+    for cut in cuts:
+        cutsIndex.append((np.abs(xarray - float(cut[0]))).argmin())
+        cutsIndex.append((np.abs(xarray - float(cut[1]))).argmin())
+
+    cutsIndex.append(-1)
+
+    y_array = list()
+
+    i = 0
+    j = 1
+
+    while i != len(cutsIndex):
+        y_array.append(yarray[cutsIndex[i]: cutsIndex[j]])
+        i = i + 2
+        j = j + 2
+
+    y = list()
+
+    for p in y_array:
+        for p1 in p:
+            y.append(p1)
+
+    y = np.array(y)
+
+    std = np.std(y)
+    max = np.max(yarray)
+
+    ston = max / (std * 3)
+    return ston
+
+
 class Result(object):
     __slots__ = ('matrix', 'specie')
 
@@ -64,8 +99,7 @@ class Result(object):
         return self.specie
 
 
-def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left, p_sig_on_right, p_ref_on_left,
-                       p_ref_on_right, frequencyA, logs, pair):
+def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left, p_sig_on_right, p_ref_on_left, p_ref_on_right, frequencyA, logs, pair):
     df_div = float(logs["header"]["df_div,df"][0])
     BW = float(logs["header"]["Fs,Ns,RBW"][0])
     f_shift = BW / df_div
@@ -77,27 +111,17 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
     si = int(l_spec / 2 - l_spec * avg_interval / 2)
     ei = int(l_spec / 2 + l_spec * avg_interval / 2)
 
-    Tsys_off_1_left = float(logs["header"]["Tcal"][0]) * (
-                (p_ref_on_left + p_ref_left) - np.mean(p_ref_on_left[si:ei] - p_ref_left[si:ei])) / (
-                                  2 * np.mean(p_ref_on_left[si:ei] - p_ref_left[si:ei]))
-    Tsys_off_2_left = float(logs["header"]["Tcal"][1]) * (
-                (p_sig_on_left + p_sig_left) - np.mean(p_sig_on_left[si:ei] - p_sig_left[si:ei])) / (
-                                  2 * np.mean(p_sig_on_left[si:ei] - p_sig_left[si:ei]))
+    Tsys_off_1_left = float(logs["header"]["Tcal"][0]) * ((p_ref_on_left + p_ref_left) - np.mean(p_ref_on_left[si:ei] - p_ref_left[si:ei])) / (2 * np.mean(p_ref_on_left[si:ei] - p_ref_left[si:ei]))
+    Tsys_off_2_left = float(logs["header"]["Tcal"][1]) * ((p_sig_on_left + p_sig_left) - np.mean(p_sig_on_left[si:ei] - p_sig_left[si:ei])) / (2 * np.mean(p_sig_on_left[si:ei] - p_sig_left[si:ei]))
 
-    Tsys_off_1_right = float(logs["header"]["Tcal"][0]) * (
-                (p_ref_on_right + p_ref_right) - np.mean(p_ref_on_right[si:ei] - p_ref_right[si:ei])) / (
-                                   2 * np.mean(p_ref_on_right[si:ei] - p_ref_right[si:ei]))
-    Tsys_off_2_right = float(logs["header"]["Tcal"][1]) * (
-                (p_sig_on_right + p_sig_right) - np.mean(p_sig_on_right[si:ei] - p_sig_right[si:ei])) / (
-                                   2 * np.mean(p_sig_on_right[si:ei] - p_sig_right[si:ei]))
+    Tsys_off_1_right = float(logs["header"]["Tcal"][0]) * ((p_ref_on_right + p_ref_right) - np.mean(p_ref_on_right[si:ei] - p_ref_right[si:ei])) / (2 * np.mean(p_ref_on_right[si:ei] - p_ref_right[si:ei]))
+    Tsys_off_2_right = float(logs["header"]["Tcal"][1]) * ((p_sig_on_right + p_sig_right) - np.mean(p_sig_on_right[si:ei] - p_sig_right[si:ei])) / (2 * np.mean(p_sig_on_right[si:ei] - p_sig_right[si:ei]))
 
     Ta_1_caloff_left = Tsys_off_1_left * (p_sig_left - p_ref_left) / p_ref_left  # non-cal phase
     Ta_1_caloff_right = Tsys_off_1_right * (p_sig_right - p_ref_right) / p_ref_right  # non-cal phase
 
-    Ta_1_calon_left = (Tsys_off_1_left + float(logs["header"]["Tcal"][0])) * (
-                p_sig_on_left - p_ref_on_left) / p_ref_on_left  # cal phase
-    Ta_1_calon_right = (Tsys_off_1_right + float(logs["header"]["Tcal"][1])) * (
-                p_sig_on_right - p_ref_on_right) / p_ref_on_right  # cal phase
+    Ta_1_calon_left = (Tsys_off_1_left + float(logs["header"]["Tcal"][0])) * (p_sig_on_left - p_ref_on_left) / p_ref_on_left  # cal phase
+    Ta_1_calon_right = (Tsys_off_1_right + float(logs["header"]["Tcal"][1])) * (p_sig_on_right - p_ref_on_right) / p_ref_on_right  # cal phase
 
     Ta_sig_left = (Ta_1_caloff_left + Ta_1_calon_left) / 2
     Ta_sig_right = (Ta_1_caloff_right + Ta_1_calon_right) / 2
@@ -105,10 +129,8 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
     Ta_2_caloff_left = Tsys_off_2_left * (p_ref_left - p_sig_left) / p_sig_left  # non-cal phase
     Ta_2_caloff_right = Tsys_off_2_right * (p_ref_right - p_sig_right) / p_sig_right  # non-cal phase
 
-    Ta_2_calon_left = (Tsys_off_2_left + float(logs["header"]["Tcal"][0])) * (
-                p_ref_on_left - p_sig_on_left) / p_sig_on_left  # cal phase
-    Ta_2_calon_right = (Tsys_off_2_right + float(logs["header"]["Tcal"][1])) * (
-                p_ref_on_right - p_sig_on_right) / p_sig_on_right  # cal phase
+    Ta_2_calon_left = (Tsys_off_2_left + float(logs["header"]["Tcal"][0])) * (p_ref_on_left - p_sig_on_left) / p_sig_on_left  # cal phase
+    Ta_2_calon_right = (Tsys_off_2_right + float(logs["header"]["Tcal"][1])) * (p_ref_on_right - p_sig_on_right) / p_sig_on_right  # cal phase
 
     Ta_ref_left = (Ta_2_caloff_left + Ta_2_calon_left) / 2
     Ta_ref_right = (Ta_2_caloff_right + Ta_2_calon_right) / 2
@@ -122,8 +144,13 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
     Ta_left = (Ta_sig_left + Ta_ref_left) / 2
     Ta_right = (Ta_sig_right + Ta_ref_right) / 2
 
-    El = (float(logs[pair[0][0]]["AzEl"][1]) + float(logs[pair[0][1]]["AzEl"][1]) + float(
-        logs[pair[1][0]]["AzEl"][1]) + float(logs[pair[1][1]]["AzEl"][1])) / 4
+    Tsys_r_left = np.mean(Tsys_off_1_left[si:ei])
+    Tsys_r_right = np.mean(Tsys_off_1_right[si:ei])
+
+    Tsys_s_left = np.mean(Tsys_off_2_left[si:ei])
+    Tsys_s_right = np.mean(Tsys_off_2_right[si:ei])
+
+    El = (float(logs[pair[0][0]]["AzEl"][1]) + float(logs[pair[0][1]]["AzEl"][1]) + float(logs[pair[1][0]]["AzEl"][1]) + float(logs[pair[1][1]]["AzEl"][1])) / 4
 
     G_El = logs["header"]["Elev_poly"]
     G_El = [float(gel) for gel in G_El]
@@ -136,7 +163,7 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
     Sf_left = Ta_left / ((float(logs["header"]["DPFU"][0])) * np.polyval(G_El, El))
     Sf_right = Ta_right / ((float(logs["header"]["DPFU"][1])) * np.polyval(G_El, El))
 
-    return (Sf_left[si:ei], Sf_right[si:ei], frequencyA[si:ei])
+    return (Sf_left[si:ei], Sf_right[si:ei], frequencyA[si:ei], Tsys_r_left, Tsys_r_right, Tsys_s_left, Tsys_s_right)
 
 
 class Analyzer(QWidget):
@@ -145,17 +172,24 @@ class Analyzer(QWidget):
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.setWindowTitle("SDR")
         self.center()
-        self.DataDir = getConfigs("paths", "dataFilePath") + "SDR/" + getArgs("source") + "/f" + getArgs(
-            "line") + "/" + getArgs("iteration_number") + "/"
+        self.DataDir = getConfigs("paths", "dataFilePath") + "SDR/" + getArgs("source") + "/f" + getArgs("line") + "/" + getArgs("iteration_number") + "/"
         self.DataFiles = os.listdir(self.DataDir)
         self.ScanPairs = self.createScanPairs()
         self.index = 0
+        self.cuts = getConfigs('cuts', getArgs("source")).split(";")
+        self.cuts = [c.split(",") for c in self.cuts]
         self.Sf_left = list()
         self.Sf_right = list()
-        self.logs = LogReaderFactory.getLogReader(LogTypes.SDR,
-                                                  getConfigs("paths", "logPath") + "SDR/" + getArgs("logFile"),
-                                                  getConfigs("paths", "prettyLogsPath") + getArgs(
-                                                      "source") + "_" + getArgs("iteration_number")).getLogs()
+        self.Tsys_r_left_list = list()
+        self.Tsys_r_right_list = list()
+        self.Tsys_s_left_list = list()
+        self.Tsys_s_right_list = list()
+
+        self.STON_list_left = list()
+        self.STON_list_right = list()
+        self.STON_list_AVG = list()
+
+        self.logs = LogReaderFactory.getLogReader(LogTypes.SDR,getConfigs("paths", "logPath") + "SDR/" + getArgs("logFile"),getConfigs("paths", "prettyLogsPath") + getArgs("source") + "_" + getArgs("iteration_number")).getLogs()
         self.grid = QGridLayout()
         self.setLayout(self.grid)
         self.grid.setSpacing(10)
@@ -234,20 +268,31 @@ class Analyzer(QWidget):
 
         # plot2
         self.plot_start__rightB = Plot()
-        self.plot_start__rightB.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "Right Polarization", (1, 1),
-                                          "linear")
+        self.plot_start__rightB.creatPlot(self.grid, 'Frequency Mhz', 'Amplitude', "Right Polarization", (1, 1),"linear")
         self.plot_start__rightB.plot(frequencyA, p_sig_right, 'b', label=str(index + 1) + "s0")
         self.plot_start__rightB.plot(frequencyB, p_ref_right, 'g', label=str(index + 1) + "r0")
         self.plot_start__rightB.plot(frequencyC, p_sig_on_right, 'r', label=str(index + 1) + "s1")
         self.plot_start__rightB.plot(frequencyD, p_ref_on_right, 'y', label=str(index + 1) + "r1")
         self.grid.addWidget(self.plot_start__rightB, 0, 1)
 
-        Sf_left, Sf_right, frequencyA1 = frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right,
-                                                            p_sig_on_left, p_sig_on_right, p_ref_on_left,
-                                                            p_ref_on_right, frequencyA, self.logs, pair)
+        Sf_left, Sf_right, frequencyA1, Tsys_r_left, Tsys_r_right, Tsys_s_left, Tsys_s_right = frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left, p_sig_on_right, p_ref_on_left, p_ref_on_right, frequencyA, self.logs, pair)
+
         self.Sf_left.append(Sf_left)
         self.Sf_right.append(Sf_right)
         self.x = frequencyA1
+
+        self.Tsys_r_left_list.append(Tsys_r_left)
+        self.Tsys_r_right_list.append(Tsys_r_right)
+        self.Tsys_s_left_list.append(Tsys_s_left)
+        self.Tsys_s_right_list.append(Tsys_s_right)
+
+        ston_left = STON(self.x, self.Sf_left, self.cuts)
+        ston_right = STON(self.x, self.Sf_right, self.cuts)
+        stone_AVG = STON(self.x, ((np.array(self.Sf_left) + np.array(self.Sf_right)) / 2), self.cuts)
+
+        self.STON_list_left.append(ston_left)
+        self.STON_list_right.append(ston_right)
+        self.STON_list_AVG.append(stone_AVG)
 
         # plot3
         self.total__left = Plot()
@@ -355,9 +400,6 @@ class Analyzer(QWidget):
             VelTotal = lsr(RaStr, DecStr, date, stringTime, x, y, z)
             print("VelTotal", VelTotal)
 
-            # self.max_y_left_index = self.Sf_left[p].argmax(axis=0)
-            # self.max_y_right_index = self.Sf_right[p].argmax(axis=0)
-
             line = getConfigs('base_frequencies_SDR', "f" + getArgs("line")).replace(" ", "").split(",")
             lineF = float(line[0]) * (10 ** 9)
             lineS = line[1]
@@ -377,26 +419,39 @@ class Analyzer(QWidget):
         y__right_avg = y__right_avg / len(self.ScanPairs)
 
         self.plot_velocity__left = Plot()
-        self.plot_velocity__left.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)',
-                                           "Left Polarization", (1, 0), "linear")
+        self.plot_velocity__left.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Left Polarization", (1, 0), "linear")
         self.plot_velocity__left.plot(velocitys_avg, y__left_avg, 'b')
 
         self.plot_velocity__right = Plot()
-        self.plot_velocity__right.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)',
-                                            "Right Polarization", (1, 1), "linear")
+        self.plot_velocity__right.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Right Polarization", (1, 1), "linear")
         self.plot_velocity__right.plot(velocitys_avg, y__right_avg, 'b')
+
+        self.plot_tsys = Plot()
+        self.plot_tsys.creatPlot(self.grid, 'Time', 'System temperature', "System temperature in time", (3, 0), "linear")
+
+        time = range(0, len(self.Tsys_r_left_list))
+        self.plot_tsys.plot(time, self.Tsys_r_left_list, 'b', label="Tsys_r_left")
+        self.plot_tsys.plot(time, self.Tsys_r_right_list, 'r', label="Tsys_r_right")
+        self.plot_tsys.plot(time, self.Tsys_s_left_list, 'g', label="Tsys_s_left")
+        self.plot_tsys.plot(time, self.Tsys_s_right_list, 'y', label="Tsys_s_right")
+
+        self.plot_STON = Plot()
+        self.plot_STON.creatPlot(self.grid, 'Pair', 'Ratio', "Signal to Noise", (3, 1), "linear")
+        self.plot_STON.plot(time, self.STON_list_left, '*r', label="left Polarization")
+        self.plot_STON.plot(time, self.STON_list_right, 'og', label="fight Polarization")
+        self.plot_STON.plot(time, self.STON_list_AVG, 'vb', label="AVG Polarization")
 
         self.grid.addWidget(self.plot_velocity__left, 0, 0)
         self.grid.addWidget(self.plot_velocity__right, 0, 1)
+        self.grid.addWidget(self.plot_tsys, 2, 0)
+        self.grid.addWidget(self.plot_STON, 2, 1)
 
-        totalResults = np.transpose(
-            np.array([np.transpose(velocitys_avg), np.transpose(y__left_avg), np.transpose(y__right_avg)]))
+        totalResults = np.transpose(np.array([np.transpose(velocitys_avg), np.transpose(y__left_avg), np.transpose(y__right_avg)]))
 
         # source_day_Month_year_houre:minute:righte_station_iteration.dat
         day = scan_1["date"].split("-")[2][0:2]
         month = scan_1["date"].split("-")[1]
-        months = {"Jan": "1", "Feb": "2", "Mar": "3", "Apr": "4", "May": "5", "Jun": "6", "Jul": "7", "Aug": "8",
-                  "Sep": "9", "Oct": "10", "Nov": "11", "Dec": "12"}
+        months = {"Jan": "1", "Feb": "2", "Mar": "3", "Apr": "4", "May": "5", "Jun": "6", "Jul": "7", "Aug": "8", "Sep": "9", "Oct": "10", "Nov": "11", "Dec": "12"}
         month = list(months.keys())[int(month) - 1]
         year = scan_1["date"].split("-")[0]
         houre = scan_1["date"].split("T")[1].split(":")[0]
@@ -405,9 +460,7 @@ class Analyzer(QWidget):
         if not os.path.exists(getConfigs("paths", "dataFilePath") + "SDR/" + getArgs("line") + "/"):
             os.makedirs(getConfigs("paths", "dataFilePath") + "SDR/" + getArgs("line") + "/")
 
-        output_file_name = getConfigs("paths", "dataFilePath") + "SDR/" + getArgs("line") + "/" + getArgs(
-            "source") + "_" + day + "_" + month + "_" + year + "_" + houre + ":" + minute + ":" + righte + "_" + station + "_" + getArgs(
-            "iteration_number") + ".dat"
+        output_file_name = getConfigs("paths", "dataFilePath") + "SDR/" + getArgs("line") + "/" + getArgs("source") + "_" + day + "_" + month + "_" + year + "_" + houre + ":" + minute + ":" + righte + "_" + station + "_" + getArgs("iteration_number") + ".dat"
         print("output_file_name", output_file_name)
         output_file_name = output_file_name.replace(" ", "")
         result = Result(totalResults, specie)
@@ -460,12 +513,24 @@ class Analyzer(QWidget):
             p_ref_on_left = np.fft.fftshift(p_ref_on_left)  # s1
             p_ref_on_right = np.fft.fftshift(p_ref_on_right)  # s1
 
-            Sf_left, Sf_right, frequencyA1 = frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right,
-                                                                p_sig_on_left, p_sig_on_right, p_ref_on_left,
-                                                                p_ref_on_right, frequencyA, self.logs, pair)
+            Sf_left, Sf_right, frequencyA1, Tsys_r_left, Tsys_r_right, Tsys_s_left, Tsys_s_right = frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left, p_sig_on_right, p_ref_on_left, p_ref_on_right, frequencyA, self.logs, pair)
+
             self.Sf_left.append(Sf_left)
             self.Sf_right.append(Sf_right)
             self.x = frequencyA1
+
+            self.Tsys_r_left_list.append(Tsys_r_left)
+            self.Tsys_r_right_list.append(Tsys_r_right)
+            self.Tsys_s_left_list.append(Tsys_s_left)
+            self.Tsys_s_right_list.append(Tsys_s_right)
+
+            ston_left = STON(self.x, self.Sf_left, self.cuts)
+            ston_right = STON(self.x, self.Sf_right, self.cuts)
+            stone_AVG = STON(self.x, ((np.array(self.Sf_left) + np.array(self.Sf_right)) / 2), self.cuts)
+
+            self.STON_list_left.append(ston_left)
+            self.STON_list_right.append(ston_right)
+            self.STON_list_AVG.append(stone_AVG)
 
             if self.index == len(self.ScanPairs) - 1:
                 self.nextPairButton.setText('Move to total results')

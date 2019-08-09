@@ -458,10 +458,8 @@ class Analyzer(QWidget):
             self.grid.addWidget(self.plot_start_u9, 0, 1)
 
             # Calibration
-            self.data_u1 = self.calibration(self.xdata, self.ydata_1_u1, self.ydata_2_u1, float(self.tsys_u1_1),
-                                            float(self.tsys_u1_2), self.elevation)
-            self.data_u9 = self.calibration(self.xdata, self.ydata_1_u9, self.ydata_2_u9, float(self.tsys_u9_1),
-                                            float(self.tsys_u9_2), self.elevation)
+            self.data_u1 = self.calibration(self.xdata, self.ydata_1_u1, self.ydata_2_u1, float(self.tsys_u1_1), float(self.tsys_u1_2), self.elevation)
+            self.data_u9 = self.calibration(self.xdata, self.ydata_1_u9, self.ydata_2_u9, float(self.tsys_u9_1), float(self.tsys_u9_2), self.elevation)
 
             self.xdata = np.array(self.xdata)
 
