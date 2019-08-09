@@ -9,17 +9,20 @@ import numpy as np
 
 from help import *
 
+
 def parseArguments():
     parser = argparse.ArgumentParser(description='''Fix Amplitudes in output file. ''', epilog="""Fix.""")
     parser.add_argument("source", help="source name", type=str, default="")
+    parser.add_argument("line", help="line", type=int)
     parser.add_argument("type", help="source name", type=str, default="SDR")
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-v","--version", action="version", version='%(prog)s - Version 0.1')
     args = parser.parse_args()
     return args
-  
-def getLocalMax(outputfile, outputFilePath, source_velocities, index_range_for_local_maxima,source):
-    file = outputFilePath + source + "/" + outputfile
+
+
+def getLocalMax(outputfile, outputFilePath, source_velocities, index_range_for_local_maxima, source, line):
+    file = outputFilePath + source + "/" + line +  "/" + outputfile
     data = np.fromfile(file, dtype="float64", count=-1, sep=" ") .reshape((file_len(file),4))
     x = data[:, [0]]
     y_u1 = data[:, [1]] 
@@ -60,14 +63,14 @@ def getLocalMax(outputfile, outputFilePath, source_velocities, index_range_for_l
     return (max_apmlitudes_u1, max_apmlitudes_u9, max_apmlitudes_uavg)
 
 
-def chanegResultAmplitudes(outputfiles, resutlFile, outputFilePath, source_velocities, index_range_for_local_maxima, source, type):
+def chanegResultAmplitudes(outputfiles, resutlFile, outputFilePath, source_velocities, index_range_for_local_maxima, source, type, line):
   
     with open(resutlFile) as result:
         result_json = json.load(result)
         
-    for outputfile  in outputfiles:
+    for outputfile in outputfiles:
         itarration = getIerattion(outputfile)
-        max_apmlitudes_u1, max_apmlitudes_u9, max_apmlitudes_uavg = getLocalMax(outputfile, outputFilePath, source_velocities, index_range_for_local_maxima, source)
+        max_apmlitudes_u1, max_apmlitudes_u9, max_apmlitudes_uavg = getLocalMax(outputfile, outputFilePath, source_velocities, index_range_for_local_maxima, source, line)
         
         for key in result_json.keys():
             if key.endswith("_" + itarration):
@@ -80,23 +83,27 @@ def chanegResultAmplitudes(outputfiles, resutlFile, outputFilePath, source_veloc
     resultFile.write(json.dumps(result_json, indent=2))
     resultFile.close()
 
+
 def getIerattion(outputFile):
     itarration = outputFile.split(".")[0].split("_")[-1]
     return itarration
-    
-def getAllOutputfiles(outputFilePath, source):
+
+
+def getAllOutputfiles(outputFilePath, source, line):
     outputFiles = list()
     
-    for file in os.listdir(outputFilePath+ "/" + source):
+    for file in os.listdir(outputFilePath+ "/" + source + "/" + line):
         if file.startswith(source):
             outputFiles.append(file)
             
     return outputFiles
 
+
 def main():
     args = parseArguments()
     source= str(args.__dict__["source"])
     type = str(args.__dict__["type"])
+    line = str(args.__dict__["line"])
     configFilePath = str(args.__dict__["config"])
     config = configparser.RawConfigParser()
     config.read(configFilePath)
@@ -104,9 +111,10 @@ def main():
     resultFilePath = config.get('paths', "resultFilePath")
     source_velocities = config.get('velocities', source).replace(" ", "").split(",")
     index_range_for_local_maxima = int(config.get('parameters', "index_range_for_local_maxima"))
-    resutlFile = resultFilePath + source + ".json"
-    outputfiles = getAllOutputfiles(outputFilePath, source)
-    chanegResultAmplitudes(outputfiles, resutlFile, outputFilePath, source_velocities, index_range_for_local_maxima, source, type)
-         
+    resutlFile = resultFilePath + source + "_" + line +".json"
+    outputfiles = getAllOutputfiles(outputFilePath, source, line)
+    chanegResultAmplitudes(outputfiles, resutlFile, outputFilePath, source_velocities, index_range_for_local_maxima, source, type, line)
+
+
 if __name__=="__main__":
     main()
