@@ -10,6 +10,7 @@ from numpy import genfromtxt
 from scipy.interpolate import griddata
 import matplotlib
 from matplotlib.ticker import MaxNLocator
+from matplotlib.colors import LogNorm
 from astropy.time import Time
 from astropy.stats import LombScargle
 from astropy.modeling import models, fitting
@@ -363,7 +364,8 @@ class Maps_View(PlottingView):
             Z = griddata((velocity, observed_time), observed_flux, (X[:], Y[:]), method='linear')
             self.mapPlot = Plot()
             self.mapPlot.creatPlot(self.getGrid(), "Velocity (km/s)", "JD (days) -  " + str(jd_first), None, (1,0), "log")
-            CS = self.mapPlot.contourf(X, Y, Z)
+            lvls = np.logspace(0, 4, 20)
+            CS = self.mapPlot.contourf(X, Y, Z, levels = lvls)
     
             cbar = self.mapPlot.colorbar(CS)
             cbar.set_clim(vmin=0) # ,vmax=max_flux_limit

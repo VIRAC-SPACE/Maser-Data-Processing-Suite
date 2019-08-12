@@ -79,8 +79,8 @@ class Plot(FigureCanvas):
     def set_ylim(self, new_y_lim):
         self.graph.set_ylim(new_y_lim)
     
-    def contourf(self, x, y, z):
-        cs = self.graph.contourf(x, y, z, 500, cmap='jet')
+    def contourf(self, x, y, z, **options):
+        cs = self.graph.contourf(x, y, z, 500, cmap='jet', **options)
         return cs
 
     def remove_markers(self):
