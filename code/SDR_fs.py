@@ -435,19 +435,6 @@ class Analyzer(QWidget):
         self.plot_tsys.plot(time, self.Tsys_s_left_list, 'g', label="Tsys_s_left")
         self.plot_tsys.plot(time, self.Tsys_s_right_list, 'y', label="Tsys_s_right")
 
-        self.plot_STON = Plot()
-        self.plot_STON.creatPlot(self.grid, 'Pair', 'Ratio', "Signal to Noise", (3, 1), "linear")
-        self.plot_STON.plot(time, self.STON_list_left, '*r', label="left Polarization")
-        self.plot_STON.plot(time, self.STON_list_right, 'og', label="fight Polarization")
-        self.plot_STON.plot(time, self.STON_list_AVG, 'vb', label="AVG Polarization")
-
-        self.grid.addWidget(self.plot_velocity__left, 0, 0)
-        self.grid.addWidget(self.plot_velocity__right, 0, 1)
-        self.grid.addWidget(self.plot_tsys, 2, 0)
-        self.grid.addWidget(self.plot_STON, 2, 1)
-
-        totalResults = np.transpose(np.array([np.transpose(velocitys_avg), np.transpose(y__left_avg), np.transpose(y__right_avg)]))
-
         # source_day_Month_year_houre:minute:righte_station_iteration.dat
         day = scan_1["date"].split("-")[2][0:2]
         month = scan_1["date"].split("-")[1]
@@ -457,6 +444,36 @@ class Analyzer(QWidget):
         houre = scan_1["date"].split("T")[1].split(":")[0]
         minute = scan_1["date"].split("T")[1].split(":")[1]
         righte = scan_1["date"].split("T")[1].split(":")[2]
+        sys_temp_out = np.transpose(np.array([time, self.Tsys_r_left_list, self.Tsys_r_right_list, self.Tsys_s_left_list, self.Tsys_s_right_list]))
+        sys_temp_out_file_name = getConfigs("paths", "tsysFilePath") + "/" + getArgs("source") + "_" + day + "_" + month + "_" + year + "_" + houre + ":" + minute + ":" + righte + "_" + station + "_" + getArgs("iteration_number") + ".dat"
+        sys_temp_out_file_name = sys_temp_out_file_name.replace(" ", "")
+        np.save(sys_temp_out_file_name, sys_temp_out)
+
+        self.STON_list_left = [value for value in self.STON_list_left if str(value) != 'nan']
+        self.STON_list_right = [value for value in self.STON_list_right if str(value) != 'nan']
+        self.STON_list_AVG = [value for value in self.STON_list_AVG if str(value) != 'nan']
+
+        time = list(time)
+        while len(time) != len(self.STON_list_left):
+            time.pop()
+
+        self.plot_STON = Plot()
+        self.plot_STON.creatPlot(self.grid, 'Pair', 'Ratio', "Signal to Noise", (3, 1), "linear")
+        self.plot_STON.plot(time, self.STON_list_left, '*r', label="left Polarization")
+        self.plot_STON.plot(time, self.STON_list_right, 'og', label="fight Polarization")
+        self.plot_STON.plot(time, self.STON_list_AVG, 'vb', label="AVG Polarization")
+
+        print("Average signal to noise for left polarization", np.mean(self.STON_list_left))
+        print("Average signal to noise for right polarization", np.mean(self.STON_list_right))
+        print("Average signal to noise for average polarization", np.mean(self.STON_list_AVG))
+
+        self.grid.addWidget(self.plot_velocity__left, 0, 0)
+        self.grid.addWidget(self.plot_velocity__right, 0, 1)
+        self.grid.addWidget(self.plot_tsys, 2, 0)
+        self.grid.addWidget(self.plot_STON, 2, 1)
+
+        totalResults = np.transpose(np.array([np.transpose(velocitys_avg), np.transpose(y__left_avg), np.transpose(y__right_avg)]))
+
         if not os.path.exists(getConfigs("paths", "dataFilePath") + "SDR/" + getArgs("line") + "/"):
             os.makedirs(getConfigs("paths", "dataFilePath") + "SDR/" + getArgs("line") + "/")
 
