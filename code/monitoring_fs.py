@@ -364,7 +364,8 @@ class Maps_View(PlottingView):
             Z = griddata((velocity, observed_time), observed_flux, (X[:], Y[:]), method='linear')
             self.mapPlot = Plot()
             self.mapPlot.creatPlot(self.getGrid(), "Velocity (km/s)", "JD (days) -  " + str(jd_first), None, (1,0), "log")
-            lvls = np.logspace(0, 4, 20)
+            lvls = np.linspace(0, 4, int(np.max(observed_flux)))
+            #lvls = np.logspace(0, 4, np.max(observed_flux))
             CS = self.mapPlot.contourf(X, Y, Z, levels = lvls)
     
             cbar = self.mapPlot.colorbar(CS)
