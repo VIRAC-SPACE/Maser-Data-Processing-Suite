@@ -364,7 +364,7 @@ class Maps_View(PlottingView):
             Z = griddata((velocity, observed_time), observed_flux, (X[:], Y[:]), method='linear')
             self.mapPlot = Plot()
             self.mapPlot.creatPlot(self.getGrid(), "Velocity (km/s)", "JD (days) -  " + str(jd_first), None, (1,0), "log")
-            lvls = np.linspace(int(np.min(observed_flux)), int(np.max(observed_flux)))
+            lvls = np.linspace(int(np.min(observed_flux)), int(np.max(observed_flux)), 10)
             #lvls = np.logspace(0, np.max(observed_flux))
             CS = self.mapPlot.contourf(X, Y, Z, levels = lvls)
     
