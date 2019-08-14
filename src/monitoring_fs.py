@@ -512,8 +512,8 @@ class Monitoring_View(PlottingView):
             self.gauss_view2.show()
 
         def createMapVew(self):
-            os.system("perl " + "code/find_multiple.pl " + self.output_path + "/" + self.source + "/"+ self.line + " " + self.source)
-            print("perl " + "code/find_multiple.pl " + self.output_path + "/" + self.source + "/"+ self.line + " " + self.source)
+            os.system("perl " + "src/find_multiple.pl " + self.output_path + "/" + self.source + "/"+ self.line + " " + self.source)
+            print("perl " + "scr/find_multiple.pl " + self.output_path + "/" + self.source + "/"+ self.line + " " + self.source)
             self.maps_view = Maps_View(self.source, self.line)
             self.maps_view.plotMaps(self.output_path)
             self.maps_view.show()
@@ -956,7 +956,7 @@ class MonitoringApp(QWidget):
             lineDict["u9"].append(l2)
             lineDict["avg"].append(l3)
 
-        np.savetxt("monitoring/" + self.source + "_" + self.line + ".txt", np.transpose(monitoringResults))
+        np.savetxt(getConfigs("paths", "monitoringFilePath") + self.source + "_" + self.line + ".txt", np.transpose(monitoringResults))
         self.Monitoring_View._addWidget(self.monitoringPlot, 0, 0)
         #self.monitoringPlot.setXtics(date_list, [convertDatetimeObjectToMJD(date) for date in  date_list], '30')
         

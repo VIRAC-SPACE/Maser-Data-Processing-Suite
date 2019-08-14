@@ -137,14 +137,14 @@ def main():
             for i in DBBC_iterations:
                 if i not in DBBCprocessed_iteration:
                     frequencyShiftingParametr = sourceName + " " + getArgs("line") + " " + i + " " + str(DBBClogfile_list[findLogFile(DBBClogfile_list, i)])
-                    logger.info("Executing python3 " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr + " -m")
-                    os.system("python3  " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr + " -m")
+                    logger.info("Executing python3 " + "src/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr + " -m")
+                    os.system("python3  " + "src/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr + " -m")
         else:
             for i in DBBC_iterations:
                 if i not in DBBCprocessed_iteration:
                     frequencyShiftingParametr = sourceName + " " + getArgs("line") + " " + i + " " + str(DBBClogfile_list[findLogFile(DBBClogfile_list, i)])
-                    logger.info("Executing python3 " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
-                    os.system("python3 " + "code/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
+                    logger.info("Executing python3 " + "src/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
+                    os.system("python3 " + "src/frequencyShiftingAnalyzer_qt5.py " + frequencyShiftingParametr)
 
         data_files = list()
         for data in os.listdir(DBBCpath + "/" + getArgs("line")):
@@ -153,11 +153,11 @@ def main():
         for d in data_files:
             if d.split(".")[0].split("_")[-1] not in DBBCprocessed_iteration:
                 if args.noGUI:
-                    logger.info("Executing python3 " + "code/totalSpectrumAnalyer_qt5.py " + " " + d + " " + getArgs("line") + " -n " + " -t DBBC")
-                    os.system("python3 " + "code/totalSpectrumAnalyer_qt5.py " + " " + d + " " + getArgs("line") + " -n " + " -t DBBC")
+                    logger.info("Executing python3 " + "src/totalSpectrumAnalyer_qt5.py " + " " + d + " " + getArgs("line") + " -n " + " -t DBBC")
+                    os.system("python3 " + "src/totalSpectrumAnalyer_qt5.py " + " " + d + " " + getArgs("line") + " -n " + " -t DBBC")
                 else:
-                    logger.info("Executing python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " " + getArgs("line") + " -t DBBC")
-                    os.system("python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " " + getArgs("line") + " -t DBBC")
+                    logger.info("Executing python3 " + "src/totalSpectrumAnalyer_qt5.py " + d + " " + getArgs("line") + " -t DBBC")
+                    os.system("python3 " + "src/totalSpectrumAnalyer_qt5.py " + d + " " + getArgs("line") + " -t DBBC")
 
     except IOError as e:
         print("IO Error", e)
@@ -184,14 +184,14 @@ def main():
             for i in SDR_iterations:
                 if i not in SDRprocessed_iteration:
                     frequencyShiftingParametr = sourceName + " " + getArgs("line") + " " + i + " " + str(SDRlogfile_list[findLogFileSDR(SDRlogfile_list, i, getArgs("line"))])
-                    logger.info("Executing python3 " + "code/SDR_fs.py " + frequencyShiftingParametr + " -m")
-                    os.system("python3  " + "code/SDR_fs.py " + frequencyShiftingParametr + " -m")
+                    logger.info("Executing python3 " + "src/SDR_fs.py " + frequencyShiftingParametr + " -m")
+                    os.system("python3  " + "src/SDR_fs.py " + frequencyShiftingParametr + " -m")
         else:
             for i in SDR_iterations:
                 if i not in SDRprocessed_iteration:
                     frequencyShiftingParametr = sourceName + " " + getArgs("line") + " " + i + " " + str(SDRlogfile_list[findLogFileSDR(SDRlogfile_list, i, getArgs("line"))])
-                    logger.info("Executing python3 " + "code/SDR_fs.py " + frequencyShiftingParametr)
-                    os.system("python3 " + "code/SDR_fs.py " + frequencyShiftingParametr)
+                    logger.info("Executing python3 " + "src/SDR_fs.py " + frequencyShiftingParametr)
+                    os.system("python3 " + "src/SDR_fs.py " + frequencyShiftingParametr)
 
         data_files = list()
         for data in os.listdir(SDRpath + "/" + getArgs("line")):
@@ -201,11 +201,11 @@ def main():
         for d in data_files:
             if d.split(".")[0].split("_")[-1] not in SDRprocessed_iteration:
                 if args.noGUI:
-                    logger.info("Executing python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " " + getArgs("line") + " " + " -n")
-                    os.system("python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " " + getArgs("line") + " " + " -n")
+                    logger.info("Executing python3 " + "src/totalSpectrumAnalyer_qt5.py " + d + " " + getArgs("line") + " " + " -n")
+                    os.system("python3 " + "src/totalSpectrumAnalyer_qt5.py " + d + " " + getArgs("line") + " " + " -n")
                 else:
-                    logger.info("Executing python3 " + "code/totalSpectrumAnalyer_qt5.py " + d  + " " + getArgs("line"))
-                    os.system("python3 " + "code/totalSpectrumAnalyer_qt5.py " + d + " " + getArgs("line"))
+                    logger.info("Executing python3 " + "src/totalSpectrumAnalyer_qt5.py " + d  + " " + getArgs("line"))
+                    os.system("python3 " + "src/totalSpectrumAnalyer_qt5.py " + d + " " + getArgs("line"))
 
     except IOError as e:
         print("IO Error", e)

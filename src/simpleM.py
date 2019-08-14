@@ -44,8 +44,8 @@ def main():
 
     years_fmt = mdates.DateFormatter('%Y-%m')
 
-    old_monitoring_file = "old_monitoring/" + get_args("source") + ".dat"
-    new_monitoring_file = "monitoring/" + get_args("source") + "_6668" + ".txt"
+    old_monitoring_file = get_configs("paths", "oldMonitoringFilePath") + get_args("source") + ".dat"
+    new_monitoring_file = get_configs("paths", "monitoringFilePath") + get_args("source") + "_6668" + ".txt"
     compunet_count = len(get_configs("velocities", get_args("source") + "_6668").replace(" ", "").split(","))
     velocity = get_configs("velocities", get_args("source") + "_6668").replace(" ", "").split(",")
 
