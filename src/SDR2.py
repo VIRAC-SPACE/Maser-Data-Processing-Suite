@@ -428,6 +428,7 @@ class Analyzer(QWidget):
         print(len(y__left_avg))
 
         for p in range(0, len(self.ScanPairs)):
+            print(self.Sf_left[p], minimums_left[p])
             index_min_left = findNearestIndex(self.Sf_left[p], minimums_left[p])
             index_max_left = findNearestIndex(self.Sf_left[p], maximums_left[p])
             index_min_right = findNearestIndex(self.Sf_right[p], minimums_right[p])
