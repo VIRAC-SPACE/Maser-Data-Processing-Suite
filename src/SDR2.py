@@ -177,7 +177,7 @@ class Analyzer(QWidget):
         self.DataFiles = os.listdir(self.DataDir)
         self.ScanPairs = self.createScanPairs()
         self.index = 0
-        self.cuts = getConfigs('cuts', getArgs("source")).split(";")
+        self.cuts = getConfigs('cuts', getArgs("source") + "_" + getArgs("line")).split(";")
         self.cuts = [c.split(",") for c in self.cuts]
         self.Sf_left = list()
         self.Sf_right = list()

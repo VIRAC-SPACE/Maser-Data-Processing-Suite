@@ -52,6 +52,7 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
     df_div = float(logs["header"]["df_div,df"][0])
     BW = float(logs["header"]["Fs,Ns,RBW"][0])
     f_shift = BW / df_div
+
     l_spec = len(frequencyA)
     f_step = (frequencyA[l_spec - 1] - frequencyA[0]) / (l_spec - 1)
     n_shift = int(np.rint(f_shift / f_step))
@@ -92,8 +93,14 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
     Ta_left = (Ta_sig_left + Ta_ref_left) / 2
     Ta_right = (Ta_sig_right + Ta_ref_right) / 2
 
-    pair = ((str(scan) + "r0", str(scan) + "s0"), (str(scan) + "r1", str(scan) + "s1"))
+    Tsys_r_left = np.mean(Tsys_off_1_left[si:ei])
+    Tsys_r_right = np.mean(Tsys_off_1_right[si:ei])
+
+    Tsys_s_left = np.mean(Tsys_off_2_left[si:ei])
+    Tsys_s_right = np.mean(Tsys_off_2_right[si:ei])
+
     El = (float(logs[pair[0][0]]["AzEl"][1]) + float(logs[pair[0][1]]["AzEl"][1]) + float(logs[pair[1][0]]["AzEl"][1]) + float(logs[pair[1][1]]["AzEl"][1])) / 4
+
     G_El = logs["header"]["Elev_poly"]
     G_El = [float(gel) for gel in G_El]
     G_ELtmp = [0, 0, 0]
@@ -102,11 +109,8 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
     G_ELtmp[2] = G_El[0]
     G_El = G_ELtmp
 
-    Sf_left = Ta_left / (((-1) * float(logs["header"]["DPFU"][0])) * np.polyval(G_El, El))
-    Sf_right = Ta_right / (((-1) * float(logs["header"]["DPFU"][1])) * np.polyval(G_El, El))
-
-    si = si
-    ei = ei
+    Sf_left = Ta_left / ((float(logs["header"]["DPFU"][0])) * np.polyval(G_El, El))
+    Sf_right = Ta_right / ((float(logs["header"]["DPFU"][1])) * np.polyval(G_El, El))
 
     return (Sf_left[si:ei], Sf_right[si:ei], frequencyA[si:ei])
 
