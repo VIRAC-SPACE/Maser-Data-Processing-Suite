@@ -436,6 +436,20 @@ class Analyzer(QWidget):
             y__right_avg.append(self.Sf_right[p][index_right:index_left])
             velocitys_avg.append(velocity_list[p][index_right:index_left])
 
+        max_points_count = np.max([len(m) for m in velocitys_avg])
+        for s in range(0, len(velocity_list)):
+            result = np.zeros(max_points_count)
+            if len(velocitys_avg[s]) < max_points_count:
+                velocitys_avg[s] = result[:len(velocitys_avg[s])] = velocitys_avg[s]
+
+            if len(y__left_avg[s]) < max_points_count:
+                y__left_avg[s] = result[:len(y__left_avg[s])] = y__left_avg[s]
+
+            if len(y__right_avg[s]) < max_points_count:
+                y__right_avg[s] = result[:len(y__right_avg[s])] = y__right_avg[s]
+
+            print(len(velocitys_avg[s]), len(y__left_avg[s]), len(y__right_avg[s]))
+
         velocitys_avg = reduce(lambda x, y : x + y, velocitys_avg)
         y__left_avg = reduce(lambda x, y : x + y, y__left_avg)
         y__right_avg = reduce(lambda x, y : x + y, y__right_avg)
@@ -492,7 +506,7 @@ class Analyzer(QWidget):
         self.plot_STON = Plot()
         self.plot_STON.creatPlot(self.grid, 'Pair', 'Ratio', "Signal to Noise", (3, 1), "linear")
         self.plot_STON.plot(time, self.STON_list_left, '*r', label="left Polarization")
-        self.plot_STON.plot(time, self.STON_list_right, 'og', label="fight Polarization")
+        self.plot_STON.plot(time, self.STON_list_right, 'og', label="right Polarization")
         self.plot_STON.plot(time, self.STON_list_AVG, 'vb', label="AVG Polarization")
 
         print("Average signal to noise for left polarization", np.mean(self.STON_list_left))
