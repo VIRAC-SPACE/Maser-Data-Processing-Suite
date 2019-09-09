@@ -474,10 +474,10 @@ class Analyzer(QWidget):
         self.plot_tsys.creatPlot(self.grid, 'Time', 'System temperature', "System temperature in time", (3, 0), "linear")
 
         time = range(0, len(self.Tsys_r_left_list))
-        self.plot_tsys.plot(time, self.Tsys_r_left_list, 'b', label="Tsys_r_left")
-        self.plot_tsys.plot(time, self.Tsys_r_right_list, 'r', label="Tsys_r_right")
-        self.plot_tsys.plot(time, self.Tsys_s_left_list, 'g', label="Tsys_s_left")
-        self.plot_tsys.plot(time, self.Tsys_s_right_list, 'y', label="Tsys_s_right")
+        self.plot_tsys.plot(time, self.Tsys_r_left_list, '*b', label="Tsys_r_left")
+        self.plot_tsys.plot(time, self.Tsys_r_right_list, '*r', label="Tsys_r_right")
+        self.plot_tsys.plot(time, self.Tsys_s_left_list, '*g', label="Tsys_s_left")
+        self.plot_tsys.plot(time, self.Tsys_s_right_list, '*y', label="Tsys_s_right")
 
         # source_day_Month_year_houre:minute:righte_station_iteration.dat
         day = scan_1["date"].split("-")[2][0:2]

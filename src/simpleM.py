@@ -19,6 +19,7 @@ from parsers._configparser import ConfigParser
 def parse_arguments():
     parser = argparse.ArgumentParser(description='''Monitoring velocity amplitudes in time. ''', epilog="""Monitor.""")
     parser.add_argument("source", help="Source Name", type=str)
+    parser.add_argument("-b", "--base", help="Base component", type=int, default=-1)
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 2.0')
     args = parser.parse_args()
@@ -137,6 +138,21 @@ def main():
     ax1.grid(True)
     ax2.grid(True)
     plt.show()
+
+    if int(get_args("base")) >= 0:
+        fig = plt.figure("Monitoring")
+        ax1 = fig.add_subplot(111)
+
+        for component in components:
+            index = components.index(component)
+            y = correctNumpyReadData(data[:, [index + 1]])
+            base = correctNumpyReadData(data[:, [int(get_args("base"))]])
+            ax1.plot(x, y / base, symbols[index] + colors[index], label=velocity[index], linewidth=0.5, markersize=5)
+
+        ax1.legend()
+        ax1.grid(True)
+        plt.show()
+
     sys.exit(0)
 
 
