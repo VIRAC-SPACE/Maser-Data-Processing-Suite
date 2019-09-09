@@ -712,7 +712,7 @@ class Analyzer(QWidget):
         else:
             result[self.expername]["type"] = "DBBC"
 
-        gauss_lines = getConfigs("gauss_lines", self.source).replace(" ", "").split(",")
+        gauss_lines = getConfigs("gauss_lines", self.source + "_" + getArgs("line")).replace(" ", "").split(",")
         gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines, gaussianaAmplitudes, gaussianaMean, gaussianaSTD = computeGauss2(self.xarray, self.avg_y_NotSmoohtData, gauss_lines)
 
         result[self.expername]["areas"] = gaussianAreas
