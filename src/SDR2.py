@@ -22,8 +22,7 @@ from help import *
 
 
 def parseArguments():
-    parser = argparse.ArgumentParser(description='''Creates input file for plotting tool. ''',
-                                     epilog="""PRE PLOTTER.""")
+    parser = argparse.ArgumentParser(description='''Creates input file for plotting tool. ''', epilog="""PRE PLOTTER.""")
     parser.add_argument("source", help="Experiment source", type=str, default="")
     parser.add_argument("line", help="frequency", type=str)
     parser.add_argument("iteration_number", help="iteration number ", type=int)
@@ -437,18 +436,17 @@ class Analyzer(QWidget):
             velocitys_avg.append(velocity_list[p][index_right:index_left])
 
         max_points_count = np.max([len(m) for m in velocitys_avg])
+        print("max_points_count", max_points_count)
         for s in range(0, len(velocity_list)):
-            result = np.zeros(max_points_count)
+
             if len(velocitys_avg[s]) < max_points_count:
-                velocitys_avg[s] = result[:len(velocitys_avg[s])] = velocitys_avg[s]
+                velocitys_avg[s] = np.append(velocitys_avg[s], 0)
 
             if len(y__left_avg[s]) < max_points_count:
-                y__left_avg[s] = result[:len(y__left_avg[s])] = y__left_avg[s]
+                y__left_avg[s] = np.append(y__left_avg[s], 0)
 
             if len(y__right_avg[s]) < max_points_count:
-                y__right_avg[s] = result[:len(y__right_avg[s])] = y__right_avg[s]
-
-            print(len(velocitys_avg[s]), len(y__left_avg[s]), len(y__right_avg[s]))
+                y__right_avg[s] = np.append(y__right_avg[s], 0)
 
         velocitys_avg = reduce(lambda x, y : x + y, velocitys_avg)
         y__left_avg = reduce(lambda x, y : x + y, y__left_avg)
