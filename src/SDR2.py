@@ -414,10 +414,6 @@ class Analyzer(QWidget):
             velocity_max.append(np.max(velocitys))
             velocity_min.append(np.min(velocitys))
 
-            #y__left_avg = y__left_avg + self.Sf_left[p]
-            #y__right_avg = y__right_avg + self.Sf_right[p]
-            #velocitys_avg = velocitys_avg + velocitys
-
         velocitys_avg = []
         y__left_avg = []
         y__right_avg = []
@@ -455,12 +451,6 @@ class Analyzer(QWidget):
         velocitys_avg = velocitys_avg / len(self.ScanPairs)
         y__left_avg = y__left_avg / len(self.ScanPairs)
         y__right_avg = y__right_avg / len(self.ScanPairs)
-
-        #velocitys_avg_left = velocitys_avg[index_min_left:index_max_left]
-        #y__left_avg = y__left_avg[index_min_left:index_max_left]
-
-        #velocitys_avg_right = velocitys_avg[index_min_right:index_max_right]
-        #y__right_avg = y__right_avg[index_min_right:index_max_right]
 
         self.plot_velocity__left = Plot()
         self.plot_velocity__left.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Left Polarization", (1, 0), "linear")
