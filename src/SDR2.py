@@ -440,7 +440,7 @@ class Analyzer(QWidget):
         for s in range(0, len(velocity_list)):
 
             if len(velocitys_avg[s]) < max_points_count:
-                velocitys_avg[s] = np.append(velocitys_avg[s], velocitys_avg[s][-1] + 0.001)
+                velocitys_avg[s] = np.append(velocitys_avg[s], np.max(velocity_min))
 
             if len(y__left_avg[s]) < max_points_count:
                 y__left_avg[s] = np.append(y__left_avg[s], 0)
