@@ -599,29 +599,23 @@ class Analyzer(QWidget):
 
         # u1
         self.plot_7 = Plot()
-        self.plot_7.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Left Polarization", (1, 0),
-                              "linear")
+        self.plot_7.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Left Polarization", (1, 0), "linear")
         self.plot_7.plot(self.xarray, self.z1, 'b', label='Signal - polynomial', markersize=1)
-        self.plot_7.plot(self.xarray[indexes_for_ceb], self.z1[indexes_for_ceb], 'dr',
-                         label="Local Maximums for signal", markersize=2)
+        self.plot_7.plot(self.xarray[indexes_for_ceb], self.z1[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2)
         self.plot_7.annotations(self.xarray[indexes_for_ceb], self.z1[indexes_for_ceb])
 
         # u9
         self.plot_8 = Plot()
-        self.plot_8.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Right Polarization", (1, 1),
-                              "linear")
+        self.plot_8.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Right Polarization", (1, 1), "linear")
         self.plot_8.plot(self.xarray, self.z2, 'b', label='Signal - polynomial', markersize=1)
-        self.plot_8.plot(self.xarray[indexes_for_ceb2], self.z2[indexes_for_ceb2], 'dr',
-                         label="Local Maximums for signal", markersize=2)
+        self.plot_8.plot(self.xarray[indexes_for_ceb2], self.z2[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2)
         self.plot_8.annotations(self.xarray[indexes_for_ceb2], self.z2[indexes_for_ceb2])
 
         # uAVG
         self.plot_9 = Plot()
-        self.plot_9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Average Polarization",
-                              (1, 2), "linear")
+        self.plot_9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Average Polarization", (1, 2), "linear")
         self.plot_9.plot(self.xarray, self.avg_y, 'b', label='Signal - polynomial', markersize=1)
-        self.plot_9.plot(self.xarray[indexes_for_avg], self.avg_y[indexes_for_avg], 'dr',
-                         label="Local Maximums for signal", markersize=2)
+        self.plot_9.plot(self.xarray[indexes_for_avg], self.avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2)
         self.plot_9.annotations(self.xarray[indexes_for_avg], self.avg_y[indexes_for_avg])
 
         self.grid.addWidget(self.plot_7, 0, 0)
