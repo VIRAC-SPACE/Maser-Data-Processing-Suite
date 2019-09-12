@@ -79,16 +79,29 @@ def computeGauss2(xarray, avg_y_NotSmoohtData, gaussLines):
     fitter = fitting.SLSQPLSQFitter()
     fit = LevMarLSQFitter()
     gg_fit = fit(gg_init, velocity, ampvid)
-    sts = [models.Gaussian1D(gg_fit[index].amplitude, gg_fit[index].mean, gg_fit[index].stddev) for index in range(0, len(gaussLines))]
-    gaussianAreas = []
-    gaussianaAmplitudes = [str(gg_fit[index].amplitude).split("=")[-1].replace(")", "") for index in range(0, len(gaussLines))]
-    gaussianaMean = [str(gg_fit[index].mean).split("=")[-1].replace(")", "") for index in range(0, len(gaussLines))]
-    gaussianaSTD = [str(gg_fit[index].stddev).split(",")[1].split("=")[-1] for index in range(0, len(gaussLines))]
+    if len(gaussLines) > 1:
+        sts = [models.Gaussian1D(gg_fit[index].amplitude, gg_fit[index].mean, gg_fit[index].stddev) for index in range(0, len(gaussLines))]
+        gaussianAreas = []
+        gaussianaAmplitudes = [str(gg_fit[index].amplitude).split("=")[-1].replace(")", "") for index in range(0, len(gaussLines))]
+        gaussianaMean = [str(gg_fit[index].mean).split("=")[-1].replace(")", "") for index in range(0, len(gaussLines))]
+        gaussianaSTD = [str(gg_fit[index].stddev).split(",")[1].split("=")[-1] for index in range(0, len(gaussLines))]
 
-    for st in sts:
-        gaussianAreas.append(trapz(st(velocity), velocity))
+        for st in sts:
+            gaussianAreas.append(trapz(st(velocity), velocity))
 
-    return (gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines, gaussianaAmplitudes, gaussianaMean, gaussianaSTD)
+        return (gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines, gaussianaAmplitudes, gaussianaMean, gaussianaSTD)
+
+    else:
+        sts = models.Gaussian1D(gg_fit.amplitude, gg_fit.mean, gg_fit.stddev)
+        gaussianAreas = []
+        gaussianaAmplitudes = str(gg_fit.amplitude).split("=")[-1].replace(")", "")
+        gaussianaMean = str(gg_fit.mean).split("=")[-1].replace(")", "")
+        gaussianaSTD = str(gg_fit.stddev).split(",")[1].split("=")[-1]
+
+        gaussianAreas.append(trapz(sts(velocity), velocity))
+
+        return (gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines, gaussianaAmplitudes, gaussianaMean, gaussianaSTD)
+
 
 def addAreasToResultFiles(file, gaussianAreas, gaussianaAmplitudes, gaussianaMean, gaussianaSTD):
     with open(getConfigs("paths", "resultFilePath") + getArgs("source") + ".json", "r") as resultFile:
