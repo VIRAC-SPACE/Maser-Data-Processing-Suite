@@ -78,10 +78,13 @@ def main():
     symbols = ["*-", "o-", "v-", "^-", "<-", ">-", "1-", "2-", "3-", "4-"]
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
     yTicks = []
+
+    result_org = [x]
     for component in components:
         index = components.index(component)
         y = correctNumpyReadData(data[:, [index + 1]])
         ax1.plot(x, y,  symbols[index]+colors[index], label=velocity[index], linewidth=0.5, markersize=5)
+        result_org.append(y)
 
         y_min = np.min(y)
         if y_min < 0:
@@ -139,6 +142,7 @@ def main():
     ax2.grid(True)
     plt.show()
 
+    result_calib = [x]
     if int(get_args("base")) >= 0:
         fig = plt.figure("Monitoring")
         ax1 = fig.add_subplot(111)
@@ -148,10 +152,17 @@ def main():
             y = correctNumpyReadData(data[:, [index + 1]])
             base = correctNumpyReadData(data[:, [int(get_args("base"))]])
             ax1.plot(x, y / base, symbols[index] + colors[index], label=velocity[index], linewidth=0.5, markersize=5)
+            result_calib.append(y / base)
 
         ax1.legend()
         ax1.grid(True)
         plt.show()
+
+    result_org_file_name = get_configs("paths", "monitoringFilePath") + get_args("source") + ".out"
+    result_calib_file_name = get_configs("paths", "monitoringFilePath") + get_args("source") + "_calib" + ".out"
+
+    np.savetxt(result_org_file_name, np.transpose(result_org))
+    np.savetxt(result_calib_file_name, np.transpose(result_calib))
 
     sys.exit(0)
 

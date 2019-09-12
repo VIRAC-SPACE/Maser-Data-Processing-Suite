@@ -13,6 +13,7 @@ from parsers._configparser import ConfigParser
 def parseArguments():
     parser = argparse.ArgumentParser(description='''Cross - Correlatet two maser componets. ''', epilog="""CrossCorr.""")
     parser.add_argument("source", help="Experiment source", type=str, default="")
+    parser.add_argument("file", help="Experiment source", type=str, default="")
     parser.add_argument("a", help="componet A ", type=int)
     parser.add_argument("b", help="componet B", type=str)
     parser.add_argument("--index1", help="index 1", type=str, default="")
@@ -31,12 +32,11 @@ def getConfigs(key, value):
     config.CreateConfig(configFilePath)
     return config.getConfig(key, value)
 
-def getData():
-    monitoringFile = "monitoring/" + getArgs("source") + ".txt"
+def getData(file):
     a = int(getArgs("a"))
     b = int(getArgs("b"))
     compunetCount = len(getConfigs("velocities", getArgs("source")).replace(" ", "").split(","))
-    data = np.fromfile(monitoringFile, dtype="float64", count=-1, sep=" ").reshape((file_len(monitoringFile),compunetCount + 1))    
+    data = np.fromfile(file, dtype="float64", count=-1, sep=" ").reshape((file_len(file),compunetCount + 1))
     x = correctNumpyReadData(data[:, [a]])
     y = correctNumpyReadData(data[:, [b]])
     time = correctNumpyReadData(data[:, [0]])
@@ -45,19 +45,20 @@ def getData():
 def main():
     index1 = getArgs("index1")
     index2 = getArgs("index2")
+    file = getConfigs("paths", "monitoringFilePath") + "/" + getArgs("file")
 
     if index1 == "":
         index1 = 0
 
     if index2 == "":
-        index2 = len(getData()[0])
+        index2 = len(getData(file)[0])
 
     index1 = int(index1)
     index2 = int(index2)
 
-    x = getData()[0][index1:index2]
-    y = getData()[1][index1:index2]
-    time = getData()[2][index1:index2]
+    x = getData(file)[0][index1:index2]
+    y = getData(file)[1][index1:index2]
+    time = getData(file)[2][index1:index2]
 
     print("Resampling\n")
 
