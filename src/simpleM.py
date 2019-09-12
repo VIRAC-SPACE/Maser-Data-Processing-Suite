@@ -11,6 +11,7 @@ import numpy as np
 import argparse
 from datetime import datetime
 from astropy.time import Time
+from functools import reduce
 
 from help import *
 from parsers._configparser import ConfigParser
@@ -79,12 +80,18 @@ def main():
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
     yTicks = []
 
+    variances = dict()
+    variability_indexies = dict()
+
     result_org = [x]
     for component in components:
         index = components.index(component)
         y = correctNumpyReadData(data[:, [index + 1]])
         ax1.plot(x, y,  symbols[index]+colors[index], label=velocity[index], linewidth=0.5, markersize=5)
         result_org.append(y)
+        sum = lambda x, y : x + y
+        variances[component] = reduce(sum, [((i - np.mean(y))/ np.std(y)) ** 2 for i in y])
+        variability_indexies[component] = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y))) / ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
 
         y_min = np.min(y)
         if y_min < 0:
@@ -100,6 +107,8 @@ def main():
 
         yTicks.append(np.max(y))
 
+    print("variances", variances)
+    print("variability indexies", variability_indexies)
     plt.title(get_configs("Full_source_name", get_args("source")))
     ax1.set_xlabel("MJD")
     ax1.set_ylabel("Flux density (Jy)")
