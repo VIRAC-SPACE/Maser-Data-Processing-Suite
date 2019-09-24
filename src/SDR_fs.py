@@ -361,6 +361,10 @@ class Analyzer(QWidget):
         y = np.float64(stationCordinations[1])
         z = np.float64(stationCordinations[2])
 
+        velocity_max = []
+        velocity_min = []
+        velocity_list = []
+
         for p in range(0, len(self.ScanPairs)):
             scanNumber = self.ScanPairs[p][0][0]
             scan_1 = self.logs[str(scanNumber)]
@@ -410,11 +414,44 @@ class Analyzer(QWidget):
             LO = float(self.logs["header"]["f_obs,LO,IF"][1])
             velocitys = dopler((self.x + LO) * (10 ** 6), VelTotal, lineF)
 
-            y__left_avg = y__left_avg + self.Sf_left[p]
-            y__right_avg = y__right_avg + self.Sf_right[p]
-            velocitys_avg = velocitys_avg + velocitys
+            print("Velocity max value is", np.max(velocitys), "velocity min value is ", np.min(velocitys))
+            velocity_max.append(np.max(velocitys))
+            velocity_min.append(np.min(velocitys))
 
-        print("Scan count", len(self.ScanPairs))
+        velocitys_avg = []
+        y__left_avg = []
+        y__right_avg = []
+
+        print("Velocity minimum from max value is", np.min(velocity_max), "velocity maximum for min value is ", np.max(velocity_min))
+        left_cut = np.max(velocity_min)
+        right_cut = np.min(velocity_max)
+
+        for p in range(0, len(velocity_list)):
+            index_left = findNearestIndex(velocity_list[p], left_cut)
+            index_right = findNearestIndex(velocity_list[p], right_cut)
+            print("index left ", index_left, "index right", index_right)
+
+            y__left_avg.append(self.Sf_left[p][index_right:index_left])
+            y__right_avg.append(self.Sf_right[p][index_right:index_left])
+            velocitys_avg.append(velocity_list[p][index_right:index_left])
+
+        max_points_count = np.max([len(m) for m in velocitys_avg])
+        print("max_points_count", max_points_count)
+        for s in range(0, len(velocity_list)):
+
+            if len(velocitys_avg[s]) < max_points_count:
+                velocitys_avg[s] = np.append(velocitys_avg[s], np.max(velocity_min))
+
+            if len(y__left_avg[s]) < max_points_count:
+                y__left_avg[s] = np.append(y__left_avg[s], 0)
+
+            if len(y__right_avg[s]) < max_points_count:
+                y__right_avg[s] = np.append(y__right_avg[s], 0)
+
+        velocitys_avg = reduce(lambda x, y: x + y, velocitys_avg)
+        y__left_avg = reduce(lambda x, y: x + y, y__left_avg)
+        y__right_avg = reduce(lambda x, y: x + y, y__right_avg)
+
         velocitys_avg = velocitys_avg / len(self.ScanPairs)
         y__left_avg = y__left_avg / len(self.ScanPairs)
         y__right_avg = y__right_avg / len(self.ScanPairs)
