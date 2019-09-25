@@ -1,6 +1,7 @@
 import sys
 import os
 import argparse
+import json
 import numpy as np
 
 from parsers._configparser import ConfigParser
@@ -42,6 +43,24 @@ def correct_amplitude(file):
     totalResults = [x, y_u1, y_u9, y_avg]
     np.savetxt(file, np.transpose(totalResults))
 
+
+def correl_result(iteration_to_fix):
+    resultFileName = getConfigs("paths", "resultFilePath") + getArgs("source") + "_" + getArgs("line") + ".json"
+    with open(resultFileName, "r") as result_data:
+        result = json.load(result_data)
+
+    for experiment in result:
+        if experiment.split("_")[-1] in iteration_to_fix and "IRBENE16" not in experiment:
+            for v in range(0, len(result[experiment]["polarizationU1"])):
+                result[experiment]["polarizationU1"][v][1] = result[experiment]["polarizationU1"][v][1] * float(getArgs("factor"))
+                result[experiment]["polarizationU9"][v][1] = result[experiment]["polarizationU9"][v][1] * float(getArgs("factor"))
+                result[experiment]["polarizationAVG"][v][1] = result[experiment]["polarizationAVG"][v][1] * float(getArgs("factor"))
+
+    resultFile = open(resultFileName, "w")
+    resultFile.write(json.dumps(result, indent=2))
+    resultFile.close()
+
+
 def main():
     iteration_to_fix = getArgs("iteration_list").replace("[", "").replace("]", "").replace("'", "").split(",")
     iteration_to_fix = [i.strip() for i in iteration_to_fix]
@@ -52,6 +71,7 @@ def main():
         if file.startswith(getArgs("source")) and file.split("_")[-1].split(".")[0] in iteration_to_fix and "IRBENE16" not in file:
             correct_amplitude(output_dir + file)
 
+    correl_result(iteration_to_fix)
 
 if __name__=="__main__":
     main()
