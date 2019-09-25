@@ -27,7 +27,7 @@ def getLocalMax(outputfile, outputFilePath, source_velocities, index_range_for_l
     x = data[:, [0]]
     y_u1 = data[:, [1]] 
     y_u9 = data[:, [2]]
-    y_avg = data[:, [2]]
+    y_avg = data[:, [3]]
     
     indexies_for_source_velocities = [0] * len(source_velocities)
     for index in range (0, len(source_velocities)):
