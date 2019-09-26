@@ -505,33 +505,6 @@ class Analyzer(QWidget):
         print("Average signal to noise for right polarization", np.mean(self.STON_list_right))
         print("Average signal to noise for average polarization", np.mean(self.STON_list_AVG))
 
-        result_file_name = getArgs("source") + "_" + getArgs("line") + ".json"
-
-        if os.path.isfile(getConfigs("paths", "resultFilePath") + result_file_name):
-            pass
-        else:
-            os.system("touch " + getConfigs("paths", "resultFilePath") + result_file_name)
-
-            result_file = open(getConfigs("paths", "resultFilePath") + result_file_name, "w")
-            result_file.write("{ \n" + "\n}")
-            result_file.close()
-
-        with open(getConfigs("paths", "resultFilePath") + result_file_name) as result_data:
-            result = json.load(result_data)
-
-        experiment_name = getArgs("source") + "_" + day + "_" + month + "_" + year + "_" + houre + ":" + minute + ":" + righte + "_" + station + "_" + getArgs("iteration_number")
-
-        if experiment_name not in result:
-            result[experiment_name] = dict()
-
-        result[experiment_name]["AVG_STON_LEFT"] = np.mean(self.STON_list_left)
-        result[experiment_name]["AVG_STON_RIGHT"] = np.mean(self.STON_list_right)
-        result[experiment_name]["AVG_STON_AVG"] = np.mean(self.STON_list_right)
-
-        result_file = open(getConfigs("paths", "resultFilePath") + result_file_name, "w")
-        result_file.write(json.dumps(result, indent=2))
-        result_file.close()
-
         self.grid.addWidget(self.plot_velocity__left, 0, 0)
         self.grid.addWidget(self.plot_velocity__right, 0, 1)
         self.grid.addWidget(self.plot_tsys, 2, 0)

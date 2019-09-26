@@ -50,6 +50,41 @@ def getConfigs(key, value):
     return config.getConfig(key, value)
 
 
+def STON(xarray, yarray, cuts):
+    cutsIndex = list()
+    cutsIndex.append(0)
+
+    for cut in cuts:
+        cutsIndex.append((np.abs(xarray - float(cut[0]))).argmin())
+        cutsIndex.append((np.abs(xarray - float(cut[1]))).argmin())
+
+    cutsIndex.append(-1)
+
+    y_array = list()
+
+    i = 0
+    j = 1
+
+    while i != len(cutsIndex):
+        y_array.append(yarray[cutsIndex[i]: cutsIndex[j]])
+        i = i + 2
+        j = j + 2
+
+    y = list()
+
+    for p in y_array:
+        for p1 in p:
+            y.append(p1)
+
+    y = np.array(y)
+
+    std = np.std(y)
+    max = np.max(yarray)
+
+    ston = max / (std * 3)
+    return ston
+
+
 class Result():
     def __init__(self, matrix, specie):
         self.matrix = matrix
@@ -713,6 +748,13 @@ class Analyzer(QWidget):
         result[self.expername]["gauss_amp"] = gaussianaAmplitudes
         result[self.expername]["gauss_mean"] = gaussianaMean
         result[self.expername]["gauss_STD"] = gaussianaSTD
+
+        cuts = getConfigs('cuts', getArgs("source") + "_" + getArgs("line")).split(";")
+        cuts = [c.split(",") for c in cuts]
+
+        result[self.experiment_name]["AVG_STON_LEFT"] = STON(self.xarray, self.z1_SmoohtData, cuts)
+        result[self.experiment_name]["AVG_STON_RIGHT"] = STON(self.xarray, self.z2_SmoohtData, cuts)
+        result[self.experiment_name]["AVG_STON_AVG"] = STON(self.xarray, self.avg_y_SmoohtData, cuts)
 
         resultFile = open(self.resultFilePath + resultFileName, "w")
         resultFile.write(json.dumps(result, indent=2))
