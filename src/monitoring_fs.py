@@ -830,6 +830,7 @@ class MonitoringApp(QWidget):
         self.location_list = list()
         labels2 = list()
         badIteration = list()
+        error_bar_data = list()
         for experiment in results:
                 scanData = results[experiment]
                 date = scanData["Date"]
@@ -842,6 +843,9 @@ class MonitoringApp(QWidget):
                 type = scanData["type"]
                 modifiedJulianDays = scanData["modifiedJulianDays"]
                 flag = scanData["flag"]
+
+                if "AVG_STON_LEFT" in scanData.keys():
+                    error_bar_data.append([date, scanData["polarizationU1"], scanData["polarizationU9"], scanData["polarizationAVG"], scanData["AVG_STON_LEFT"], scanData["AVG_STON_RIGHT"], scanData["AVG_STON_AVG"]])
 
                 if "areas" in scanData.keys():
                     areas = scanData["areas"]
@@ -955,6 +959,11 @@ class MonitoringApp(QWidget):
             lineDict["u1"].append(l1)
             lineDict["u9"].append(l2)
             lineDict["avg"].append(l3)
+
+        for i in range(0, len(source_velocities)):
+            self.monitoringPlot.errorbar([j[0] for j in error_bar_data], [j[i][1] for j in error_bar_data], [j[4] for j in error_bar_data], "*r")
+            self.monitoringPlot.errorbar([j[0] for j in error_bar_data], [j[i][2] for j in error_bar_data], [j[5] for j in error_bar_data], "*r")
+            self.monitoringPlot.errorbar([j[0] for j in error_bar_data], [j[i][3] for j in error_bar_data], [j[6] for j in error_bar_data], "*r")
 
         np.savetxt(getConfigs("paths", "monitoringFilePath") + self.source + "_" + self.line + ".txt", np.transpose(monitoringResults))
         self.Monitoring_View._addWidget(self.monitoringPlot, 0, 0)

@@ -67,6 +67,9 @@ class Plot(FigureCanvas):
             self.legend.set_draggable(True, update='loc')
         return line
 
+    def errorbar(self,  x, y, error, line,  **options):
+        self.graph.errorbar(x, y, yerr=error, fmt=line, **options)
+
     def get_xlim(self):
         return self.graph.get_xlim()
 
