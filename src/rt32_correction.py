@@ -51,6 +51,7 @@ def correl_result(iteration_to_fix):
 
     for experiment in result:
         if experiment.split("_")[-1] in iteration_to_fix and "IRBENE16" not in experiment:
+            input("Press Enter to process interation " + str(experiment.split("_")[-1]) + " for result file")
             for v in range(0, len(result[experiment]["polarizationU1"])):
                 result[experiment]["polarizationU1"][v][1] = result[experiment]["polarizationU1"][v][1] * float(getArgs("factor"))
                 result[experiment]["polarizationU9"][v][1] = result[experiment]["polarizationU9"][v][1] * float(getArgs("factor"))
@@ -69,6 +70,7 @@ def main():
 
     for file in os.listdir(output_dir):
         if file.startswith(getArgs("source")) and file.split("_")[-1].split(".")[0] in iteration_to_fix and "IRBENE16" not in file:
+            input("Press Enter to process interation " + str(file.split("_")[-1].split(".")[0]) + " for output file")
             correct_amplitude(output_dir + file)
 
     correl_result(iteration_to_fix)
