@@ -961,9 +961,9 @@ class MonitoringApp(QWidget):
             lineDict["avg"].append(l3)
 
         for i in range(0, len(source_velocities)):
-            self.monitoringPlot.errorbar([j[0] for j in error_bar_data], [j[i][1] for j in error_bar_data], [j[4] for j in error_bar_data], "*r")
-            self.monitoringPlot.errorbar([j[0] for j in error_bar_data], [j[i][2] for j in error_bar_data], [j[5] for j in error_bar_data], "*r")
-            self.monitoringPlot.errorbar([j[0] for j in error_bar_data], [j[i][3] for j in error_bar_data], [j[6] for j in error_bar_data], "*r")
+            self.monitoringPlot.errorbar([convertDatetimeObjectToMJD(j[0]) for j in error_bar_data], [j[i][1] for j in error_bar_data], [j[4] for j in error_bar_data], "*r")
+            self.monitoringPlot.errorbar([convertDatetimeObjectToMJD(j[0]) for j in error_bar_data], [j[i][2] for j in error_bar_data], [j[5] for j in error_bar_data], "*r")
+            self.monitoringPlot.errorbar([convertDatetimeObjectToMJD(j[0]) for j in error_bar_data], [j[i][3] for j in error_bar_data], [j[6] for j in error_bar_data], "*r")
 
         np.savetxt(getConfigs("paths", "monitoringFilePath") + self.source + "_" + self.line + ".txt", np.transpose(monitoringResults))
         self.Monitoring_View._addWidget(self.monitoringPlot, 0, 0)
