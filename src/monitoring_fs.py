@@ -855,14 +855,13 @@ class MonitoringApp(QWidget):
                 if "areas" in scanData.keys():
                     areas = scanData["areas"]
                 else:
-                    print("No Gauss areas in result file for iteration", iter_number)
+                    pass
 
                 if "gauss_amp" in scanData.keys():
                     gauss_amp = scanData["gauss_amp"]
                 else:
                     badIteration.append(iter_number)
                     gauss_amp = np.zeros(len(getConfigs("gauss_lines", self.source + "_" + self.line).replace(" ", "").split(",")))
-                    print("No Gauss gauss_amp in result file for iteration", iter_number)
 
                 if self.flag == "Not Flag":
                     if flag == False:
@@ -873,7 +872,6 @@ class MonitoringApp(QWidget):
                     result = Result(location, datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), amplitudes_for_u1,amplitudes_for_u9, amplitudes_for_uAVG, iter_number, specie, type, modifiedJulianDays, areas, gauss_amp)
                     result_list.append(dict(result))
 
-        print("badIteration", badIteration)
         result_list = sorted(result_list, key=itemgetter('date'), reverse=False)
 
         self.AreaList = list()
@@ -967,11 +965,10 @@ class MonitoringApp(QWidget):
         error_u9_ston = [d[5] for d in error_bar_data]
         error_avg_ston = [d[6] for d in error_bar_data]
 
-
         for i in range(0, len(source_velocities)):
-            self.monitoringPlot.errorbar(error_dates, [j[i][1] for j in error_u1_pol], error_u1_ston, "*r")
-            self.monitoringPlot.errorbar(error_dates, [j[i][1] for j in error_u9_pol], error_u9_ston, "*r")
-            self.monitoringPlot.errorbar(error_dates, [j[i][1] for j in error_avg_pol], error_avg_ston, "*r")
+            self.monitoringPlot.errorbar(error_dates, [j[i][1] for j in error_u1_pol], error_u1_ston, "none", visible=False)
+            self.monitoringPlot.errorbar(error_dates, [j[i][1] for j in error_u9_pol], error_u9_ston, "none", visible=False)
+            self.monitoringPlot.errorbar(error_dates, [j[i][1] for j in error_avg_pol], error_avg_ston, "none", visible=True)
 
         np.savetxt(getConfigs("paths", "monitoringFilePath") + self.source + "_" + self.line + ".txt", np.transpose(monitoringResults))
         self.Monitoring_View._addWidget(self.monitoringPlot, 0, 0)
