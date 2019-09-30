@@ -844,8 +844,13 @@ class MonitoringApp(QWidget):
                 modifiedJulianDays = scanData["modifiedJulianDays"]
                 flag = scanData["flag"]
 
+                dates = date.split("_")
+                monthsNumber = dates[1]
+                dates[1] = self.months.getMonthNumber([monthsNumber][0])
+                date = scanData["time"].replace(":", " ") + " " + " ".join(dates)
+
                 if "AVG_STON_LEFT" in scanData.keys():
-                    error_bar_data.append([date, scanData["polarizationU1"], scanData["polarizationU9"], scanData["polarizationAVG"], scanData["AVG_STON_LEFT"], scanData["AVG_STON_RIGHT"], scanData["AVG_STON_AVG"]])
+                    error_bar_data.append([datetime.datetime.strptime(date, '%H %M %S %d %m %Y'), scanData["polarizationU1"], scanData["polarizationU9"], scanData["polarizationAVG"], scanData["AVG_STON_LEFT"], scanData["AVG_STON_RIGHT"], scanData["AVG_STON_AVG"]])
 
                 if "areas" in scanData.keys():
                     areas = scanData["areas"]
@@ -858,11 +863,6 @@ class MonitoringApp(QWidget):
                     badIteration.append(iter_number)
                     gauss_amp = np.zeros(len(getConfigs("gauss_lines", self.source + "_" + self.line).replace(" ", "").split(",")))
                     print("No Gauss gauss_amp in result file for iteration", iter_number)
-
-                dates = date.split("_")
-                monthsNumber = dates[1]
-                dates[1] = self.months.getMonthNumber([monthsNumber][0])
-                date = scanData["time"].replace(":", " ") + " " + " ".join(dates)
 
                 if self.flag == "Not Flag":
                     if flag == False:
@@ -948,7 +948,6 @@ class MonitoringApp(QWidget):
         monitoringResults = [[convertDatetimeObjectToMJD(d) for d in date_list]]
 
         for i in range(0, len(source_velocities)):
-            print(len(date_list), len(velocitie_dict["u1"][source_velocities[i]]))
             l1, = self.monitoringPlot.plot(date_list, velocitie_dict["u1"][source_velocities[i]], Symbols[i]+colors[i], fontsize=8, visible=False, picker=False)
             l2, = self.monitoringPlot.plot(date_list, velocitie_dict["u9"][source_velocities[i]], Symbols[i]+colors[i], fontsize=8, visible=False, picker=False)
             l3, = self.monitoringPlot.plot(date_list, velocitie_dict["avg"][source_velocities[i]], Symbols[i]+colors[i], fontsize=8, label="Velocity " + source_velocities[i], visible=True, picker=5)
@@ -960,10 +959,19 @@ class MonitoringApp(QWidget):
             lineDict["u9"].append(l2)
             lineDict["avg"].append(l3)
 
+        error_dates = [d[0] for d in error_bar_data]
+        error_u1_pol = [d[1] for d in error_bar_data]
+        error_u9_pol = [d[2] for d in error_bar_data]
+        error_avg_pol = [d[3] for d in error_bar_data]
+        error_u1_ston = [d[4] for d in error_bar_data]
+        error_u9_ston = [d[5] for d in error_bar_data]
+        error_avg_ston = [d[6] for d in error_bar_data]
+
+
         for i in range(0, len(source_velocities)):
-            self.monitoringPlot.errorbar([convertDatetimeObjectToMJD(j[0]) for j in error_bar_data], [j[i][1] for j in error_bar_data], [j[4] for j in error_bar_data], "*r")
-            self.monitoringPlot.errorbar([convertDatetimeObjectToMJD(j[0]) for j in error_bar_data], [j[i][2] for j in error_bar_data], [j[5] for j in error_bar_data], "*r")
-            self.monitoringPlot.errorbar([convertDatetimeObjectToMJD(j[0]) for j in error_bar_data], [j[i][3] for j in error_bar_data], [j[6] for j in error_bar_data], "*r")
+            self.monitoringPlot.errorbar(error_dates, [j[i][1] for j in error_u1_pol], error_u1_ston, "*r")
+            self.monitoringPlot.errorbar(error_dates, [j[i][1] for j in error_u9_pol], error_u9_ston, "*r")
+            self.monitoringPlot.errorbar(error_dates, [j[i][1] for j in error_avg_pol], error_avg_ston, "*r")
 
         np.savetxt(getConfigs("paths", "monitoringFilePath") + self.source + "_" + self.line + ".txt", np.transpose(monitoringResults))
         self.Monitoring_View._addWidget(self.monitoringPlot, 0, 0)
