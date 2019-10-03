@@ -12,7 +12,7 @@ import scipy.constants
 from astropy.time import Time
 import datetime
 import pickle
-import json
+from functools import reduce
 
 from parsers._configparser import ConfigParser
 from ExperimentsLogReader.experimentsLogReader import LogReaderFactory, LogTypes
@@ -22,8 +22,7 @@ from help import *
 
 
 def parseArguments():
-    parser = argparse.ArgumentParser(description='''Creates input file for plotting tool. ''',
-                                     epilog="""PRE PLOTTER.""")
+    parser = argparse.ArgumentParser(description='''Creates input file for plotting tool. ''', epilog="""PRE PLOTTER.""")
     parser.add_argument("source", help="Experiment source", type=str, default="")
     parser.add_argument("line", help="frequency", type=str)
     parser.add_argument("iteration_number", help="iteration number ", type=int)
@@ -345,10 +344,6 @@ class Analyzer(QWidget):
         for i in reversed(range(self.grid.count())):
             self.grid.itemAt(i).widget().deleteLater()
 
-        velocitys_avg = np.zeros(len(self.x))
-        y__left_avg = np.zeros(len(self.x))
-        y__right_avg = np.zeros(len(self.x))
-
         station = self.logs["header"]["station"]
         if station == "RT-32":
             station = "IRBENE"
@@ -413,6 +408,7 @@ class Analyzer(QWidget):
             print("specie", specie, "\n")
             LO = float(self.logs["header"]["f_obs,LO,IF"][1])
             velocitys = dopler((self.x + LO) * (10 ** 6), VelTotal, lineF)
+            velocity_list.append(velocitys)
 
             print("Velocity max value is", np.max(velocitys), "velocity min value is ", np.min(velocitys))
             velocity_max.append(np.max(velocitys))
@@ -434,6 +430,7 @@ class Analyzer(QWidget):
             y__left_avg.append(self.Sf_left[p][index_right:index_left])
             y__right_avg.append(self.Sf_right[p][index_right:index_left])
             velocitys_avg.append(velocity_list[p][index_right:index_left])
+            print(len(velocity_list[p][index_right:index_left]))
 
         max_points_count = np.max([len(m) for m in velocitys_avg])
         print("max_points_count", max_points_count)
