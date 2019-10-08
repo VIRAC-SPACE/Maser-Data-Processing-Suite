@@ -10,10 +10,9 @@ from numpy import genfromtxt
 from scipy.interpolate import griddata
 import matplotlib
 from matplotlib.ticker import MaxNLocator
-from matplotlib.colors import LogNorm
 from astropy.time import Time
 from astropy.stats import LombScargle
-from astropy.modeling import models, fitting
+from astropy.modeling import models
 from astropy.modeling.fitting import LevMarLSQFitter
 import datetime
 from functools import reduce
