@@ -749,12 +749,12 @@ class Analyzer(QWidget):
         result[self.expername]["gauss_mean"] = gaussianaMean
         result[self.expername]["gauss_STD"] = gaussianaSTD
 
-        cuts = getConfigs('cuts', getArgs("source") + "_" + getArgs("line")).split(";")
+        cuts = getConfigs('cuts', self.source + "_" + getArgs("line")).split(";")
         cuts = [c.split(",") for c in cuts]
 
-        result[self.experiment_name]["AVG_STON_LEFT"] = STON(self.xarray, self.z1_SmoohtData, cuts)
-        result[self.experiment_name]["AVG_STON_RIGHT"] = STON(self.xarray, self.z2_SmoohtData, cuts)
-        result[self.experiment_name]["AVG_STON_AVG"] = STON(self.xarray, self.avg_y_SmoohtData, cuts)
+        result[self.expername]["AVG_STON_LEFT"] = STON(self.xarray, self.z1_SmoohtData, cuts)
+        result[self.expername]["AVG_STON_RIGHT"] = STON(self.xarray, self.z2_SmoohtData, cuts)
+        result[self.expername]["AVG_STON_AVG"] = STON(self.xarray, self.avg_y_SmoohtData, cuts)
 
         resultFile = open(self.resultFilePath + resultFileName, "w")
         resultFile.write(json.dumps(result, indent=2))
