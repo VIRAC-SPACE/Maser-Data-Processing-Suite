@@ -7,7 +7,6 @@ from obspy.imaging.cm import obspy_sequential
 from obspy.signal.tf_misfit import cwt
 import argparse
 import pycwt as wavelet
-#from piwavelet import piwavelet
 
 
 from help import *
