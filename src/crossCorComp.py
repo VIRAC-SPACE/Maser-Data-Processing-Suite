@@ -5,7 +5,10 @@ import sys
 import argparse
 import numpy as np
 from scipy.signal import correlate, resample
+from scipy import signal
 import matplotlib.pyplot as plt
+from matplotlib.colors import BoundaryNorm
+from matplotlib.ticker import MaxNLocator
 
 from help import *
 from parsers._configparser import ConfigParser
@@ -121,7 +124,19 @@ def main():
     plt.title("FFT")
     plt.show()
 
+    f, c_xy = signal.coherence(xResample[0], yResample[0], nfft=256)
+
+    plt.semilogy(f, c_xy, label="scipy_signal_coherence")
+    plt.xlabel('frequency')
+    plt.ylabel('Coherence')
+    plt.cohere(xResample[0], yResample[0], NFFT=256, label="pyplot_cohere")
+    plt.legend()
+    plt.grid(True)
+
+    plt.show()
+
     sys.exit(0)
-    
+
+
 if __name__ == "__main__":
     main()
