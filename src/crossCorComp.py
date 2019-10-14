@@ -140,10 +140,10 @@ def main():
     dt = np.diff(time)[0]
     n = len(time)
     mother = wavelet.Morlet(6)
-    s0 = 2 * dt
-    dj = 1 / 12
-    J = 7 / dj
-    slevel = 0.9999
+    slevel = 0.95  # Significance level
+    dj = 1 / 12  # Twelve sub-octaves per octaves
+    s0 = -1  # 2 * dt                   # Starting scale, here 6 months
+    J = -1  # 7 / dj
 
     p_a = np.polyfit(time - time[0], xResample[0], 1)
     dat_notrend_a = x - np.polyval(p_a, time - time[0])
@@ -180,7 +180,7 @@ def main():
     plt.contourf(time, np.log2(period_b), np.log2(power_b), np.log2(levels), extend='both', cmap=plt.cm.viridis)
     plt.show()
 
-    W12, cross_coi, freq, signif = wavelet.xwt(dat_norm_a, dat_norm_b, dt, dj=dj, s0=s0, J=J, significance_level=0.8646, wavelet='morlet', normalize=True)
+    W12, cross_coi, freq, signif = wavelet.xwt(dat_norm_a, dat_norm_b, dt, dj=dj, s0=-1, J=-1, significance_level=0.8646, wavelet='morlet', normalize=True)
 
     cross_power = np.abs(W12) ** 2
     cross_sig = np.ones([1, n]) * signif[:, None]
@@ -212,33 +212,19 @@ def main():
     im1 = NonUniformImage(ax1, interpolation='bilinear', extent=extent_cross)
     im1.set_data(time, cross_period, cross_power)
     ax1.images.append(im1)
-    ax1.contour(time, cross_period, cross_sig, [-99, 1], colors='k', linewidths=2,
-                extent=extent_cross)
-    ax1.fill(np.concatenate([time, time[-1:] + dt, time[-1:] + dt, time[:1] - dt, time[:1] - dt]),
-             np.concatenate([cross_coi, [1e-9], cross_period[-1:],
-                             cross_period[-1:], [1e-9]]),
-             'k', alpha=0.3, hatch='x')
+    ax1.contour(time, cross_period, cross_sig, [-99, 1], colors='k', linewidths=2, extent=extent_cross)
+    ax1.fill(np.concatenate([time, time[-1:] + dt, time[-1:] + dt, time[:1] - dt, time[:1] - dt]), np.concatenate([cross_coi, [1e-9], cross_period[-1:], cross_period[-1:], [1e-9]]), 'k', alpha=0.3, hatch='x')
     ax1.set_title('Cross-Wavelet')
-    ax1.quiver(t1[::3], cross_period[::3], u[::3, ::3], v[::3, ::3],
-               units='width', angles='uv', pivot='mid', linewidth=1,
-               edgecolor='k', headwidth=10, headlength=10, headaxislength=5,
-               minshaft=2, minlength=5)
+    ax1.quiver(time[::3], cross_period[::3], u[::3, ::3], v[::3, ::3], units='width', angles='uv', pivot='mid', linewidth=1, edgecolor='k', headwidth=10, headlength=10, headaxislength=5, minshaft=2, minlength=5)
     fig.colorbar(im1, cax=cbar_ax)
 
     im2 = NonUniformImage(ax2, interpolation='bilinear', extent=extent_corr)
     im2.set_data(time, cor_period, WCT)
     ax2.images.append(im2)
-    ax2.contour(time, cor_period, cor_sig, [-99, 1], colors='k', linewidths=2,
-                extent=extent_corr)
-    ax2.fill(np.concatenate([time, time[-1:] + dt, time[-1:] + dt, time[:1] - dt, time[:1] - dt]),
-             np.concatenate([corr_coi, [1e-9], cor_period[-1:], cor_period[-1:],
-                             [1e-9]]),
-             'k', alpha=0.3, hatch='x')
+    ax2.contour(time, cor_period, cor_sig, [-99, 1], colors='k', linewidths=2, extent=extent_corr)
+    ax2.fill(np.concatenate([time, time[-1:] + dt, time[-1:] + dt, time[:1] - dt, time[:1] - dt]), np.concatenate([corr_coi, [1e-9], cor_period[-1:], cor_period[-1:], [1e-9]]),'k', alpha=0.3, hatch='x')
     ax2.set_title('Cross-Correlation')
-    ax2.quiver(time[::3], cor_period[::3], u[::3, ::3], v[::3, ::3], units='height',
-               angles='uv', pivot='mid', linewidth=1, edgecolor='k',
-               headwidth=10, headlength=10, headaxislength=5, minshaft=2,
-               minlength=5)
+    ax2.quiver(time[::3], cor_period[::3], u[::3, ::3], v[::3, ::3], units='height', angles='uv', pivot='mid', linewidth=1, edgecolor='k', headwidth=10, headlength=10, headaxislength=5, minshaft=2, minlength=5)
     #ax2.set_ylim(2, 35)
     #ax2.set_xlim(max(t1.min(), t2.min()), min(t1.max(), t2.max()))
     fig.colorbar(im2, cax=cbar_ax_1)
