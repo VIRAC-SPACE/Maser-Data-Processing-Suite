@@ -138,17 +138,19 @@ def main():
 
     time = getData(file)[2][index1:index2]
     dt = np.diff(time)[0]
+    print(np.diff(time))
     n = len(time)
     mother = wavelet.Morlet(6)
     slevel = 0.95  # Significance level
     dj = 1 / 12  # Twelve sub-octaves per octaves
-    s0 = -1  # 2 * dt                   # Starting scale, here 6 months
+    s0 = 2  # 2 * dt                   # Starting scale, here 6 months
     J = -1  # 7 / dj
 
     p_a = np.polyfit(time - time[0], xResample[0], 1)
     dat_notrend_a = x - np.polyval(p_a, time - time[0])
     std_a = dat_notrend_a.std()
     dat_norm_a = dat_notrend_a / std_a
+
     wave_a, scales_a, freqs_a, coi_a, fft_a, fftfreqs_a = wavelet.cwt(dat_norm_a, dt, dj, s0, J, mother)
     signif_a, fft_theor_a = wavelet.significance(1.0, dt, scales_a, 0, 0.0, significance_level=slevel, wavelet=mother)
     power_a = (np.abs(wave_a)) ** 2
@@ -156,9 +158,10 @@ def main():
     period_a = 1 / freqs_a
 
     p_b = np.polyfit(time - time[0], yResample[0], 1)
-    dat_notrend_b = x - np.polyval(p_b, time - time[0])
+    dat_notrend_b = y - np.polyval(p_b, time - time[0])
     std_b = dat_notrend_b.std()
     dat_norm_b = dat_notrend_b / std_b
+
     wave_b, scales_b, freqs_b, coi_b, fft_b, fftfreqs_b = wavelet.cwt(dat_norm_b, dt, dj, s0, J, mother)
     signif_b, fft_theor_b = wavelet.significance(1.0, dt, scales_b, 0, 0.0, significance_level=slevel, wavelet=mother)
     power_b = (np.abs(wave_b)) ** 2
@@ -180,6 +183,9 @@ def main():
     plt.contourf(time, np.log2(period_b), np.log2(power_b), np.log2(levels), extend='both', cmap=plt.cm.viridis)
     plt.show()
 
+
+
+    print(help(wavelet.xwt))
     W12, cross_coi, freq, signif = wavelet.xwt(dat_norm_a, dat_norm_b, dt, dj=dj, s0=-1, J=-1, significance_level=0.8646, wavelet='morlet', normalize=True)
 
     cross_power = np.abs(W12) ** 2
