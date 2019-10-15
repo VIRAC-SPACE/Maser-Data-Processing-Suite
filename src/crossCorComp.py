@@ -140,7 +140,7 @@ def main():
 
     plt.plot(f, c_xy, label="fs = 1/dt")
     plt.plot(f2, c_xy2, label="fs = np.max(time)/len(time)")
-    plt.plot(f2, c_xy2, label="fs = 10")
+    plt.plot(f3, c_xy3, label="fs = 10")
     plt.xlabel('frequency')
     plt.ylabel('Coherence')
     plt.legend()
