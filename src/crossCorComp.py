@@ -134,11 +134,13 @@ def main():
     fs2 = np.max(time)/len(time)
     f, c_xy = signal.coherence(xResample[0], yResample[0], fs=fs)
     f2, c_xy2 = signal.coherence(xResample[0], yResample[0], fs=fs2)
+    f3, c_xy3 = signal.coherence(xResample[0], yResample[0], fs=10)
 
     print("fs, fs2, dt", fs, fs2, dt)
 
     plt.plot(f, c_xy, label="fs = 1/dt")
     plt.plot(f2, c_xy2, label="fs = np.max(time)/len(time)")
+    plt.plot(f2, c_xy2, label="fs = 10")
     plt.xlabel('frequency')
     plt.ylabel('Coherence')
     plt.legend()
