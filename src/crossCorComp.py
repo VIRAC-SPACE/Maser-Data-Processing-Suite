@@ -125,20 +125,18 @@ def main():
     plt.title("FFT")
     plt.show()
 
-    f, c_xy = signal.coherence(xResample[0], yResample[0], nfft=256)
-
-    plt.semilogy(f, c_xy, label="scipy_signal_coherence")
-    plt.xlabel('frequency')
-    plt.ylabel('Coherence')
-    plt.cohere(xResample[0], yResample[0], NFFT=256, label="pyplot_cohere")
-    plt.legend()
-    plt.grid(True)
-
-    plt.show()
-
     time = getData(file)[2][index1:index2]
     dt = np.diff(time)[0]
-    print(np.diff(time))
+    fs = 1/dt
+    f, c_xy = signal.coherence(xResample[0], yResample[0], fs=fs)
+
+    plt.plot(f, c_xy, label="scipy_signal_coherence")
+    plt.xlabel('frequency')
+    plt.ylabel('Coherence')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
     n = len(time)
     mother = wavelet.Morlet(6)
     slevel = 0.95  # Significance level
