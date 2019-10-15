@@ -83,6 +83,9 @@ def main():
 
     plt.show()
 
+    print("time after resampling x", xResample[1])
+    print("time after resampling y", yResample[1])
+
     print("corr coef befor resampling", np.corrcoef(x, y), "\n\n")
     print ("corr coef after resampling", np.corrcoef(xResample[0], yResample[0]), "\n\n")
 
@@ -125,12 +128,17 @@ def main():
     plt.title("FFT")
     plt.show()
 
-    time = getData(file)[2][index1:index2]
+    time = xResample[1]  #getData(file)[2][index1:index2]
     dt = np.diff(time)[0]
     fs = 1/dt
+    fs2 = np.max(time)/len(time)
     f, c_xy = signal.coherence(xResample[0], yResample[0], fs=fs)
+    f2, c_xy2 = signal.coherence(xResample[0], yResample[0], fs=fs2)
 
-    plt.plot(f, c_xy, label="scipy_signal_coherence")
+    print("fs, fs2, dt", fs, fs2, dt)
+
+    plt.plot(f, c_xy, label="fs = 1/dt")
+    plt.plot(f2, c_xy2, label="fs = np.max(time)/len(time)")
     plt.xlabel('frequency')
     plt.ylabel('Coherence')
     plt.legend()
@@ -181,9 +189,6 @@ def main():
     plt.contourf(time, np.log2(period_b), np.log2(power_b), np.log2(levels), extend='both', cmap=plt.cm.viridis)
     plt.show()
 
-
-
-    print(help(wavelet.xwt))
     W12, cross_coi, freq, signif = wavelet.xwt(dat_norm_a, dat_norm_b, dt, dj=dj, s0=-1, J=-1, significance_level=0.8646, wavelet='morlet', normalize=True)
 
     cross_power = np.abs(W12) ** 2

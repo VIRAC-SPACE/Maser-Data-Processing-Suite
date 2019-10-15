@@ -5,22 +5,32 @@ from scipy import signal
 import pycwt as wavelet
 import random
 
-t = np.arange(0, 1e5, 0.1)
+fs = 1000
+t = []
 
-r = random.random()
-print("r", r)
+ti = 0
+while ti < 1:
+    t += [ti]
+    ti += 1/fs
+t = np.array(t)
 
-a1 = 20
-a2 = 19
+print("time", t)
+
+a1 = 15000
+a2 = 15000
+a3 = 15000
 
 f1 = 1234.0
-f2 = 1234.0
+f2 = f1 * 1.5
+f3 = f2 * 2
 
 p1 = 0
 p2 = 0
+p3 = 0
 
 s1 = a1*np.sin(2*np.pi*f1*t + p1)
 s2 = a2*np.sin(2*np.pi*f2*t + p2)
+s3 = a3*np.sin(2*np.pi*f3*t + p3)
 
 print("corr coef", np.corrcoef(s1, s2), "\n\n")
 
@@ -31,7 +41,6 @@ plt.xlabel('Time')
 plt.ylabel('Signal')
 plt.grid(True)
 plt.legend()
-
 
 crossCorr = correlate(s1, s2, "full", "fft")
 a = len(t)
@@ -51,10 +60,15 @@ plt.ylabel('Cross-correlation between components s1 and s2')
 plt.grid(True)
 
 fig3 = plt.figure("coherence")
-f, c_xy = signal.coherence(s1, s2, nfft=1024, nperseg=1024)
-f2, c_xy2 = signal.coherence(s1, s2, nfft=1024, nperseg=1024)
-plt.semilogy(f, c_xy, label="scipy_signal_coherence_1")
-plt.semilogy(f2, c_xy2, label="scipy_signal_coherence")
+f, c_xy = signal.coherence(s1, s2, fs=fs)
+plt.plot(f, c_xy, label="s1 and s2")
+
+f, c_xy = signal.coherence(s1, s3, fs=fs)
+plt.plot(f, c_xy, label="s1 and s3")
+
+f, c_xy = signal.coherence(s3, s2, fs=fs)
+plt.plot(f, c_xy, label="s3 and s2")
+
 plt.xlabel('frequency')
 plt.ylabel('Coherence')
 
@@ -62,7 +76,7 @@ plt.legend()
 plt.grid(True)
 plt.show()
 
-
+''''
 fs = 10e3
 print("fs", fs)
 N = 1e5
@@ -87,7 +101,7 @@ plt.plot(x)
 plt.plot(y)
 plt.xlabel('time')
 plt.show()
-
+'''
 
 
 
