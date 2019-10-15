@@ -159,16 +159,25 @@ def main():
     std_a = dat_notrend_a.std()
     dat_norm_a = dat_notrend_a / std_a
 
+    p_b = np.polyfit(time - time[0], yResample[0], 1)
+    dat_notrend_b = y - np.polyval(p_b, time - time[0])
+    std_b = dat_notrend_b.std()
+    dat_norm_b = dat_notrend_b / std_b
+
+    fig = plt.figure("Normal data")
+    plt.plot(time, dat_norm_a, label="dat_norm_a")
+    plt.plot(time, dat_norm_b, label="dat_norm_b")
+    plt.xlabel('Time')
+    plt.ylabel('Flux')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
     wave_a, scales_a, freqs_a, coi_a, fft_a, fftfreqs_a = wavelet.cwt(dat_norm_a, dt, dj, s0, J, mother)
     signif_a, fft_theor_a = wavelet.significance(1.0, dt, scales_a, 0, 0.0, significance_level=slevel, wavelet=mother)
     power_a = (np.abs(wave_a)) ** 2
     fft_power_a = np.abs(fft_a) ** 2
     period_a = 1 / freqs_a
-
-    p_b = np.polyfit(time - time[0], yResample[0], 1)
-    dat_notrend_b = y - np.polyval(p_b, time - time[0])
-    std_b = dat_notrend_b.std()
-    dat_norm_b = dat_notrend_b / std_b
 
     wave_b, scales_b, freqs_b, coi_b, fft_b, fftfreqs_b = wavelet.cwt(dat_norm_b, dt, dj, s0, J, mother)
     signif_b, fft_theor_b = wavelet.significance(1.0, dt, scales_b, 0, 0.0, significance_level=slevel, wavelet=mother)
