@@ -81,7 +81,7 @@ def STON(xarray, yarray, cuts):
     std = np.std(y)
     max = np.max(yarray)
 
-    ston = max / (std * 3)
+    ston = std * 3
     return ston
 
 

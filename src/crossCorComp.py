@@ -135,12 +135,16 @@ def main():
     f, c_xy = signal.coherence(xResample[0], yResample[0], fs=fs)
     f2, c_xy2 = signal.coherence(xResample[0], yResample[0], fs=fs2)
     f3, c_xy3 = signal.coherence(xResample[0], yResample[0], fs=10)
+    f4, c_xy4 = signal.coherence(xResample[0], yResample[0], fs=1/10)
+    f5, c_xy5 = signal.coherence(xResample[0], yResample[0], fs=(xResample[1][-1] - xResample[1][0])/len(xResample[1]))
 
-    print("fs, fs2, dt", fs, fs2, dt)
+    print("fs, fs2, f4, dt", fs, fs2, 1/10, dt, (xResample[1][-1] - xResample[1][0])/len(xResample[1]))
 
     plt.plot(f, c_xy, label="fs = 1/dt")
     plt.plot(f2, c_xy2, label="fs = np.max(time)/len(time)")
     plt.plot(f3, c_xy3, label="fs = 10")
+    plt.plot(f4, c_xy4, label="fs = 1/10")
+    plt.plot(f5, c_xy5, label="fs = (xResample[1][-1] - xResample[1][0])/len(xResample[1])")
     plt.xlabel('frequency')
     plt.ylabel('Coherence')
     plt.legend()
