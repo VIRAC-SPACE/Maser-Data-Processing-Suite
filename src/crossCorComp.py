@@ -130,7 +130,7 @@ def main():
     fs = 1/dt
     print("dt, fs", dt, fs)
 
-    f, c_xy = signal.coherence(xResample[0], yResample[0], fs=fs)
+    f, c_xy = signal.coherence(xResample[0], yResample[0], fs=fs/(24*60*60), nfft=len(time))
     plt.plot(f, c_xy, label="coherence")
     plt.xlabel('frequency')
     plt.ylabel('Coherence')
@@ -145,13 +145,15 @@ def main():
     s0 = 2  # 2 * dt                   # Starting scale, here 6 months
     J = -1  # 7 / dj
 
-    p_a = np.polyfit(time - time[0], xResample[0], 1)
-    dat_notrend_a = x - np.polyval(p_a, time - time[0])
+    p_a, residuals_a, rank_a, singular_values_a, rcond_a = np.polyfit(time, xResample[0], 1, full=True)
+    print("residuals_a, rank_a, singular_values_a, rcond_a",residuals_a, rank_a, singular_values_a, rcond_a)
+    dat_notrend_a = xResample[0] - np.polyval(p_a, time)
     std_a = dat_notrend_a.std()
     dat_norm_a = dat_notrend_a / std_a
 
-    p_b = np.polyfit(time - time[0], yResample[0], 1)
-    dat_notrend_b = y - np.polyval(p_b, time - time[0])
+    p_b, residuals_b, rank_b, singular_values_b, rcond_b = np.polyfit(time, yResample[0], 1, full=True)
+    print("residuals_b, rank_b, singular_values_b, rcond_b", residuals_b, rank_b, singular_values_b, rcond_b)
+    dat_notrend_b = yResample[0] - np.polyval(p_b, time)
     std_b = dat_notrend_b.std()
     dat_norm_b = dat_notrend_b / std_b
 
