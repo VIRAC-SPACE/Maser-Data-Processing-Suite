@@ -138,13 +138,6 @@ def main():
     plt.grid(True)
     plt.show()
 
-    n = len(time)
-    mother = wavelet.Morlet(6)
-    slevel = 0.95  # Significance level
-    dj = 1 / 12  # Twelve sub-octaves per octaves
-    s0 = 2  # 2 * dt                   # Starting scale, here 6 months
-    J = -1  # 7 / dj
-
     p_a, residuals_a, rank_a, singular_values_a, rcond_a = np.polyfit(time, xResample[0], 1, full=True)
     print("residuals_a, rank_a, singular_values_a, rcond_a",residuals_a, rank_a, singular_values_a, rcond_a)
     dat_notrend_a = xResample[0] - np.polyval(p_a, time)
@@ -157,7 +150,7 @@ def main():
     std_b = dat_notrend_b.std()
     dat_norm_b = dat_notrend_b / std_b
 
-    fig = plt.figure("Normal data")
+    plt.figure("Normal data")
     plt.plot(time, dat_norm_a, label="dat_norm_a")
     plt.plot(time, dat_norm_b, label="dat_norm_b")
     plt.xlabel('Time')
@@ -165,6 +158,13 @@ def main():
     plt.legend()
     plt.grid(True)
     plt.show()
+
+    n = len(time)
+    mother = wavelet.Morlet(6)
+    slevel = 0.95  # Significance level
+    dj = 1 / 12  # Twelve sub-octaves per octaves
+    s0 = 2  # 2 * dt                   # Starting scale
+    J = -1  # 7 / dj
 
     wave_a, scales_a, freqs_a, coi_a, fft_a, fftfreqs_a = wavelet.cwt(dat_norm_a, dt, dj, s0, J, mother)
     signif_a, fft_theor_a = wavelet.significance(1.0, dt, scales_a, 0, 0.0, significance_level=slevel, wavelet=mother)
@@ -181,7 +181,6 @@ def main():
     levels = [0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16]
 
     plt.figure("Continuous wavelet power spectrum")
-
     plt.subplot(121)
     plt.xlabel('Time')
     plt.ylabel('Period for components ' + getArgs("a"))
