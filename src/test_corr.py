@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import pycwt as wavelet
 from scipy.signal import correlate
 from scipy import signal
 
@@ -52,6 +53,8 @@ plt.grid(True)
 plt.legend()
 plt.show()
 
+#https://github.com/regeirk/pycwt/blob/master/pycwt/wavelet.py
+
 signal_ft_s1 = np.fft.fft(s1)
 signal_ft_s2 = np.fft.fft(s2)
 signal_ft_s3 = np.fft.fft(s3)
@@ -69,10 +72,10 @@ ftfreqs_norm = 2 * np.pi * np.fft.fftfreq(len(signal_ft_norm), dt_s1)
 f0 = 6
 s0 = 2
 dj = 1 / 12
-J = -1
+J = 2
 n0 = len(s1)
-J = np.int(np.round(np.log2(n0 * dt_s1/ s0) / dj))
-J = abs(J)
+#J = np.int(np.round(np.log2(n0 * dt_s1/ s0) / dj))
+#J = abs(J)
 sj = s0 * 2 ** (np.arange(0, J + 1) * dj)
 sj_col = sj[:, np.newaxis]
 
@@ -145,7 +148,7 @@ period_s2 = 1/freqs_s2
 period_s3 = 1/freqs_s3
 period_norm = 1/freqs_norm
 
-print(power_s1)
+print(power_s1, period_s1.shape)
 
 levels = [0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16]
 
@@ -188,6 +191,42 @@ plt.ylabel('Period s1')
 plt.contourf(t, np.log2(period_norm), np.log2(power_norm), extend='both', cmap=plt.cm.viridis)
 #plt.ylim(np.log2([period_norm.min(), period_norm.max()]))
 plt.show()
+
+
+mother = wavelet.Morlet(6)
+wave_s1, scales_s1, freqs_s1, coi_s1, fft_s1, fftfreqs_s1 = wavelet.cwt(s1, dt_s1, dj, s0, J, mother)
+wave_s2, scales_s2, freqs_s2, coi_s2, fft_s2, fftfreqs_s2 = wavelet.cwt(s2, dt_s2, dj, s0, J, mother)
+wave_s3, scales_s3, freqs_s3, coi_s3, fft_s3, fftfreqs_s3 = wavelet.cwt(s3, dt_s3, dj, s0, J, mother)
+
+power_s1 = (np.abs(wave_s1)) ** 2
+fft_power_s1 = np.abs(fft_s1) ** 2
+period_s1 = 1 / freqs_s1
+
+power_s2 = (np.abs(wave_s2)) ** 2
+fft_power_s2 = np.abs(fft_s2) ** 2
+period_s2 = 1 / freqs_s2
+
+power_s3 = (np.abs(wave_s3)) ** 2
+fft_power_s3 = np.abs(fft_s3) ** 2
+period_s3 = 1 / freqs_s3
+
+plt.figure("Continuous wavelet power spectrum")
+plt.subplot(131)
+plt.xlabel('Time')
+plt.ylabel('Period for components ')
+plt.contourf(t, np.log2(period_s1), np.log2(power_s1), extend='both', cmap=plt.cm.viridis)
+
+plt.subplot(132)
+plt.xlabel('Time')
+plt.ylabel('Period for components ')
+plt.contourf(t, np.log2(period_s2), np.log2(power_s2), extend='both', cmap=plt.cm.viridis)
+
+plt.subplot(133)
+plt.xlabel('Time')
+plt.ylabel('Period for components ')
+plt.contourf(t, np.log2(period_s3), np.log2(power_s3), extend='both', cmap=plt.cm.viridis)
+plt.show()
+
 
 '''
 crossCorr = correlate(s1, s2, "full", "fft")
