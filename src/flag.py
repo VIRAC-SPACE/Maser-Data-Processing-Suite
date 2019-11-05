@@ -1,6 +1,6 @@
 import json
 
-filename = "results/cepa.json"
+filename = "results/g75p78_6668.json"
 
 with open(filename) as result_data:
     results = json.load(result_data)

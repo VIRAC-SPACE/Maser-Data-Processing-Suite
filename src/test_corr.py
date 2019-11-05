@@ -11,7 +11,11 @@ noise = []
 ti = 0
 while ti < 1:
     t += [ti]
+<<<<<<< HEAD
     noise.append(10 * np.random.normal(100, 100, 1)[0])
+=======
+    noise.append(10 * np.random.normal(100, 1, 1)[0])
+>>>>>>> e6490d8f03dabc0c6f0721dd42ce850d72676e02
     ti += 1/fs
 
 noise = np.array(noise)
@@ -23,21 +27,36 @@ a1 = 1000
 a2 = 1000
 a3 = 1000
 
+<<<<<<< HEAD
 f1 = 100 + 10 * 10 * np.sin(t)
 f2 = 100.0 * 1.5
 f3 = f2 * 2
+=======
+f1 = 100 + 10 * np.sin(t)
+f2 = 100.0 *1.0
+f3 = f2 * 1
+>>>>>>> e6490d8f03dabc0c6f0721dd42ce850d72676e02
 
 p1 = 0
 p2 = 0
 p3 = 0
 
 #s1 = a1*np.sin(2*np.pi*f1*t + p1) + a1*np.sin(2*np.pi*5*f1*t + p1 + 1/(2.5*f1)) + a1*np.cos(2*np.pi*3*f1*t + p1 + 1/(1.5*f1)) + a1*np.cos(2*np.pi*7*f1*t + p1 + + 1/(3.5*f1)) + noise
+<<<<<<< HEAD
 #s2 = a2*np.sin(2*np.pi*f2*t + p2)+ a1*np.sin(2*np.pi*5*f1*t + p1 + 1/(2.5*f1)) + a1*np.cos(2*np.pi*3*f1*t + p1 + 1/(1.5*f1)) + a1*np.cos(2*np.pi*7*f1*t + p1 + + 1/(3.5*f1))
 #s3 = a3*np.sin(2*np.pi*f3*t + p3) +noise
 
 s1 = a1*np.sin(2*np.pi*f1*t + p1)+0.2*a1*np.sin(0.5*np.pi*f1*2*t + p1)+0.3*a1*np.sin(2*np.pi*0.75*f1*t + p1)+noise
 s2 = a2*np.sin(2*np.pi*f2*t + p2)+noise
 s3 = noise # a3*np.sin(2*np.pi*f3*t *t*t+ p3)
+=======
+#s2 = a2*np.sin(2*np.pi*f2*t + p2)+ a1*np.sin(2*np.pi*5*f1*t + p1 + 1/(2.5*f1)) + a1*np.cos(2*np.pi*3*f1*t + p1 + 1/(1.5*f1)) + a1*np.cos(2*np.pi*7*f1*t + p1 + + 1/(3.5*f1)) 
+#s3 = a3*np.sin(2*np.pi*f3*t + p3) +noise ////// +0.2*a1*np.sin(2*np.pi*f1*t + p1)+0.3*a1*np.sin(2*np.pi*f1*t + p1)+noise
+
+s1 = a1*np.sin(2*np.pi*f1*t + p1)+noise
+s2 = a2*np.sin(2*np.pi*f2*t + p2)+noise
+s3 = a3*np.sin(2*np.pi*f3*t *t*t+ p3) +noise
+>>>>>>> e6490d8f03dabc0c6f0721dd42ce850d72676e02
 
 p_a, residuals_a, rank_a, singular_values_a, rcond_a = np.polyfit(t, s1, 1, full=True)
 #print("residuals_a, rank_a, singular_values_a, rcond_a",residuals_a, rank_a, singular_values_a, rcond_a)
@@ -201,7 +220,11 @@ plt.contourf(t, np.log10(period_norm), np.log10(power_norm), extend='both', cmap
 plt.show()
 
 
+<<<<<<< HEAD
 mother = wavelet.Morlet(f0) # 6 - number of wave;et cycles
+=======
+mother = wavelet.Morlet(6) # 6 - number of wave;et cycles
+>>>>>>> e6490d8f03dabc0c6f0721dd42ce850d72676e02
 wave_s1, scales_s1, freqs_s1, coi_s1, fft_s1, fftfreqs_s1 = wavelet.cwt(s1, dt_s1, dj, s0, J, mother)
 wave_s2, scales_s2, freqs_s2, coi_s2, fft_s2, fftfreqs_s2 = wavelet.cwt(s2, dt_s2, dj, s0, J, mother)
 wave_s3, scales_s3, freqs_s3, coi_s3, fft_s3, fftfreqs_s3 = wavelet.cwt(s3, dt_s3, dj, s0, J, mother)

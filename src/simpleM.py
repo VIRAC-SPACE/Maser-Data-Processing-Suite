@@ -3,7 +3,7 @@
 
 import sys
 import os
-from matplotlib.ticker import ScalarFormatter
+from matplotlib.ticker import StrMethodFormatter, NullFormatter
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib
@@ -92,6 +92,7 @@ def main():
         index = components.index(component)
         y = correctNumpyReadData(data[:, [index + 1]])
         ax1.plot(x, y, symbols[index] + colors[index], label=velocity[index], linewidth=0.5, markersize=5)
+        ax1.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
         result_org.append(y)
         sum = lambda x, y: x + y
         variances[component] = reduce(sum, [((i - np.mean(y)) / np.std(y)) ** 2 for i in y])
@@ -141,13 +142,14 @@ def main():
     # format the coords message box
     ax2.format_xdata = mdates.DateFormatter('%Y-%m')
     ax2.grid(False)
-
+    ax1.autoscale()
     # rotates and right aligns the x labels, and moves the bottom of the
     # axes up to make room for them
     fig.autofmt_xdate()
 
     plt.yscale("log")
-    ax1.yaxis.set_major_formatter(ScalarFormatter())  # clasic log scale!
+    ax1.yaxis.set_major_formatter(StrMethodFormatter('{x:.0f}'))  # clasic log scale!
+    ax1.yaxis.set_minor_formatter(NullFormatter())
     ax1.yaxis.set_ticks_position('both')
     ax1.xaxis.set_ticks_position('both')
     ax1.tick_params(axis="x", direction="in", which="both", length=16, width=2, labelsize=12)  # MJD atzimju formâts
