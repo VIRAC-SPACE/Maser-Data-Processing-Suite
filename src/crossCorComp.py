@@ -160,7 +160,7 @@ def main():
     plt.show()
 
     n = len(time)
-    mother = wavelet.Morlet(6)
+    mother = wavelet.Paul(1)
     slevel = 0.95  # Significance level
     dj = 1 / 12  # Twelve sub-octaves per octaves
     s0 = 2  # 2 * dt                   # Starting scale
@@ -184,12 +184,12 @@ def main():
     plt.subplot(121)
     plt.xlabel('Time')
     plt.ylabel('Period for components ' + getArgs("a"))
-    plt.contourf(time, np.log2(period_a), np.log2(power_a), np.log2(levels), extend='both', cmap=plt.cm.viridis)
+    plt.contourf(time, np.log10(period_a), np.log10(power_a), extend='both', cmap=plt.cm.viridis)
 
     plt.subplot(122)
     plt.xlabel('Time')
     plt.ylabel('Period for components ' + getArgs("b"))
-    plt.contourf(time, np.log2(period_b), np.log2(power_b), np.log2(levels), extend='both', cmap=plt.cm.viridis)
+    plt.contourf(time, np.log10(period_b), np.log10(power_b), extend='both', cmap=plt.cm.viridis)
     plt.show()
 
     W12, cross_coi, freq, signif = wavelet.xwt(dat_norm_a, dat_norm_b, dt, dj=dj, s0=-1, J=-1, significance_level=0.8646, wavelet='morlet', normalize=True)

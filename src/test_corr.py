@@ -11,7 +11,7 @@ noise = []
 ti = 0
 while ti < 1:
     t += [ti]
-    noise.append(10 * np.random.normal(100, 10000, 1)[0])
+    noise.append(10 * np.random.normal(100, 100, 1)[0])
     ti += 1/fs
 
 noise = np.array(noise)
@@ -19,25 +19,29 @@ t = np.array(t)
 
 #print("noise", noise)
 
-a1 = 15000
-a2 = 15000
-a3 = 15000
+a1 = 1000
+a2 = 1000
+a3 = 1000
 
-f1 = 1234.0 + 10 * 15000 * np.sin(t)
-f2 = 1234.0 * 1.5
+f1 = 100 + 10 * 10 * np.sin(t)
+f2 = 100.0 * 1.5
 f3 = f2 * 2
 
 p1 = 0
 p2 = 0
 p3 = 0
 
-s1 = a1*np.sin(2*np.pi*f1*t + p1) + a1*np.sin(2*np.pi*5*f1*t + p1 + 1/(2.5*f1)) + a1*np.cos(2*np.pi*3*f1*t + p1 + 1/(1.5*f1)) + a1*np.cos(2*np.pi*7*f1*t + p1 + + 1/(3.5*f1)) + noise
-s2 = a2*np.sin(2*np.pi*f2*t + p2)
-s3 = a3*np.sin(2*np.pi*f3*t + p3)
+#s1 = a1*np.sin(2*np.pi*f1*t + p1) + a1*np.sin(2*np.pi*5*f1*t + p1 + 1/(2.5*f1)) + a1*np.cos(2*np.pi*3*f1*t + p1 + 1/(1.5*f1)) + a1*np.cos(2*np.pi*7*f1*t + p1 + + 1/(3.5*f1)) + noise
+#s2 = a2*np.sin(2*np.pi*f2*t + p2)+ a1*np.sin(2*np.pi*5*f1*t + p1 + 1/(2.5*f1)) + a1*np.cos(2*np.pi*3*f1*t + p1 + 1/(1.5*f1)) + a1*np.cos(2*np.pi*7*f1*t + p1 + + 1/(3.5*f1))
+#s3 = a3*np.sin(2*np.pi*f3*t + p3) +noise
+
+s1 = a1*np.sin(2*np.pi*f1*t + p1)+0.2*a1*np.sin(0.5*np.pi*f1*2*t + p1)+0.3*a1*np.sin(2*np.pi*0.75*f1*t + p1)+noise
+s2 = a2*np.sin(2*np.pi*f2*t + p2)+noise
+s3 = noise # a3*np.sin(2*np.pi*f3*t *t*t+ p3)
 
 p_a, residuals_a, rank_a, singular_values_a, rcond_a = np.polyfit(t, s1, 1, full=True)
 #print("residuals_a, rank_a, singular_values_a, rcond_a",residuals_a, rank_a, singular_values_a, rcond_a)
-dat_notrend_a = s1 - np.polyval(p_a, t)
+dat_notrend_a = s3 - np.polyval(p_a, t)
 std_a = dat_notrend_a.std()
 dat_norm_a = dat_notrend_a / std_a
 
@@ -69,17 +73,21 @@ ftfreqs_s2 = 2 * np.pi * np.fft.fftfreq(len(signal_ft_s2), dt_s2)
 ftfreqs_s3 = 2 * np.pi * np.fft.fftfreq(len(signal_ft_s3), dt_s2)
 ftfreqs_norm = 2 * np.pi * np.fft.fftfreq(len(signal_ft_norm), dt_s1)
 
-f0 = 6
-s0 = 2
-dj = 1 / 12
-J = 2
+f0 = 1/100   # Fourier equivalent frequencies
+s0 = 2 *dt_s3
+print(s0, "s0")
+dj = 1 / 12 # Spacing between discrete scales [1/12 - defoult]
+J = 50   # Number of scales
 n0 = len(s1)
-#J = np.int(np.round(np.log2(n0 * dt_s1/ s0) / dj))
+#J= np.int(np.round(np.log2(n0 * dt_s1/ s0) / dj))
 #J = abs(J)
 sj = s0 * 2 ** (np.arange(0, J + 1) * dj)
 sj_col = sj[:, np.newaxis]
 
+print("Number of scales", J)
+
 f_s1 = sj_col * ftfreqs_s1
+print(f_s1)
 f_s2 = sj_col * ftfreqs_s2
 f_s3 = sj_col * ftfreqs_s3
 f_norm = sj_col * ftfreqs_norm
@@ -155,17 +163,17 @@ levels = [0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16]
 plt.subplot(231)
 plt.xlabel('Time')
 plt.ylabel('Period s1')
-plt.contourf(t, np.log2(period_s1), np.log2(power_s1), extend='both', cmap=plt.cm.viridis)
+plt.contourf(t, np.log10(period_s1), np.log10(power_s1), extend='both', cmap=plt.cm.viridis)
 
 plt.subplot(232)
 plt.xlabel('Time')
 plt.ylabel('Period s2')
-plt.contourf(t, np.log2(period_s2), np.log2(power_s2), extend='both', cmap=plt.cm.viridis)
+plt.contourf(t, np.log10(period_s2), np.log10(power_s2), extend='both', cmap=plt.cm.viridis)
 
 plt.subplot(233)
 plt.xlabel('Time')
 plt.ylabel('Period s3')
-plt.contourf(t, np.log2(period_s3), np.log2(power_s3), extend='both', cmap=plt.cm.viridis)
+plt.contourf(t, np.log10(period_s3), np.log10(power_s3), extend='both', cmap=plt.cm.viridis)
 
 # bez log
 plt.subplot(234)
@@ -188,12 +196,12 @@ plt.show()
 
 plt.xlabel('Time')
 plt.ylabel('Period s1')
-plt.contourf(t, np.log2(period_norm), np.log2(power_norm), extend='both', cmap=plt.cm.viridis)
-#plt.ylim(np.log2([period_norm.min(), period_norm.max()]))
+plt.contourf(t, np.log10(period_norm), np.log10(power_norm), extend='both', cmap=plt.cm.viridis)
+#plt.ylim(np.log10([period_norm.min(), period_norm.max()]))
 plt.show()
 
 
-mother = wavelet.Morlet(6)
+mother = wavelet.Morlet(f0) # 6 - number of wave;et cycles
 wave_s1, scales_s1, freqs_s1, coi_s1, fft_s1, fftfreqs_s1 = wavelet.cwt(s1, dt_s1, dj, s0, J, mother)
 wave_s2, scales_s2, freqs_s2, coi_s2, fft_s2, fftfreqs_s2 = wavelet.cwt(s2, dt_s2, dj, s0, J, mother)
 wave_s3, scales_s3, freqs_s3, coi_s3, fft_s3, fftfreqs_s3 = wavelet.cwt(s3, dt_s3, dj, s0, J, mother)
@@ -214,17 +222,17 @@ plt.figure("Continuous wavelet power spectrum")
 plt.subplot(131)
 plt.xlabel('Time')
 plt.ylabel('Period for components ')
-plt.contourf(t, np.log2(period_s1), np.log2(power_s1), extend='both', cmap=plt.cm.viridis)
+plt.contourf(t, np.log10(period_s1), np.log10(power_s1), extend='both', cmap=plt.cm.viridis)
 
 plt.subplot(132)
 plt.xlabel('Time')
 plt.ylabel('Period for components ')
-plt.contourf(t, np.log2(period_s2), np.log2(power_s2), extend='both', cmap=plt.cm.viridis)
+plt.contourf(t, np.log10(period_s2), np.log10(power_s2), extend='both', cmap=plt.cm.viridis)
 
 plt.subplot(133)
 plt.xlabel('Time')
 plt.ylabel('Period for components ')
-plt.contourf(t, np.log2(period_s3), np.log2(power_s3), extend='both', cmap=plt.cm.viridis)
+plt.contourf(t, np.log10(period_s3), np.log10(power_s3), extend='both', cmap=plt.cm.viridis)
 plt.show()
 
 
