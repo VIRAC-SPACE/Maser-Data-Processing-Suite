@@ -3,6 +3,7 @@
 
 import sys
 import os
+from matplotlib.ticker import StrMethodFormatter, NullFormatter
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib
@@ -84,10 +85,12 @@ def main():
     variability_indexies = dict()
 
     result_org = [x]
+    ax1.plot([],[],' ',label="km sec$^{-1}$") # viltîba lai dabûtu km/s pirms series labels
     for component in components:
         index = components.index(component)
         y = correctNumpyReadData(data[:, [index + 1]])
         ax1.plot(x, y,  symbols[index]+colors[index], label=velocity[index], linewidth=0.5, markersize=5)
+        ax1.errorbar(x[0], y[0], yerr = 1.5 + 0.05*y[0], xerr = None, ls='none',ecolor ='k') # 1st poiont error bar
         result_org.append(y)
         sum = lambda x, y : x + y
         variances[component] = reduce(sum, [((i - np.mean(y))/ np.std(y)) ** 2 for i in y])
@@ -106,15 +109,16 @@ def main():
             ytick = 10 ** n
 
         yTicks.append(np.max(y))
-
+        
+          
     print("variances", variances)
     print("variability indexies", variability_indexies)
-    plt.title(get_configs("Full_source_name", get_args("source")))
-    ax1.set_xlabel("MJD")
-    ax1.set_ylabel("Flux density (Jy)")
+    plt.title(get_configs("Full_source_name", get_args("source")),fontsize=18)
+    ax1.set_xlabel("MJD", fontsize=15 )
+    ax1.set_ylabel("Flux density (Jy)", fontsize=15)
 
     ax2 = ax1.twiny()
-    ax2.set_xlabel("Date")
+    ax2.set_xlabel("Date", fontsize=15)
     t = Time(x, format='mjd', scale='utc', out_subfmt='date')
     t.format = 'isot'
     newvalues = [datetime.strptime(i.value, "%Y-%m-%d") for i in t]
@@ -125,7 +129,8 @@ def main():
     ax2.set_xticklabels(newvalues)
     ax2.xaxis.set_major_locator(months)
     ax2.xaxis.set_major_formatter(years_fmt)
-    ax2.xaxis.set_minor_locator(weeks)
+    #ax2.xaxis.set_minor_locator(weeks)
+    ax2.autoscale()
 
     # round to nearest years.
     datemin = np.datetime64(newvalues[0], 'D')
@@ -134,21 +139,28 @@ def main():
 
     # format the coords message box
     ax2.format_xdata = mdates.DateFormatter('%Y-%m')
-    ax2.grid(True)
-
+    ax2.grid(False)
+    ax1.autoscale()
     # rotates and right aligns the x labels, and moves the bottom of the
     # axes up to make room for them
     fig.autofmt_xdate()
 
-    #plt.yscale("log")
+    plt.yscale("log")
+    ax1.yaxis.set_major_formatter(StrMethodFormatter('{x:.0f}'))# clasic log scale!
+    ax1.yaxis.set_minor_formatter(NullFormatter())
+    ax1.yaxis.set_ticks_position('both')
+    ax1.xaxis.set_ticks_position('both')
+    ax1.tick_params(axis="x", direction="in",which="both",length=16, width=2, labelsize=12)# MJD atzimju formâts
+    ax1.tick_params(axis="y", direction="in",which="major", length=16, width=2, labelsize=12) # Flux atzimju formats
+    ax1.tick_params(axis="y", direction="in",which="minor", length=10, width=1.5) # Flux atzimju formats
     yTicks = list(set(yTicks))
-    ax1.set_yticks(yTicks)
-    if old:
-        ax1.axvline(x=new_data[0][0], linewidth=4, color='r', linestyle='--', label="New Monitoring")
+    #ax1.set_yticks(yTicks)  # vecais scale variants
+    #if old:
+        #ax1.axvline(x=new_data[0][0], linewidth=4, color='r', linestyle='--', label="New Monitoring") # rakstam liniju neradam
 
-    ax1.legend()
-    ax1.grid(True)
-    ax2.grid(True)
+    ax1.legend(fontsize=15)
+    ax1.grid(False)
+    ax2.grid(False)
     plt.show()
 
     result_calib = [x]
@@ -164,7 +176,7 @@ def main():
             result_calib.append(y / base)
 
         ax1.legend()
-        ax1.grid(True)
+        ax1.grid(False)
         plt.show()
 
     result_org_file_name = get_configs("paths", "monitoringFilePath") + get_args("source") + ".out"
