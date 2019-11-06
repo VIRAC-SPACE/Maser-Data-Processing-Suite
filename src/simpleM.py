@@ -3,12 +3,14 @@
 
 import sys
 import os
+
+import matplotlib
+matplotlib.use("Qt5Agg")
+
 from matplotlib.ticker import StrMethodFormatter, NullFormatter
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import matplotlib
 
-matplotlib.use("Qt5Agg")
 import numpy as np
 import argparse
 from datetime import datetime
