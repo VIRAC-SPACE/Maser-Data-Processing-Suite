@@ -46,21 +46,19 @@ def main():
     months = mdates.MonthLocator()
     weeks = mdates.WeekdayLocator()
 
-    years_fmt = mdates.DateFormatter('%Y-%m')
+    years_fmt = mdates.DateFormatter('%Y')
 
     old_monitoring_file = get_configs("paths", "oldMonitoringFilePath") + get_args("source") + ".dat"
     new_monitoring_file = get_configs("paths", "monitoringFilePath") + get_args("source") + "_6668" + ".txt"
     compunet_count = len(get_configs("velocities", get_args("source") + "_6668").replace(" ", "").split(","))
     velocity = get_configs("velocities", get_args("source") + "_6668").replace(" ", "").split(",")
 
-    new_data = np.fromfile(new_monitoring_file, dtype="float64", count=-1, sep=" ").reshape(
-        (file_len(new_monitoring_file), compunet_count + 1))
+    new_data = np.fromfile(new_monitoring_file, dtype="float64", count=-1, sep=" ").reshape((file_len(new_monitoring_file), compunet_count + 1))
     new_x = correctNumpyReadData(new_data[:, [0]])
     components = [i for i in range(1, compunet_count + 1)]
 
     if os.path.isfile(old_monitoring_file):
-        old_data = np.loadtxt(old_monitoring_file, dtype=str).reshape(
-            (file_len(old_monitoring_file), compunet_count + 1))
+        old_data = np.loadtxt(old_monitoring_file, dtype=str).reshape((file_len(old_monitoring_file), compunet_count + 1))
         old_x = correctNumpyReadData(old_data[:, [0]])
         old_x = [convertDatetimeObjectToMJD(datetime.strptime(x, "%Y-%m-%d%H:%M:%S")) for x in old_x]
         old_data[:, [0]] = old_x[0]
@@ -74,6 +72,9 @@ def main():
         x = list(new_x)
         old = False
 
+    #x = [int(str(int(round(qwerty)))[0:3].ljust(5, '0')) for qwerty in x]
+    #x = list(set(x))
+    #print(x)
     print("total time in years", (np.max(x) - np.min(x)) / 365)
 
     fig = plt.figure("Monitoring")
@@ -96,8 +97,7 @@ def main():
         result_org.append(y)
         sum = lambda x, y: x + y
         variances[component] = reduce(sum, [((i - np.mean(y)) / np.std(y)) ** 2 for i in y])
-        variability_indexies[component] = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y))) / (
-                    (np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
+        variability_indexies[component] = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y))) / ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
 
         y_min = np.min(y)
         if y_min < 0:
@@ -121,15 +121,14 @@ def main():
 
     ax2 = ax1.twiny()
     ax2.set_xlabel("Date", fontsize=15)
-    t = Time(x, format='mjd', scale='utc', out_subfmt='date')
+    t = Time(x,  format='mjd', scale='utc', out_subfmt='date')
     t.format = 'isot'
     newvalues = [datetime.strptime(i.value, "%Y-%m-%d") for i in t]
-    newpos = x
 
-    newpos = [p for p in range(0, len(x))]
+    newpos = [p for p in range(0, len(t))]
     ax2.set_xticks(newpos)
     ax2.set_xticklabels(newvalues)
-    ax2.xaxis.set_major_locator(months)
+    ax2.xaxis.set_major_locator(years)
     ax2.xaxis.set_major_formatter(years_fmt)
     # ax2.xaxis.set_minor_locator(weeks)
     ax2.autoscale()
@@ -149,7 +148,7 @@ def main():
 
     plt.yscale("log")
     ax1.yaxis.set_major_formatter(StrMethodFormatter('{x:.0f}'))  # clasic log scale!
-    ax1.yaxis.set_minor_formatter(NullFormatter())
+    #ax1.yaxis.set_minor_formatter(NullFormatter())
     ax1.yaxis.set_ticks_position('both')
     ax1.xaxis.set_ticks_position('both')
     ax1.tick_params(axis="x", direction="in", which="both", length=16, width=2, labelsize=12)  # MJD atzimju formâts
@@ -163,6 +162,8 @@ def main():
     ax1.legend(fontsize=15)
     ax1.grid(False)
     ax2.grid(False)
+    ax2.xaxis.get_ticklocs(minor=False)
+    plt.minorticks_off()
     plt.show()
 
     result_calib = [x]
