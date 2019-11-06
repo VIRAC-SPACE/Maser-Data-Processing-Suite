@@ -162,8 +162,6 @@ def main():
     ax1.legend(fontsize=15)
     ax1.grid(False)
     ax2.grid(False)
-    ax2.xaxis.get_ticklocs(minor=False)
-    plt.minorticks_off()
     plt.show()
 
     result_calib = [x]

@@ -1,12 +1,20 @@
-FROM python:3
+FROM ubuntu:18.04
+
+RUN apt-get update  && apt-get upgrade && apt-get install -y build-essential
+
+RUN apt install python3.6 -y
+RUN apt install python3-pip -y
+RUN apt install python3-tk -y
+RUN APT install python3-dev -y
 
 RUN pip3 install numpy scipy matplotlib ipython jupyter pandas sympy nose astropy peakutils
+RUN pip3 install pyqt5
 
-# WORKDIR /DataProcessingForMaserObservation
-ADD ./code/ /
-ADD ./config/ /config
-ARG SOURCE
+RUN apt install python3-pyqt5 -y  
+RUN apt install pyqt5-dev-tools -y
+RUN apt install qttools5-dev-tools -y
 
-CMD [ "python3", "-u", "./main.py", "cepa"]
+
+
 
 
