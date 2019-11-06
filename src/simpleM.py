@@ -151,7 +151,7 @@ def main():
     #ax1.yaxis.set_minor_formatter(NullFormatter())
     ax1.yaxis.set_ticks_position('both')
     ax1.xaxis.set_ticks_position('both')
-    ax1.tick_params(axis="x", direction="in", which="both", length=16, width=2, labelsize=12)  # MJD atzimju formâts
+    ax1.tick_params(axis="x", direction="in", which="both", length=16, width=2, labelsize=12, rotation=0)  # MJD atzimju formâts
     ax1.tick_params(axis="y", direction="in", which="major", length=16, width=2, labelsize=12)  # Flux atzimju formats
     ax1.tick_params(axis="y", direction="in", which="minor", length=10, width=1.5)  # Flux atzimju formats
     yTicks = list(set(yTicks))
@@ -162,6 +162,7 @@ def main():
     ax1.legend(fontsize=15)
     ax1.grid(False)
     ax2.grid(False)
+    plt.xticks(rotation=0, ha='right')
     plt.show()
 
     result_calib = [x]
