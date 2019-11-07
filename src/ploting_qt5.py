@@ -70,6 +70,12 @@ class Plot(FigureCanvas):
     def errorbar(self,  x, y, error, line,  **options):
         self.graph.errorbar(x, y, yerr=error, fmt=line, **options)
 
+    def set_tick_params(self, axis, direction, which, length, width, labelsize, rotation):
+        self.graph.tick_params(axis=axis, direction=direction, which=which, length=length, width=width, labelsize=labelsize, rotation=rotation)
+
+    def save_fig(self, fname, dpi=None, facecolor='w', edgecolor='w', orientation='portrait', papertype=None, format=None, transparent=False, bbox_inches=None, pad_inches=0.1, frameon=None, metadata=None):
+        self.fig.savefig(fname, dpi=None, facecolor='w', edgecolor='w', orientation='portrait', papertype=None, format=None, transparent=False, bbox_inches=None, pad_inches=0.1, frameon=None, metadata=None)
+
     def get_xlim(self):
         return self.graph.get_xlim()
 

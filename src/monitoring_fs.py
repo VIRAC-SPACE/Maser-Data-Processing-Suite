@@ -483,6 +483,7 @@ class Monitoring_View(PlottingView):
             self.selected_points = list()
             self.multiple_spectre = False
             self.line = line
+            self.symbol_i = 0
             
         def setLineDict(self, lineDict):
             self.lineDict = lineDict
@@ -719,7 +720,8 @@ class Monitoring_View(PlottingView):
                     self.spectrPlot.creatPlot(self.Spectre_View.getGrid(), "Velocity (km sec$^{-1}$)", "Flux density (Jy)", source_name, (1, 0), "linear")
                 else:
                     source_name = getConfigs("Full_source_name", spectraFileName.split("/")[-1].split("_")[0])
-                    self.spectrPlot.creatPlot(self.Spectre_View.getGrid(), "Velocity (km sec$^{-1}$)","Flux density (Jy)", source_name, (1, 0), "linear")
+                    self.spectrPlot.creatPlot(self.Spectre_View.getGrid(), "Velocity (km sec$^{-1}$)", "Flux density (Jy)", source_name, (1, 0), "linear")
+
                 self.Spectre_View._addWidget(self.spectrPlot, 0, 0)
                 self.Spectre_View.show()
                 self.new_spectre = False
@@ -752,10 +754,19 @@ class Monitoring_View(PlottingView):
                 y = data[:, [amplitude_colon]]
 
                 if plot_name not in self.plotList:
-                    self.plotList.append(plot_name)
-                    self.spectrPlot.plot(x, y, "-", label=plot_name)
-                    self.spectrPlot.canvasShow()
 
+                    symbols = ["*", "-.", "-"]
+                    symbol = symbols[self.symbol_i]
+                    self.plotList.append(plot_name)
+                    self.spectrPlot.plot(x, y, symbol)
+                    self.spectrPlot.set_tick_params(axis="x", direction="in", which="both", length=16, width=2, labelsize=12, rotation=0)
+                    self.spectrPlot.set_tick_params(axis="y", direction="in", which="major", length=16, width=2, labelsize=12)
+                    self.spectrPlot.set_tick_params(axis="y", direction="in", which="minor", length=10, width=1.5)
+                    self.spectrPlot.canvasShow()
+                    self.symbol_i += 1
+
+                    if  self.symbol_i == 3:
+                        self.spectrPlot.save_fig("/home/janis/Desktop/test.png")
 
 class MonitoringApp(QWidget):
     __slots__ = ['configFilePath', 'grid', 'months', 'new_spectre', 'flag']
