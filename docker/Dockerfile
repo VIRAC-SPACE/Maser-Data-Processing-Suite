@@ -2,6 +2,8 @@ FROM ubuntu:18.04
 
 RUN apt-get update  && apt-get upgrade && apt-get install -y build-essential
 
+RUN apt-get install -qqy x11-apps
+
 RUN apt install python3.6 -y
 RUN apt install python3-pip -y
 
