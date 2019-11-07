@@ -128,8 +128,13 @@ class Plot(FigureCanvas):
         self.toolbar.update()
         self.grid.addWidget(self.toolbar, toolbarpos[0], toolbarpos[1])
         
-        self.graph.grid(True, which='major', color='k', linestyle='-', linewidth=0.5)
-        self.graph.grid(False, which='minor')
+        #self.graph.grid(True, which='major', color='k', linestyle='-', linewidth=0.5)
+        #self.graph.grid(False, which='minor')
+
+        self.graph.yaxis.set_ticks_position('both')
+        self.graph.xaxis.set_ticks_position('both')
+        #self.graph.autoscale()
+
         if self.x_label != None:
             self.graph.set_xlabel(self.x_label)
         if self.y_label !=None:
