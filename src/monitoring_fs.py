@@ -755,18 +755,18 @@ class Monitoring_View(PlottingView):
 
                 if plot_name not in self.plotList:
 
-                    symbols = ["*", "-.", "-"]
+                    symbols = [".", "-.", "-"]
                     symbol = symbols[self.symbol_i]
                     self.plotList.append(plot_name)
                     self.spectrPlot.plot(x, y, symbol)
                     self.spectrPlot.set_tick_params(axis="x", direction="in", which="both", length=16, width=2, labelsize=12, rotation=0)
-                    self.spectrPlot.set_tick_params(axis="y", direction="in", which="major", length=16, width=2, labelsize=12)
-                    self.spectrPlot.set_tick_params(axis="y", direction="in", which="minor", length=10, width=1.5)
+                    self.spectrPlot.set_tick_params(axis="y", direction="in", which="major", length=16, width=2, labelsize=12,  rotation=0)
+                    self.spectrPlot.set_tick_params(axis="y", direction="in", which="minor", length=10, width=1.5, labelsize=12,  rotation=0)
                     self.spectrPlot.canvasShow()
                     self.symbol_i += 1
 
                     if  self.symbol_i == 3:
-                        self.spectrPlot.save_fig("/home/janis/Desktop/test.png")
+                        self.spectrPlot.save_fig("/home/janis/Desktop/test1.eps", format="eps", dpi=5000)
 
 class MonitoringApp(QWidget):
     __slots__ = ['configFilePath', 'grid', 'months', 'new_spectre', 'flag']
