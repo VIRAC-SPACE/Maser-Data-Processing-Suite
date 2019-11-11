@@ -101,7 +101,7 @@ def main():
     variability_indexies = dict()
 
     result_org = [x]
-    ax1.plot([], [], ' ', label="km sec$^{-1}$")  # viltîba lai dabûtu km/s pirms series labels
+    #ax1.plot([], [], ' ', label="km sec$^{-1}$")  # viltîba lai dabûtu km/s pirms series labels
     for component in components:
         index = components.index(component)
         y = correctNumpyReadData(data[:, [index + 1]])
@@ -144,7 +144,7 @@ def main():
     ax2.xaxis.set_major_locator(years)
     ax2.xaxis.set_major_formatter(years_fmt)
     # ax2.xaxis.set_minor_locator(weeks)
-    ax2.autoscale()
+    #ax2.autoscale()
 
     # round to nearest years.
     datemin = np.datetime64(newvalues[0], 'D')
@@ -154,7 +154,7 @@ def main():
     # format the coords message box
     ax2.format_xdata = mdates.DateFormatter('%Y-%m')
     ax2.grid(False)
-    ax1.autoscale()
+    #ax1.autoscale()
     # rotates and right aligns the x labels, and moves the bottom of the
     # axes up to make room for them
     fig.autofmt_xdate()
@@ -176,6 +176,7 @@ def main():
     ax1.grid(False)
     ax2.grid(False)
     plt.xticks(rotation=0, ha='right')
+    plt.tight_layout(pad=1, h_pad=None, w_pad=None, rect=None)
     plt.savefig("/home/janis/Desktop/monitoring.eps", format="eps", dpi=5000)
     plt.show()
 

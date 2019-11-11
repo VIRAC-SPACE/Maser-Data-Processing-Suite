@@ -133,6 +133,8 @@ class Plot(FigureCanvas):
 
         self.graph.yaxis.set_ticks_position('both')
         self.graph.xaxis.set_ticks_position('both')
+        self.fig.tight_layout(pad=2.3, h_pad=None, w_pad=None, rect=None)
+
         #self.graph.autoscale()
 
         if self.x_label != None:
