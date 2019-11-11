@@ -25,7 +25,7 @@ from PyQt5 import QtWidgets
 
 class Plot(FigureCanvas):
     
-    def __init__(self, parent=None, width=7, height=7):
+    def __init__(self, parent=None, width=16, height=9):
         self.parent = parent
         self.fig = Figure(figsize=(width, height))
         FigureCanvas.__init__(self, self.fig)

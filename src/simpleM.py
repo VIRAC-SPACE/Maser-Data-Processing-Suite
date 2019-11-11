@@ -10,6 +10,7 @@ matplotlib.use("Qt5Agg")
 from matplotlib.ticker import StrMethodFormatter, NullFormatter
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+from matplotlib import rcParams
 
 import numpy as np
 import argparse
@@ -20,6 +21,16 @@ from functools import reduce
 from help import *
 from parsers._configparser import ConfigParser
 
+
+def getConfigsItems():
+    configFilePath = "config/plot.cfg"
+    config = ConfigParser.getInstance()
+    config.CreateConfig(configFilePath)
+    return config.getItems("main")
+
+configItems = getConfigsItems()
+for key, value in configItems.items():
+    rcParams[key] = value
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='''Monitoring velocity amplitudes in time. ''', epilog="""Monitor.""")
@@ -79,7 +90,7 @@ def main():
     #print(x)
     print("total time in years", (np.max(x) - np.min(x)) / 365)
 
-    fig = plt.figure("Monitoring")
+    fig = plt.figure("Monitoring", figsize=(16, 9))
     ax1 = fig.add_subplot(111)
 
     symbols = ["*-", "o-", "v-", "^-", "<-", ">-", "1-", "2-", "3-", "4-"]
@@ -122,7 +133,7 @@ def main():
     ax1.set_ylabel("Flux density (Jy)", fontsize=15)
 
     ax2 = ax1.twiny()
-    ax2.set_xlabel("Date", fontsize=15)
+    #ax2.set_xlabel("Date", fontsize=15)
     t = Time(x,  format='mjd', scale='utc', out_subfmt='date')
     t.format = 'isot'
     newvalues = [datetime.strptime(i.value, "%Y-%m-%d") for i in t]
@@ -165,6 +176,7 @@ def main():
     ax1.grid(False)
     ax2.grid(False)
     plt.xticks(rotation=0, ha='right')
+    plt.savefig("/home/janis/Desktop/monitoring.eps", format="eps", dpi=5000)
     plt.show()
 
     result_calib = [x]
