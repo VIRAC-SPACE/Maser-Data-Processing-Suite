@@ -5,7 +5,7 @@ import sys
 import os
 
 import matplotlib
-matplotlib.use("Qt5Agg")
+matplotlib.use('Qt5Agg')
 
 from matplotlib.ticker import StrMethodFormatter, NullFormatter
 import matplotlib.pyplot as plt
@@ -90,7 +90,7 @@ def main():
     #print(x)
     print("total time in years", (np.max(x) - np.min(x)) / 365)
 
-    fig = plt.figure("Monitoring", figsize=(16, 9))
+    fig = plt.figure("Monitoring", figsize=(4, 3), dpi=75)
     ax1 = fig.add_subplot(111)
 
     symbols = ["*-", "o-", "v-", "^-", "<-", ">-", "1-", "2-", "3-", "4-"]
@@ -105,7 +105,7 @@ def main():
     for component in components:
         index = components.index(component)
         y = correctNumpyReadData(data[:, [index + 1]])
-        ax1.plot(x, y, symbols[index] + colors[index], label=velocity[index], linewidth=0.5, markersize=5)
+        ax1.plot(x, y, symbols[index] + colors[index],  linewidth=0.5, markersize=5)
         ax1.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
         result_org.append(y)
         sum = lambda x, y: x + y
@@ -128,32 +128,32 @@ def main():
 
     print("variances", variances)
     print("variability indexies", variability_indexies)
-    plt.title(get_configs("Full_source_name", get_args("source")), fontsize=18)
-    ax1.set_xlabel("MJD", fontsize=15)
-    ax1.set_ylabel("Flux density (Jy)", fontsize=15)
+    plt.title(get_configs("Full_source_name", get_args("source")))
+    ax1.set_xlabel("MJD")
+    ax1.set_ylabel("Flux density (Jy)")
 
-    ax2 = ax1.twiny()
+    #ax2 = ax1.twiny()
     #ax2.set_xlabel("Date", fontsize=15)
     t = Time(x,  format='mjd', scale='utc', out_subfmt='date')
     t.format = 'isot'
     newvalues = [datetime.strptime(i.value, "%Y-%m-%d") for i in t]
 
     newpos = [p for p in range(0, len(t))]
-    ax2.set_xticks(newpos)
-    ax2.set_xticklabels(newvalues)
-    ax2.xaxis.set_major_locator(years)
-    ax2.xaxis.set_major_formatter(years_fmt)
+    #ax2.set_xticks(newpos)
+    #ax2.set_xticklabels(newvalues)
+    #ax2.xaxis.set_major_locator(years)
+    #ax2.xaxis.set_major_formatter(years_fmt)
     # ax2.xaxis.set_minor_locator(weeks)
     #ax2.autoscale()
 
     # round to nearest years.
     datemin = np.datetime64(newvalues[0], 'D')
     datemax = np.datetime64(newvalues[-1], 'D')
-    ax2.set_xlim(datemin, datemax)
+    #ax2.set_xlim(datemin, datemax)
 
     # format the coords message box
-    ax2.format_xdata = mdates.DateFormatter('%Y-%m')
-    ax2.grid(False)
+    #ax2.format_xdata = mdates.DateFormatter('%Y-%m')
+    #ax2.grid(False)
     #ax1.autoscale()
     # rotates and right aligns the x labels, and moves the bottom of the
     # axes up to make room for them
@@ -172,32 +172,32 @@ def main():
     # if old:
     # ax1.axvline(x=new_data[0][0], linewidth=4, color='r', linestyle='--', label="New Monitoring") # rakstam liniju neradam
 
-    ax1.legend(fontsize=15)
+    #ax1.legend()
     ax1.grid(False)
-    ax2.grid(False)
+    #ax2.grid(False)
     plt.xticks(rotation=0, ha='right')
-    plt.tight_layout(pad=1, h_pad=None, w_pad=None, rect=None)
-    plt.savefig("/home/janis/Desktop/monitoring.eps", format="eps", dpi=5000)
+    #fig.tight_layout(pad=4, h_pad=1, w_pad=1, rect=None)
+    #plt.rc('text', usetex=True)
+    plt.savefig("/home/janis/Desktop/monitoring.eps", format="eps", dpi=300)
     plt.show()
 
     result_calib = [x]
     if int(get_args("base")) >= 0:
-        fig = plt.figure("Monitoring")
         ax1 = fig.add_subplot(111)
 
         for component in components:
             index = components.index(component)
             y = correctNumpyReadData(data[:, [index + 1]])
             base = correctNumpyReadData(data[:, [int(get_args("base"))]])
-            ax1.plot(x, y / base, symbols[index] + colors[index], label=velocity[index], linewidth=0.5, markersize=5)
+            ax1.plot(x, y / base, symbols[index] + colors[index], linewidth=0.5, markersize=5)
             result_calib.append(y / base)
 
-        ax1.legend()
+        #ax1.legend()
         ax1.grid(False)
         plt.show()
 
     result_org_file_name = get_configs("paths", "monitoringFilePath") + get_args("source") + ".out"
-    result_calib_file_name = get_configs("paths", "monitoringFilePath") + get_args("source") + "_calib" + ".out"
+    result_calib_file_name = get_configs("paths", "monitoringFilePath") + get_args("source") + "_norm" + ".out"
 
     np.savetxt(result_org_file_name, np.transpose(result_org))
     np.savetxt(result_calib_file_name, np.transpose(result_calib))

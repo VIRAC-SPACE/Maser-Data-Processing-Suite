@@ -27,13 +27,13 @@ class Plot(FigureCanvas):
     
     def __init__(self, parent=None, width=16, height=9):
         self.parent = parent
-        self.fig = Figure(figsize=(width, height))
+        self.fig = Figure(figsize=(4, 3), dpi=75)
         FigureCanvas.__init__(self, self.fig)
         self.setParent(self.parent)
         FigureCanvas.setSizePolicy(self, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
 
-    def plot(self, x, y, line, fontsize=12, **options):
+    def plot(self, x, y, line, fontsize=20, **options):
         line = self.graph.plot(x,y, line, **options)
         #self.graph.set_ylim(np.min(y), np.max(y))
         #self.graph.set_ylim(0, 1)
@@ -73,8 +73,8 @@ class Plot(FigureCanvas):
     def set_tick_params(self, axis, direction, which, length, width, labelsize, rotation):
         self.graph.tick_params(axis=axis, direction=direction, which=which, length=length, width=width, labelsize=labelsize, rotation=rotation)
 
-    def save_fig(self, fname, dpi=None, facecolor='w', edgecolor='w', orientation='portrait', papertype=None, format=None, transparent=False, bbox_inches=None, pad_inches=0.1, frameon=None, metadata=None):
-        self.fig.savefig(fname, dpi=None, facecolor='w', edgecolor='w', orientation='portrait', papertype=None, format=None, transparent=False, bbox_inches=None, pad_inches=0.1, frameon=None, metadata=None)
+    def save_fig(self, fname, dpi=None, format="eps"):
+        self.fig.savefig(fname, dpi=dpi, format=format)
 
     def get_xlim(self):
         return self.graph.get_xlim()
@@ -122,7 +122,7 @@ class Plot(FigureCanvas):
         self.title = title
         
         if self.title != None:
-            self.graph.set_title(title,  y=1.08) 
+            self.graph.set_title(title)
         
         self.toolbar = qt5agg.NavigationToolbar2QT(self, self.parent)
         self.toolbar.update()
@@ -133,7 +133,7 @@ class Plot(FigureCanvas):
 
         self.graph.yaxis.set_ticks_position('both')
         self.graph.xaxis.set_ticks_position('both')
-        self.fig.tight_layout(pad=2.3, h_pad=None, w_pad=None, rect=None)
+        #self.fig.tight_layout(pad=4, h_pad=1, w_pad=1, rect=None)
 
         #self.graph.autoscale()
 
