@@ -16,7 +16,6 @@ import numpy as np
 import argparse
 from datetime import datetime
 from astropy.time import Time
-from functools import reduce
 
 from help import *
 from parsers._configparser import ConfigParser
@@ -51,6 +50,12 @@ def get_configs(key, value):
 
 
 def main():
+    years = mdates.YearLocator()
+    months = mdates.MonthLocator()
+    weeks = mdates.WeekdayLocator()
+
+    years_fmt = mdates.DateFormatter('%Y')
+
     config_items = get_configs_items()
     for key, value in config_items.items():
         rcParams[key] = value
@@ -94,26 +99,41 @@ def main():
         ax2.plot(x, y, symbols[index] + colors[index], linewidth=0.5, markersize=5)
         ax2.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
 
-    ax1.yaxis.set_minor_formatter(NullFormatter())
     ax1.yaxis.set_ticks_position('both')
     ax1.xaxis.set_ticks_position('both')
     ax1.tick_params(axis="x", direction="in", which="both", length=16, width=2, labelsize=12,rotation=0)  # MJD atzimju formâts
     ax1.tick_params(axis="y", direction="in", which="major", length=16, width=2, labelsize=12)  # Flux atzimju formats
     ax1.tick_params(axis="y", direction="in", which="minor", length=10, width=1.5)  # Flux atzimju formats
 
+    ax2.set_yscale("log")
     ax2.yaxis.set_major_formatter(StrMethodFormatter('{x:.0f}'))  # clasic log scale!
-    ax2.yaxis.set_minor_formatter(NullFormatter())
     ax2.yaxis.set_ticks_position('both')
     ax2.xaxis.set_ticks_position('both')
     ax2.tick_params(axis="x", direction="in", which="both", length=16, width=2, labelsize=12,rotation=0)  # MJD atzimju formâts
     ax2.tick_params(axis="y", direction="in", which="major", length=16, width=2, labelsize=12)  # Flux atzimju formats
     ax2.tick_params(axis="y", direction="in", which="minor", length=10, width=1.5)  # Flux atzimju formats
-
-    ax2.set_yscale("log")
     ax2.set_xlabel("MJD")
 
+    ax3 = ax2.twiny()
+    ax3.set_xlabel("Date", fontsize=15)
+    t = Time(x, format='mjd', scale='utc', out_subfmt='date')
+    t.format = 'isot'
+    newvalues = [datetime.strptime(i.value.split("-")[0], "%Y").year for i in t]
+    newvalues = list(set(newvalues))
+    #print(newvalues)
+    newpos = [p for p in range(0, len(t))]
+
+    #ax3.set_xticks(newpos)
+    ax3.set_xticklabels(newvalues)
+    #ax3.xaxis.set_major_locator(years)
+    #ax3.xaxis.set_major_formatter(years_fmt)
+    #ax3.xaxis.set_minor_locator(weeks)
+    ax3.autoscale()
+
     plt.show()
+    f.autofmt_xdate()
     f.savefig("/home/janis/Desktop/monitoring.eps", format="eps", dpi=5000)
+
 
 if __name__ == "__main__":
     main()
