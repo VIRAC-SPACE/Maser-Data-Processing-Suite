@@ -1,21 +1,14 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
-
-import sys
-import os
-
 import matplotlib
 matplotlib.use('Qt5Agg')
 
-from matplotlib.ticker import StrMethodFormatter, NullFormatter
+from matplotlib.ticker import StrMethodFormatter
 import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 from matplotlib import rcParams
-
+from matplotlib.font_manager import FontProperties
 import numpy as np
 import argparse
-from datetime import datetime
-from astropy.time import Time
 
 from help import *
 from parsers._configparser import ConfigParser
@@ -26,6 +19,7 @@ def get_configs_items():
     config = ConfigParser.getInstance()
     config.CreateConfig(config_file_path)
     return config.getItems("main")
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='''Monitoring velocity amplitudes in time. ''', epilog="""Monitor.""")
@@ -50,11 +44,8 @@ def get_configs(key, value):
 
 
 def main():
-    years = mdates.YearLocator()
-    months = mdates.MonthLocator()
-    weeks = mdates.WeekdayLocator()
-
-    years_fmt = mdates.DateFormatter('%Y')
+    fontP = FontProperties()
+    fontP.set_size('small')
 
     config_items = get_configs_items()
     for key, value in config_items.items():
@@ -64,13 +55,16 @@ def main():
     data_file = get_configs("paths", "monitoringFilePath") + get_args("source") + ".out"
     data = np.fromfile(data_file, dtype="float64", count=-1, sep=" ").reshape((file_len(data_file), component_count + 1))
     x = correctNumpyReadData(data[:, [0]])
+    print("Number of observations", len(x))
 
     components = [i for i in range(1, component_count + 1)]
     symbols = ["*-", "o-", "v-", "^-", "<-", ">-", "1-", "2-", "3-", "4-"]
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
+    velocity = get_configs("velocities", get_args("source") + "_6668").replace(" ", "").split(",")
 
-    f, (ax1, ax2) = plt.subplots(1, 2, gridspec_kw={'width_ratios': [2, 4]}, dpi=75, figsize=(20, 12))
+    f, (ax1, ax2) = plt.subplots(1, 2, gridspec_kw={'width_ratios': [2, 4]}, dpi=75, figsize=(20.7, 9.3))
     f.tight_layout(pad=2, h_pad=2, w_pad=2, rect=None)
+    f.subplots_adjust(wspace=0.1, right=0.876, bottom=0.076, top=0.945)
     f.suptitle(get_configs("Full_source_name", get_args("source")), horizontalalignment="center", verticalalignment="center", x=0.4)
 
     specter_files = ["cepa_23_53_48_22_Dec_2018_IRBENE16_294.dat", "cepa_22_24_38_23_Jul_2018_IRBENE16_46.dat", "cepa_22_08_44_29_Aug_2018_IRBENE16_121.dat"]
@@ -92,11 +86,11 @@ def main():
     ax1.set_xlabel("Velocity (km sec$^{-1}$)")
     ax1.set_ylabel("Flux density (Jy)")
 
-
+    ax2.plot([], [], ' ', label="km sec$^{-1}$")
     for component in components:
         index = components.index(component)
         y = correctNumpyReadData(data[:, [index + 1]])
-        ax2.plot(x, y, symbols[index] + colors[index], linewidth=0.5, markersize=5)
+        ax2.plot(x, y, symbols[index] + colors[index], linewidth=0.5, markersize=5, label=str(velocity[index]))
         ax2.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
 
     ax1.yaxis.set_ticks_position('both')
@@ -109,29 +103,14 @@ def main():
     ax2.yaxis.set_major_formatter(StrMethodFormatter('{x:.0f}'))  # clasic log scale!
     ax2.yaxis.set_ticks_position('both')
     ax2.xaxis.set_ticks_position('both')
-    ax2.tick_params(axis="x", direction="in", which="both", length=16, width=2, labelsize=12,rotation=0)  # MJD atzimju formâts
+    ax2.tick_params(axis="x", direction="in", which="both", length=16, width=2, labelsize=13,rotation=0)  # MJD atzimju formâts
     ax2.tick_params(axis="y", direction="in", which="major", length=16, width=2, labelsize=12)  # Flux atzimju formats
     ax2.tick_params(axis="y", direction="in", which="minor", length=10, width=1.5)  # Flux atzimju formats
     ax2.set_xlabel("MJD")
 
-    ax3 = ax2.twiny()
-    ax3.set_xlabel("Date", fontsize=15)
-    t = Time(x, format='mjd', scale='utc', out_subfmt='date')
-    t.format = 'isot'
-    newvalues = [datetime.strptime(i.value.split("-")[0], "%Y").year for i in t]
-    newvalues = list(set(newvalues))
-    #print(newvalues)
-    newpos = [p for p in range(0, len(t))]
-
-    #ax3.set_xticks(newpos)
-    ax3.set_xticklabels(newvalues)
-    #ax3.xaxis.set_major_locator(years)
-    #ax3.xaxis.set_major_formatter(years_fmt)
-    #ax3.xaxis.set_minor_locator(weeks)
-    ax3.autoscale()
+    ax2.legend(bbox_to_anchor=(1, 0.5, 0.3, 0.3), loc='upper left', borderaxespad=0.5)
 
     plt.show()
-    f.autofmt_xdate()
     f.savefig("/home/janis/Desktop/monitoring.eps", format="eps", dpi=5000)
 
 
