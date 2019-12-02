@@ -26,6 +26,7 @@ def parse_arguments():
     parser.add_argument("source", help="Source Name", type=str)
     parser.add_argument("-b", "--base", help="Base component", type=int, default=-1)
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
+    parser.add_argument("-n", "--not_show", type=str,  default="")
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 2.0')
     args = parser.parse_args()
     return args
@@ -89,9 +90,18 @@ def main():
     ax2.plot([], [], ' ', label="km sec$^{-1}$")
     for component in components:
         index = components.index(component)
-        y = correctNumpyReadData(data[:, [index + 1]])
-        ax2.plot(x, y, symbols[index] + colors[index], linewidth=0.5, markersize=5, label=str(velocity[index]))
-        ax2.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
+
+        if len(get_args("not_show")) !=0:
+
+            if index + 1 != 3:
+                y = correctNumpyReadData(data[:, [index + 1]])
+                ax2.plot(x, y, symbols[index] + colors[index], linewidth=0.5, markersize=5, label=str(velocity[index]))
+                ax2.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
+
+        else:
+            y = correctNumpyReadData(data[:, [index + 1]])
+            ax2.plot(x, y, symbols[index] + colors[index], linewidth=0.5, markersize=5, label=str(velocity[index]))
+            ax2.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
 
     ax1.yaxis.set_ticks_position('both')
     ax1.xaxis.set_ticks_position('both')
@@ -111,7 +121,7 @@ def main():
     ax2.legend(bbox_to_anchor=(1, 0.5, 0.3, 0.3), loc='upper left', borderaxespad=0.5)
 
     plt.show()
-    f.savefig("/home/janis/Desktop/monitoring.eps", format="eps", dpi=5000)
+    f.savefig("/home/janis/Desktop/monitoring.eps", format="eps", dpi=5000, papertype="a4")
 
 
 if __name__ == "__main__":

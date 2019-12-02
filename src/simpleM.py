@@ -99,18 +99,28 @@ def main():
 
     variances = dict()
     variability_indexies = dict()
+    variances_normal = dict()
+    fuction_index = dict()
 
     result_org = [x]
+
     #ax1.plot([], [], ' ', label="km sec$^{-1}$")  # viltîba lai dabûtu km/s pirms series labels
     for component in components:
         index = components.index(component)
         y = correctNumpyReadData(data[:, [index + 1]])
+        N = len(y)
         ax1.plot(x, y, symbols[index] + colors[index],  linewidth=0.5, markersize=5)
         ax1.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
         result_org.append(y)
         sum = lambda x, y: x + y
         variances[component] = reduce(sum, [((i - np.mean(y)) / np.std(y)) ** 2 for i in y])
         variability_indexies[component] = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y))) / ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
+        variances_normal[component] = variances[component] * (1/N-1)
+        fuction_index[component] = np.sqrt((((reduce(sum, [i ** 2 * np.std(y) ** 2 for i in y])) - np.mean(y) * reduce(sum, [i**2*np.std(y)**2 for i in y])) / (N-1))) / np.mean(y) * reduce(sum, [N/(1.5 + 0.05 *i) for i in y])
+
+        print((((reduce(sum, [i ** 2 * np.std(y) ** 2 for i in y])) - np.mean(y) * reduce(sum, [i**2*np.std(y)**2 for i in y])) / (N-1)))
+
+
 
         y_min = np.min(y)
         if y_min < 0:
@@ -127,7 +137,9 @@ def main():
         yTicks.append(np.max(y))
 
     print("variances", variances)
+    print("variances_normal", variances_normal)
     print("variability indexies", variability_indexies)
+    print("fuction_index", fuction_index)
     plt.title(get_configs("Full_source_name", get_args("source")))
     ax1.set_xlabel("MJD")
     ax1.set_ylabel("Flux density (Jy)")
