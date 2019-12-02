@@ -116,11 +116,9 @@ def main():
         variances[component] = reduce(sum, [((i - np.mean(y)) / np.std(y)) ** 2 for i in y])
         variability_indexies[component] = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y))) / ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
         variances_normal[component] = variances[component] * (1/N-1)
-        fuction_index[component] = np.sqrt((((reduce(sum, [i ** 2 * np.std(y) ** 2 for i in y])) - np.mean(y) * reduce(sum, [i**2*np.std(y)**2 for i in y])) / (N-1))) / np.mean(y) * reduce(sum, [N/(1.5 + 0.05 *i) for i in y])
+        fuction_index[component] = np.sqrt((N/reduce(sum, [(1.5 + 0.05 * i) **2 for i in y])) * ((reduce(sum, [i**2*(1.5 + 0.05 * i) **2 for i in y]) -np.mean(y) * reduce(sum, [i*(1.5 + 0.05 * i) **2 for i in y])) /(N-1))-1)/np.mean(y)
 
-        print((((reduce(sum, [i ** 2 * np.std(y) ** 2 for i in y])) - np.mean(y) * reduce(sum, [i**2*np.std(y)**2 for i in y])) / (N-1)))
-
-
+        #np.sqrt((((reduce(sum, [i ** 2 * np.std(y) ** 2 for i in y])) - np.mean(y) * reduce(sum, [i ** 2 * np.std(y) ** 2 for i in y])) / (N - 1))) / np.mean(y) * reduce(sum, [N / (1.5 + 0.05 * i) for i in y])
 
         y_min = np.min(y)
         if y_min < 0:
