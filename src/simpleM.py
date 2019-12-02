@@ -140,6 +140,7 @@ def main():
     print("variances_normal", variances_normal)
     print("variability indexies", variability_indexies)
     print("fuction_index", fuction_index)
+    print("Start time", np.min(x))
     plt.title(get_configs("Full_source_name", get_args("source")))
     ax1.set_xlabel("MJD")
     ax1.set_ylabel("Flux density (Jy)")
