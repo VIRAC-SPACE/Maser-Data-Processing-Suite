@@ -68,7 +68,11 @@ def main():
     f.subplots_adjust(wspace=0.1, right=0.876, bottom=0.076, top=0.945)
     f.suptitle(get_configs("Full_source_name", get_args("source")), horizontalalignment="center", verticalalignment="center", x=0.4)
 
-    specter_files = ["cepa_23_53_48_22_Dec_2018_IRBENE16_294.dat", "cepa_22_24_38_23_Jul_2018_IRBENE16_46.dat", "cepa_22_08_44_29_Aug_2018_IRBENE16_121.dat"]
+    specter_files = ["w51_18_04_58_24_Jul_2018_IRBENE16_2.dat", "w51_18_43_13_11_Aug_2019_IRBENE_18.dat","w51_10_56_46_24_Nov_2019_IRBENE16_30.dat" ]
+    #specter_files = ["g90p92_15_58_46_23_Mar_2019_IRBENE16_42.dat","g90p92_09_09_22_18_Jan_2019_IRBENE16_27.dat", "g90p92_11_10_44_23_Nov_2019_IRBENE16_45.dat"]
+    #specter_files = ["s255_2017-04-21_m21_n25.dat.out", "s255_2018-03-05_m119_n41.dat.out", "s255_09_41_03_20_Oct_2019_IRBENE16_21.dat"]# S255
+    #specter_files = ["w3oh_16_38_18_23_Mar_2019_IRBENE16_53.dat","w3oh_07_39_00_28_Nov_2018_IRBENE16_28.dat", "w3oh_20_22_47_08_Jun_2018_IRBENE16_9.dat"]# w3oh
+    #specter_files = ["g90p92_15_58_46_23_Mar_2019_IRBENE16_42.dat","g90p92_09_09_22_18_Jan_2019_IRBENE16_27.dat", "g90p92_11_10_44_23_Nov_2019_IRBENE16_45.dat"]# g90p92
 
     symbols_2 = [".", "-.", "-"]
     i = 0
@@ -83,7 +87,7 @@ def main():
         ax1.plot(x_, y_, symbols_2[i])
         i += 1
 
-    ax1.set_xlim(-5.5, -1)
+    ax1.set_xlim(46.0, 65.0)
     ax1.set_xlabel("Velocity (km sec$^{-1}$)")
     ax1.set_ylabel("Flux density (Jy)")
 
@@ -111,6 +115,7 @@ def main():
 
     ax2.set_yscale("log")
     ax2.yaxis.set_major_formatter(StrMethodFormatter('{x:.0f}'))  # clasic log scale!
+    #ax2.yaxis.set_minor_formatter(StrMethodFormatter('{x:.0f}'))
     ax2.yaxis.set_ticks_position('both')
     ax2.xaxis.set_ticks_position('both')
     ax2.tick_params(axis="x", direction="in", which="both", length=16, width=2, labelsize=13,rotation=0)  # MJD atzimju formâts
@@ -121,7 +126,7 @@ def main():
     ax2.legend(bbox_to_anchor=(1, 0.5, 0.3, 0.3), loc='upper left', borderaxespad=0.5)
 
     plt.show()
-    f.savefig("/home/janis/Desktop/monitoring.eps", format="eps", dpi=5000, papertype="a4")
+    f.savefig("/home/artis/monitoring_w51.eps", format="eps", dpi=5000, papertype="a4")
 
 
 if __name__ == "__main__":

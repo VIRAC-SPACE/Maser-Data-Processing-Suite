@@ -192,7 +192,7 @@ def main():
     plt.xticks(rotation=0, ha='right')
     #fig.tight_layout(pad=4, h_pad=1, w_pad=1, rect=None)
     #plt.rc('text', usetex=True)
-    plt.savefig("/home/janis/Desktop/monitoring.eps", format="eps", dpi=300)
+    plt.savefig("/home/artis/monitoring.eps", format="eps", dpi=300)
     plt.show()
 
     result_calib = [x]
