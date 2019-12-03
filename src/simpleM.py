@@ -3,7 +3,6 @@
 
 import sys
 import os
-
 import matplotlib
 matplotlib.use('Qt5Agg')
 
@@ -11,13 +10,11 @@ from matplotlib.ticker import StrMethodFormatter, NullFormatter
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib import rcParams
-
 import numpy as np
 import argparse
 from datetime import datetime
 from astropy.time import Time
 from functools import reduce
-
 from help import *
 from parsers._configparser import ConfigParser
 
@@ -28,9 +25,11 @@ def getConfigsItems():
     config.CreateConfig(configFilePath)
     return config.getItems("main")
 
+
 configItems = getConfigsItems()
 for key, value in configItems.items():
     rcParams[key] = value
+
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='''Monitoring velocity amplitudes in time. ''', epilog="""Monitor.""")
@@ -89,6 +88,8 @@ def main():
     #x = list(set(x))
     #print(x)
     print("total time in years", (np.max(x) - np.min(x)) / 365)
+    print("Nmbers of observations", len(x))
+    print("Observations per month", (len(x)/ ((np.max(x) - np.min(x)) / 365))/12, "(len(x)/ ((np.max(x) - np.min(x)) / 365))/12")
 
     fig = plt.figure("Monitoring", figsize=(4, 3), dpi=75)
     ax1 = fig.add_subplot(111)
@@ -139,6 +140,7 @@ def main():
     print("variability indexies", variability_indexies)
     print("fuction_index", fuction_index)
     print("Start time", np.min(x))
+
     plt.title(get_configs("Full_source_name", get_args("source")))
     ax1.set_xlabel("MJD")
     ax1.set_ylabel("Flux density (Jy)")
