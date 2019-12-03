@@ -119,6 +119,7 @@ def main():
         variances_normal[component] = variances[component] * (1/N-1)
         fuction_index[component] = np.sqrt((N/reduce(sum, [(1.5 + 0.05 * i) **2 for i in y])) * ((reduce(sum, [i**2*(1.5 + 0.05 * i) **2 for i in y]) -np.mean(y) * reduce(sum, [i*(1.5 + 0.05 * i) **2 for i in y])) /(N-1))-1)/np.mean(y)
 
+        print("average flux of component", component, np.mean(y))
         #np.sqrt((((reduce(sum, [i ** 2 * np.std(y) ** 2 for i in y])) - np.mean(y) * reduce(sum, [i ** 2 * np.std(y) ** 2 for i in y])) / (N - 1))) / np.mean(y) * reduce(sum, [N / (1.5 + 0.05 * i) for i in y])
 
         y_min = np.min(y)
