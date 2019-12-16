@@ -10,10 +10,11 @@ from astropy.convolution import Gaussian1DKernel, convolve
 from astropy.time import Time
 from datetime import datetime
 import peakutils
+import pandas as pd
 import json
 import pickle
-from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QMessageBox, QLabel, QLineEdit, QSlider,
-                             QDesktopWidget, QLCDNumber)
+from multiprocessing import Pool
+from PyQt5.QtWidgets import (QWidget, QGridLayout, QApplication, QPushButton, QMessageBox, QLabel, QLineEdit, QSlider, QDesktopWidget, QLCDNumber)
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
@@ -33,6 +34,8 @@ def parseArguments():
     parser.add_argument("-n", "--noGUI", help="Create smoothed and not smothed outputfiles", action='store_true')
     parser.add_argument("-r", "--rawdata", help="Use raw data, skip smoothing", action='store_true')
     parser.add_argument("-t", "--calibType", help="Type of calibration", default="SDR")
+    parser.add_argument("-tr", "--threshold", help="Set threshold for outlier filter", type=float, default=1.0)
+    parser.add_argument("-f", "--filter",help="Set the amount of times to filter data to remove noise spikes, higher than 5 makes little difference", type=int, default=0, choices=range(0, 11), metavar="[0-10]")
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 1.0')
     args = parser.parse_args()
     return args
@@ -85,6 +88,26 @@ def STON(xarray, yarray, cuts):
     return ston
 
 
+def replaceBadPoints(xdata, ydata, x_bad_point, y_bad_point, data):
+    tempx = []
+    tempy = []
+
+    xlist = xdata.tolist()
+
+    pf = np.polyfit(xdata[:, 0], ydata[:, 0], 10)
+    p = np.poly1d(pf)
+
+    for idx, point in enumerate(x_bad_point):
+        index = xlist.index(point)
+        if (y_bad_point[idx] / ydata[index][0] > 1.10 or y_bad_point[idx] / ydata[index][0] < 0.90):
+            tempx.append(x_bad_point[idx])
+            tempy.append(y_bad_point[idx])
+            ydata[index][0] = p(x_bad_point[idx])
+        else:
+            ydata[index][0] = data[index, [1]][0]
+    return tempx, tempy
+
+
 class Result():
     def __init__(self, matrix, specie):
         self.matrix = matrix
@@ -97,9 +120,21 @@ class Result():
         return self.specie
 
 
+def is_outlier(points, threshold):
+    if len(points.shape) == 1:
+        points = points[:, None]
+
+    median = np.median(points, axis=0)
+    diff = np.sum((points - median) ** 2, axis=-1)
+    diff = np.sqrt(diff)
+    med_abs_deviation = np.median(diff)
+    modified_z_score = 0.6745 * diff / med_abs_deviation
+
+    return modified_z_score < threshold
+
+
 class Analyzer(QWidget):
-    def __init__(self, datafile, resultFilePath, source_velocities, cuts, output, index_range_for_local_maxima,
-                 skipsmooth, calibType, line):
+    def __init__(self, datafile, resultFilePath, source_velocities, cuts, output, index_range_for_local_maxima, skipsmooth, calibType, line):
         super().__init__()
         self.skipsmoothing = skipsmooth
         self.setWindowIcon(QIcon('viraclogo.png'))
@@ -108,9 +143,7 @@ class Analyzer(QWidget):
         self.source = datafile.split("/")[-1].split(".")[0].split("_")[0]
         self.expername = datafile.split("/")[-1].split(".")[0]
         self.location = datafile.split("/")[-1].split(".")[0].split("_")[-2]
-        self.date = "_".join(
-            [datafile.split("/")[-1].split(".")[0].split("_")[1], datafile.split("/")[-1].split(".")[0].split("_")[2],
-             datafile.split("/")[-1].split(".")[0].split("_")[3]])
+        self.date = "_".join([datafile.split("/")[-1].split(".")[0].split("_")[1], datafile.split("/")[-1].split(".")[0].split("_")[2], datafile.split("/")[-1].split(".")[0].split("_")[3]])
         self.time = datafile.split("/")[-1].split(".")[0].split("_")[-3]
         self.iteration_number = datafile.split("/")[-1].split(".")[0].split("_")[-1]
         self.resultFilePath = resultFilePath
@@ -146,13 +179,75 @@ class Analyzer(QWidget):
             sys.exit(1)
 
         else:
-            self.dataPoints = data.shape[0]
+            if int(getArgs("filter")) > 0:
+                x_bad_point = []
+                y_bad_point_left = []
+                y_bad_point_right = []
+
+                xdata = data[:, [0]].tolist()
+                ydata_left = data[:, [1]].tolist()
+                ydata_right = data[:, [2]].tolist()
+
+                for x in range(int(getArgs("filter"))):
+                    outliers_mask = is_outlier(data, float(getArgs("threshold")))
+                    bad_point_index = indexies(outliers_mask, False)
+
+                    if x == 0:
+
+                        for idx, point in enumerate(outliers_mask):
+                            if point == False:
+                                x_bad_point.append(data[idx, [0]][0])
+                                y_bad_point_left.append(data[idx, [1]][0])
+                                y_bad_point_right.append(data[idx, [2]][0])
+
+                    df_y_left = pd.DataFrame(data=ydata_left)
+                    df_y_right = pd.DataFrame(data=ydata_right)
+
+                    mean_y_left = np.nan_to_num(df_y_left.rolling(window=int(getConfigs("parameters", "badPointRange")), center=True).mean())
+                    mean_y_right = np.nan_to_num(df_y_right.rolling(window=int(getConfigs("parameters", "badPointRange")), center=True).mean())
+
+                    for badPoint in bad_point_index:
+                        if mean_y_left[badPoint] != 0:
+                            ydata_left[badPoint][0] = mean_y_left[badPoint]
+
+                    for badPoint in bad_point_index:
+                        if mean_y_right[badPoint] != 0:
+                            ydata_right[badPoint][0] = mean_y_right[badPoint]
+
+                    xdata = np.array(xdata)
+                    ydata_left = np.array(ydata_left)
+                    ydata_right = np.array(ydata_right)
+
+                    data[:, [1]] = ydata_left
+                    data[:, [2]] = ydata_right
+
+                    if x == int(getArgs("filter")) - 1:
+                        pool = Pool(processes=4)
+                        xdata = np.array(xdata, dtype="float")
+                        x_bad_point = np.array(x_bad_point, dtype="float")
+
+                        ydata_left = np.array(ydata_left, dtype="float")
+                        ydata_right = np.array(ydata_right, dtype="float")
+
+                        async_result1 = pool.apply_async(replaceBadPoints, (xdata, ydata_left, x_bad_point, y_bad_point_left, data))
+                        async_result2 = pool.apply_async(replaceBadPoints, (xdata, ydata_right,x_bad_point, y_bad_point_right, data))
+
+                        x_bad_point, y_bad_point_left = async_result1.get()
+                        x_bad_point, y_bad_point_right = async_result2.get()
+
+
+                self.xdata = xdata
+                self.y_u1 = ydata_left
+                self.y_u9 = ydata_right
+
+            else:
+                self.xdata = data[:, [0]]
+                self.y_u1 = data[:, [1]]
+                self.y_u9 = data[:, [2]]
+
+            self.dataPoints = len(self.xdata)
             self.m = 0
             self.n = self.dataPoints
-
-            self.xdata = data[:, [0]]
-            self.y_u1 = data[:, [1]]
-            self.y_u9 = data[:, [2]]
 
             # Making sure that data is numpy array
             self.xarray = np.zeros(self.dataPoints)
@@ -174,37 +269,16 @@ class Analyzer(QWidget):
 
             self.plotShortSpectr()
 
+
     def center(self):
         qr = self.frameGeometry()
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
-    def onpickU1(self, event):
-        thisline = event.artist
-        xdata = thisline.get_xdata()
-        ydata = thisline.get_ydata()
-        ind = event.ind
-        p = tuple(zip(xdata[ind], ydata[ind]))
-        self.plot_3.plot(p[0][0], p[0][1], 'ro', markersize=1, picker=5)
-        self.points_1u.append(p[0])
-        # self.points_9u.append(p[0])
-        self.plot_3.canvasShow()
-
-    def onpickU9(self, event):
-        thisline = event.artist
-        xdata = thisline.get_xdata()
-        ydata = thisline.get_ydata()
-        ind = event.ind
-        p = tuple(zip(xdata[ind], ydata[ind]))
-        self.plot_4.plot(p[0][0], p[0][1], 'ro', markersize=1, picker=5)
-        self.points_9u.append(p[0])
-        # self.points_1u.append(p[0])
-        self.plot_4.canvasShow()
 
     def plotInitData(self):
         self.setWindowTitle("Change params")
-
         self.changeParms = True
 
         self.changeParams.hide()
@@ -228,14 +302,15 @@ class Analyzer(QWidget):
         self.grid.addWidget(self.plotSmoothDataButton, 5, 4)
 
         self.plot_1 = Plot()
-        self.plot_1.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization", (1, 0),
-                              "linear")
+        self.plot_1.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization", (1, 0),"linear")
         self.plot_1.plot(self.xarray, self.y1array, 'ko', label='Data Points', markersize=1)
 
         self.plot_2 = Plot()
-        self.plot_2.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization", (1, 1),
-                              "linear")
+        self.plot_2.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization", (1, 1), "linear")
         self.plot_2.plot(self.xarray, self.y2array, 'ko', label='Data Points', markersize=1)
+
+        self.plot_1.fig.canvas.mpl_connect('pick_event', self._on_left_click_u1)
+        # self.plot_start_u1.fig.canvas.mpl_connect('pick_event', self._on_right_click_u1)
 
         self.grid.addWidget(self.plot_1, 0, 0)
         self.grid.addWidget(self.plot_2, 0, 1)
@@ -342,10 +417,8 @@ class Analyzer(QWidget):
         self.previousM = value
 
     def change_N(self, value):
-        self.plot_1.plot(self.xarray[int(self.previousN - 1)], self.y1array[int(self.previousN - 1)], 'ko',
-                         markersize=1)
-        self.plot_2.plot(self.xarray[int(self.previousN - 1)], self.y2array[int(self.previousN - 1)], 'ko',
-                         markersize=1)
+        self.plot_1.plot(self.xarray[int(self.previousN - 1)], self.y1array[int(self.previousN - 1)], 'ko', markersize=1)
+        self.plot_2.plot(self.xarray[int(self.previousN - 1)], self.y2array[int(self.previousN - 1)], 'ko', markersize=1)
 
         self.plot_1.annotation(self.xarray[int(self.previousN - 1)], self.y1array[int(self.previousN - 1)], " ")
         self.plot_2.annotation(self.xarray[int(self.previousN - 1)], self.y2array[int(self.previousN - 1)], " ")
@@ -363,6 +436,27 @@ class Analyzer(QWidget):
         self.plot_2.canvasShow()
 
         self.previousN = value
+
+    def _on_left_click_u1(self, event):
+        print("yes")
+        if event.mouseevent.button == 1:
+            line = event.artist
+            pointx, pointy = line.get_data()
+            ind = event.ind
+            if (pointx[ind].size > 1):
+                print("Too many points selected")
+            else:
+                y_list = self.ydata_2_u1.tolist()
+                index = y_list.index(pointy[ind])
+                if self.xdata[index][0] not in self.x_bad_point_2_u1:
+                    pf = np.polyfit(self.xdata[:, 0], self.ydata_2_u1[:, 0], 10)
+                    p = np.poly1d(pf)
+                    self.y_bad_point_2_u1.append(self.ydata_2_u1[index][0])
+                    self.x_bad_point_2_u1.append(self.xdata[index][0])
+                    self.badplot_2_u1[0].set_data(self.x_bad_point_2_u1, self.y_bad_point_2_u1)
+                    self.ydata_2_u1[index][0] = p(self.xdata[index])
+                    event.canvas.draw()
+                    event.canvas.flush_events()
 
     def plotShortSpectr(self):
         self.setWindowTitle("Spectrum")
@@ -453,14 +547,12 @@ class Analyzer(QWidget):
 
         # u1 plot
         self.plot_10 = Plot()
-        self.plot_10.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Left Polarization", (1, 0),
-                               "linear")
+        self.plot_10.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Left Polarization", (1, 0), "linear")
         self.plot_10.plot(self.xarray, self.y1array, 'ko', label='Data Points', markersize=1)
 
         # u9 plot
         self.plot_11 = Plot()
-        self.plot_11.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Right Polarization", (1, 1),
-                               "linear")
+        self.plot_11.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Right Polarization", (1, 1), "linear")
         self.plot_11.plot(self.xarray, self.y2array, 'ko', label='Data Points', markersize=1)
 
         self.grid.addWidget(self.plot_10, 0, 0)
