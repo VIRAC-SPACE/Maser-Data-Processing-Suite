@@ -156,6 +156,9 @@ class Analyzer(QWidget):
         self.changeParms = False
         self.calibType = calibType
         self.line = line
+        self.x_bad_points = []
+        self.y_bad_point_left = []
+        self.y_bad_point_right = []
 
         try:
             result = pickle.load(open(datafile, "rb"))
@@ -309,9 +312,6 @@ class Analyzer(QWidget):
         self.plot_2.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization", (1, 1), "linear")
         self.plot_2.plot(self.xarray, self.y2array, 'ko', label='Data Points', markersize=1)
 
-        self.plot_1.fig.canvas.mpl_connect('pick_event', self._on_left_click_u1)
-        # self.plot_start_u1.fig.canvas.mpl_connect('pick_event', self._on_right_click_u1)
-
         self.grid.addWidget(self.plot_1, 0, 0)
         self.grid.addWidget(self.plot_2, 0, 1)
 
@@ -438,23 +438,24 @@ class Analyzer(QWidget):
         self.previousN = value
 
     def _on_left_click_u1(self, event):
-        print("yes")
         if event.mouseevent.button == 1:
             line = event.artist
             pointx, pointy = line.get_data()
             ind = event.ind
+
             if (pointx[ind].size > 1):
                 print("Too many points selected")
             else:
-                y_list = self.ydata_2_u1.tolist()
+                y_list = self.y1array.tolist()
                 index = y_list.index(pointy[ind])
-                if self.xdata[index][0] not in self.x_bad_point_2_u1:
-                    pf = np.polyfit(self.xdata[:, 0], self.ydata_2_u1[:, 0], 10)
+                if self.xdata[index] not in self.x_bad_points:
+                    self.xdata = self.xarray.reshape(self.xarray.shape[0])
+                    pf = np.polyfit(self.xdata, self.y1array[:], 10)
                     p = np.poly1d(pf)
-                    self.y_bad_point_2_u1.append(self.ydata_2_u1[index][0])
-                    self.x_bad_point_2_u1.append(self.xdata[index][0])
-                    self.badplot_2_u1[0].set_data(self.x_bad_point_2_u1, self.y_bad_point_2_u1)
-                    self.ydata_2_u1[index][0] = p(self.xdata[index])
+                    self.y_bad_point_left.append(self.y1array[index])
+                    self.x_bad_points.append(self.xdata[index])
+                    self.badplot_1_left[0].set_data(self.x_bad_points, self.y_bad_point_left)
+                    self.y1array[index] = p(self.xdata[index])
                     event.canvas.draw()
                     event.canvas.flush_events()
 
@@ -548,12 +549,18 @@ class Analyzer(QWidget):
         # u1 plot
         self.plot_10 = Plot()
         self.plot_10.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Left Polarization", (1, 0), "linear")
-        self.plot_10.plot(self.xarray, self.y1array, 'ko', label='Data Points', markersize=1)
+        self.plot_10.plot(self.xarray, self.y1array, 'ko', label='Data Points a', markersize=4, picker=5)
 
         # u9 plot
         self.plot_11 = Plot()
         self.plot_11.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Right Polarization", (1, 1), "linear")
-        self.plot_11.plot(self.xarray, self.y2array, 'ko', label='Data Points', markersize=1)
+        self.plot_11.plot(self.xarray, self.y2array, 'ko', label='Data Points', markersize=4, picker=5)
+
+        self.badplot_1_left = self.plot_10.plot(self.x_bad_points, self.y_bad_point_left, 'x')
+        self.badplot_2_right = self.plot_11.plot(self.x_bad_points, self.y_bad_point_right, 'x')
+
+        self.plot_10.fig.canvas.mpl_connect('pick_event', self._on_left_click_u1)
+        # self.plot_start_u1.fig.canvas.mpl_connect('pick_event', self._on_right_click_u1)
 
         self.grid.addWidget(self.plot_10, 0, 0)
         self.grid.addWidget(self.plot_11, 0, 1)
