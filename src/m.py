@@ -10,7 +10,10 @@ from matplotlib import rcParams
 from matplotlib.font_manager import FontProperties
 import numpy as np
 import argparse
+import json
+import datetime
 
+from monitor.months import Months
 from help import *
 from parsers._configparser import ConfigParser
 
@@ -55,8 +58,7 @@ def main():
 
     component_count = len(get_configs("velocities", get_args("source") + "_6668").replace(" ", "").split(","))
     data_file = get_configs("paths", "monitoringFilePath") + get_args("source") + ".out"
-    data = np.fromfile(data_file, dtype="float64", count=-1, sep=" ").reshape(
-        (file_len(data_file), component_count + 1))
+    data = np.fromfile(data_file, dtype="float64", count=-1, sep=" ").reshape((file_len(data_file), component_count + 1))
     x = correctNumpyReadData(data[:, [0]])
     print("Number of observations", len(x))
 
@@ -74,10 +76,10 @@ def main():
     ax1.set_aspect(aspect=0.5)
     ax2.set_aspect(aspect=0.3)
 
-    # specter_files = ["w51_18_04_58_24_Jul_2018_IRBENE16_2.dat", "w51_18_43_13_11_Aug_2019_IRBENE_18.dat","w51_10_56_46_24_Nov_2019_IRBENE16_30.dat" ]
-    # specter_files = ["g90p92_15_58_46_23_Mar_2019_IRBENE16_42.dat","g90p92_09_09_22_18_Jan_2019_IRBENE16_27.dat", "g90p92_11_10_44_23_Nov_2019_IRBENE16_45.dat"]
-    # specter_files = ["s255_2017-04-21_m21_n25.dat.out", "s255_2018-03-05_m119_n41.dat.out", "s255_09_41_03_20_Oct_2019_IRBENE16_21.dat"]# S255
-    # specter_files = ["w3oh_16_38_18_23_Mar_2019_IRBENE16_53.dat","w3oh_07_39_00_28_Nov_2018_IRBENE16_28.dat", "w3oh_20_22_47_08_Jun_2018_IRBENE16_9.dat"]# w3oh
+    #specter_files = ["w51_18_04_58_24_Jul_2018_IRBENE16_2.dat", "w51_18_43_13_11_Aug_2019_IRBENE_18.dat","w51_10_56_46_24_Nov_2019_IRBENE16_30.dat" ]
+    #specter_files = ["g90p92_15_58_46_23_Mar_2019_IRBENE16_42.dat","g90p92_09_09_22_18_Jan_2019_IRBENE16_27.dat", "g90p92_11_10_44_23_Nov_2019_IRBENE16_45.dat"]
+    specter_files = ["s255_2017-04-21_m21_n25.dat.out", "s255_2018-03-05_m119_n41.dat.out", "s255_09_41_03_20_Oct_2019_IRBENE16_21.dat"]# S255
+    #specter_files = ["w3oh_16_38_18_23_Mar_2019_IRBENE16_53.dat","w3oh_07_39_00_28_Nov_2018_IRBENE16_28.dat", "w3oh_20_22_47_08_Jun_2018_IRBENE16_9.dat"]# w3oh
     # specter_files = ["g90p92_15_58_46_23_Mar_2019_IRBENE16_42.dat","g90p92_09_09_22_18_Jan_2019_IRBENE16_27.dat", "g90p92_11_10_44_23_Nov_2019_IRBENE16_45.dat"]# g90p92
 
     # specter_files = ["w51_18_04_58_24_Jul_2018_IRBENE16_2.dat", "w51_18_43_13_11_Aug_2019_IRBENE_18.dat","w51_10_56_46_24_Nov_2019_IRBENE16_30.dat" ]
@@ -85,7 +87,7 @@ def main():
     # specter_files = ["s255_2017-04-21_m21_n25.dat.out", "s255_2018-03-05_m119_n41.dat.out", "s255_09_41_03_20_Oct_2019_IRBENE16_21.dat"]# S255
     # specter_files = ["w3oh_16_38_18_23_Mar_2019_IRBENE16_53.dat","w3oh_07_39_00_28_Nov_2018_IRBENE16_28.dat", "w3oh_20_22_47_08_Jun_2018_IRBENE16_9.dat"]# w3oh
     # specter_files = ["g90p92_15_58_46_23_Mar_2019_IRBENE16_42.dat","g90p92_09_09_22_18_Jan_2019_IRBENE16_27.dat", "g90p92_11_10_44_23_Nov_2019_IRBENE16_45.dat"]# g90p92
-    # specter_files = ["cepa_17_55_39_04_Oct_2019_IRBENE16_214.dat", "cepa_2018-06-04_m242_n29.dat.out", "cepa_07_05_58_10_Sep_2018_IRBENE16_144.dat"]
+    #specter_files = ["cepa_17_55_39_04_Oct_2019_IRBENE16_214.dat", "cepa_2018-06-04_m242_n29.dat.out", "cepa_07_05_58_10_Sep_2018_IRBENE16_144.dat"]
     # specter_files = ["g33p64_20_39_39_24_Jul_2018_IRBENE16_2.dat", "g33p64_00_26_34_23_Jun_2019_IRBENE_8.dat", "g33p64_13_20_17_14_Nov_2019_IRBENE16_33.dat"]
     # specter_files = ["g32p745_20_18_24_10_Jul_2018_IRBENE16_5.dat", "g32p745_21_18_07_15_Aug_2018_IRBENE16_18.dat", "g32p745_12_24_15_10_Dec_2018_IRBENE16_36.dat"]
     # specter_files = ["g25p65_20_38_40_07_Aug_2018_IRBENE16_8.dat","g25p65_00_23_27_25_May_2019_IRBENE_4.dat","g25p65_17_31_29_09_Oct_2019_IRBENE16_22.dat"]
@@ -110,7 +112,7 @@ def main():
     # specter_files = ["g43p79_18_05_19_12_Aug_2018_IRBENE16_6.dat","g43p79_06_59_44_08_Dec_2018_IRBENE16_23.dat","g43p79_16_28_40_06_Nov_2019_IRBENE16_30.dat"]
     # specter_files = ["on1_06_10_52_01_Apr_2019_IRBENE16_55.dat","on1_18_38_21_14_Aug_2018_IRBENE16_7.dat","on1_11_35_30_19_Nov_2019_IRBENE16_33.dat"]
     # specter_files = ["g34p403_12_39_51_19_Nov_2019_IRBENE16_34.dat","g34p403_19_44_01_29_Jul_2018_IRBENE16_2.dat","g34p403_06_39_07_27_Dec_2018_IRBENE16_27.dat"]
-    specter_files = ["g34p403_12_39_51_19_Nov_2019_IRBENE16_34.dat", "g34p403_19_44_01_29_Jul_2018_IRBENE16_2.dat", "g34p403_06_39_07_27_Dec_2018_IRBENE16_27.dat"]
+    #specter_files = ["g34p403_12_39_51_19_Nov_2019_IRBENE16_34.dat", "g34p403_19_44_01_29_Jul_2018_IRBENE16_2.dat", "g34p403_06_39_07_27_Dec_2018_IRBENE16_27.dat"]
 
     symbols_2 = [".", "-.", "-"]
     i = 0
@@ -131,6 +133,27 @@ def main():
     # ax1.set_ylim(-2,9)
 
     ax2.plot([], [], ' ', label="km sec$^{-1}$")
+
+    print(get_configs("paths", "resultFilePath") + get_args("source") + "_6668.json")
+    with open(get_configs("paths", "resultFilePath") + "/" + get_args("source") + "_6668.json", "r") as r_data:
+        result_data = json.load(r_data)
+
+    months = Months()
+    RT32_observation_dates = []
+    for observation in result_data:
+        if observation.split("_")[-2] == "IRBENE":
+            date = result_data[observation]["Date"]
+            dates = date.split("_")
+            monthsNumber = dates[1]
+            dates[1] = months.getMonthNumber([monthsNumber][0])
+            date = result_data[observation]["time"].replace(":", " ") + " " + " ".join(dates)
+            date = datetime.datetime.strptime(date, '%H %M %S %d %m %Y')
+            date = convertDatetimeObjectToMJD(date)
+            RT32_observation_dates.append(date)
+
+    rt32_x = [rt32 for rt32 in x if rt32 in RT32_observation_dates]
+    rt32_x_indexies = [x.tolist().index(rt32) for rt32 in x if rt32 in RT32_observation_dates]
+
     for component in components:
         index = components.index(component)
 
@@ -138,20 +161,19 @@ def main():
 
             if index + 1 != 3:
                 y = correctNumpyReadData(data[:, [index + 1]])
-                ax2.plot(x, y, symbols[index], color=colors[index], linewidth=0.5, markersize=5,
-                         label=str(velocity[index]))
-                ax2.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none',
-                             ecolor='k')  # 1st poiont error bar
+                ax2.plot(x, y, symbols[index], color=colors[index], linewidth=0.5, markersize=5,label=str(velocity[index]))
+                ax2.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
 
         else:
             y = correctNumpyReadData(data[:, [index + 1]])
+            rt32_y = y[rt32_x_indexies]
             ax2.plot(x, y, symbols[index], color=colors[index], linewidth=0.5, markersize=5, label=str(velocity[index]))
+            ax2.plot(rt32_x, rt32_y, symbols[index], color=colors[index], linewidth=0.5, markersize=10, label=str(velocity[index]))
             ax2.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
 
     ax1.yaxis.set_ticks_position('both')
     ax1.xaxis.set_ticks_position('both')
-    ax1.tick_params(axis="x", direction="in", which="both", length=16, width=2, labelsize=12,
-                    rotation=0)  # MJD atzimju formâts
+    ax1.tick_params(axis="x", direction="in", which="both", length=16, width=2, labelsize=12, rotation=0)  # MJD atzimju formâts
     ax1.tick_params(axis="y", direction="in", which="major", length=16, width=2, labelsize=12)  # Flux atzimju formats
     ax1.tick_params(axis="y", direction="in", which="minor", length=10, width=1.5)  # Flux atzimju formats
     # ax2.set_ylim(1)
@@ -163,8 +185,7 @@ def main():
 
     ax2.yaxis.set_ticks_position('both')
     ax2.xaxis.set_ticks_position('both')
-    ax2.tick_params(axis="x", direction="in", which="both", length=16, width=2, labelsize=13,
-                    rotation=0)  # MJD atzimju formâts
+    ax2.tick_params(axis="x", direction="in", which="both", length=16, width=2, labelsize=13, rotation=0)  # MJD atzimju formâts
     ax2.tick_params(axis="y", direction="in", which="major", length=16, width=2, labelsize=12)  # Flux atzimju formats
     ax2.tick_params(axis="y", direction="in", which="minor", length=10, width=1.5)  # Flux atzimju formats
     ax2.set_xlabel("MJD")
@@ -173,8 +194,8 @@ def main():
 
     plt.show()
 
-    f.savefig("/home/artis/monitoring_g34p403.eps", format="eps", dpi=5000)  # , papertype="a4")
-    # f.savefig("monitoring_" + get_args("source") + ".eps", format="eps", dpi=5000, papertype="a4")
+    #f.savefig("/home/artis/monitoring_g34p403.eps", format="eps", dpi=5000)  # , papertype="a4")
+    f.savefig("monitoring_" + get_args("source") + ".eps", format="eps", dpi=5000, papertype="a4")
 
 
 if __name__ == "__main__":
