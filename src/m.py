@@ -9,9 +9,11 @@ import matplotlib.pyplot as plt
 from matplotlib import rcParams
 from matplotlib.font_manager import FontProperties
 import numpy as np
+import pandas as pd
 import argparse
 import json
 import datetime
+import os
 
 from monitor.months import Months
 from help import *
@@ -56,6 +58,26 @@ def main():
     for key, value in config_items.items():
         rcParams[key] = value
 
+    old_dates = []
+    old_log_file_dir = "/home/janis/Documents/maser/old_prety_log/"
+    for old_log_file in os.listdir(old_log_file_dir):
+        with open(old_log_file_dir + old_log_file, "r") as old_log_file2:
+            lines = old_log_file2.readlines()
+            station = lines[1].split(";")[1]
+            if station == "IRBENE":
+                line_index = -1
+                for line in lines:
+                    line_index += 1
+                    if line.startswith("Source;"):
+                        source = line.split(";")[1].split(",")[0]
+                        if source == get_args("source"):
+                            data = lines[line_index + 1].split(";")[1]
+                            time = lines[line_index + 2].split(";")[1]
+                            time_stamp = data + "_" + time
+                            old_dates.append(time_stamp)
+
+    old_dates = [datetime.datetime.strptime(d, '%Y-%m-%d_%H:%M:%S') for d in old_dates]
+
     component_count = len(get_configs("velocities", get_args("source") + "_6668").replace(" ", "").split(","))
     data_file = get_configs("paths", "monitoringFilePath") + get_args("source") + ".out"
     data = np.fromfile(data_file, dtype="float64", count=-1, sep=" ").reshape((file_len(data_file), component_count + 1))
@@ -68,7 +90,7 @@ def main():
     velocity = get_configs("velocities", get_args("source") + "_6668").replace(" ", "").split(",")
 
     # f, (ax1, ax2) = plt.subplots(1, 2, gridspec_kw={'width_ratios': [2, 4]}, dpi=75, figsize=(19.8, 9.3))
-    f, (ax1, ax2) = plt.subplots(1, 2, gridspec_kw={'width_ratios': [2, 4]}, dpi=75, figsize=(19.8, 9.3))
+    f, (ax1, ax2) = plt.subplots(1, 2, gridspec_kw={'width_ratios': [2, 4]},  figsize=(19.8, 9.3))
     f.tight_layout(pad=2, h_pad=2, w_pad=2, rect=None)
     f.subplots_adjust(wspace=0.1, right=0.876, bottom=0.076, top=0.945)
     f.suptitle(get_configs("Full_source_name", get_args("source")), horizontalalignment="center", verticalalignment="center", x=0.4)
@@ -76,12 +98,21 @@ def main():
     #ax1.set_aspect(aspect=1)
     #ax2.set_aspect(aspect=100000)
     
+    ax1.set_aspect(aspect=0.5)
+    ax2.set_aspect(aspect=0.3)
+
+    #specter_files = ["w51_18_04_58_24_Jul_2018_IRBENE16_2.dat", "w51_18_43_13_11_Aug_2019_IRBENE_18.dat","w51_10_56_46_24_Nov_2019_IRBENE16_30.dat" ]
+    #specter_files = ["g90p92_15_58_46_23_Mar_2019_IRBENE16_42.dat","g90p92_09_09_22_18_Jan_2019_IRBENE16_27.dat", "g90p92_11_10_44_23_Nov_2019_IRBENE16_45.dat"]
+    #specter_files = ["s255_2017-04-21_m21_n25.dat.out", "s255_2018-03-05_m119_n41.dat.out", "s255_09_41_03_20_Oct_2019_IRBENE16_21.dat"]# S255
+    #specter_files = ["w3oh_16_38_18_23_Mar_2019_IRBENE16_53.dat","w3oh_07_39_00_28_Nov_2018_IRBENE16_28.dat", "w3oh_20_22_47_08_Jun_2018_IRBENE16_9.dat"]# w3oh
+    # specter_files = ["g90p92_15_58_46_23_Mar_2019_IRBENE16_42.dat","g90p92_09_09_22_18_Jan_2019_IRBENE16_27.dat", "g90p92_11_10_44_23_Nov_2019_IRBENE16_45.dat"]# g90p92
+
     # specter_files = ["w51_18_04_58_24_Jul_2018_IRBENE16_2.dat", "w51_18_43_13_11_Aug_2019_IRBENE_18.dat","w51_10_56_46_24_Nov_2019_IRBENE16_30.dat" ]
     # specter_files = ["g90p92_15_58_46_23_Mar_2019_IRBENE16_42.dat","g90p92_09_09_22_18_Jan_2019_IRBENE16_27.dat", "g90p92_11_10_44_23_Nov_2019_IRBENE16_45.dat"]
     # specter_files = ["s255_2017-04-21_m21_n25.dat.out", "s255_2018-03-05_m119_n41.dat.out", "s255_09_41_03_20_Oct_2019_IRBENE16_21.dat"]# S255
     # specter_files = ["w3oh_16_38_18_23_Mar_2019_IRBENE16_53.dat","w3oh_07_39_00_28_Nov_2018_IRBENE16_28.dat", "w3oh_20_22_47_08_Jun_2018_IRBENE16_9.dat"]# w3oh
     # specter_files = ["g90p92_15_58_46_23_Mar_2019_IRBENE16_42.dat","g90p92_09_09_22_18_Jan_2019_IRBENE16_27.dat", "g90p92_11_10_44_23_Nov_2019_IRBENE16_45.dat"]# g90p92
-    #specter_files = ["cepa_17_55_39_04_Oct_2019_IRBENE16_214.dat", "cepa_2018-06-04_m242_n29.dat.out", "cepa_07_05_58_10_Sep_2018_IRBENE16_144.dat"]
+    specter_files = ["cepa_17_55_39_04_Oct_2019_IRBENE16_214.dat", "cepa_2018-06-04_m242_n29.dat.out", "cepa_07_05_58_10_Sep_2018_IRBENE16_144.dat"]
     # specter_files = ["g33p64_20_39_39_24_Jul_2018_IRBENE16_2.dat", "g33p64_00_26_34_23_Jun_2019_IRBENE_8.dat", "g33p64_13_20_17_14_Nov_2019_IRBENE16_33.dat"]
     # specter_files = ["g32p745_20_18_24_10_Jul_2018_IRBENE16_5.dat", "g32p745_21_18_07_15_Aug_2018_IRBENE16_18.dat", "g32p745_12_24_15_10_Dec_2018_IRBENE16_36.dat"]
     # specter_files = ["g25p65_20_38_40_07_Aug_2018_IRBENE16_8.dat","g25p65_00_23_27_25_May_2019_IRBENE_4.dat","g25p65_17_31_29_09_Oct_2019_IRBENE16_22.dat"]
@@ -142,7 +173,8 @@ def main():
         result_data = json.load(r_data)
 
     months = Months()
-    RT32_observation_dates = []
+    RT32_observation_dates = old_dates
+
     for observation in result_data:
         if observation.split("_")[-2] == "IRBENE":
             date = result_data[observation]["Date"]
@@ -157,6 +189,7 @@ def main():
     rt32_x = [rt32 for rt32 in x if rt32 in RT32_observation_dates]
     rt32_x_indexies = [x.tolist().index(rt32) for rt32 in x if rt32 in RT32_observation_dates]
 
+    markersize = [10 for i in range(0, len(x))]
     for component in components:
         index = components.index(component)
 
@@ -170,8 +203,8 @@ def main():
         else:
             y = correctNumpyReadData(data[:, [index + 1]])
             rt32_y = y[rt32_x_indexies]
-            ax2.plot(x, y, symbols[index], color=colors[index], linewidth=0.5, markersize=5, label=str(velocity[index]))
-            ax2.plot(rt32_x, rt32_y, symbols[index], color=colors[index], linewidth=0.5, markersize=10, label=str(velocity[index]))
+            ax2.plot(x, y, symbols[index], c=colors[index], linewidth=0.5, markersize=4, label=str(velocity[index]))
+            ax2.plot(rt32_x, rt32_y, symbols[index], c=colors[index], linewidth=0.5, markersize=10, label=str(velocity[index]))
             ax2.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
 
     ax1.yaxis.set_ticks_position('both')
