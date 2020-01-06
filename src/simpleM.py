@@ -67,7 +67,7 @@ def main():
 
     components = [i for i in range(1, compunet_count + 1)]
 
-    if os.path.isfile(old_monitoring_file) and  os.path.isfile(new_monitoring_file):
+    if os.path.isfile(old_monitoring_file) and os.path.isfile(new_monitoring_file):
         new_data = np.fromfile(new_monitoring_file, dtype="float64", count=-1, sep=" ").reshape((file_len(new_monitoring_file), compunet_count + 1))
         new_x = correctNumpyReadData(new_data[:, [0]])
 
@@ -85,7 +85,9 @@ def main():
         old_data = np.loadtxt(old_monitoring_file, dtype=str).reshape((file_len(old_monitoring_file), compunet_count + 1))
         old_x = correctNumpyReadData(old_data[:, [0]])
         old_x = [convertDatetimeObjectToMJD(datetime.strptime(x, "%Y-%m-%d%H:%M:%S")) for x in old_x]
-        data = old_x
+        old_data[:, [0]] = old_x[0]
+        data = old_data
+        x = list(old_x)
 
     else:
         new_data = np.fromfile(new_monitoring_file, dtype="float64", count=-1, sep=" ").reshape((file_len(new_monitoring_file), compunet_count + 1))
@@ -119,6 +121,7 @@ def main():
     for component in components:
         index = components.index(component)
         y = correctNumpyReadData(data[:, [index + 1]])
+        y = [np.float128(yi) for yi in y]
         N = len(y)
         ax1.plot(x, y, symbols[index] + colors[index],  linewidth=0.5, markersize=5)
         ax1.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar

@@ -1,0 +1,35 @@
+Start;Header;
+Station;IRBENE16;
+End;Header;----------------------;
+Scan;01;
+Source;s255,061254.02,175923.3;
+Date;2018-07-15;
+TimeStart;06:00:00;UT;
+TimeStop;06:07:00;UT;
+Duration;420;sec;7;min
+RA;06 12 54.02;
+DEC;17 59 23.3;
+Epoch;2000.0;
+Systemtemperature1;1u;28.2;
+Systemtemperature2;9u;30.5;
+FreqBBC1;567.34;MHz
+FreqBBC2;569.34;MHz
+FreqStart;6667.34;MHz
+FreqStop;6669.34;MHz
+End;01;----------------------;
+Scan;02;
+Source;cepa,225617.90,620149.7;
+Date;2018-07-15;
+TimeStart;06:09:00;UT;
+TimeStop;06:16:00;UT;
+Duration;420;sec;7;min
+RA;22 56 17.90;
+DEC;62 01 49.7;
+Epoch;2000.0;
+Systemtemperature1;1u;26.9;
+Systemtemperature2;9u;28.4;
+FreqBBC1;568.19;MHz
+FreqBBC2;570.19;MHz
+FreqStart;6668.19;MHz
+FreqStop;6670.19;MHz
+End;02;----------------------;

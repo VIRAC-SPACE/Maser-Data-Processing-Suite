@@ -36,8 +36,10 @@ def parseArguments():
     args = parser.parse_args()
     return args
 
+
 def getArgs(key):
     return str(parseArguments().__dict__[key])
+
 
 def is_outlier(points, threshold):
     if len(points.shape) == 1:
@@ -51,10 +53,12 @@ def is_outlier(points, threshold):
 
     return modified_z_score < threshold
 
+
 def dopler(ObservedFrequency, velocityReceiver, f0):
     c = scipy.constants.speed_of_light
     velocitySoure = (-((ObservedFrequency / f0) - 1) * c + (velocityReceiver * 1000)) / 1000
     return velocitySoure
+
 
 def indexies(array, value):
     indexs = list()
@@ -62,6 +66,7 @@ def indexies(array, value):
         if array[i] == value:
             indexs.append(i)
     return indexs
+
 
 def STON(xarray, yarray, cuts):
     cutsIndex = list()
@@ -97,6 +102,7 @@ def STON(xarray, yarray, cuts):
     ston = max / (std * 3)
     return ston
 
+
 def replaceBadPoints(xdata, ydata, x_bad_point, y_bad_point, data):
     tempx = []
     tempy = []
@@ -116,6 +122,7 @@ def replaceBadPoints(xdata, ydata, x_bad_point, y_bad_point, data):
             ydata[index][0] = data[index, [1]][0]
     return tempx, tempy
 
+
 class Result():
     def __init__(self, matrix, specie):
         self.matrix = matrix
@@ -126,6 +133,7 @@ class Result():
 
     def getSpecie(self):
         return self.specie
+
 
 class Analyzer(QWidget):
     def __init__(self, source, iteration_number, filter, threshold, badPointRange, dataPath, resultPath, logs, DPFU_max, G_El, Tcal, k, fstart, cuts, firstScanStartTime, base_frequencies, stationCordinations):

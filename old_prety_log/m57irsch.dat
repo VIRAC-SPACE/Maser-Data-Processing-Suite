@@ -1,0 +1,1123 @@
+Start;Header;
+Station;IRBENE16;
+End;Header;----------------------;
+Scan;01;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;16:05:00;UT;
+TimeStop;16:12:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;41.3;
+Systemtemperature2;9u;46.8;
+FreqBBC1;566.30;MHz
+FreqBBC2;568.30;MHz
+FreqStart;6666.3;MHz
+FreqStop;6668.3;MHz
+End;01;----------------------;
+Scan;02;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;16:13:00;UT;
+TimeStop;16:20:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;40.5;
+Systemtemperature2;9u;46.1;
+FreqBBC1;566.81;MHz
+FreqBBC2;568.81;MHz
+FreqStart;6666.81;MHz
+FreqStop;6668.81;MHz
+End;02;----------------------;
+Scan;03;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;16:21:00;UT;
+TimeStop;16:28:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;39.2;
+Systemtemperature2;9u;44.6;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;03;----------------------;
+Scan;04;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;16:29:00;UT;
+TimeStop;16:36:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;38.3;
+Systemtemperature2;9u;43.4;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;04;----------------------;
+Scan;05;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;16:37:00;UT;
+TimeStop;16:44:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;37.1;
+Systemtemperature2;9u;42.2;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;05;----------------------;
+Scan;06;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;16:45:00;UT;
+TimeStop;16:52:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;36.7;
+Systemtemperature2;9u;41.7;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;06;----------------------;
+Scan;07;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;16:53:00;UT;
+TimeStop;17:00:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;35.6;
+Systemtemperature2;9u;40.6;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;07;----------------------;
+Scan;08;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;17:01:01;UT;
+TimeStop;17:08:00;UT;
+Duration;419;sec;6;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;35.4;
+Systemtemperature2;9u;39.9;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;08;----------------------;
+Scan;09;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;17:09:00;UT;
+TimeStop;17:16:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;34.3;
+Systemtemperature2;9u;39.0;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;09;----------------------;
+Scan;10;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;17:17:00;UT;
+TimeStop;17:24:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;33.9;
+Systemtemperature2;9u;38.8;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;10;----------------------;
+Scan;11;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;17:25:00;UT;
+TimeStop;17:32:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;33.2;
+Systemtemperature2;9u;37.8;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;11;----------------------;
+Scan;12;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;17:33:00;UT;
+TimeStop;17:40:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;33.0;
+Systemtemperature2;9u;37.6;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;12;----------------------;
+Scan;13;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;17:41:00;UT;
+TimeStop;17:48:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;32.1;
+Systemtemperature2;9u;36.7;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;13;----------------------;
+Scan;14;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;17:49:00;UT;
+TimeStop;17:56:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;31.9;
+Systemtemperature2;9u;36.3;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;14;----------------------;
+Scan;15;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;17:57:00;UT;
+TimeStop;18:04:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;31.4;
+Systemtemperature2;9u;35.8;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;15;----------------------;
+Scan;16;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;18:05:00;UT;
+TimeStop;18:12:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;31.0;
+Systemtemperature2;9u;35.1;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;16;----------------------;
+Scan;17;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;18:13:00;UT;
+TimeStop;18:20:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;30.7;
+Systemtemperature2;9u;34.8;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;17;----------------------;
+Scan;18;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;18:21:00;UT;
+TimeStop;18:28:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;30.9;
+Systemtemperature2;9u;34.9;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;18;----------------------;
+Scan;19;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;18:29:00;UT;
+TimeStop;18:36:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;30.3;
+Systemtemperature2;9u;34.3;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;19;----------------------;
+Scan;20;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;18:37:00;UT;
+TimeStop;18:44:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;30.3;
+Systemtemperature2;9u;34.1;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;20;----------------------;
+Scan;21;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;18:45:00;UT;
+TimeStop;18:52:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;29.8;
+Systemtemperature2;9u;34.1;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;21;----------------------;
+Scan;22;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;18:53:00;UT;
+TimeStop;19:00:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;30.0;
+Systemtemperature2;9u;33.8;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;22;----------------------;
+Scan;23;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;19:01:00;UT;
+TimeStop;19:08:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;29.6;
+Systemtemperature2;9u;33.6;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;23;----------------------;
+Scan;24;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;19:09:00;UT;
+TimeStop;19:16:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;29.5;
+Systemtemperature2;9u;33.5;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;24;----------------------;
+Scan;25;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;19:17:00;UT;
+TimeStop;19:24:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;29.1;
+Systemtemperature2;9u;33.4;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;25;----------------------;
+Scan;26;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;19:25:00;UT;
+TimeStop;19:32:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;29.5;
+Systemtemperature2;9u;33.4;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;26;----------------------;
+Scan;27;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;19:33:00;UT;
+TimeStop;19:40:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;29.1;
+Systemtemperature2;9u;33.2;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;27;----------------------;
+Scan;28;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;19:41:00;UT;
+TimeStop;19:48:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;29.3;
+Systemtemperature2;9u;33.3;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;28;----------------------;
+Scan;29;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;19:49:00;UT;
+TimeStop;19:56:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;29.1;
+Systemtemperature2;9u;33.1;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;29;----------------------;
+Scan;30;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;19:57:00;UT;
+TimeStop;20:04:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;29.1;
+Systemtemperature2;9u;33.1;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;30;----------------------;
+Scan;31;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;20:05:01;UT;
+TimeStop;20:12:00;UT;
+Duration;419;sec;6;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;29.0;
+Systemtemperature2;9u;33.0;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;31;----------------------;
+Scan;32;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;20:13:00;UT;
+TimeStop;20:20:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;29.2;
+Systemtemperature2;9u;33.0;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;32;----------------------;
+Scan;33;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;20:21:00;UT;
+TimeStop;20:28:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;28.9;
+Systemtemperature2;9u;32.9;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;33;----------------------;
+Scan;34;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;20:29:00;UT;
+TimeStop;20:36:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;29.1;
+Systemtemperature2;9u;33.0;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;34;----------------------;
+Scan;35;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;20:37:00;UT;
+TimeStop;20:44:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;28.9;
+Systemtemperature2;9u;32.9;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;35;----------------------;
+Scan;36;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;20:45:00;UT;
+TimeStop;20:52:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;29.1;
+Systemtemperature2;9u;33.0;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;36;----------------------;
+Scan;37;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;20:53:00;UT;
+TimeStop;21:00:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;28.9;
+Systemtemperature2;9u;32.8;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;37;----------------------;
+Scan;38;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;21:01:00;UT;
+TimeStop;21:08:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;29.2;
+Systemtemperature2;9u;33.0;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;38;----------------------;
+Scan;39;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;21:09:00;UT;
+TimeStop;21:16:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;29.0;
+Systemtemperature2;9u;33.1;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;39;----------------------;
+Scan;40;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;21:17:00;UT;
+TimeStop;21:24:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;29.3;
+Systemtemperature2;9u;33.2;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;40;----------------------;
+Scan;41;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;21:25:00;UT;
+TimeStop;21:32:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;29.2;
+Systemtemperature2;9u;33.1;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;41;----------------------;
+Scan;42;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;21:33:00;UT;
+TimeStop;21:40:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;29.5;
+Systemtemperature2;9u;33.3;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;42;----------------------;
+Scan;43;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;21:41:00;UT;
+TimeStop;21:48:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;29.4;
+Systemtemperature2;9u;33.3;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;43;----------------------;
+Scan;44;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;21:49:00;UT;
+TimeStop;21:56:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;29.5;
+Systemtemperature2;9u;33.6;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;44;----------------------;
+Scan;45;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;21:57:00;UT;
+TimeStop;22:04:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;29.5;
+Systemtemperature2;9u;33.5;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;45;----------------------;
+Scan;46;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;22:05:00;UT;
+TimeStop;22:12:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;29.7;
+Systemtemperature2;9u;33.7;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;46;----------------------;
+Scan;47;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;22:13:00;UT;
+TimeStop;22:20:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;29.7;
+Systemtemperature2;9u;33.8;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;47;----------------------;
+Scan;48;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;22:21:00;UT;
+TimeStop;22:28:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;30.4;
+Systemtemperature2;9u;34.2;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;48;----------------------;
+Scan;49;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;22:29:00;UT;
+TimeStop;22:36:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;30.0;
+Systemtemperature2;9u;34.2;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;49;----------------------;
+Scan;50;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;22:37:00;UT;
+TimeStop;22:44:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;30.3;
+Systemtemperature2;9u;34.7;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;50;----------------------;
+Scan;51;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;22:45:00;UT;
+TimeStop;22:52:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;30.4;
+Systemtemperature2;9u;34.7;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;51;----------------------;
+Scan;52;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;22:53:00;UT;
+TimeStop;23:00:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;30.9;
+Systemtemperature2;9u;35.0;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;52;----------------------;
+Scan;53;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;23:01:00;UT;
+TimeStop;23:08:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;30.8;
+Systemtemperature2;9u;35.3;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;53;----------------------;
+Scan;54;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;23:09:02;UT;
+TimeStop;23:16:00;UT;
+Duration;418;sec;6;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;31.5;
+Systemtemperature2;9u;35.8;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;54;----------------------;
+Scan;55;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;23:17:00;UT;
+TimeStop;23:24:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;31.5;
+Systemtemperature2;9u;36.0;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;55;----------------------;
+Scan;56;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;23:25:00;UT;
+TimeStop;23:32:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;32.3;
+Systemtemperature2;9u;36.7;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;56;----------------------;
+Scan;57;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;23:33:00;UT;
+TimeStop;23:40:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;32.3;
+Systemtemperature2;9u;36.8;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;57;----------------------;
+Scan;58;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;23:41:00;UT;
+TimeStop;23:48:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;33.2;
+Systemtemperature2;9u;37.9;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;58;----------------------;
+Scan;59;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;23:49:00;UT;
+TimeStop;23:56:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;33.2;
+Systemtemperature2;9u;37.9;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;59;----------------------;
+Scan;60;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;23:57:00;UT;
+TimeStop;00:04:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;34.3;
+Systemtemperature2;9u;39.3;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;60;----------------------;
+Scan;61;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;00:05:00;UT;
+TimeStop;00:12:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;34.3;
+Systemtemperature2;9u;39.1;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;61;----------------------;
+Scan;62;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;00:13:00;UT;
+TimeStop;00:20:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;35.6;
+Systemtemperature2;9u;40.7;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;62;----------------------;
+Scan;63;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;00:21:00;UT;
+TimeStop;00:28:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;35.7;
+Systemtemperature2;9u;40.7;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;63;----------------------;
+Scan;64;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;00:29:00;UT;
+TimeStop;00:36:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;37.0;
+Systemtemperature2;9u;41.9;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;64;----------------------;
+Scan;65;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;00:37:00;UT;
+TimeStop;00:44:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;36.9;
+Systemtemperature2;9u;42.4;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;65;----------------------;
+Scan;66;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;00:45:00;UT;
+TimeStop;00:52:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;38.8;
+Systemtemperature2;9u;44.1;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;66;----------------------;
+Scan;67;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;00:53:00;UT;
+TimeStop;01:00:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;38.6;
+Systemtemperature2;9u;44.0;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;67;----------------------;
+Scan;68;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;01:01:00;UT;
+TimeStop;01:08:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;40.7;
+Systemtemperature2;9u;46.2;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;68;----------------------;
+Scan;69;
+Source;g33p64,185332.56,003139.2;
+Date;2017-08-02;
+TimeStart;01:09:00;UT;
+TimeStop;01:16:00;UT;
+Duration;420;sec;7;min
+RA;18 53 32.56;
+DEC;00 31 39.2;
+Epoch;2000.0;
+Systemtemperature1;1u;40.4;
+Systemtemperature2;9u;46.3;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;69;----------------------;
+Scan;70;
+Source;g32p745,185121.87,-001205.3;
+Date;2017-08-02;
+TimeStart;01:17:00;UT;
+TimeStop;01:24:00;UT;
+Duration;420;sec;7;min
+RA;18 51 21.87;
+DEC;-00 12 05.3;
+Epoch;2000.0;
+Systemtemperature1;1u;43.0;
+Systemtemperature2;9u;49.0;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;70;----------------------;

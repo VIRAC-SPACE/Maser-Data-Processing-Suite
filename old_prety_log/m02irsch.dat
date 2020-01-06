@@ -1,0 +1,145 @@
+Start;Header;
+Station;IRBENE;
+End;Header;----------------------;
+Scan;01;
+Source;g60p57,194552.30,241742.6;
+Date;2017-03-06;
+TimeStart;11:05:00;UT;
+TimeStop;12:30:15;UT;
+Duration;5115;sec;85;min
+RA;19 45 52.30;
+DEC;24 17 42.6;
+Epoch;2000.0;
+Systemtemperature1;1u;24.6;
+Systemtemperature2;9u;27.3;
+FreqBBC1;568.15;MHz
+FreqBBC2;570.15;MHz
+FreqStart;6668.15;MHz
+FreqStop;6670.15;MHz
+End;01;----------------------;
+Scan;02;
+Source;g60p57,194552.30,241742.6;
+Date;2017-03-06;
+TimeStart;0;UT;
+TimeStop;0;UT;
+Duration;0;sec;0;min
+RA;19 45 52.30;
+DEC;24 17 42.6;
+Epoch;2000.0;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;02;----------------------;
+Scan;03;
+Source;g60p57,194552.30,241742.6;
+Date;2017-03-06;
+TimeStart;0;UT;
+TimeStop;0;UT;
+Duration;0;sec;0;min
+RA;19 45 52.30;
+DEC;24 17 42.6;
+Epoch;2000.0;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;03;----------------------;
+Scan;04;
+Source;g60p57,194552.30,241742.6;
+Date;2017-03-06;
+TimeStart;0;UT;
+TimeStop;0;UT;
+Duration;0;sec;0;min
+RA;19 45 52.30;
+DEC;24 17 42.6;
+Epoch;2000.0;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;04;----------------------;
+Scan;05;
+Source;g60p57,194552.30,241742.6;
+Date;2017-03-06;
+TimeStart;0;UT;
+TimeStop;0;UT;
+Duration;0;sec;0;min
+RA;19 45 52.30;
+DEC;24 17 42.6;
+Epoch;2000.0;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;05;----------------------;
+Scan;06;
+Source;g60p57,194552.30,241742.6;
+Date;2017-03-06;
+TimeStart;0;UT;
+TimeStop;0;UT;
+Duration;0;sec;0;min
+RA;19 45 52.30;
+DEC;24 17 42.6;
+Epoch;2000.0;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;06;----------------------;
+Scan;07;
+Source;g60p57,194552.30,241742.6;
+Date;2017-03-06;
+TimeStart;0;UT;
+TimeStop;0;UT;
+Duration;0;sec;0;min
+RA;19 45 52.30;
+DEC;24 17 42.6;
+Epoch;2000.0;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;07;----------------------;
+Scan;08;
+Source;g60p57,194552.30,241742.6;
+Date;2017-03-06;
+TimeStart;0;UT;
+TimeStop;0;UT;
+Duration;0;sec;0;min
+RA;19 45 52.30;
+DEC;24 17 42.6;
+Epoch;2000.0;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;08;----------------------;
+Scan;09;
+Source;g60p57,194552.30,241742.6;
+Date;2017-03-06;
+TimeStart;0;UT;
+TimeStop;0;UT;
+Duration;0;sec;0;min
+RA;19 45 52.30;
+DEC;24 17 42.6;
+Epoch;2000.0;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;09;----------------------;
+Scan;10;
+Source;g60p57,194552.30,241742.6;
+Date;2017-03-06;
+TimeStart;0;UT;
+TimeStop;0;UT;
+Duration;0;sec;0;min
+RA;19 45 52.30;
+DEC;24 17 42.6;
+Epoch;2000.0;
+FreqBBC1;0;MHz
+FreqBBC2;0;MHz
+FreqStart;0.0;MHz
+FreqStop;0.0;MHz
+End;10;----------------------;
