@@ -59,7 +59,7 @@ def main():
         rcParams[key] = value
 
     old_dates = []
-    old_log_file_dir = "/home/janis/Documents/maser/old_prety_log/"
+    old_log_file_dir = "/irbene/maser/freq_shift/DataProcessingForMaserObservation/old_prety_log/"
     for old_log_file in os.listdir(old_log_file_dir):
         with open(old_log_file_dir + old_log_file, "r") as old_log_file2:
             lines = old_log_file2.readlines()
@@ -76,7 +76,7 @@ def main():
                             time_stamp = data + "_" + time
                             old_dates.append(time_stamp)
 
-    old_dates = [datetime.datetime.strptime(d, '%Y-%m-%d_%H:%M:%S') for d in old_dates]
+    old_dates = [convertDatetimeObjectToMJD(datetime.datetime.strptime(d, '%Y-%m-%d_%H:%M:%S')) for d in old_dates]
 
     component_count = len(get_configs("velocities", get_args("source") + "_6668").replace(" ", "").split(","))
     data_file = get_configs("paths", "monitoringFilePath") + get_args("source") + ".out"
@@ -98,8 +98,8 @@ def main():
     #ax1.set_aspect(aspect=1)
     #ax2.set_aspect(aspect=100000)
     
-    ax1.set_aspect(aspect=0.5)
-    ax2.set_aspect(aspect=0.3)
+    #ax1.set_aspect(aspect=0.5)
+    #ax2.set_aspect(aspect=0.3)
 
     #specter_files = ["w51_18_04_58_24_Jul_2018_IRBENE16_2.dat", "w51_18_43_13_11_Aug_2019_IRBENE_18.dat","w51_10_56_46_24_Nov_2019_IRBENE16_30.dat" ]
     #specter_files = ["g90p92_15_58_46_23_Mar_2019_IRBENE16_42.dat","g90p92_09_09_22_18_Jan_2019_IRBENE16_27.dat", "g90p92_11_10_44_23_Nov_2019_IRBENE16_45.dat"]
@@ -146,7 +146,7 @@ def main():
     #specter_files = ["g183p35_2018-01-25_m107_n37.dat.out", "g183p35_2017-09-13_m68_n08.dat.out", "g183p35_2017-05-05_m25_n12.dat.out"]
     #specter_files = ["g188p79_2018-05-30_m235_n34.dat.out", "g188p79_2017-07-08_m47_n09.dat.out", "g188p79_2017-05-24_m32_n19.dat.out"]
     #specter_files = ["g30p99_19_14_48_04_Sep_2019_IRBENE16_19.dat", "g30p99_09_39_23_08_Jan_2019_IRBENE16_32.dat", "g30p99_12_07_53_19_Nov_2019_IRBENE16_34.dat"]
-    specter_files = ["g30p99_19_14_48_04_Sep_2019_IRBENE16_19.dat", "g30p99_09_39_23_08_Jan_2019_IRBENE16_32.dat", "g30p99_12_07_53_19_Nov_2019_IRBENE16_34.dat"]
+    #specter_files = ["g30p99_19_14_48_04_Sep_2019_IRBENE16_19.dat", "g30p99_09_39_23_08_Jan_2019_IRBENE16_32.dat", "g30p99_12_07_53_19_Nov_2019_IRBENE16_34.dat"]
 
     symbols_2 = [".", "-.", "-"]
     i = 0
@@ -161,7 +161,7 @@ def main():
         ax1.plot(x_, y_, symbols_2[i])
         i += 1
 
-    ax1.set_xlim(52.0, 65.0)
+    ax1.set_xlim(-8.0, 4.0)
     ax1.set_xlabel("Velocity (km sec$^{-1}$)")
     ax1.set_ylabel("Flux density (Jy)")
     # ax1.set_ylim(-2,9)
@@ -204,7 +204,7 @@ def main():
             y = correctNumpyReadData(data[:, [index + 1]])
             rt32_y = y[rt32_x_indexies]
             ax2.plot(x, y, symbols[index], c=colors[index], linewidth=0.5, markersize=4, label=str(velocity[index]))
-            ax2.plot(rt32_x, rt32_y, symbols[index], c=colors[index], linewidth=0.5, markersize=10, label=str(velocity[index]))
+            ax2.plot(rt32_x, rt32_y, symbols[index], c=colors[index], linewidth=0.5, markersize=10)
             ax2.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
 
     ax1.yaxis.set_ticks_position('both')
