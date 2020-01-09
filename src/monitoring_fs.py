@@ -901,7 +901,12 @@ class MonitoringApp(QWidget):
             specie = experiment["specie"]
             areas = experiment["areas"]
             gauss_amp = experiment["gauss_amp"]
-            gauss_amp = [float(g) for g in gauss_amp]
+
+            if isinstance(gauss_amp, str):
+                gauss_amp == float(gauss_amp)
+            else:
+                print(gauss_amp, len(gauss_amp))
+                gauss_amp = [float(g) for g in gauss_amp]
 
             gaussLines = getConfigs("gauss_lines", self.source + "_" + self.line).replace(" ", "").split(",")
             if len(areas) == len(gaussLines):
