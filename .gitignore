@@ -216,6 +216,8 @@ de435.bspk
 cepa_spectre_movie.mpg
 old_monitoring/*
 tsys/
+old_prety
+*.dat
 .gitignore
 
 

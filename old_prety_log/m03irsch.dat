@@ -1,0 +1,19 @@
+Start;Header;
+Station;IRBENE;
+End;Header;----------------------;
+Scan;01;
+Source;s231,053913.06,354551.3;
+Date;2017-03-07;
+TimeStart;16:10:00;UT;
+TimeStop;16:11:00;UT;
+Duration;60;sec;1;min
+RA;05 39 13.06;
+DEC;35 45 51.3;
+Epoch;2000.0;
+Systemtemperature1;1u;30.6;
+Systemtemperature2;9u;35.7;
+FreqBBC1;566.98;MHz
+FreqBBC2;0;MHz
+FreqStart;6666.98;MHz
+FreqStop;6100.0;MHz
+End;01;----------------------;

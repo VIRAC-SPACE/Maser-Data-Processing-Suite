@@ -1,0 +1,5 @@
+Start;Header;
+Station;;
+End;Header;----------------------;
+Scan;01;
+Source;g78p122,201426.04,411333.4;
