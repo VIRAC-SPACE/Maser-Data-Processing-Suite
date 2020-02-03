@@ -172,9 +172,6 @@ class Analyzer(QWidget):
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.setWindowTitle("SDR")
         self.center()
-        self.DataDir = getConfigs("paths", "dataFilePath") + "SDR/" + getArgs("source") + "/f" + getArgs("line") + "/" + getArgs("iteration_number") + "/"
-        self.DataFiles = os.listdir(self.DataDir)
-        self.ScanPairs = self.createScanPairs()
         self.index = 0
         self.cuts = getConfigs('cuts', getArgs("source") + "_" + getArgs("line")).split(";")
         self.cuts = [c.split(",") for c in self.cuts]
@@ -188,8 +185,12 @@ class Analyzer(QWidget):
         self.STON_list_left = list()
         self.STON_list_right = list()
         self.STON_list_AVG = list()
-
-        self.logs = LogReaderFactory.getLogReader(LogTypes.SDR,getConfigs("paths", "logPath") + "SDR/" + getArgs("logFile"),getConfigs("paths", "prettyLogsPath") + getArgs("source") + "_" + getArgs("iteration_number")).getLogs()
+        self.logs = LogReaderFactory.getLogReader(LogTypes.SDR, getConfigs("paths", "logPath") + "SDR/" + getArgs("logFile"), getConfigs("paths", "prettyLogsPath") + getArgs("source") + "_" + getArgs("iteration_number")).getLogs()
+        self.station = self.logs["header"]["station,id"]
+        self.DataDir = getConfigs("paths", "dataFilePath") + getArgs("source") + "_f" + getArgs("line") + "_" + self.station[1] + "_" + getArgs("iteration_number") + "/"
+        print("self.DataDir", self.station )
+        self.DataFiles = os.listdir(self.DataDir)
+        self.ScanPairs = self.createScanPairs()
         self.grid = QGridLayout()
         self.setLayout(self.grid)
         self.grid.setSpacing(10)
@@ -203,7 +204,7 @@ class Analyzer(QWidget):
         self.move(qr.topLeft())
 
     def __getScanName__(self, dataFileName):
-        return dataFileName.split(".")[0].split("_")[3][2:len(dataFileName.split(".")[0].split("_")[3])].lstrip('0')
+        return dataFileName.split(".")[0].split("_")[4][2:len(dataFileName.split(".")[0].split("_")[4])].lstrip('0')
 
     def __getData(self, dataFileName):
         frequency = np.loadtxt(dataFileName, usecols=(0,), unpack=True)
@@ -344,7 +345,7 @@ class Analyzer(QWidget):
         for i in reversed(range(self.grid.count())):
             self.grid.itemAt(i).widget().deleteLater()
 
-        station = self.logs["header"]["station"]
+        station = self.logs["header"]["station,id"][0]
         if station == "RT-32":
             station = "IRBENE"
         else:
