@@ -112,6 +112,7 @@ def mutations(parents):
     new_generations = []
     cepa_velocity = [-1.77, -2.41, -3.66, -4.01, -4.67]
     min_velocity_count = len(cepa_velocity)
+    max_line_count = 15
 
     for parent in parents:
 
@@ -140,6 +141,9 @@ def mutations(parents):
             new_generation[tmp_index] = new_generation[tmp_index] - tmp
 
         new_generation = sorted(new_generation, reverse=True)
+
+        if len(new_generation) > max_line_count:
+            new_generation = new_generation[0:max_line_count]
         new_generations.append(new_generation)
 
     return new_generations
@@ -170,7 +174,7 @@ def main():
     '''
     i = 0
     for gen in range(0, generations):
-        print("generation", i +1)
+        print("generation", i + 1)
         if len(populations) < 2:
             break
 
