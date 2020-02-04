@@ -74,7 +74,7 @@ def fit(gg_fit):
 
 
 def fitness_evaluation(populations):
-    p = Pool(8)
+    p = Pool(10)
     gg_fits = p.map(compute_gauss, populations)
     fitness = p.map(fit, gg_fits)
     return fitness
@@ -112,7 +112,7 @@ def mutations(parents):
     new_generations = []
     cepa_velocity = [-1.77, -2.41, -3.66, -4.01, -4.67]
     min_velocity_count = len(cepa_velocity)
-    max_line_count = 15
+    max_line_count = 30
 
     for parent in parents:
 
@@ -162,8 +162,8 @@ def plot_best_individual(populations):
 
 
 def main():
-    generations = 1
-    population_size = 300
+    generations = 1000
+    population_size = 600
 
     print("generation", 0)
     populations = generate_initial_populations(population_size)
@@ -171,7 +171,7 @@ def main():
     selected_elite = select_elite(populations, fitness)
     parents = pairing(selected_elite)
     
-    '''
+    
     i = 0
     for gen in range(0, generations):
         print("generation", i + 1)
@@ -187,7 +187,7 @@ def main():
         parents = pairing(selected_elite)
 
         i += 1
-    '''
+  
     print(populations, fitness)
 
     plot_best_individual(populations)
