@@ -4,11 +4,15 @@ import matplotlib.pyplot as plt
 from astropy.modeling import models, fitting
 from astropy.modeling.fitting import LevMarLSQFitter
 from functools import reduce
+from multiprocessing import Pool
 import random
 import pandas as pd
 
 
-def compute_gauss(velocity, y_data, gauss_lines):
+def compute_gauss(gauss_lines):
+    test_data_file = "/home/janis/Documents/maser/output/NotSmooht/cepa/6668/cepa_00_01_03_15_Nov_2019_IRBENE_418.dat"
+    velocity = np.loadtxt(test_data_file, usecols=(0,), unpack=True)
+    y_data = np.loadtxt(test_data_file, usecols=(3,), unpack=True)
     indexes = [(np.abs(velocity - float(line))).argmin() for line in gauss_lines]
     mons = [max(y_data[index - 5:index + 5]) for index in indexes]
     gaussian = [models.Gaussian1D(mons[index], gauss_lines[index], 0.05, bounds={'stddev': (None, 0.15)}) for index in range(0, len(mons))]
@@ -22,55 +26,57 @@ def compute_gauss(velocity, y_data, gauss_lines):
 
 
 def generate_initial_populations(population_size):
-    cepa_velocity = [-1.77, -2.41, -3.66, -4.01, -4.67]
-
     populations = []
     for i in range(0, population_size):
         population = []
         cepa_velocity = [-1.77, -2.41, -3.66, -4.01, -4.67]
         tmp = np.random.random()
 
-        if tmp < 0.4:
+        if 0.1 < tmp < 0.2:
             initial_population_size = len(cepa_velocity)
-
-        elif 0.4 < tmp < 0.6:
-            initial_population_size = len(cepa_velocity) + 2
-
-        elif 0.6 < tmp < 0.9:
-            initial_population_size = len(cepa_velocity)
-
-        else:
+        elif 0.3 < tmp < 0.4:
             initial_population_size = len(cepa_velocity) + 1
+        elif 0.4 < tmp < 0.5:
+            initial_population_size = len(cepa_velocity) + 2
+        elif 0.5 < tmp < 0.6:
+            initial_population_size = len(cepa_velocity) + 3
+        elif 0.6 < tmp < 0.7:
+            initial_population_size = len(cepa_velocity) + 4
+        elif 0.7 < tmp < 0.8:
+            initial_population_size = len(cepa_velocity) + 5
+        elif 0.8 < tmp < 0.9:
+            initial_population_size = len(cepa_velocity) + 6
+        elif 0.9 < tmp < 1.0:
+            initial_population_size = len(cepa_velocity) + 7
+        else:
+            initial_population_size = len(cepa_velocity)
 
         if initial_population_size == len(cepa_velocity):
             population = cepa_velocity
 
-        elif initial_population_size == len(cepa_velocity) + 2:
+        else:
             population = cepa_velocity
-            population.append(population[-1] - tmp)
-            population.append(population[-1] - tmp)
+            for p in range(0, initial_population_size):
+                tmp_index = random.randint(0, len(population) - 1)
+                population.insert(tmp_index, population[tmp_index] + tmp)
 
-        elif initial_population_size == len(cepa_velocity) + 1:
-            population = cepa_velocity
-            population.append(population[-1] - tmp)
-
+        population = sorted(population, reverse=True)
         populations.append(population)
 
     return populations
 
 
-def fitness_evaluation(populations):
+def fit(gg_fit):
     test_data_file = "/home/janis/Documents/maser/output/NotSmooht/cepa/6668/cepa_00_01_03_15_Nov_2019_IRBENE_418.dat"
     velocity = np.loadtxt(test_data_file, usecols=(0,), unpack=True)
     y_data = np.loadtxt(test_data_file, usecols=(3,), unpack=True)
-    fitness = np.zeros((len(populations)))
+    return np.sqrt(np.sum(np.abs(y_data**2 - gg_fit(velocity)**2)))
 
-    i = 0
-    for population in populations:
-        gg_fit = compute_gauss(velocity, y_data, population)
-        fitness[i] = np.sqrt(np.sum(np.abs(y_data**2 - gg_fit(velocity)**2)))
-        i += 1
 
+def fitness_evaluation(populations):
+    p = Pool(3)
+    gg_fits = p.map(compute_gauss, populations)
+    fitness = p.map(fit, gg_fits)
     return fitness
 
 
@@ -88,7 +94,7 @@ def select_elite(populations, fitness):
     return selected_individuals
 
 
-def pairing (elite):
+def pairing(elite):
     parents = []
 
     i = 0
@@ -108,25 +114,33 @@ def mutations(parents):
     min_velocity_count = len(cepa_velocity)
 
     for parent in parents:
-        if len(parent[0]) < min_velocity_count and len(parent[1]) < min_velocity_count:
-            new_generation = parent[0]
-            new_generations.append(new_generation)
 
-        elif len(parent[0]) > min_velocity_count > len(parent[1]):
+        if len(parent[0]) == min_velocity_count and len(parent[1]) == min_velocity_count:
             new_generation = parent[0]
-            new_generations.append(new_generation)
 
-        elif len(parent[0]) < min_velocity_count < len(parent[1]):
+        elif len(parent[0]) == min_velocity_count and len(parent[1]) > min_velocity_count:
             new_generation = parent[1]
-            new_generations.append(new_generation)
+
+        elif len(parent[1]) == min_velocity_count and len(parent[0]) > min_velocity_count:
+            new_generation = parent[0]
 
         else:
             new_generation = cepa_velocity
-            new_generation.extend(parent[0][len(cepa_velocity):len(parent[0])])
-            new_generation.extend(parent[1][len(cepa_velocity):len(parent[1])])
+            new_generation.extend(parent[0])
+            new_generation.extend(parent[1])
             new_generation = list(set(new_generation))
-            new_generation = sorted(new_generation, reverse=True)
-            new_generations.append(new_generation)
+
+        tmp = np.random.random()
+        tmp_index = random.randint(0, len(new_generation) -1)
+
+        if 0.5 < tmp < 0.75:
+            new_generation[tmp_index] = new_generation[tmp_index] + tmp
+
+        elif 0.75 <= tmp <= 1.0:
+            new_generation[tmp_index] = new_generation[tmp_index] - tmp
+
+        new_generation = sorted(new_generation, reverse=True)
+        new_generations.append(new_generation)
 
     return new_generations
 
@@ -136,7 +150,7 @@ def plot_best_individual(populations):
     test_data_file = "/home/janis/Documents/maser/output/NotSmooht/cepa/6668/cepa_00_01_03_15_Nov_2019_IRBENE_418.dat"
     velocity = np.loadtxt(test_data_file, usecols=(0,), unpack=True)
     y_data = np.loadtxt(test_data_file, usecols=(3,), unpack=True)
-    gg_fit = compute_gauss(velocity, y_data, best_gauss_lines)
+    gg_fit = compute_gauss(best_gauss_lines)
 
     plt.plot(velocity, y_data, "r-", label="original data")
     plt.plot(velocity, gg_fit(velocity), "g*", label="modulate data")
@@ -147,6 +161,7 @@ def main():
     generations = 1000
     population_size = 300
 
+    print("generation", 0)
     populations = generate_initial_populations(population_size)
     fitness = fitness_evaluation(populations)
     selected_elite = select_elite(populations, fitness)
@@ -154,7 +169,7 @@ def main():
 
     i = 0
     for gen in range(0, generations):
-        print("i", i)
+        print("generation", i +1)
         if len(populations) < 2:
             break
 
