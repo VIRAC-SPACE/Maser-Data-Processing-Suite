@@ -10,7 +10,7 @@ import pandas as pd
 
 
 def compute_gauss(gauss_lines):
-    test_data_file = "/home/janis/Documents/maser/output/NotSmooht/cepa/6668/cepa_00_01_03_15_Nov_2019_IRBENE_418.dat"
+    test_data_file = "/mnt/WORK/maser/DataProcessingForMaserObservation/output/NotSmooht/cepa/6668/cepa_00_01_03_15_Nov_2019_IRBENE_418.dat"
     velocity = np.loadtxt(test_data_file, usecols=(0,), unpack=True)
     y_data = np.loadtxt(test_data_file, usecols=(3,), unpack=True)
     indexes = [(np.abs(velocity - float(line))).argmin() for line in gauss_lines]
@@ -67,14 +67,14 @@ def generate_initial_populations(population_size):
 
 
 def fit(gg_fit):
-    test_data_file = "/home/janis/Documents/maser/output/NotSmooht/cepa/6668/cepa_00_01_03_15_Nov_2019_IRBENE_418.dat"
+    test_data_file = "/mnt/WORK/maser/DataProcessingForMaserObservation/output/NotSmooht/cepa/6668/cepa_00_01_03_15_Nov_2019_IRBENE_418.dat"
     velocity = np.loadtxt(test_data_file, usecols=(0,), unpack=True)
     y_data = np.loadtxt(test_data_file, usecols=(3,), unpack=True)
     return np.sqrt(np.sum(np.abs(y_data**2 - gg_fit(velocity)**2)))
 
 
 def fitness_evaluation(populations):
-    p = Pool(3)
+    p = Pool(8)
     gg_fits = p.map(compute_gauss, populations)
     fitness = p.map(fit, gg_fits)
     return fitness
@@ -147,7 +147,7 @@ def mutations(parents):
 
 def plot_best_individual(populations):
     best_gauss_lines = populations[0]
-    test_data_file = "/home/janis/Documents/maser/output/NotSmooht/cepa/6668/cepa_00_01_03_15_Nov_2019_IRBENE_418.dat"
+    test_data_file = "/mnt/WORK/maser/DataProcessingForMaserObservation/output/NotSmooht/cepa/6668/cepa_00_01_03_15_Nov_2019_IRBENE_418.dat"
     velocity = np.loadtxt(test_data_file, usecols=(0,), unpack=True)
     y_data = np.loadtxt(test_data_file, usecols=(3,), unpack=True)
     gg_fit = compute_gauss(best_gauss_lines)
@@ -158,7 +158,7 @@ def plot_best_individual(populations):
 
 
 def main():
-    generations = 1000
+    generations = 1
     population_size = 300
 
     print("generation", 0)
@@ -166,7 +166,8 @@ def main():
     fitness = fitness_evaluation(populations)
     selected_elite = select_elite(populations, fitness)
     parents = pairing(selected_elite)
-
+    
+    '''
     i = 0
     for gen in range(0, generations):
         print("generation", i +1)
@@ -182,7 +183,7 @@ def main():
         parents = pairing(selected_elite)
 
         i += 1
-
+    '''
     print(populations, fitness)
 
     plot_best_individual(populations)

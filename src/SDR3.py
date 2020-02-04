@@ -48,7 +48,7 @@ def read_dat(file_name):
     return (frequency, polarization_left, polarization_right)
 
 
-def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left, p_sig_on_right, p_ref_on_left, p_ref_on_right, frequencyA, scan, logs):
+def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left, p_sig_on_right, p_ref_on_left, p_ref_on_right, frequencyA, logs):
     df_div = float(logs["header"]["df_div,df"][0])
     BW = float(logs["header"]["Fs,Ns,RBW"][0])
     f_shift = BW / df_div
@@ -116,133 +116,9 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
 
 
 def main():
-    dir = "/home/janis/g111p26_f6668_22/"
-    scans = [i for i in range(3, 16)]
-    logs = LogReaderFactory.getLogReader(LogTypes.SDR, "/home/janis/Downloads/g111p26_f6668_22.log", "/home/janis/").getLogs()
-
-    Sf_lefts = []
-    Sf_rights = []
-
-    Sf_lefts2 = []
-    Sf_rights2 = []
-
-    for scan in scans:
-        # process data file
-
-        if len(str(scan)) == 1:
-            scan_number = "no00" + str(scan)
-        else:
-            scan_number = "no0" + str(scan)
-        file1 = dir + "g111p26_f6668_22_" + scan_number + "r0.dat"
-        file2 = dir + "g111p26_f6668_22_" + scan_number + "s0.dat"
-        file3 = dir + "g111p26_f6668_22_" + scan_number + "r1.dat"
-        file4 = dir + "g111p26_f6668_22_" + scan_number + "s1.dat"
-
-        frequencyA = read_dat(file1)[0]  # r0
-        p_sig_left = read_dat(file1)[1]  # r0
-        p_sig_right = read_dat(file1)[2]  # r0
-
-        frequencyB = read_dat(file2)[0]  # s0
-        p_ref_left = read_dat(file2)[1]  # s0
-        p_ref_right = read_dat(file2)[2]  # s0
-
-        frequencyC = read_dat(file3)[0]  # r1
-        p_sig_on_left = read_dat(file3)[1]  # r1
-        p_sig_on_right = read_dat(file3)[2]  # r1
-
-        frequencyD = read_dat(file4)[0]  # s1
-        p_ref_on_left = read_dat(file4)[1]  # s1
-        p_ref_on_right = read_dat(file4)[2]  # s1
-
-        p_sig_left = np.fft.fftshift(p_sig_left)  # r0
-        p_sig_right = np.fft.fftshift(p_sig_right)  # r0
-        p_ref_left = np.fft.fftshift(p_ref_left)  # s0
-        p_ref_right = np.fft.fftshift(p_ref_right)  # s0
-        p_sig_on_left = np.fft.fftshift(p_sig_on_left)  # r1
-        p_sig_on_right = np.fft.fftshift(p_sig_on_right)  # r1
-        p_ref_on_left = np.fft.fftshift(p_ref_on_left)  # s1
-        p_ref_on_right = np.fft.fftshift(p_ref_on_right)  # s1
-
-        Sf_left, Sf_right, frequencyA1 = frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left, p_sig_on_right, p_ref_on_left, p_ref_on_right, frequencyA, scan, logs)
-        Sf_lefts.append(Sf_left)
-        Sf_rights.append(Sf_right)
-
-        # process raw files
-        file1 = dir + "g111p26_f6668_22_" + scan_number + "r0_ch1.raw"
-        file2 = dir + "g111p26_f6668_22_" + scan_number + "s0_ch1.raw"
-        file3 = dir + "g111p26_f6668_22_" + scan_number + "r1_ch1.raw"
-        file4 = dir + "g111p26_f6668_22_" + scan_number + "s1_ch1.raw"
-
-        file5 = dir + "g111p26_f6668_22_" + scan_number + "r0_ch2.raw"
-        file6 = dir + "g111p26_f6668_22_" + scan_number + "s0_ch2.raw"
-        file7 = dir + "g111p26_f6668_22_" + scan_number + "r1_ch2.raw"
-        file8 = dir + "g111p26_f6668_22_" + scan_number + "s1_ch2.raw"
-
-        p_sig_left = read_raw(file1)
-        p_ref_left = read_raw(file2)
-        p_sig_on_left = read_raw(file3)
-        p_ref_on_left = read_raw(file4)
-
-        p_sig_right = read_raw(file5)
-        p_ref_right = read_raw(file6)
-        p_sig_on_right = read_raw(file7)
-        p_ref_on_right = read_raw(file8)
-
-        print(len(p_sig_left), len(frequencyA))
-
-        freq = []
-
-        start = frequencyA[0]
-        for f in range(0, 4096):
-            freq.append(start)
-            start += 0.000381
-
-        freq = np.array(freq)
-
-        Sf_left2, Sf_right2, frequencyA2 = frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right,p_sig_on_left, p_sig_on_right, p_ref_on_left, p_ref_on_right, freq, scan, logs)
-        Sf_lefts2.append(Sf_left2)
-        Sf_rights2.append(Sf_right2)
-
-    # data files
-    Sf_lefts_np = np.zeros(len(Sf_lefts[0]))
-    for s in  Sf_lefts:
-        Sf_lefts_np = Sf_lefts_np + np.array(s)
-
-    Sf_rights_np = np.zeros(len(Sf_rights[0]))
-    for s in  Sf_rights:
-        Sf_rights_np = Sf_rights_np + np.array(s)
-
-    Sf_lefts_np = Sf_lefts_np/len(Sf_lefts_np)
-    Sf_rights_np = Sf_rights_np/len(Sf_rights_np)
-
-    # raw files
-    Sf_lefts_np2 = np.zeros(len(Sf_lefts2[0]))
-    for s in Sf_lefts2:
-        Sf_lefts_np2 = Sf_lefts_np2 + np.array(s)
-
-
-    Sf_rights_np2 = np.zeros(len(Sf_rights2[0]))
-
-    for s in Sf_rights2:
-        Sf_rights_np2 = Sf_rights_np2 + np.array(s)
-
-    Sf_lefts_np2 = Sf_lefts_np2 / len(Sf_lefts_np2)
-    Sf_rights_np2 = Sf_rights_np2 / len(Sf_rights_np2)
-
-    plt.subplot(2,2,1)
-    plt.plot(frequencyA1, Sf_lefts_np)
-
-    plt.subplot(2, 2, 2)
-    plt.plot(frequencyA1, Sf_lefts_np)
-
-    plt.subplot(2, 2, 3)
-    plt.plot(Sf_lefts_np2)
-
-    plt.subplot(2, 2, 4)
-    plt.plot(Sf_lefts_np2)
-
-    plt.show()
-
+    raw_file_dir = "/mnt/WORK/temp/"
+    data_file_dir = 
+    
     sys.exit(0)
 
 
