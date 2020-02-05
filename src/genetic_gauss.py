@@ -149,7 +149,7 @@ def mutations(parents):
     return new_generations
 
 
-def plot_best_individual(populations):
+def plot_best_individual(populations, label):
     best_gauss_lines = populations[0]
     test_data_file = "/mnt/WORK/maser/DataProcessingForMaserObservation/output/NotSmooht/cepa/6668/cepa_00_01_03_15_Nov_2019_IRBENE_418.dat"
     velocity = np.loadtxt(test_data_file, usecols=(0,), unpack=True)
@@ -158,41 +158,45 @@ def plot_best_individual(populations):
 
     plt.plot(velocity, y_data, "r-", label="original data")
     plt.plot(velocity, gg_fit(velocity), "g*", label="modulate data")
-    plt.show()
+    plt.savefig(label)
 
 
 def main():
-    generations = 1000
-    population_size = 600
+    tmp = 100
+    for r in range(0, tmp):
+        generations = 1000
+        population_size = 600
 
-    print("generation", 0)
-    populations = generate_initial_populations(population_size)
-    fitness = fitness_evaluation(populations)
-    selected_elite = select_elite(populations, fitness)
-    parents = pairing(selected_elite)
-    
-    
-    i = 0
-    for gen in range(0, generations):
-        print("generation", i + 1)
-        if len(populations) < 2:
-            break
-
-        if min(fitness) < 0.0000001:
-            break
-
-        populations = mutations(parents)
+        print("generation", 0)
+        populations = generate_initial_populations(population_size)
         fitness = fitness_evaluation(populations)
         selected_elite = select_elite(populations, fitness)
         parents = pairing(selected_elite)
 
-        i += 1
-  
-    print(populations, fitness)
+        i = 0
+        for gen in range(0, generations):
+            print("generation", i + 1)
+            if len(populations) < 2:
+                break
 
-    plot_best_individual(populations)
+            if min(fitness) < 0.0000001:
+                break
+
+            populations = mutations(parents)
+            fitness = fitness_evaluation(populations)
+            selected_elite = select_elite(populations, fitness)
+            parents = pairing(selected_elite)
+
+            i += 1
+
+        print(populations, fitness)
+
+        label = str(r) + ".png"
+
+        plot_best_individual(populations, label)
     sys.exit(0)
 
 
 if __name__ == "__main__":
     main()
+
