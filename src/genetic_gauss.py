@@ -76,6 +76,9 @@ def fitness_evaluation(populations):
     p = Pool(3)
     gg_fits = p.map(compute_gauss, populations)
     fitness = p.map(fit, gg_fits)
+    p.close()
+    p.terminate()
+    #p.join()
     return fitness
 
 
@@ -148,20 +151,24 @@ def mutations(parents):
     return new_generations
 
 
-def plot_best_individual(populations, label):
+def plot_best_individual(populations, label, text):
     best_gauss_lines = populations[0]
     gg_fit = compute_gauss(best_gauss_lines)
     plt.plot(velocity, y_data, "r-", label="original data")
     plt.plot(velocity, gg_fit(velocity), "g*", label="modulate data")
-    plt.xlim((-5, 3))
+    plt.xlim((-5, -1))
+    plt.text(-5, 400, text)
+    plt.legend()
     plt.savefig(label)
+    plt.close('all')
 
 
 def main():
     tmp = 100
+    generations = 1000
+    population_size = 10
+
     for r in range(0, tmp):
-        generations = 1000
-        population_size = 150
 
         print("generation", 0)
         populations = generate_initial_populations(population_size)
@@ -185,11 +192,11 @@ def main():
 
             i += 1
 
-        print(populations, fitness)
-
+        p = [str(pi) for pi in populations[0]]
+        text = "_\n".join(p) + "\n_" + str(fitness[0])
         label = str(r) + ".png"
+        plot_best_individual(populations, label, text)
 
-        plot_best_individual(populations, label)
     sys.exit(0)
 
 
