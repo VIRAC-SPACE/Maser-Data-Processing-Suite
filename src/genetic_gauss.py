@@ -9,10 +9,13 @@ import random
 import pandas as pd
 
 
+test_data_file = "/mnt/WORK/maser/DataProcessingForMaserObservation/output/NotSmooht/cepa/6668/cepa_00_01_03_15_Nov_2019_IRBENE_418.dat"
+velocity = np.loadtxt(test_data_file, usecols=(0,), unpack=True)
+y_data = np.loadtxt(test_data_file, usecols=(3,), unpack=True)
+
+
+
 def compute_gauss(gauss_lines):
-    test_data_file = "/mnt/WORK/maser/DataProcessingForMaserObservation/output/NotSmooht/cepa/6668/cepa_00_01_03_15_Nov_2019_IRBENE_418.dat"
-    velocity = np.loadtxt(test_data_file, usecols=(0,), unpack=True)
-    y_data = np.loadtxt(test_data_file, usecols=(3,), unpack=True)
     indexes = [(np.abs(velocity - float(line))).argmin() for line in gauss_lines]
     mons = [max(y_data[index - 5:index + 5]) for index in indexes]
     gaussian = [models.Gaussian1D(mons[index], gauss_lines[index], 0.05, bounds={'stddev': (None, 0.15)}) for index in range(0, len(mons))]
@@ -67,9 +70,6 @@ def generate_initial_populations(population_size):
 
 
 def fit(gg_fit):
-    test_data_file = "/mnt/WORK/maser/DataProcessingForMaserObservation/output/NotSmooht/cepa/6668/cepa_00_01_03_15_Nov_2019_IRBENE_418.dat"
-    velocity = np.loadtxt(test_data_file, usecols=(0,), unpack=True)
-    y_data = np.loadtxt(test_data_file, usecols=(3,), unpack=True)
     return np.sqrt(np.sum(np.abs(y_data**2 - gg_fit(velocity)**2)))
 
 
@@ -151,13 +151,10 @@ def mutations(parents):
 
 def plot_best_individual(populations, label):
     best_gauss_lines = populations[0]
-    test_data_file = "/mnt/WORK/maser/DataProcessingForMaserObservation/output/NotSmooht/cepa/6668/cepa_00_01_03_15_Nov_2019_IRBENE_418.dat"
-    velocity = np.loadtxt(test_data_file, usecols=(0,), unpack=True)
-    y_data = np.loadtxt(test_data_file, usecols=(3,), unpack=True)
     gg_fit = compute_gauss(best_gauss_lines)
-
     plt.plot(velocity, y_data, "r-", label="original data")
     plt.plot(velocity, gg_fit(velocity), "g*", label="modulate data")
+    plt.xlim((-5, 3))
     plt.savefig(label)
 
 
@@ -189,7 +186,6 @@ def main():
 
             i += 1
 
-        print(populations, fitness)
 
         label = str(r) + ".png"
 
