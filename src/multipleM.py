@@ -118,7 +118,7 @@ def main():
 
         i = 0
         for y_data in lines[source]["y_data"]:
-            z = np.polyfit(date, y_data, 1)
+            z = np.polyfit(date, y_data, 2)
             p = np.poly1d(z)
             line = plt.plot(date, y_data, label=source+" velocity " + velocities_tmp[i] + " " + "y=%.6fx+(%.6f)"%(z[0], z[1]) + " " + "R^2 = " + str(r2_score(y_data, p(date))))
             lines2.append(line)
@@ -146,7 +146,7 @@ def main():
             i = findNearestIndex(x, a)
             j = findNearestIndex(x, b)
 
-            z = np.polyfit(x[i:j], y[i:j], 1)
+            z = np.polyfit(x[i:j], y[i:j], 2)
             p = np.poly1d(z)
             new_label = " ".join(old_label.split(" ")[0:3]) + " " + "y=%.6fx+(%.6f)"%(z[0], z[1]) + " " + "R^2 = " + str(r2_score(y[i:j], p(x[i:j])))
             lines2[t][0].set_label(new_label)
