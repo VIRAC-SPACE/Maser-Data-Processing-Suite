@@ -114,7 +114,7 @@ def mutations(parents):
     new_generations = []
     cepa_velocity = [-1.77, -2.41, -3.66, -4.01, -4.67]
     min_velocity_count = len(cepa_velocity)
-    max_line_count = 15
+    max_line_count = 30
 
     for parent in parents:
 
