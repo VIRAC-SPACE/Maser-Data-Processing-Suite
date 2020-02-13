@@ -5,8 +5,11 @@ import sys
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import r2_score
+from matplotlib.pyplot import gca
 from matplotlib.widgets import Slider
+from pandas import DataFrame
+from sklearn.metrics import r2_score
+from sympy import *
 
 from parsers._configparser import ConfigParser
 from help import *
@@ -94,6 +97,7 @@ def main():
     trends = []
     lines2 = []
     fig1 = plt.figure()
+    ax = gca()
     for source in sources:
         date = lines[source]["date"]
         slider_min.append(min(date))
@@ -120,23 +124,40 @@ def main():
         for y_data in lines[source]["y_data"]:
             z = np.polyfit(date, y_data, 2)
             p = np.poly1d(z)
-            line = plt.plot(date, y_data, label=source+" velocity " + velocities_tmp[i] + " " + "y=%.6fx+(%.6f)"%(z[0], z[1]) + " " + "R^2 = " + str(r2_score(y_data, p(date))))
+            fit = str( z[0] ) + " * x1**2 "
+
+            if "-" in str( z[1] ):
+                fit += " + " + str( z[1] ) + " * x1 "
+            else:
+                fit += " + " + str( z[1] ) + " * x1"
+
+            if "-" in str( z[2] ):
+                fit += " + " + str( z[2] )
+            else:
+                fit += " + " + str( z[2] )
+            line = plt.plot(date, y_data, "*", label=source+" velocity " + velocities_tmp[i] + " " + "y= " + fit)
             lines2.append(line)
             trend = plt.plot(date, p(date), "r--")
             trends.append(trend)
             i += 1
-    fig1.legend()
+
+    ax.legend()
     fig2 = plt.figure()
 
     axcolor = 'lightgoldenrodyellow'
-    a_axis = plt.axes([0.25, 0.6, 0.65, 0.03], facecolor=axcolor )
-    b_axis = plt.axes([0.25, 0.5, 0.65, 0.03], facecolor=axcolor )
-    a_slider = Slider(a_axis, 'a', max(slider_min), min(slider_max), max(slider_min) + 10)
-    b_slider = Slider(b_axis, 'b', max(slider_min), min(slider_max), min(slider_max) - 20)
+    a_axis = plt.axes([0.25, 0.6, 0.65, 0.03], facecolor=axcolor)
+    b_axis = plt.axes([0.25, 0.5, 0.65, 0.03], facecolor=axcolor)
+    a_slider = Slider(a_axis, 'a', max(slider_min), min(slider_max) -10, max(slider_min) + 10)
+    b_slider = Slider(b_axis, 'b', max(slider_min) -10, min(slider_max), min(slider_max) - 10)
+    a_slider.drawon = False
+    b_slider.drawon = False
 
     def update(val):
         a = a_slider.val
         b = b_slider.val
+        xtmp = np.arange(a,b)
+        data = {}
+        columns = []
 
         for t in range(0, len(trends)):
             x = lines2[t][0].get_xdata()
@@ -148,12 +169,33 @@ def main():
 
             z = np.polyfit(x[i:j], y[i:j], 2)
             p = np.poly1d(z)
-            new_label = " ".join(old_label.split(" ")[0:3]) + " " + "y=%.6fx+(%.6f)"%(z[0], z[1]) + " " + "R^2 = " + str(r2_score(y[i:j], p(x[i:j])))
+
+            fit = str(z[0]) + " * x1**2 "
+
+            if "-" in str(z[1]):
+                fit += " + " + str(z[1]) + " * x1 "
+            else:
+                fit += " + " + str(z[1]) + " * x1"
+
+            if "-" in str(z[2]):
+                fit += " + " + str(z[2])
+            else:
+                fit += " + " + str(z[2])
+
+            equation = lambdify('x1', fit, 'numpy')
+            ytmp = equation(xtmp)
+            data["_".join(old_label.split(" ")[0:3])] = ytmp
+            columns.append("_".join(old_label.split(" ")[0:3]))
+            new_label = " ".join(old_label.split(" ")[0:3]) + " " + "y=" + fit + " " + "R^2 = " + str(r2_score(y[i:j], p(x[i:j])))
             lines2[t][0].set_label(new_label)
             trends[t][0].set_xdata(x[i:j])
             trends[t][0].set_ydata(p(x[i:j]))
 
-        fig1.legend()
+        df = DataFrame(data, columns=columns)
+        corr = df.corr()
+        print(corr)
+        ax.get_legend().remove()
+        ax.legend()
         plt.draw()
         fig1.canvas.draw_idle()
         fig1.canvas.draw()
@@ -163,7 +205,6 @@ def main():
     b_slider.on_changed(update)
 
     plt.show()
-
     sys.exit(0)
 
 
