@@ -76,7 +76,7 @@ def read_monitoring_files(monitoring_files, sources):
 
         for c in range(1, column_nr+1):
             if c - 1 in idexie_for_lines_to_plot:
-                lines[source]["y_data"].append(np.loadtxt(file, usecols=(c,), unpack=True))
+                lines[source]["y_data"].append(np.loadtxt(file, usecols=(c,), unpack=True)/np.mean(np.loadtxt(file, usecols=(c,), unpack=True)))
 
     return lines
 
@@ -186,7 +186,7 @@ def main():
             ytmp = equation(xtmp)
             data["_".join(old_label.split(" ")[0:3])] = ytmp
             columns.append("_".join(old_label.split(" ")[0:3]))
-            new_label = " ".join(old_label.split(" ")[0:3]) + " " + "y=" + fit + " " + "R^2 = " + str(r2_score(y[i:j], p(x[i:j])))
+            new_label = " ".join(old_label.split(" ")[0:3]) + " " + "y=" + fit
             lines2[t][0].set_label(new_label)
             trends[t][0].set_xdata(x[i:j])
             trends[t][0].set_ydata(p(x[i:j]))
