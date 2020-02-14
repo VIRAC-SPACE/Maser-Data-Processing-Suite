@@ -6,9 +6,8 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import gca
-from matplotlib.widgets import Slider
+from matplotlib.widgets import Slider, TextBox, Button
 from pandas import DataFrame
-from sklearn.metrics import r2_score
 from sympy import *
 
 from parsers._configparser import ConfigParser
@@ -152,9 +151,31 @@ def main():
     a_slider.drawon = False
     b_slider.drawon = False
 
+    axbox_l = plt.axes([0.25, 0.4, 0.65, 0.03])
+    axbox_r = plt.axes([0.25, 0.3, 0.65, 0.03])
+    text_box_l = TextBox(axbox_l, 'left', initial=str(max(slider_min)))
+    text_box_r = TextBox(axbox_r, 'right', initial=str(min(slider_max)))
+    axbox_b = plt.axes( [0.25, 0.2, 0.65, 0.03] )
+    b = Button(axbox_b, "Compute statistical values", image=None, color='0.85', hovercolor='0.95')
+
+    def compute_statistical_values(val):
+        a = float(text_box_l.text)
+        b = float(text_box_r.text)
+
+        for t in range(0, len(trends)):
+            x = lines2[t][0].get_xdata()
+            y = lines2[t][0].get_ydata()
+            i = findNearestIndex(x, a)
+            j = findNearestIndex(x, b)
+            y_tmp = y[i:j]
+            label = lines2[t][0].get_label()
+            print("Mean value and standard deviation for " + "_".join(label.split(" ")[0:3]) + " " + str(np.mean(y_tmp)) + "  " + str(np.std(y_tmp)))
+
     def update(val):
         a = a_slider.val
         b = b_slider.val
+        #ax.set_xlim(a,b)
+
         xtmp = np.arange(a,b)
         data = {}
         columns = []
@@ -201,6 +222,7 @@ def main():
         fig1.canvas.draw()
         fig1.canvas.flush_events()
 
+    b.on_clicked(compute_statistical_values)
     a_slider.on_changed(update)
     b_slider.on_changed(update)
 
