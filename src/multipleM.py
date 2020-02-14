@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from matplotlib.pyplot import gca
 from matplotlib.widgets import Slider, TextBox, Button
 from pandas import DataFrame
+from scipy import stats
 from sympy import *
 
 from parsers._configparser import ConfigParser
@@ -169,12 +170,11 @@ def main():
             j = findNearestIndex(x, b)
             y_tmp = y[i:j]
             label = lines2[t][0].get_label()
-            print("Mean value and standard deviation for " + "_".join(label.split(" ")[0:3]) + " " + str(np.mean(y_tmp)) + "  " + str(np.std(y_tmp)))
+            print("Descriptive statistics for " + "_".join(label.split(" ")[0:3]) + " " + str(stats.describe(y_tmp)))
 
     def update(val):
         a = a_slider.val
         b = b_slider.val
-        #ax.set_xlim(a,b)
 
         xtmp = np.arange(a,b)
         data = {}
