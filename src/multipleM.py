@@ -18,7 +18,7 @@ from help import *
 def parse_arguments():
     parser = argparse.ArgumentParser(description='''Monitoring multiple sources. ''', epilog="""MMonitor.""")
     #"[g32p745, w51, g59p783, on1, s252, ngc7538, w3(oh)]"
-    parser.add_argument("--sources", help="Sources Names", type=str, nargs='+', default="[w51, on1, s252, ngc7538, w3oh]")
+    parser.add_argument("--sources", help="Sources Names", type=str, nargs='+', default="[g32p745, w51, g59p783, on1, s252, ngc7538, w3oh]")
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 2.0')
     args = parser.parse_args()
@@ -48,7 +48,7 @@ def read_monitoring_files(monitoring_files, sources):
             velocities_tmp = ["30.49",  "39.18"]
         elif source == "w51":
             velocities_tmp = ["59.29"]
-        elif source == "g59783":
+        elif source == "g59p783":
             velocities_tmp = ["19.2"]
         elif source == "on1":
             velocities_tmp = ["14.64"]
@@ -66,7 +66,7 @@ def read_monitoring_files(monitoring_files, sources):
         source = file.split("/")[-1].split(".")[0]
         lines_to_plot = velocities_to_plot_for_source[source]
         TMP = get_configs("velocities", source + "_6668" ).split(",")
-        TMP = [v.strip() for v in TMP]
+        TMP = [v.strip().replace(" ", "") for v in TMP]
         idexie_for_lines_to_plot = []
         for tmpl in lines_to_plot:
             idexie_for_lines_to_plot.append(TMP.index(tmpl))
