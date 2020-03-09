@@ -10,6 +10,8 @@ from matplotlib.widgets import Slider, TextBox, Button
 from pandas import DataFrame
 from scipy import stats
 from sympy import *
+import re
+from tabulate import tabulate
 
 from parsers._configparser import ConfigParser
 from help import *
@@ -17,7 +19,6 @@ from help import *
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='''Monitoring multiple sources. ''', epilog="""MMonitor.""")
-    #"[g32p745, w51, g59p783, on1, s252, ngc7538, w3(oh)]"
     parser.add_argument("--sources", help="Sources Names", type=str, nargs='+', default="[g32p745, w51, g59p783, on1, s252, ngc7538, w3oh]")
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 2.0')
@@ -35,6 +36,18 @@ def get_configs(key, value):
     config = ConfigParser.getInstance()
     config.CreateConfig(config_file_path)
     return config.getConfig(key, value)
+
+
+def print_stats(stats):
+    #DescribeResult(nobs=1, minmax=(1.2230937354864293, 1.2230937354864293), mean=1.2230937354864293, variance=nan, skewness=0.0, kurtosis=-3.0)
+    headers = ["nobs", "min", "max", "mean", "variance", "skewness", "kurtosis"]
+    data = [headers]
+    for s in stats:
+        stats = str(stats).replace("DescribeResult", "").replace("(", "").replace(")", "").replace(",", "").split(" ")
+        stats = [re.sub("[^0-9.]", "", s.split("=")[-1])[0:5] for s in stats]
+        data.append(stats)
+
+    print(tabulate(data))
 
 
 def read_monitoring_files(monitoring_files, sources):
@@ -162,7 +175,7 @@ def main():
     def compute_statistical_values(val):
         a = float(text_box_l.text)
         b = float(text_box_r.text)
-
+        stats_list = []
         for t in range(0, len(trends)):
             x = lines2[t][0].get_xdata()
             y = lines2[t][0].get_ydata()
@@ -170,7 +183,8 @@ def main():
             j = findNearestIndex(x, b)
             y_tmp = y[i:j]
             label = lines2[t][0].get_label()
-            print("Descriptive statistics for " + "_".join(label.split(" ")[0:3]) + " " + str(stats.describe(y_tmp)))
+            stats_list.append(stats.describe(y_tmp))
+        print_stats(stats_list)
 
     def update(val):
         a = a_slider.val
