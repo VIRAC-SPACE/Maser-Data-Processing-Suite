@@ -11,7 +11,9 @@ from pandas import DataFrame
 from scipy import stats
 from sympy import *
 import re
+import json
 from tabulate import tabulate
+
 
 from parsers._configparser import ConfigParser
 from help import *
@@ -52,6 +54,30 @@ def print_stats(stats, labels):
         i += 1
 
     print(tabulate(data))
+
+
+def get_iterations_from_mjd(star_time, stop_time):
+    iterations = dict()
+    source_list = ["g32p745", "w51", "g59p783", "on1", "s252", "ngc7538", "w3oh"]
+    result_file_path = get_configs("paths", "resultFilePath")
+
+    for source in source_list:
+        result_file = result_file_path + source + "_6668.json"
+
+        with open(result_file) as result_data:
+            result = json.load(result_data)
+            modified_julian_days = []
+            iteration_numbers = []
+            for observation in result:
+                modified_julian_days.append(result[observation]["modifiedJulianDays"])
+                iteration_numbers.append(result[observation]["Iteration_number"])
+
+            if len(modified_julian_days) > 0:
+                left_index = findNearestIndex(modified_julian_days, star_time)
+                right_index = findNearestIndex(modified_julian_days, stop_time)
+                iterations[source] = iteration_numbers[min(right_index,left_index):max(right_index,left_index)]
+
+    return iterations
 
 
 def read_monitoring_files(monitoring_files, sources):
@@ -195,6 +221,8 @@ def main():
     def update(val):
         a = a_slider.val
         b = b_slider.val
+
+        print("Iteration list for time range ", a, b, get_iterations_from_mjd(a, b))
 
         xtmp = np.arange(a,b)
         data = {}
