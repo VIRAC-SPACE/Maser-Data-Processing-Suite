@@ -38,14 +38,18 @@ def get_configs(key, value):
     return config.getConfig(key, value)
 
 
-def print_stats(stats):
-    #DescribeResult(nobs=1, minmax=(1.2230937354864293, 1.2230937354864293), mean=1.2230937354864293, variance=nan, skewness=0.0, kurtosis=-3.0)
-    headers = ["nobs", "min", "max", "mean", "variance", "skewness", "kurtosis"]
+def print_stats(stats, labels):
+    headers = ["source", "nobs", "min", "max", "mean", "variance", "skewness", "kurtosis"]
     data = [headers]
+    i = 0
     for s in stats:
-        stats = str(stats).replace("DescribeResult", "").replace("(", "").replace(")", "").replace(",", "").split(" ")
-        stats = [re.sub("[^0-9.]", "", s.split("=")[-1])[0:5] for s in stats]
-        data.append(stats)
+        stats_results = []
+        stats_results.append(labels[stats.index(s)])
+        stats_TMP = str(s).replace("DescribeResult", "").replace("(", "").replace(")", "").replace(",", "").split(" ")
+        stats_TMP = [re.sub("[^0-9.]", "", s.split("=")[-1])[0:5] for s in stats_TMP]
+        stats_results.extend(stats_TMP)
+        data.append(stats_results)
+        i += 1
 
     print(tabulate(data))
 
@@ -137,17 +141,17 @@ def main():
         for y_data in lines[source]["y_data"]:
             z = np.polyfit(date, y_data, 2)
             p = np.poly1d(z)
-            fit = str( z[0] ) + " * x1**2 "
+            fit = str(z[0]) + " * x1**2 "
 
-            if "-" in str( z[1] ):
-                fit += " + " + str( z[1] ) + " * x1 "
+            if "-" in str(z[1]):
+                fit += " + " + str(z[1]) + " * x1 "
             else:
-                fit += " + " + str( z[1] ) + " * x1"
+                fit += " + " + str(z[1]) + " * x1"
 
-            if "-" in str( z[2] ):
-                fit += " + " + str( z[2] )
+            if "-" in str(z[2]):
+                fit += " + " + str(z[2])
             else:
-                fit += " + " + str( z[2] )
+                fit += " + " + str(z[2])
             line = plt.plot(date, y_data, "*", label=source+" velocity " + velocities_tmp[i] + " " + "y= " + fit)
             lines2.append(line)
             trend = plt.plot(date, p(date), "r--")
@@ -176,6 +180,7 @@ def main():
         a = float(text_box_l.text)
         b = float(text_box_r.text)
         stats_list = []
+        labels = []
         for t in range(0, len(trends)):
             x = lines2[t][0].get_xdata()
             y = lines2[t][0].get_ydata()
@@ -183,8 +188,9 @@ def main():
             j = findNearestIndex(x, b)
             y_tmp = y[i:j]
             label = lines2[t][0].get_label()
+            labels.append(label)
             stats_list.append(stats.describe(y_tmp))
-        print_stats(stats_list)
+        print_stats(stats_list, labels)
 
     def update(val):
         a = a_slider.val
