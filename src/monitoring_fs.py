@@ -984,7 +984,7 @@ class MonitoringApp(QWidget):
         for i in range(0, len(source_velocities)):
             self.monitoringPlot.errorbar(error_dates, [j[i][1] for j in error_u1_pol], error_u1_ston, "none", visible=False)
             self.monitoringPlot.errorbar(error_dates, [j[i][1] for j in error_u9_pol], error_u9_ston, "none", visible=False)
-            self.monitoringPlot.errorbar(error_dates, [j[i][1] for j in error_avg_pol], error_avg_ston, "none", visible=True) 
+            self.monitoringPlot.errorbar(error_dates, [j[i][1] for j in error_avg_pol], error_avg_ston, "none", visible=True)L   
         '''
 
         np.savetxt(getConfigs("paths", "monitoringFilePath") + self.source + "_" + self.line + ".txt", np.transpose(monitoringResults))
