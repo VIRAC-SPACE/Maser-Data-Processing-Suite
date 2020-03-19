@@ -7,6 +7,7 @@ from functools import reduce
 from multiprocessing import Pool
 import random
 import pandas as pd
+import json
 
 
 test_data_file = "/home/janis/Documents/maser/output/NotSmooht/cepa/6668/cepa_00_01_03_15_Nov_2019_IRBENE_418.dat"
@@ -110,11 +111,11 @@ def pairing(elite):
     return parents
 
 
-def mutations(parents):
+def mutations(parents, max_line_count):
     new_generations = []
     cepa_velocity = [-1.77, -2.41, -3.66, -4.01, -4.67]
     min_velocity_count = len(cepa_velocity)
-    max_line_count = 30
+    max_line_count = max_line_count
 
     for parent in parents:
 
@@ -163,10 +164,11 @@ def plot_best_individual(populations, label, text):
     plt.close('all')
 
 
-def main():
+def run(population_size, max_line_count):
     tmp = 100
     generations = 1000
-    population_size = 10
+    population_size = population_size
+    results = dict()
 
     for r in range(0, tmp):
 
@@ -185,7 +187,7 @@ def main():
             if min(fitness) < 0.0000001:
                 break
 
-            populations = mutations(parents)
+            populations = mutations(parents, max_line_count)
             fitness = fitness_evaluation(populations)
             selected_elite = select_elite(populations, fitness)
             parents = pairing(selected_elite)
@@ -194,8 +196,20 @@ def main():
 
         p = [str(pi) for pi in populations[0]]
         text = "_\n".join(p) + "\n_" + str(fitness[0])
+        results[r] = {"best_fitness":fitness[0], "velocities":p}
         label = str(r) + ".png"
-        plot_best_individual(populations, label, text)
+        # plot_best_individual(populations, label, text)
+
+    return results
+
+
+def main():
+    params = [(10, 10), (10, 15), (10, 20), (10, 30), (15, 10), (15, 15), (15, 20), (15, 30)]
+
+    for param in params:
+        results = run(param[0], param[1])
+        with open(str(param[0]) + "_" + str(param[1]) + ".json", "w") as result_file:
+            result_file.write(json.dumps(results, indent=2))
 
     sys.exit(0)
 
