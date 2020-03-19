@@ -116,7 +116,11 @@ def mutations(parents):
     cepa_velocity = [-1.77, -2.41, -3.66, -4.01, -4.67]
     min_velocity_count = len(cepa_velocity)
     max_line_count = 30
+<<<<<<< HEAD
     
+=======
+
+>>>>>>> 39440b0c329c9d53bb721505a84635f8471eb2da
     for parent in parents:
 
         if len(parent[0]) == min_velocity_count and len(parent[1]) == min_velocity_count:
