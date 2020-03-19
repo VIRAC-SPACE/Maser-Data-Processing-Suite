@@ -74,7 +74,7 @@ def fit(gg_fit):
 
 
 def fitness_evaluation(populations):
-    p = Pool(10)
+    p = Pool(12)
     gg_fits = p.map(compute_gauss, populations)
     fitness = p.map(fit, gg_fits)
     p.close()
@@ -116,7 +116,7 @@ def mutations(parents):
     cepa_velocity = [-1.77, -2.41, -3.66, -4.01, -4.67]
     min_velocity_count = len(cepa_velocity)
     max_line_count = 30
-
+    
     for parent in parents:
 
         if len(parent[0]) == min_velocity_count and len(parent[1]) == min_velocity_count:
@@ -167,11 +167,9 @@ def plot_best_individual(populations, label, text):
 def main():
     tmp = 100
     generations = 1000
-    population_size = 10
+    population_size = 15
 
     for r in range(0, tmp):
-        generations = 1000
-        population_size = 600
 
         print("generation", 0)
         populations = generate_initial_populations(population_size)
