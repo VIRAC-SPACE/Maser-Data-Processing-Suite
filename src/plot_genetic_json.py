@@ -27,8 +27,8 @@ def compute_gauss(gauss_lines, velocity, y_data):
 
 
 def main():
-    test_data_file_before = "/home/janis/Documents/maser/output/NotSmooht/cepa/6668/cepa_23_55_31_14_Nov_2019_IRBENE_417.dat"
-    test_data_file_after = "/home/janis/Documents/maser/output/NotSmooht/cepa/6668/cepa_00_06_35_15_Nov_2019_IRBENE_419.dat"
+    test_data_file_before = "/mnt/WORK/maser/DataProcessingForMaserObservation/output/NotSmooht/cepa/6668/cepa_23_55_31_14_Nov_2019_IRBENE_417.dat"
+    test_data_file_after = "/mnt/WORK/maser/DataProcessingForMaserObservation/output/NotSmooht/cepa/6668/cepa_00_06_35_15_Nov_2019_IRBENE_419.dat"
 
     velocity_before = np.loadtxt(test_data_file_before , usecols=(0,), unpack=True)
     y_data_before = np.loadtxt(test_data_file_before , usecols=(3,), unpack=True)
@@ -50,13 +50,13 @@ def main():
         gg_fit_before = compute_gauss(gauss_lines, velocity_before, y_data_before)
         gg_fit_after = compute_gauss(gauss_lines, velocity_after, y_data_after)
 
-        plt.subplot(2, 2, 1)
+        plt.subplot(1, 2, 1)
         plt.plot(velocity_before, y_data_before, "r-", label="original data before")
         plt.plot(velocity_before, gg_fit_before(velocity_before), "g*", label="modulate data before")
         plt.xlim((-5, -1))
         plt.legend()
 
-        plt.subplot(2, 2, 2)
+        plt.subplot(1, 2, 2)
         plt.xlim((-5, -1))
         plt.plot(velocity_after, y_data_after, "r-", label="original data after")
         plt.plot(velocity_after, gg_fit_after(velocity_after), "g*", label="modulate data after")

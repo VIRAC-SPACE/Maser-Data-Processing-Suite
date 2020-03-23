@@ -15,23 +15,24 @@ velocity = np.loadtxt(test_data_file, usecols=(0,), unpack=True)
 y_data = np.loadtxt(test_data_file, usecols=(3,), unpack=True)
 
 
-def compute_gauss(gauss_lines):
+def compute_gauss(population):
+    gauss_lines = population["velocities"]
+    amplitudes = population["amplitudes"]
     indexes = [(np.abs(velocity - float(line))).argmin() for line in gauss_lines]
-    mons = [max(y_data[index - 5:index + 5]) for index in indexes]
-    gaussian = [models.Gaussian1D(mons[index], gauss_lines[index], 0.05, bounds={'stddev': (None, 0.15)}) for index in range(0, len(mons))]
-
+    gaussian = [models.Gaussian1D(amplitudes[index], gauss_lines[index], 0.05, bounds={'stddev': (None, 0.15)}) for index in range(0, len(amplitudes))]
     gg_init = reduce(lambda a, b: a+b, gaussian)
     fitting.SLSQPLSQFitter()
     fit = LevMarLSQFitter()
     gg_fit = fit(gg_init, velocity, y_data)
-
     return gg_fit
 
 
 def generate_initial_populations(population_size):
-    populations = []
+    populations = [] 
+   
     for i in range(0, population_size):
-        population = []
+        population = {"velocities": [], "amplitudes": []}
+        velocity_tmp = []
         cepa_velocity = [-1.77, -2.41, -3.66, -4.01, -4.67]
         tmp = np.random.random()
 
@@ -55,15 +56,18 @@ def generate_initial_populations(population_size):
             initial_population_size = len(cepa_velocity)
 
         if initial_population_size == len(cepa_velocity):
-            population = cepa_velocity
+            velocity_tmp = cepa_velocity
 
         else:
-            population = cepa_velocity
+            velocity_tmp = cepa_velocity
             for p in range(0, initial_population_size):
-                tmp_index = random.randint(0, len(population) - 1)
-                population.insert(tmp_index, population[tmp_index] + tmp)
+                tmp_index = random.randint(0, len(velocity_tmp) - 1)
+                velocity_tmp.insert(tmp_index, velocity_tmp[tmp_index] + tmp)
 
-        population = sorted(population, reverse=True)
+        velocity_tmp = sorted(velocity_tmp, reverse=True)
+        indexes = [(np.abs(velocity - float(line))).argmin() for line in velocity_tmp]
+        amplitudes = [max(y_data[index - 5:index + 5]) for index in indexes]
+        population = {"velocities": velocity_tmp, "amplitudes": amplitudes}
         populations.append(population)
 
     return populations
@@ -91,9 +95,9 @@ def select_elite(populations, fitness):
     df = pd.DataFrame({'fitness': fitness})
     fitness_of_selected_individuals = df.nsmallest(selected_individuals_count, 'fitness')
     selected_individuals_indexes = list(fitness_of_selected_individuals.to_dict()["fitness"].keys())
-    tmp_p = np.array(populations)
     selected_individuals_indexes = sorted(selected_individuals_indexes)
-    selected_individuals = tmp_p[selected_individuals_indexes]
+
+    selected_individuals = [populations[p] for p in selected_individuals_indexes]
     return selected_individuals
 
 
@@ -108,6 +112,7 @@ def pairing(elite):
         i += 1
         j += 1
 
+
     return parents
 
 
@@ -119,41 +124,55 @@ def mutations(parents, max_line_count):
 
     for parent in parents:
 
-        if len(parent[0]) == min_velocity_count and len(parent[1]) == min_velocity_count:
-            new_generation = parent[0]
+        if len(parent[0]["velocities"]) == min_velocity_count and len(parent[1]["velocities"]) == min_velocity_count:
+            new_generation = {"velocities": parent[0]["velocities"], "amplitudes": parent[0]["amplitudes"]}
 
-        elif len(parent[0]) == min_velocity_count and len(parent[1]) > min_velocity_count:
-            new_generation = parent[1]
+        elif len(parent[0]["velocities"]) == min_velocity_count and len(parent[1]) > min_velocity_count:
+            new_generation =  {"velocities": parent[1]["velocities"], "amplitudes": parent[1]["amplitudes"]}
 
-        elif len(parent[1]) == min_velocity_count and len(parent[0]) > min_velocity_count:
-            new_generation = parent[0]
+        elif len(parent[1]["velocities"]) == min_velocity_count and len(parent[0]) > min_velocity_count:
+            new_generation =  {"velocities": parent[0]["velocities"], "amplitudes": parent[0]["amplitudes"]}
 
         else:
-            new_generation = cepa_velocity
-            new_generation.extend(parent[0])
-            new_generation.extend(parent[1])
-            new_generation = list(set(new_generation))
+            indexes = [(np.abs(velocity - float(line))).argmin() for line in cepa_velocity]
+            amplitudes = [max(y_data[index - 5:index + 5]) for index in indexes]
+            new_generation = {"velocities": cepa_velocity, "amplitudes": amplitudes}
+
+            new_generation["velocities"].extend(parent[0]["velocities"])
+            new_generation["velocities"].extend(parent[1]["velocities"])
+            
+            new_generation["amplitudes"].extend(parent[0]["amplitudes"])
+            new_generation["amplitudes"].extend(parent[1]["amplitudes"])
+            
+            new_generation["amplitudes"] = list(set(new_generation["amplitudes"]))
+            new_generation["velocities"] = list(set(new_generation["velocities"])) 
 
         tmp = np.random.random()
-        tmp_index = random.randint(0, len(new_generation) -1)
+        tmp_index = random.randint(0, len(new_generation["velocities"]))
 
         if 0.5 < tmp < 0.75:
-            new_generation[tmp_index] = new_generation[tmp_index] + tmp
+            new_generation["velocities"][tmp_index] = new_generation["velocities"][tmp_index] + tmp
+            new_generation["amplitudes"][tmp_index] = new_generation["amplitudes"][tmp_index] + tmp
 
         elif 0.75 <= tmp <= 1.0:
-            new_generation[tmp_index] = new_generation[tmp_index] - tmp
+            new_generation["velocities"][tmp_index] = new_generation["velocities"][tmp_index] - tmp
+            new_generation["amplitudes"][tmp_index] = new_generation["amplitudes"][tmp_index] - tmp
+        
+        new_generation_tmp = new_generation
+        a_tmp = sorted([new_generation_tmp["velocities"].index(v) for v in sorted(new_generation["velocities"], reverse=True)], reverse=False)
+        print("new_generation_tmp", len(new_generation_tmp["amplitudes"]), len(a_tmp))
+        amplitudes_tmp = [new_generation_tmp["amplitudes"][a] for a in a_tmp]
+        new_generation = {"velocities": sorted(new_generation["velocities"], reverse=True), "amplitudes": amplitudes_tmp}
 
-        new_generation = sorted(new_generation, reverse=True)
-
-        if len(new_generation) > max_line_count:
-            new_generation = new_generation[0:max_line_count]
+        if len(new_generation["velocities"]) > max_line_count:
+            new_generation = {"velocities":new_generation["velocities"][0:max_line_count], "amplitudes":new_generation["amplitudes"][0:max_line_count]}
         new_generations.append(new_generation)
 
     return new_generations
 
 
 def plot_best_individual(populations, label, text):
-    best_gauss_lines = populations[0]
+    best_gauss_lines = populations["velocities"][0]
     gg_fit = compute_gauss(best_gauss_lines)
     plt.plot(velocity, y_data, "r-", label="original data")
     plt.plot(velocity, gg_fit(velocity), "g*", label="modulate data")
@@ -175,8 +194,9 @@ def run(population_size, max_line_count):
         print("generation", 0)
         populations = generate_initial_populations(population_size)
         fitness = fitness_evaluation(populations)
-        selected_elite = select_elite(populations, fitness)
-        parents = pairing(selected_elite)
+
+        selected_elite_ = select_elite(populations, fitness)
+        parents = pairing(selected_elite_)
 
         i = 0
         for gen in range(0, generations):
@@ -189,8 +209,8 @@ def run(population_size, max_line_count):
 
             populations = mutations(parents, max_line_count)
             fitness = fitness_evaluation(populations)
-            selected_elite = select_elite(populations, fitness)
-            parents = pairing(selected_elite)
+            selected_elite_ = select_elite(populations, fitness)
+            parents = pairing(selected_elite_)
 
             i += 1
 
@@ -199,7 +219,7 @@ def run(population_size, max_line_count):
         results[r] = {"best_fitness":fitness[0], "velocities":p}
         label = str(r) + ".png"
         # plot_best_individual(populations, label, text)
-
+  
     return results
 
 
@@ -208,8 +228,10 @@ def main():
 
     for param in params:
         results = run(param[0], param[1])
+
         with open(str(param[0]) + "_" + str(param[1]) + ".json", "w") as result_file:
             result_file.write(json.dumps(results, indent=2))
+
 
     sys.exit(0)
 
