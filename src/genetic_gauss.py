@@ -134,21 +134,18 @@ def mutations(parents, max_line_count):
             new_generation =  {"velocities": parent[0]["velocities"], "amplitudes": parent[0]["amplitudes"]}
 
         else:
-            indexes = [(np.abs(velocity - float(line))).argmin() for line in cepa_velocity]
-            amplitudes = [max(y_data[index - 5:index + 5]) for index in indexes]
-            new_generation = {"velocities": cepa_velocity, "amplitudes": amplitudes}
+            new_generation = {"velocities": cepa_velocity}
 
             new_generation["velocities"].extend(parent[0]["velocities"])
             new_generation["velocities"].extend(parent[1]["velocities"])
             
-            new_generation["amplitudes"].extend(parent[0]["amplitudes"])
-            new_generation["amplitudes"].extend(parent[1]["amplitudes"])
+            new_generation["velocities"] = list(set(new_generation["velocities"]))
+            indexes = [(np.abs(velocity - float(line))).argmin() for line in new_generation["velocities"]]
+            amplitudes = [max(y_data[index - 5:index + 5]) for index in indexes]
+            new_generation["amplitudes"] = amplitudes
             
-            new_generation["amplitudes"] = list(set(new_generation["amplitudes"]))
-            new_generation["velocities"] = list(set(new_generation["velocities"])) 
-
         tmp = np.random.random()
-        tmp_index = random.randint(0, len(new_generation["velocities"]))
+        tmp_index = random.randint(0, len(new_generation["velocities"]) -1)
 
         if 0.5 < tmp < 0.75:
             new_generation["velocities"][tmp_index] = new_generation["velocities"][tmp_index] + tmp
@@ -157,12 +154,8 @@ def mutations(parents, max_line_count):
         elif 0.75 <= tmp <= 1.0:
             new_generation["velocities"][tmp_index] = new_generation["velocities"][tmp_index] - tmp
             new_generation["amplitudes"][tmp_index] = new_generation["amplitudes"][tmp_index] - tmp
-        
-        new_generation_tmp = new_generation
-        a_tmp = sorted([new_generation_tmp["velocities"].index(v) for v in sorted(new_generation["velocities"], reverse=True)], reverse=False)
-        print("new_generation_tmp", len(new_generation_tmp["amplitudes"]), len(a_tmp))
-        amplitudes_tmp = [new_generation_tmp["amplitudes"][a] for a in a_tmp]
-        new_generation = {"velocities": sorted(new_generation["velocities"], reverse=True), "amplitudes": amplitudes_tmp}
+       
+        new_generation["velocities"] = sorted(new_generation["velocities"], reverse=True)
 
         if len(new_generation["velocities"]) > max_line_count:
             new_generation = {"velocities":new_generation["velocities"][0:max_line_count], "amplitudes":new_generation["amplitudes"][0:max_line_count]}
@@ -192,8 +185,9 @@ def run(population_size, max_line_count):
     for r in range(0, tmp):
 
         print("generation", 0)
-        populations = generate_initial_populations(population_size)
+        populations = generate_initial_populations(population_size) 
         fitness = fitness_evaluation(populations)
+       
 
         selected_elite_ = select_elite(populations, fitness)
         parents = pairing(selected_elite_)
