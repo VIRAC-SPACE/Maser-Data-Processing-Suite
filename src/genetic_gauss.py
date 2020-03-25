@@ -208,9 +208,10 @@ def run(population_size, max_line_count):
 
             i += 1
 
-        p = [str(pi) for pi in populations[0]]
-        text = "_\n".join(p) + "\n_" + str(fitness[0])
-        results[r] = {"best_fitness":fitness[0], "velocities":p}
+        p = [str(pi) for pi in populations[0]["velocities"]]
+        p_a = [str(pi) for pi in populations[0]["amplitudes"]]
+        #text = "_\n".join(p) + "\n_" + str(fitness[0])
+        results[r] = {"best_fitness":fitness[0], "velocities":p, "amplitudes":p_a}
         label = str(r) + ".png"
         # plot_best_individual(populations, label, text)
   

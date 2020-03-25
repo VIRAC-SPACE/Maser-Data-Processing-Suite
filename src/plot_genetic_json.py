@@ -13,11 +13,8 @@ def get_all_json_file():
     return [file for file in os.listdir(path) if ".json" in file]
 
 
-def compute_gauss(gauss_lines, velocity, y_data):
-    indexes = [(np.abs(velocity - float(line))).argmin() for line in gauss_lines]
-    mons = [max(y_data[index - 5:index + 5]) for index in indexes]
-    gaussian = [models.Gaussian1D(mons[index], gauss_lines[index], 0.05, bounds={'stddev': (None, 0.15)}) for index in range(0, len(mons))]
-
+def compute_gauss(gauss_lines, velocity, y_data, amplitude):
+    gaussian = [models.Gaussian1D(amplitude[index], gauss_lines[index], 0.05, bounds={'stddev': (None, 0.15)}) for index in range(0, len(amplitude))]
     gg_init = reduce(lambda a, b: a+b, gaussian)
     fitting.SLSQPLSQFitter()
     fit = LevMarLSQFitter()
@@ -40,15 +37,18 @@ def main():
         print("file", file)
         fitness = []
         velocities = []
+        amplitudes = []
         with open(file) as data:
             genetic_results = json.load(data)
             for iter in genetic_results:
                 fitness.append(genetic_results[iter]["best_fitness"])
                 velocities.append(genetic_results[iter]["velocities"])
+                amplitudes.append(genetic_results[iter]["amplitudes"])
 
+        gauss_amplitude = amplitudes[fitness.index(min(fitness))]
         gauss_lines = velocities[fitness.index(min(fitness))]
-        gg_fit_before = compute_gauss(gauss_lines, velocity_before, y_data_before)
-        gg_fit_after = compute_gauss(gauss_lines, velocity_after, y_data_after)
+        gg_fit_before = compute_gauss(gauss_lines, velocity_before, y_data_before, gauss_amplitude)
+        gg_fit_after = compute_gauss(gauss_lines, velocity_after, y_data_after, gauss_amplitude)
 
         plt.subplot(1, 2, 1)
         plt.plot(velocity_before, y_data_before, "r-", label="original data before")
