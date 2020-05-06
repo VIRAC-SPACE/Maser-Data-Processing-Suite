@@ -141,7 +141,7 @@ def main():
 
         #print("average flux of component", component, np.mean(y))
         v = velocity[index]
-        print(v + "&  " + str(np.mean(y)) + " & " + str(variability_indexies[component]) + " & " + str(fuction_index[component]))
+        print("{:3} &  {:.3f} & {:.3f} & {:.3f}\\\\".format(v, np.mean(y), variability_indexies[component], fuction_index[component]))
         #np.sqrt((((reduce(sum, [i ** 2 * np.std(y) ** 2 for i in y])) - np.mean(y) * reduce(sum, [i ** 2 * np.std(y) ** 2 for i in y])) / (N - 1))) / np.mean(y) * reduce(sum, [N / (1.5 + 0.05 * i) for i in y])
 
         y_min = np.min(y)
