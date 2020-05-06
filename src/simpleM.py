@@ -17,6 +17,8 @@ from astropy.time import Time
 from functools import reduce
 from help import *
 from parsers._configparser import ConfigParser
+import warnings
+warnings.filterwarnings("ignore")
 
 
 def getConfigsItems():
@@ -118,6 +120,11 @@ def main():
     result_org = [x]
 
     #ax1.plot([], [], ' ', label="km sec$^{-1}$")  # viltîba lai dabûtu km/s pirms series labels
+    print("\n\n\n")
+    print("\hline")
+    print("\multicolumn{4}{l}{" + get_configs("Full_source_name", get_args("source")) + "MJD\\textsubscript{s}=" + str(np.min(x)) + "$T\\textsubscript{s}$=" + str((np.max(x) - np.min(x)) / 365) + ",}\\\\")
+    print("\multicolumn{4}{l}{$N$=" + str(len(x)) + ", $C(month^{-1})$=" + str((len(x)/ ((np.max(x) - np.min(x)) / 365))/12) + ")} \\\\")
+    print("\hline")
     for component in components:
         index = components.index(component)
         y = correctNumpyReadData(data[:, [index + 1]])
@@ -132,7 +139,9 @@ def main():
         variances_normal[component] = variances[component] * (1/N-1)
         fuction_index[component] = np.sqrt((N/reduce(sum, [(1.5 + 0.05 * i) **2 for i in y])) * ((reduce(sum, [i**2*(1.5 + 0.05 * i) **2 for i in y]) -np.mean(y) * reduce(sum, [i*(1.5 + 0.05 * i) **2 for i in y])) /(N-1))-1)/np.mean(y)
 
-        print("average flux of component", component, np.mean(y))
+        #print("average flux of component", component, np.mean(y))
+        v = velocity[index]
+        print(v + "&  " + str(np.mean(y)) + " & " + str(variability_indexies[component]) + " & " + str(fuction_index[component]))
         #np.sqrt((((reduce(sum, [i ** 2 * np.std(y) ** 2 for i in y])) - np.mean(y) * reduce(sum, [i ** 2 * np.std(y) ** 2 for i in y])) / (N - 1))) / np.mean(y) * reduce(sum, [N / (1.5 + 0.05 * i) for i in y])
 
         y_min = np.min(y)
@@ -149,10 +158,12 @@ def main():
 
         yTicks.append(np.max(y))
 
+    print("\hline")
+    print("\n\n\n")
     print("variances", variances)
     print("variances_normal", variances_normal)
     print("variability indexies", variability_indexies)
-    print("fuction_index", fuction_index)
+    #print("fuction_index", fuction_index)
     print("Start time", np.min(x))
 
     plt.title(get_configs("Full_source_name", get_args("source")))
@@ -205,7 +216,7 @@ def main():
     plt.xticks(rotation=0, ha='right')
     #fig.tight_layout(pad=4, h_pad=1, w_pad=1, rect=None)
     #plt.rc('text', usetex=True)
-    plt.savefig("/home/artis/monitoring.eps", format="eps", dpi=300)
+    #plt.savefig("/home/artis/monitoring.eps", format="eps", dpi=300)
     plt.show()
 
     result_calib = [x]
@@ -228,8 +239,6 @@ def main():
 
     np.savetxt(result_org_file_name, np.transpose(result_org))
     np.savetxt(result_calib_file_name, np.transpose(result_calib))
-
-    sys.exit(0)
 
 
 if __name__ == "__main__":
