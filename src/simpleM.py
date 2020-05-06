@@ -122,8 +122,8 @@ def main():
     #ax1.plot([], [], ' ', label="km sec$^{-1}$")  # viltîba lai dabûtu km/s pirms series labels
     print("\n\n\n")
     print("\hline")
-    print("\multicolumn{4}{l}{" + get_configs("Full_source_name", get_args("source")) + "MJD\\textsubscript{s}=" + str(np.min(x)) + "$T\\textsubscript{s}$=" + str((np.max(x) - np.min(x)) / 365) + ",}\\\\")
-    print("\multicolumn{4}{l}{$N$=" + str(len(x)) + ", $C(month^{-1})$=" + str((len(x)/ ((np.max(x) - np.min(x)) / 365))/12) + ")} \\\\")
+    print("\multicolumn{4}{l}{" + get_configs("Full_source_name", get_args("source")) + "MJD\\textsubscript{{s}}= {:.3f} $T\\textsubscript{{s}}$= {:.3f},}}\\\\".format(np.min(x), (np.max(x) - np.min(x)) / 365))
+    print("\multicolumn{{4}}{{l}}{{$N$={:d}, $C(month^{{-1}})$={:.3f})}} \\\\".format(len(x), (len(x)/ ((np.max(x) - np.min(x)) / 365))/12))
     print("\hline")
     for component in components:
         index = components.index(component)
