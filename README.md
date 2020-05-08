@@ -1,2 +1,3 @@
-# ExperimentsLogReader
-experiment log file reader
+# MDPS -  Maser Data Processing Suite
+
+# Table of Contents
