@@ -3,6 +3,11 @@
 # Table of Contents
 
 ## Dependencies
+# Table of Contents
+* [Dependencies](#dependencies)
+* [Changelog](#changelog)
+* [Getting Help](#getting-help)
+* [Acknowledgements](#acknowledgements)
 
 ## Changelog
 

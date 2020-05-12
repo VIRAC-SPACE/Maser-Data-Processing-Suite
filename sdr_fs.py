@@ -10,7 +10,6 @@ import os
 import re
 import argparse
 import datetime
-import pickle
 from functools import reduce
 import scipy.constants
 import numpy as np
@@ -23,31 +22,6 @@ from parsers.configparser_ import ConfigParser
 from utils.vlsr import lsr
 from utils.help import find_nearest_index
 from utils.ploting_qt5 import Plot
-
-
-class Result:
-    """
-    Result  class
-    """
-    __slots__ = ('matrix', 'specie')
-
-    def __init__(self, matrix, specie):
-        self.matrix = matrix
-        self.specie = specie
-
-    def get_matrix(self):
-        """
-
-        :return: matrix
-        """
-        return self.matrix
-
-    def get_specie(self):
-        """
-
-        :return: specie
-        """
-        return self.specie
 
 
 def parse_arguments():
@@ -720,7 +694,7 @@ class Analyzer(QWidget):
         p_ref_on_right = np.fft.fftshift(p_ref_on_right)  # r1
 
         sf_left, sf_right, frequency_a1, tsys_r_left, \
-        tsys_r_right, tsys_s_left, tsys_s_right = frequency_shifting(
+         tsys_r_right, tsys_s_left, tsys_s_right = frequency_shifting(
             p_sig_left, p_sig_right, p_ref_left, p_ref_right,
             p_sig_on_left, p_sig_on_right, p_ref_on_left,
             p_ref_on_right, frequency_a, self.logs, pair)
