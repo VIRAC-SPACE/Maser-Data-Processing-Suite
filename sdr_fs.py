@@ -12,9 +12,10 @@ import argparse
 import datetime
 import pickle
 from functools import reduce
-import scipy
+import scipy.constants
 import numpy as np
 from astropy.time import Time
+import h5py
 from PyQt5.QtWidgets import QWidget, QApplication, QDesktopWidget, QGridLayout, QPushButton
 from PyQt5.QtGui import QIcon
 from ExperimentsLogReader.experimentsLogReader import LogReaderFactory, LogTypes
@@ -61,7 +62,7 @@ def parse_arguments():
     parser.add_argument("iteration_number", help="iteration number ", type=int)
     parser.add_argument("log_file", help="Experiment log file name", type=str)
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str,
-                        default="../config/config.cfg")
+                        default="config/config.cfg")
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 1.0')
     args = parser.parse_args()
     return args
@@ -173,22 +174,22 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
     e_i = int(l_spec / 2 + l_spec * avg_interval / 2)
 
     tsys_off_1_left = float(logs["header"]["Tcal"][0]) * (
-                (p_ref_on_left + p_ref_left) -
-                np.mean(p_ref_on_left[s_i:e_i] - p_ref_left[s_i:e_i])) \
-                / (2 * np.mean(p_ref_on_left[s_i:e_i] - p_ref_left[s_i:e_i]))
+            (p_ref_on_left + p_ref_left) -
+            np.mean(p_ref_on_left[s_i:e_i] - p_ref_left[s_i:e_i])) \
+                      / (2 * np.mean(p_ref_on_left[s_i:e_i] - p_ref_left[s_i:e_i]))
     tsys_off_2_left = float(logs["header"]["Tcal"][1]) * (
-                (p_sig_on_left + p_sig_left) -
-                np.mean(p_sig_on_left[s_i:e_i] -p_sig_left[s_i:e_i])) \
-                / (2 * np.mean(p_sig_on_left[s_i:e_i] - p_sig_left[s_i:e_i]))
+            (p_sig_on_left + p_sig_left) -
+            np.mean(p_sig_on_left[s_i:e_i] - p_sig_left[s_i:e_i])) \
+                      / (2 * np.mean(p_sig_on_left[s_i:e_i] - p_sig_left[s_i:e_i]))
 
     tsys_off_1_right = float(logs["header"]["Tcal"][0]) * (
-                (p_ref_on_right + p_ref_right) -
-                np.mean(p_ref_on_right[s_i:e_i] - p_ref_right[s_i:e_i])) \
-                / (2 * np.mean(p_ref_on_right[s_i:e_i] - p_ref_right[s_i:e_i]))
+            (p_ref_on_right + p_ref_right) -
+            np.mean(p_ref_on_right[s_i:e_i] - p_ref_right[s_i:e_i])) \
+                       / (2 * np.mean(p_ref_on_right[s_i:e_i] - p_ref_right[s_i:e_i]))
     tsys_off_2_right = float(logs["header"]["Tcal"][1]) * (
-                (p_sig_on_right + p_sig_right) -
-                np.mean(p_sig_on_right[s_i:e_i] - p_sig_right[s_i:e_i])) \
-                / (2 * np.mean(p_sig_on_right[s_i:e_i] - p_sig_right[s_i:e_i]))
+            (p_sig_on_right + p_sig_right) -
+            np.mean(p_sig_on_right[s_i:e_i] - p_sig_right[s_i:e_i])) \
+                       / (2 * np.mean(p_sig_on_right[s_i:e_i] - p_sig_right[s_i:e_i]))
 
     ta_1_caloff_left = tsys_off_1_left * (p_sig_left - p_ref_left) / p_ref_left  # non-cal phase
     ta_1_caloff_right = tsys_off_1_right * \
@@ -206,10 +207,10 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
     ta_2_caloff_right = tsys_off_2_right * \
                         (p_ref_right - p_sig_right) / p_sig_right  # non-cal phase
 
-    ta_2_calon_left = (tsys_off_2_left + float(logs["header"]["Tcal"][0])) *\
+    ta_2_calon_left = (tsys_off_2_left + float(logs["header"]["Tcal"][0])) * \
                       (p_ref_on_left - p_sig_on_left) / p_sig_on_left  # cal phase
     ta_2_calon_right = (tsys_off_2_right + float(logs["header"]["Tcal"][1])) * \
-                      (p_ref_on_right - p_sig_on_right) / p_sig_on_right  # cal phase
+                       (p_ref_on_right - p_sig_on_right) / p_sig_on_right  # cal phase
 
     ta_ref_left = (ta_2_caloff_left + ta_2_calon_left) / 2
     ta_ref_right = (ta_2_caloff_right + ta_2_calon_right) / 2
@@ -273,9 +274,10 @@ class Analyzer(QWidget):
     """
     GUI application
     """
+
     def __init__(self):
         super().__init__()
-        self.setWindowIcon(QIcon('../../viraclogo.png'))
+        self.setWindowIcon(QIcon('viraclogo.png'))
         self.setWindowTitle("SDR")
         self.center()
         self.index = 0
@@ -292,7 +294,7 @@ class Analyzer(QWidget):
         self.ston_list_avg = list()
         self.logs = LogReaderFactory.getLogReader(LogTypes.SDR,
                                                   get_configs("paths", "logPath") + "SDR/" +
-                                                  get_args("logFile"),
+                                                  get_args("log_file"),
                                                   get_configs("paths", "prettyLogsPath") +
                                                   get_args("source") + "_" +
                                                   get_args("iteration_number")).getLogs()
@@ -313,6 +315,8 @@ class Analyzer(QWidget):
         self.plot_start__left_a = None
         self.plot_start__right_b = None
         self.x = None
+        self.total__left = None
+        self.total__right = None
 
         self.__UI__()
 
@@ -544,16 +548,16 @@ class Analyzer(QWidget):
             specie = line_s
 
             print("specie", specie, "\n")
-            local_osilator = float(self.logs["header"]["f_obs,LO,IF"][1])
-            velocitys = dopler((self.x + local_osilator) * (10 ** 6), vel_total, line_f)
-            velocity_list.append(velocitys)
+            local_oscillator = float(self.logs["header"]["f_obs,LO,IF"][1])
+            velocities = dopler((self.x + local_oscillator) * (10 ** 6), vel_total, line_f)
+            velocity_list.append(velocities)
 
-            print("Velocity max value is", np.max(velocitys),
-                  "velocity min value is ", np.min(velocitys))
-            velocity_max.append(np.max(velocitys))
-            velocity_min.append(np.min(velocitys))
+            print("Velocity max value is", np.max(velocities),
+                  "velocity min value is ", np.min(velocities))
+            velocity_max.append(np.max(velocities))
+            velocity_min.append(np.min(velocities))
 
-        velocitys_avg = []
+        velocities_avg = []
         y__left_avg = []
         y__right_avg = []
 
@@ -569,15 +573,15 @@ class Analyzer(QWidget):
 
             y__left_avg.append(self.sf_left[p][index_right:index_left])
             y__right_avg.append(self.sf_right[p][index_right:index_left])
-            velocitys_avg.append(velocity_list[p][index_right:index_left])
+            velocities_avg.append(velocity_list[p][index_right:index_left])
             print(len(velocity_list[p][index_right:index_left]))
 
-        max_points_count = np.max([len(m) for m in velocitys_avg])
+        max_points_count = np.max([len(m) for m in velocities_avg])
         print("max_points_count", max_points_count)
         for s in range(0, len(velocity_list)):
 
-            if len(velocitys_avg[s]) < max_points_count:
-                velocitys_avg[s] = np.append(velocitys_avg[s], np.max(velocity_min))
+            if len(velocities_avg[s]) < max_points_count:
+                velocities_avg[s] = np.append(velocities_avg[s], np.max(velocity_min))
 
             if len(y__left_avg[s]) < max_points_count:
                 y__left_avg[s] = np.append(y__left_avg[s], 0)
@@ -585,11 +589,11 @@ class Analyzer(QWidget):
             if len(y__right_avg[s]) < max_points_count:
                 y__right_avg[s] = np.append(y__right_avg[s], 0)
 
-        velocitys_avg = reduce(lambda x, y: x + y, velocitys_avg)
+        velocities_avg = reduce(lambda x, y: x + y, velocities_avg)
         y__left_avg = reduce(lambda x, y: x + y, y__left_avg)
         y__right_avg = reduce(lambda x, y: x + y, y__right_avg)
 
-        velocitys_avg = velocitys_avg / len(self.scan_pairs)
+        velocities_avg = velocities_avg / len(self.scan_pairs)
         y__left_avg = y__left_avg / len(self.scan_pairs)
         y__right_avg = y__right_avg / len(self.scan_pairs)
 
@@ -597,13 +601,13 @@ class Analyzer(QWidget):
         self.plot_velocity__left.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
                                            'Flux density (Jy)',
                                            "Left Polarization", (1, 0), "linear")
-        self.plot_velocity__left.plot(velocitys_avg, y__left_avg, 'b')
+        self.plot_velocity__left.plot(velocities_avg, y__left_avg, 'b')
 
         self.plot_velocity__right = Plot()
         self.plot_velocity__right.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
                                             'Flux density (Jy)',
                                             "Right Polarization", (1, 1), "linear")
-        self.plot_velocity__right.plot(velocitys_avg, y__right_avg, 'b')
+        self.plot_velocity__right.plot(velocities_avg, y__right_avg, 'b')
 
         self.plot_tsys = Plot()
         self.plot_tsys.creatPlot(self.grid, 'Time', 'System temperature',
@@ -623,18 +627,21 @@ class Analyzer(QWidget):
                   "Nov": "11", "Dec": "12"}
         month = list(months.keys())[int(month) - 1]
         year = scan_1["date"].split("-")[0]
-        houre = scan_1["date"].split("T")[1].split(":")[0]
+        hour = scan_1["date"].split("T")[1].split(":")[0]
         minute = scan_1["date"].split("T")[1].split(":")[1]
-        righte = scan_1["date"].split("T")[1].split(":")[2]
+        right = scan_1["date"].split("T")[1].split(":")[2]
+        result_file_name = get_configs("paths", "outputFilePath") + \
+                           get_args("source") + "_" + day + "_" + month + "_" + year + "_" + \
+                           hour + ":" + minute + ":" + right + "_" + station + "_" + \
+                           get_args("iteration_number") + ".h5"
+
+        result_file = h5py.File(result_file_name, "w")
+
         sys_temp_out = np.transpose(np.array([time, self.tsys_r_left_list,
                                               self.tsys_r_right_list,
                                               self.tsys_s_left_list, self.tsys_s_right_list]))
-        sys_temp_out_file_name = get_configs("paths", "tsysFilePath") + "/" + \
-                                 get_args("source") + "_" + day + "_" + month + "_" + year + "_" + \
-                                 houre + ":" + minute + ":" + righte + "_" + station + "_" + \
-                                 get_args("iteration_number") + ".dat"
-        sys_temp_out_file_name = sys_temp_out_file_name.replace(" ", "")
-        np.save(sys_temp_out_file_name, sys_temp_out)
+
+        result_file.create_dataset("system_temperature", data=sys_temp_out)
 
         self.ston_list_left = [value for value in self.ston_list_left if str(value) != 'nan']
         self.ston_list_right = [value for value in self.ston_list_right if str(value) != 'nan']
@@ -659,23 +666,14 @@ class Analyzer(QWidget):
         self.grid.addWidget(self.plot_tsys, 2, 0)
         self.grid.addWidget(self.plot_ston, 2, 1)
 
-        total_results = np.transpose(np.array([np.transpose(velocitys_avg),
+        total_results = np.transpose(np.array([np.transpose(velocities_avg),
                                                np.transpose(y__left_avg),
                                                np.transpose(y__right_avg)]))
 
-        if not os.path.exists(get_configs("paths", "dataFilePath") +
-                              "SDR/" + get_args("line") + "/"):
-            os.makedirs(get_configs("paths", "dataFilePath") + "SDR/" + get_args("line") + "/")
-
-        output_file_name = get_configs("paths", "dataFilePath") + "SDR/" + \
-                           get_args("line") + "/" + \
-                           get_args("source") + "_" + day + "_" + month + "_" + year + "_" + \
-                           houre + ":" + minute + ":" + righte + "_" + station + "_" + \
-                           get_args("iteration_number") + ".dat"
-        print("output_file_name", output_file_name)
-        output_file_name = output_file_name.replace(" ", "")
-        result = Result(total_results, specie)
-        pickle.dump(result, open(output_file_name, 'wb'))
+        result_file.create_dataset("amplitude", data=total_results)
+        print("specie", specie)
+        result_file.create_dataset("specie", specie.encode('utf-8'), dtype=h5py.string_dtype())
+        result_file.close()
 
     def get_data_file_for_scan(self, scan_name):
         """
@@ -721,6 +719,31 @@ class Analyzer(QWidget):
         p_ref_on_left = np.fft.fftshift(p_ref_on_left)  # r1
         p_ref_on_right = np.fft.fftshift(p_ref_on_right)  # r1
 
+        sf_left, sf_right, frequency_a1, tsys_r_left, \
+        tsys_r_right, tsys_s_left, tsys_s_right = frequency_shifting(
+            p_sig_left, p_sig_right, p_ref_left, p_ref_right,
+            p_sig_on_left, p_sig_on_right, p_ref_on_left,
+            p_ref_on_right, frequency_a, self.logs, pair)
+
+        self.sf_left.append(sf_left)
+        self.sf_right.append(sf_right)
+        self.x = frequency_a1
+
+        self.tsys_r_left_list.append(tsys_r_left)
+        self.tsys_r_right_list.append(tsys_r_right)
+        self.tsys_s_left_list.append(tsys_s_left)
+        self.tsys_s_right_list.append(tsys_s_right)
+
+        ston_left = signal_to_noise_ratio(self.x, self.sf_left, self.cuts)
+        ston_right = signal_to_noise_ratio(self.x, self.sf_right, self.cuts)
+        stone_avg = signal_to_noise_ratio(self.x,
+                                          ((np.array(self.sf_left) + np.array(self.sf_right)) / 2),
+                                          self.cuts)
+
+        self.ston_list_left.append(ston_left)
+        self.ston_list_right.append(ston_right)
+        self.ston_list_avg.append(stone_avg)
+
         # plot1
         self.plot_start__left_a = Plot()
         self.plot_start__left_a.creatPlot(self.grid, 'Frequency Mhz',
@@ -741,6 +764,24 @@ class Analyzer(QWidget):
         self.plot_start__right_b.plot(frequency_d, p_ref_on_right, 'y', label=str(index + 1) + "r1")
         self.grid.addWidget(self.plot_start__right_b, 0, 1)
 
+        # plot3
+        self.total__left = Plot()
+        self.total__left.creatPlot(self.grid, 'Frequency Mhz',
+                                   'Flux density (Jy)', "", (4, 0), "linear")
+        self.total__left.plot(self.x, sf_left, 'b', label=str(index + 1))
+        self.grid.addWidget(self.total__left, 3, 0)
+
+        # plot4
+        self.total__right = Plot()
+        self.total__right.creatPlot(self.grid,
+                                    'Frequency Mhz', 'Flux density (Jy)', "", (4, 1), "linear")
+        self.total__right.plot(self.x, sf_right, 'b', label=str(index + 1))
+        self.grid.addWidget(self.total__right, 3, 1)
+
+        if index == len(self.scan_pairs) - 1:
+            self.next_pair_button.setText('Move to total results')
+            self.next_pair_button.clicked.connect(self.plot_total_results)
+
 
 def main():
     """
@@ -748,8 +789,8 @@ def main():
     :return: None
     """
     q_app = QApplication(sys.argv)
-    aplication = Analyzer()
-    aplication.show()
+    application = Analyzer()
+    application.show()
     sys.exit(q_app.exec_())
 
 
