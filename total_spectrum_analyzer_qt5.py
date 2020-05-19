@@ -1,6 +1,10 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
+"""
+sdr_fs data processing tool
+"""
+
 import sys
 import os
 import argparse
@@ -14,75 +18,100 @@ import pandas as pd
 import json
 import pickle
 from multiprocessing import Pool
-from PyQt5.QtWidgets import QWidget, QGridLayout, QApplication, QPushButton, QMessageBox, QLabel, QLineEdit, QSlider, QDesktopWidget, QLCDNumber
+from PyQt5.QtWidgets import QWidget, QGridLayout, QApplication, QPushButton, \
+    QMessageBox, QLabel, QLineEdit, QSlider, QDesktopWidget, QLCDNumber
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QColor
 
 from utils.ploting_qt5 import Plot
-from utils.help import find_nearest_index
+from utils.help import indexies
 from velocityDensity import computeGauss2
 from parsers.configparser_ import ConfigParser
 
 
-def parseArguments():
+def parse_arguments():
+    """
+
+    :return: dict with passed args to script
+    """
     parser = argparse.ArgumentParser(description='''plotting tool. ''', epilog="""PRE PLOTTER.""")
     parser.add_argument("datafile", help="Experiment correlation file name", type=str)
     parser.add_argument("line", help="Experiment correlation file name", type=int)
-    parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
-    parser.add_argument("-n", "--noGUI", help="Create smoothed and not smothed outputfiles", action='store_true')
+    parser.add_argument("-c", "--config", help="Configuration cfg file",
+                        type=str, default="config/config.cfg")
     parser.add_argument("-r", "--rawdata", help="Use raw data, skip smoothing", action='store_true')
     parser.add_argument("-t", "--calibType", help="Type of calibration", default="SDR")
-    parser.add_argument("-tr", "--threshold", help="Set threshold for outlier filter", type=float, default=1.0)
-    parser.add_argument("-f", "--filter",help="Set the amount of times to filter data to remove noise spikes, higher than 5 makes little difference", type=int, default=0, choices=range(0, 11), metavar="[0-10]")
+    parser.add_argument("-tr", "--threshold",
+                        help="Set threshold for outlier filter", type=float, default=1.0)
+    parser.add_argument("-f", "--filter",
+                        help="Set the amount of times to filter data to remove noise spikes, "
+                             "higher than 5 makes little difference",
+                        type=int, default=0, choices=range(0, 11), metavar="[0-10]")
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 1.0')
     args = parser.parse_args()
     return args
 
 
-def getArgs(key):
-    args = parseArguments()
-    return str(args.__dict__[key])
+def get_args(key):
+    """
+
+    :param key: argument key
+    :return: to script passed argument value
+    """
+    return str(parse_arguments().__dict__[key])
 
 
-def getConfigs(key, value):
-    configFilePath = getArgs("config")
-    config = ConfigParser.getInstance()
-    config.CreateConfig(configFilePath)
-    return config.getConfig(key, value)
+def get_configs(section, key):
+    """
+
+    :param section: configuration file section
+    :param key: configuration file sections key
+    :return: configuration file section key value
+    """
+    config_file_path = get_args("config")
+    config = ConfigParser(config_file_path)
+    return config.get_config(section, key)
 
 
-def STON(xarray, yarray, cuts):
-    cutsIndex = list()
-    cutsIndex.append(0)
+def signal_to_noise_ratio(frequency, amplitude, cuts):
+    """
+
+    :param frequency: frequency
+    :param amplitude: amplitude
+    :param cuts: signal region
+    :return: signal to noise ratio
+    """
+    cuts_index = list()
+    cuts_index.append(0)
 
     for cut in cuts:
-        cutsIndex.append((np.abs(xarray - float(cut[0]))).argmin())
-        cutsIndex.append((np.abs(xarray - float(cut[1]))).argmin())
+        cuts_index.append((np.abs(frequency - float(cut[0]))).argmin())
+        cuts_index.append((np.abs(frequency - float(cut[1]))).argmin())
 
-    cutsIndex.append(-1)
+    cuts_index.append(-1)
 
     y_array = list()
 
     i = 0
     j = 1
 
-    while i != len(cutsIndex):
-        y_array.append(yarray[cutsIndex[i]: cutsIndex[j]])
+    while i != len(cuts_index):
+        y_array.append(amplitude[cuts_index[i]: cuts_index[j]])
         i = i + 2
         j = j + 2
 
-    y = list()
+    non_signal_amplitude = list()
 
-    for p in y_array:
-        for p1 in p:
-            y.append(p1)
+    for point in y_array:
+        for point_one in point:
+            non_signal_amplitude.append(point_one)
 
-    y = np.array(y)
+    non_signal_amplitude = np.array(non_signal_amplitude)
 
-    std = np.std(y)
-    max = np.max(yarray)
+    std = np.std(non_signal_amplitude)
+    max_value = np.max(amplitude)
 
     ston = std * 3
     return ston
@@ -108,18 +137,6 @@ def replaceBadPoints(xdata, ydata, x_bad_point, y_bad_point, data):
     return tempx, tempy
 
 
-class Result():
-    def __init__(self, matrix, specie):
-        self.matrix = matrix
-        self.specie = specie
-
-    def getMatrix(self):
-        return self.matrix
-
-    def getSpecie(self):
-        return self.specie
-
-
 def is_outlier(points, threshold):
     if len(points.shape) == 1:
         points = points[:, None]
@@ -134,7 +151,8 @@ def is_outlier(points, threshold):
 
 
 class Analyzer(QWidget):
-    def __init__(self, datafile, resultFilePath, source_velocities, cuts, output, index_range_for_local_maxima, skipsmooth, calibType, line):
+    def __init__(self, datafile, result_file_path, source_velocities, cuts,
+                 output, index_range_for_local_maxima, skipsmooth, calib_type, line):
         super().__init__()
         self.skipsmoothing = skipsmooth
         self.setWindowIcon(QIcon('viraclogo.png'))
@@ -143,10 +161,12 @@ class Analyzer(QWidget):
         self.source = datafile.split("/")[-1].split(".")[0].split("_")[0]
         self.expername = datafile.split("/")[-1].split(".")[0]
         self.location = datafile.split("/")[-1].split(".")[0].split("_")[-2]
-        self.date = "_".join([datafile.split("/")[-1].split(".")[0].split("_")[1], datafile.split("/")[-1].split(".")[0].split("_")[2], datafile.split("/")[-1].split(".")[0].split("_")[3]])
+        self.date = "_".join([datafile.split("/")[-1].split(".")[0].split("_")[1],
+                              datafile.split("/")[-1].split(".")[0].split("_")[2],
+                              datafile.split("/")[-1].split(".")[0].split("_")[3]])
         self.time = datafile.split("/")[-1].split(".")[0].split("_")[-3]
         self.iteration_number = datafile.split("/")[-1].split(".")[0].split("_")[-1]
-        self.resultFilePath = resultFilePath
+        self.resultFilePath = result_file_path
         self.source_velocities = source_velocities
         self.cuts = cuts
         self.output = output
@@ -154,7 +174,7 @@ class Analyzer(QWidget):
         self.infoSet = set()
         self.infoSet_2 = list()
         self.changeParms = False
-        self.calibType = calibType
+        self.calibType = calib_type
         self.line = line
         self.x_bad_points_left = []
         self.x_bad_points_right = []
@@ -183,7 +203,7 @@ class Analyzer(QWidget):
             sys.exit(1)
 
         else:
-            if int(getArgs("filter")) > 0:
+            if int(get_args("filter")) > 0:
                 x_bad_point = []
                 y_bad_point_left = []
                 y_bad_point_right = []
@@ -192,8 +212,8 @@ class Analyzer(QWidget):
                 ydata_left = data[:, [1]].tolist()
                 ydata_right = data[:, [2]].tolist()
 
-                for x in range(int(getArgs("filter"))):
-                    outliers_mask = is_outlier(data, float(getArgs("threshold")))
+                for x in range(int(get_args("filter"))):
+                    outliers_mask = is_outlier(data, float(get_args("threshold")))
                     bad_point_index = indexies(outliers_mask, False)
 
                     if x == 0:
@@ -207,8 +227,10 @@ class Analyzer(QWidget):
                     df_y_left = pd.DataFrame(data=ydata_left)
                     df_y_right = pd.DataFrame(data=ydata_right)
 
-                    mean_y_left = np.nan_to_num(df_y_left.rolling(window=int(getConfigs("parameters", "badPointRange")), center=True).mean())
-                    mean_y_right = np.nan_to_num(df_y_right.rolling(window=int(getConfigs("parameters", "badPointRange")), center=True).mean())
+                    mean_y_left = np.nan_to_num(df_y_left.rolling(window=int(
+                        get_configs("parameters", "badPointRange")), center=True).mean())
+                    mean_y_right = np.nan_to_num(df_y_right.rolling(window=int(
+                        get_configs("parameters", "badPointRange")), center=True).mean())
 
                     for badPoint in bad_point_index:
                         if mean_y_left[badPoint] != 0:
@@ -225,7 +247,7 @@ class Analyzer(QWidget):
                     data[:, [1]] = ydata_left
                     data[:, [2]] = ydata_right
 
-                    if x == int(getArgs("filter")) - 1:
+                    if x == int(get_args("filter")) - 1:
                         pool = Pool(processes=4)
                         xdata = np.array(xdata, dtype="float")
                         x_bad_point = np.array(x_bad_point, dtype="float")
@@ -233,12 +255,15 @@ class Analyzer(QWidget):
                         ydata_left = np.array(ydata_left, dtype="float")
                         ydata_right = np.array(ydata_right, dtype="float")
 
-                        async_result1 = pool.apply_async(replaceBadPoints, (xdata, ydata_left, x_bad_point, y_bad_point_left, data))
-                        async_result2 = pool.apply_async(replaceBadPoints, (xdata, ydata_right,x_bad_point, y_bad_point_right, data))
+                        async_result1 = pool.\
+                            apply_async(replaceBadPoints,
+                                        (xdata, ydata_left, x_bad_point, y_bad_point_left, data))
+                        async_result2 = pool.\
+                            apply_async(replaceBadPoints,
+                                        (xdata, ydata_right, x_bad_point, y_bad_point_right, data))
 
                         x_bad_point, y_bad_point_left = async_result1.get()
                         x_bad_point, y_bad_point_right = async_result2.get()
-
 
                 self.xdata = xdata
                 self.y_u1 = ydata_left
@@ -306,30 +331,32 @@ class Analyzer(QWidget):
         self.grid.addWidget(self.plotSmoothDataButton, 5, 4)
 
         self.plot_1 = Plot()
-        self.plot_1.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u1 Polarization", (1, 0),"linear")
+        self.plot_1.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
+                              'Flux density (Jy)', "u1 Polarization", (1, 0), "linear")
         self.plot_1.plot(self.xarray, self.y1array, 'ko', label='Data Points', markersize=1)
 
         self.plot_2 = Plot()
-        self.plot_2.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "u9 Polarization", (1, 1), "linear")
+        self.plot_2.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
+                              'Flux density (Jy)', "u9 Polarization", (1, 1), "linear")
         self.plot_2.plot(self.xarray, self.y2array, 'ko', label='Data Points', markersize=1)
 
         self.grid.addWidget(self.plot_1, 0, 0)
         self.grid.addWidget(self.plot_2, 0, 1)
 
-        infoPanelLabelsText = ["Polynomial order"]
-        infoPanelEntryText = [{"defaultValue": str(self.polynomialOrder), "addEntry": True}]
+        info_panel_labels_text = ["Polynomial order"]
+        info_panel_entry_text = [{"defaultValue": str(self.polynomialOrder), "addEntry": True}]
 
-        for i in range(0, len(infoPanelLabelsText)):
+        for i in range(0, len(info_panel_labels_text)):
 
-            self.infoLabel = QLabel(infoPanelLabelsText[i])
-            self.grid.addWidget(self.infoLabel, i + 3, 3)
-            self.infoSet.add(self.infoLabel)
+            self.info_label = QLabel(info_panel_labels_text[i])
+            self.grid.addWidget(self.info_label, i + 3, 3)
+            self.infoSet.add(self.info_label)
 
-            if infoPanelEntryText[i]["addEntry"]:
-                self.infoInputField = QLineEdit()
-                self.infoInputField.setText(str(infoPanelEntryText[i]["defaultValue"]))
-                self.grid.addWidget(self.infoInputField, i + 3, 4)
-                self.infoSet_2.append(self.infoInputField)
+            if info_panel_entry_text[i]["addEntry"]:
+                self.info_input_field = QLineEdit()
+                self.info_input_field.setText(str(info_panel_entry_text[i]["defaultValue"]))
+                self.grid.addWidget(self.info_input_field, i + 3, 4)
+                self.infoSet_2.append(self.info_input_field)
 
         self.a = ((np.abs(self.xarray - float(self.cuts[0][0]))).argmin())
         self.b = ((np.abs(self.xarray - float(self.cuts[-1][1]))).argmin())
@@ -397,20 +424,28 @@ class Analyzer(QWidget):
         QMessageBox.information(self, "Info", "Data was changed")
 
     def change_M(self, value):
-        self.plot_1.plot(self.xarray[int(self.previousM)], self.y1array[int(self.previousM)], 'ko', markersize=1)
-        self.plot_2.plot(self.xarray[int(self.previousM)], self.y2array[int(self.previousM)], 'ko', markersize=1)
+        self.plot_1.plot(self.xarray[int(self.previousM)],
+                         self.y1array[int(self.previousM)], 'ko', markersize=1)
+        self.plot_2.plot(self.xarray[int(self.previousM)],
+                         self.y2array[int(self.previousM)], 'ko', markersize=1)
 
-        self.plot_1.annotation(self.xarray[int(self.previousM)], self.y1array[int(self.previousM)], " ")
-        self.plot_2.annotation(self.xarray[int(self.previousM)], self.y2array[int(self.previousM)], " ")
+        self.plot_1.annotation(self.xarray[int(self.previousM)],
+                               self.y1array[int(self.previousM)], " ")
+        self.plot_2.annotation(self.xarray[int(self.previousM)],
+                               self.y2array[int(self.previousM)], " ")
 
         self.plot_1.remannotation()
         self.plot_2.remannotation()
 
-        self.plot_1.annotation(self.xarray[int(value)], self.y1array[int(value)], "M")
-        self.plot_2.annotation(self.xarray[int(value)], self.y2array[int(value)], "M")
+        self.plot_1.annotation(self.xarray[int(value)],
+                               self.y1array[int(value)], "M")
+        self.plot_2.annotation(self.xarray[int(value)],
+                               self.y2array[int(value)], "M")
 
-        self.plot_1.plot(self.xarray[int(value)], self.y1array[int(value)], 'ro', markersize=1)
-        self.plot_2.plot(self.xarray[int(value)], self.y2array[int(value)], 'ro', markersize=1)
+        self.plot_1.plot(self.xarray[int(value)],
+                         self.y1array[int(value)], 'ro', markersize=1)
+        self.plot_2.plot(self.xarray[int(value)],
+                         self.y2array[int(value)], 'ro', markersize=1)
 
         self.plot_1.canvasShow()
         self.plot_2.canvasShow()
@@ -418,20 +453,28 @@ class Analyzer(QWidget):
         self.previousM = value
 
     def change_N(self, value):
-        self.plot_1.plot(self.xarray[int(self.previousN - 1)], self.y1array[int(self.previousN - 1)], 'ko', markersize=1)
-        self.plot_2.plot(self.xarray[int(self.previousN - 1)], self.y2array[int(self.previousN - 1)], 'ko', markersize=1)
+        self.plot_1.plot(self.xarray[int(self.previousN - 1)],
+                         self.y1array[int(self.previousN - 1)], 'ko', markersize=1)
+        self.plot_2.plot(self.xarray[int(self.previousN - 1)],
+                         self.y2array[int(self.previousN - 1)], 'ko', markersize=1)
 
-        self.plot_1.annotation(self.xarray[int(self.previousN - 1)], self.y1array[int(self.previousN - 1)], " ")
-        self.plot_2.annotation(self.xarray[int(self.previousN - 1)], self.y2array[int(self.previousN - 1)], " ")
+        self.plot_1.annotation(self.xarray[int(self.previousN - 1)],
+                               self.y1array[int(self.previousN - 1)], " ")
+        self.plot_2.annotation(self.xarray[int(self.previousN - 1)],
+                               self.y2array[int(self.previousN - 1)], " ")
 
         self.plot_1.remannotation()
         self.plot_2.remannotation()
 
-        self.plot_1.annotation(self.xarray[int(value - 1)], self.y1array[int(value - 1)], "N")
-        self.plot_2.annotation(self.xarray[int(value - 1)], self.y2array[int(value - 1)], "N")
+        self.plot_1.annotation(self.xarray[int(value - 1)],
+                               self.y1array[int(value - 1)], "N")
+        self.plot_2.annotation(self.xarray[int(value - 1)],
+                               self.y2array[int(value - 1)], "N")
 
-        self.plot_1.plot(self.xarray[int(value - 1)], self.y1array[int(value - 1)], 'ro', markersize=1)
-        self.plot_2.plot(self.xarray[int(value - 1)], self.y2array[int(value - 1)], 'ro', markersize=1)
+        self.plot_1.plot(self.xarray[int(value - 1)],
+                         self.y1array[int(value - 1)], 'ro', markersize=1)
+        self.plot_2.plot(self.xarray[int(value - 1)],
+                         self.y2array[int(value - 1)], 'ro', markersize=1)
 
         self.plot_1.canvasShow()
         self.previousN = value
@@ -457,7 +500,6 @@ class Analyzer(QWidget):
                     self.y1array[index] = p(self.xdata[index])
                     event.canvas.draw()
                     event.canvas.flush_events()
-
 
     def _on_right_click(self, event):
         if event.mouseevent.button == 1:
@@ -904,259 +946,6 @@ class Analyzer(QWidget):
         self.close()
         del self
 
-'''
-class NoGUI(object):
-    __slots__ = ('datafile', 'cuts', 'output', 'resultFilePath', 'source_velocities', 'index_range_for_local_maxima',
-                 'polynomialOrder', 'source', 'time', 'date', 'location',
-                 'iteration_number', 'resultFilePath', 'expername', 'data', 'specie', 'dataPoints', 'dataPoints',
-                 'xdata', 'y_u1', 'y_u9', 'xarray', 'y1array', 'y2array', 'polyx',
-                 'polyu1', 'polyu9', 'p_u1', 'p_u9', 'localMax_Array_u1', 'localMax_Array_u9', 'z1_NotSmoohtData',
-                 'z2_NotSmoohtData', 'avg_y_NotSmoohtData', 'z1_SmoohtData', 'z2_SmoohtData', 'avg_y_SmoohtData',
-                 'calibType')
-
-    def __init__(self, datafile, cuts, output, resultFilePath, source_velocities, index_range_for_local_maxima,
-                 calibType):
-        self.datafile = datafile
-        self.cuts = cuts
-        self.polynomialOrder = 3
-        self.output = output
-        self.source = datafile.split("/")[-1].split(".")[0].split("_")[0]
-        self.time = datafile.split("/")[-1].split(".")[0].split("_")[-3]
-        self.date = "_".join(
-            [datafile.split("/")[-1].split(".")[0].split("_")[1], datafile.split("/")[-1].split(".")[0].split("_")[2],
-             datafile.split("/")[-1].split(".")[0].split("_")[3]])
-        self.location = datafile.split("/")[-1].split(".")[0].split("_")[-2]
-        self.iteration_number = datafile.split("/")[-1].split(".")[0].split("_")[-1]
-        self.resultFilePath = resultFilePath
-        self.expername = datafile.split("/")[-1].split(".")[0]
-        self.source_velocities = source_velocities
-        self.index_range_for_local_maxima = index_range_for_local_maxima
-        self.calibType = calibType
-
-    def createData(self):
-        try:
-            result = pickle.load(open(self.datafile, "rb"))
-            self.data = result.getMatrix()
-            self.specie = result.getSpecie()
-
-        except IOError as e:
-            print("IO Error", e)
-            sys.exit(1)
-
-        except TypeError as e:
-            print("TypeError", e)
-            sys.exit(1)
-
-        except AttributeError as e:
-            print("AttributeError", e)
-            sys.exit(1)
-
-        except:
-            print("Unexpected error:", sys.exc_info()[0])
-            sys.exit(1)
-        else:
-            self.dataPoints = self.data.shape[0]
-
-            self.xdata = self.data[:, [0]]
-            self.y_u1 = self.data[:, [1]]
-            self.y_u9 = self.data[:, [2]]
-
-            # Making sure that data is numpy array
-            self.xarray = np.zeros(self.dataPoints)
-            self.y1array = np.zeros(self.dataPoints)
-            self.y2array = np.zeros(self.dataPoints)
-
-            for i in range(0, self.dataPoints):
-                self.xarray[i] = self.xdata[i]
-                self.y1array[i] = self.y_u1[i]
-                self.y2array[i] = self.y_u9[i]
-
-            self.xarray = np.flip(self.xarray, 0)
-            self.y1array = np.flip(self.y1array, 0)
-            self.y2array = np.flip(self.y2array, 0)
-
-    def createPolynomial(self):
-        cutsIndex = list()
-        cutsIndex.append(0)
-
-        for cut in self.cuts:
-            cutsIndex.append((np.abs(self.xarray - float(cut[0]))).argmin())
-            cutsIndex.append((np.abs(self.xarray - float(cut[1]))).argmin())
-
-        cutsIndex.append(self.dataPoints)
-
-        polyArray_x = list()
-        polyArray_u1 = list()
-        polyArray_u9 = list()
-
-        i = 0
-        j = 1
-
-        while i != len(cutsIndex):
-            polyArray_x.append(self.xarray[cutsIndex[i]: cutsIndex[j]])
-            polyArray_u1.append(self.y1array[cutsIndex[i]: cutsIndex[j]])
-            polyArray_u9.append(self.y2array[cutsIndex[i]: cutsIndex[j]])
-            i = i + 2
-            j = j + 2
-
-        poly_x = list()
-        poly_u1 = list()
-        poly_u9 = list()
-
-        for p in polyArray_x:
-            for p1 in p:
-                poly_x.append(p1)
-
-        for p in polyArray_u1:
-            for p1 in p:
-                poly_u1.append(p1)
-
-        for p in polyArray_u9:
-            for p1 in p:
-                poly_u9.append(p1)
-
-        self.polyx = np.array(poly_x)
-        self.polyu1 = np.array(poly_u1)
-        self.polyu9 = np.array(poly_u9)
-
-        z_u1 = np.polyfit(self.polyx, self.polyu1, self.polynomialOrder)
-        self.p_u1 = np.poly1d(z_u1)
-
-        z_u9 = np.polyfit(self.polyx, self.polyu9, self.polynomialOrder)
-        self.p_u9 = np.poly1d(z_u9)
-
-    def writeResult(self):
-        self.localMax_Array_u1 = self.y1array - self.p_u1(self.xarray)
-        self.localMax_Array_u9 = self.y2array - self.p_u9(self.xarray)
-        self.z1_NotSmoohtData = self.localMax_Array_u1
-        self.z2_NotSmoohtData = self.localMax_Array_u9
-        self.avg_y_NotSmoohtData = (self.z1_NotSmoohtData + self.z2_NotSmoohtData) / 2
-
-        g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
-        g2 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
-        self.z1_SmoohtData = convolve(self.localMax_Array_u1, g1, boundary='extend')
-        self.z2_SmoohtData = convolve(self.localMax_Array_u9, g2, boundary='extend')
-        self.avg_y_SmoohtData = (self.z1_SmoohtData + self.z2_SmoohtData) / 2
-
-        args = parseArguments()
-        totalResults = [self.xarray, self.z1_SmoohtData, self.z2_SmoohtData, self.avg_y_SmoohtData]
-        output_file_name = self.output + self.source + "/" + str(
-            args.__dict__["line"]) + "/" + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(
-            " ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
-        output_file_name = output_file_name.replace(" ", "")
-        if not os.path.exists(self.output + self.source + "/" + str(args.__dict__["line"])):
-            os.makedirs(self.output + self.source + "/" + str(args.__dict__["line"]))
-
-        np.savetxt(output_file_name, np.transpose(totalResults))
-
-        totalResults = [self.xarray, self.z1_NotSmoohtData, self.z2_NotSmoohtData, self.avg_y_NotSmoohtData]
-        output_file_name = self.output + "/NotSmooht/" + self.source + "/" + str(
-            args.__dict__["line"]) + "/" + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(
-            " ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
-        output_file_name = output_file_name.replace(" ", "")
-        if not os.path.exists(self.output + "/NotSmooht/" + self.source + "/" + str(args.__dict__["line"])):
-            os.makedirs(self.output + "/NotSmooht/" + self.source + "/" + str(args.__dict__["line"]))
-
-        np.savetxt(output_file_name, np.transpose(totalResults))
-
-        resultFileName = self.source + "_" + self.line + ".json"
-        self.resultFilePath + resultFileName
-        if os.path.isfile(self.resultFilePath + resultFileName):
-            pass
-        else:
-            os.system("touch " + self.resultFilePath + resultFileName)
-
-            resultFile = open(self.resultFilePath + resultFileName, "w")
-            resultFile.write("{ \n" + "\n}")
-            resultFile.close()
-
-        with open(self.resultFilePath + resultFileName) as result_data:
-            print(self.resultFilePath + resultFileName)
-            result = json.load(result_data)
-
-        if self.expername not in result:
-            result[self.expername] = dict()
-
-        indexies_for_source_velocities = [0] * len(self.source_velocities)
-
-        for index in range(0, len(self.source_velocities)):
-            indexies_for_source_velocities[index] = (
-                np.abs(self.xarray - float(self.source_velocities[index]))).argmin()
-
-        max_amplitude_list_u1 = list()
-        max_amplitude_list_u9 = list()
-        max_amplitude_list_uavg = list()
-        for index in indexies_for_source_velocities:
-            max_amplitude_list_tmp_u1 = list()
-            max_amplitude_list_tmp_u9 = list()
-            max_amplitude_list_tmp_uavg = list()
-            for i in range(index - self.index_range_for_local_maxima, index + self.index_range_for_local_maxima):
-                max_amplitude_list_tmp_u1.append(self.z1_SmoohtData[i])
-                max_amplitude_list_tmp_u9.append(self.z2_SmoohtData[i])
-                max_amplitude_list_tmp_uavg.append(self.avg_y_SmoohtData[i])
-
-            max_amplitude_list_u1.append(max_amplitude_list_tmp_u1)
-            max_amplitude_list_u9.append(max_amplitude_list_tmp_u9)
-            max_amplitude_list_uavg.append(max_amplitude_list_tmp_uavg)
-
-        max_apmlitudes_u1 = [np.max(value) for value in max_amplitude_list_u1]
-        max_apmlitudes_u9 = [np.max(value) for value in max_amplitude_list_u9]
-        max_apmlitudes_uavg = [np.max(value) for value in max_amplitude_list_uavg]
-
-        for max in range(0, len(max_apmlitudes_u1)):
-            max_apmlitudes_u1[max] = [self.source_velocities[max], max_apmlitudes_u1[max]]
-            max_apmlitudes_u9[max] = [self.source_velocities[max], max_apmlitudes_u9[max]]
-            max_apmlitudes_uavg[max] = [self.source_velocities[max], max_apmlitudes_uavg[max]]
-
-        time = self.time + "_" + self.date.replace(" ", "_")
-
-        try:
-            time2 = datetime.strptime(time, "%H:%M:%S_%d_%b_%Y").isoformat()
-            t = Time(time2, format='isot')
-            MJD = t.mjd
-            result[self.expername]["modifiedJulianDays"] = MJD
-        except ValueError as e:
-            print("Cannot crate modified Julian Days", e)
-        except:
-            print("Unexpected error:", sys.exc_info()[0])
-
-        result[self.expername]["qwerty"] = "qwerty"
-        print("After flag")
-        result[self.expername]["location"] = self.location
-        result[self.expername]["Date"] = self.date
-        result[self.expername]["Iteration_number"] = int(self.iteration_number)
-        result[self.expername]["time"] = self.time
-        result[self.expername]["specie"] = self.specie
-
-        result[self.expername]["polarizationU1"] = max_apmlitudes_u1
-        result[self.expername]["polarizationU9"] = max_apmlitudes_u9
-        result[self.expername]["polarizationAVG"] = max_apmlitudes_uavg
-        result[self.expername]["flag"] = False
-        if self.calibType == "SDR":
-            result[self.expername]["type"] = "SDR"
-        else:
-            result[self.expername]["type"] = "DBBC"
-
-        gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines, gaussianaAmplitudes, gaussianaMean, gaussianaSTD = computeGauss(
-            self.xarray, self.avg_y_NotSmoohtData)
-
-        print(gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines, gaussianaAmplitudes, gaussianaMean,
-              gaussianaSTD)
-
-        result[self.expername]["areas"] = gaussianAreas
-        result[self.expername]["gauss_amp"] = gaussianaAmplitudes
-        result[self.expername]["gauss_mean"] = gaussianaMean
-        result[self.expername]["gauss_STD"] = gaussianaSTD
-
-        resultFile = open(self.resultFilePath + resultFileName, "w")
-        resultFile.write(json.dumps(result, indent=2))
-        resultFile.close()
-
-    def run(self):
-        self.createData()
-        self.createPolynomial()
-        self.writeResult()
-'''
 
 class Main(object):
     __slots__ = ('datafile', 'dataFilesPath', 'resultFilePath', 'output', 'cuts', 'source_velocities', 'index_range_for_local_maxima', 'noGUI', 'skipsmooth', 'calibType', 'line')
@@ -1186,16 +975,11 @@ class Main(object):
         self.calibType = str(args.__dict__["calibType"])
 
     def execute(self):
-        if self.noGUI:
-            NoGUI(self.dataFilesPath + "/" + self.calibType + "/" + self.line + "/" + self.datafile, self.cuts, self.output, self.resultFilePath, self.source_velocities, self.index_range_for_local_maxima, self.calibType, self.line).run()
-        else:
-            qApp = QApplication(sys.argv)
-            aw = Analyzer(self.dataFilesPath + "/" + self.calibType + "/" + self.line + "/" + self.datafile, self.resultFilePath, self.source_velocities, self.cuts, self.output, self.index_range_for_local_maxima, self.skipsmooth, self.calibType, self.line)
-            aw.show()
-            aw.showMaximized()
-            sys.exit(qApp.exec_())
-        sys.exit(0)
-
+        qApp = QApplication(sys.argv)
+        aw = Analyzer(self.dataFilesPath + "/" + self.calibType + "/" + self.line + "/" + self.datafile, self.resultFilePath, self.source_velocities, self.cuts, self.output, self.index_range_for_local_maxima, self.skipsmooth, self.calibType, self.line)
+        aw.show()
+        aw.showMaximized()
+        sys.exit(qApp.exec_())
 
 def main():
     Main().execute()
