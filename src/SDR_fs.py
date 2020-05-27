@@ -465,7 +465,9 @@ class Analyzer(QWidget):
         self.plot_tsys = Plot()
         self.plot_tsys.creatPlot(self.grid, 'Time', 'System temperature', "System temperature in time", (3, 0), "linear")
 
-        time = range(0, len(self.Tsys_r_left_list))
+        time = list(set([int(t.split("_")[-1].split(".")[0]
+                             [2:len(t.split("_")[-1].split(".")[0]) - 2])
+                         for t in self.data_files]))
         self.plot_tsys.plot(time, self.Tsys_r_left_list, '*b', label="Tsys_r_left")
         self.plot_tsys.plot(time, self.Tsys_r_right_list, '*r', label="Tsys_r_right")
         self.plot_tsys.plot(time, self.Tsys_s_left_list, '*g', label="Tsys_s_left")
@@ -530,6 +532,7 @@ class Analyzer(QWidget):
             self.plotPair(self.index)
 
     def skipAll(self):
+        self.index += 1
         while self.index < len(self.ScanPairs):
             pair = self.ScanPairs[self.index]
 
