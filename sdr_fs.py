@@ -147,23 +147,24 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
     s_i = int(l_spec / 2 - l_spec * avg_interval / 2)
     e_i = int(l_spec / 2 + l_spec * avg_interval / 2)
 
-    tsys_off_1_left = float(logs["header"]["Tcal"][0]) * (
-            (p_ref_on_left + p_ref_left) -
-            np.mean(p_ref_on_left[s_i:e_i] - p_ref_left[s_i:e_i])) \
-                      / (2 * np.mean(p_ref_on_left[s_i:e_i] - p_ref_left[s_i:e_i]))
-    tsys_off_2_left = float(logs["header"]["Tcal"][1]) * (
-            (p_sig_on_left + p_sig_left) -
-            np.mean(p_sig_on_left[s_i:e_i] - p_sig_left[s_i:e_i])) \
-                      / (2 * np.mean(p_sig_on_left[s_i:e_i] - p_sig_left[s_i:e_i]))
+    tsys_off_1_left = float(logs["header"]["Tcal"][0]) * ((p_ref_on_left + p_ref_left) -
+                                                          np.mean(p_ref_on_left[s_i:e_i] -
+                                                                  p_ref_left[s_i:e_i])) / \
+                      (2 * np.mean(p_ref_on_left[s_i:e_i] - p_ref_left[s_i:e_i]))
+    tsys_off_2_left = float(logs["header"]["Tcal"][1]) * ((p_sig_on_left + p_sig_left)
+                                                          - np.mean(p_sig_on_left[s_i:e_i]
+                                                                    - p_sig_left[s_i:e_i])) / \
+                      (2 * np.mean(p_sig_on_left[s_i:e_i] - p_sig_left[s_i:e_i]))
 
-    tsys_off_1_right = float(logs["header"]["Tcal"][0]) * (
-            (p_ref_on_right + p_ref_right) -
-            np.mean(p_ref_on_right[s_i:e_i] - p_ref_right[s_i:e_i])) \
-                       / (2 * np.mean(p_ref_on_right[s_i:e_i] - p_ref_right[s_i:e_i]))
-    tsys_off_2_right = float(logs["header"]["Tcal"][1]) * (
-            (p_sig_on_right + p_sig_right) -
-            np.mean(p_sig_on_right[s_i:e_i] - p_sig_right[s_i:e_i])) \
-                       / (2 * np.mean(p_sig_on_right[s_i:e_i] - p_sig_right[s_i:e_i]))
+    tsys_off_1_right = float(logs["header"]["Tcal"][0]) * ((p_ref_on_right + p_ref_right) -
+                                                           np.mean(p_ref_on_right[s_i:e_i]
+                                                                   - p_ref_right[s_i:e_i])) / \
+                       (2 * np.mean(p_ref_on_right[s_i:e_i] - p_ref_right[s_i:e_i]))
+
+    tsys_off_2_right = float(logs["header"]["Tcal"][1]) * ((p_sig_on_right + p_sig_right) -
+                                                           np.mean(p_sig_on_right[s_i:e_i]
+                                                                   - p_sig_right[s_i:e_i])) / \
+                       (2 * np.mean(p_sig_on_right[s_i:e_i] - p_sig_right[s_i:e_i]))
 
     ta_1_caloff_left = tsys_off_1_left * (p_sig_left - p_ref_left) / p_ref_left  # non-cal phase
     ta_1_caloff_right = tsys_off_1_right * \
@@ -356,6 +357,7 @@ class Analyzer(QWidget):
 
         :return: None
         """
+        self.index += 1
         while self.index < len(self.scan_pairs):
             pair = self.scan_pairs[self.index]
 
@@ -587,7 +589,9 @@ class Analyzer(QWidget):
         self.plot_tsys.creatPlot(self.grid, 'Time', 'System temperature',
                                  "System temperature in time", (3, 0), "linear")
 
-        time = range(0, len(self.tsys_r_left_list))
+        time = list(set([int(t.split("_")[-1].split(".")[0]
+                             [2:len(t.split("_")[-1].split(".")[0]) - 2])
+                         for t in self.data_files]))
         self.plot_tsys.plot(time, self.tsys_r_left_list, '*b', label="Tsys_r_left")
         self.plot_tsys.plot(time, self.tsys_r_right_list, '*r', label="Tsys_r_right")
         self.plot_tsys.plot(time, self.tsys_s_left_list, '*g', label="Tsys_s_left")
@@ -693,11 +697,10 @@ class Analyzer(QWidget):
         p_ref_on_left = np.fft.fftshift(p_ref_on_left)  # r1
         p_ref_on_right = np.fft.fftshift(p_ref_on_right)  # r1
 
-        sf_left, sf_right, frequency_a1, tsys_r_left, \
-         tsys_r_right, tsys_s_left, tsys_s_right = frequency_shifting(
-            p_sig_left, p_sig_right, p_ref_left, p_ref_right,
-            p_sig_on_left, p_sig_on_right, p_ref_on_left,
-            p_ref_on_right, frequency_a, self.logs, pair)
+        sf_left, sf_right, frequency_a1, tsys_r_left, tsys_r_right, tsys_s_left, tsys_s_right = \
+            frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left,
+                               p_sig_on_right, p_ref_on_left,
+                               p_ref_on_right, frequency_a, self.logs, pair)
 
         self.sf_left.append(sf_left)
         self.sf_right.append(sf_right)
