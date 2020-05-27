@@ -4,10 +4,34 @@
 
 ## Dependencies
 # Table of Contents
+* [Capabilities of MDPS](#capabilities-of-MDPS)
 * [Dependencies](#dependencies)
 * [Changelog](#changelog)
 * [Getting Help](#getting-help)
 * [Acknowledgements](#acknowledgements)
+
+## Capabilities of MDPS
+MDPS is maser data processing suite, with user friendly GUI. Currently it allows users to perform:
+
+- Process SDR output
+- Display monitoring  
+- Visualize data for publications and presentation 
+
+## Dependencies
+- python 3
+  - PyQt5 5.14.0 
+  - Astropy 4.0.1.
+  - coloredlogs 14.0
+  - Matplotlib 3.2.1 
+  - Numpy 1.18.2
+  - H5py 2.10.0 
+  - ExperimentsLogReader 2.2.2
+  - SciPy 1.4.1
+  - PeakUtils
+  - pandas 1.0.3 
+  - mplcursors 0.3
+  - jplephem 2.14
+  - configparser 5.0.0
 
 ## Changelog
 

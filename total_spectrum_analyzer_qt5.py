@@ -9,15 +9,15 @@ import sys
 import os
 import argparse
 import configparser
+import pickle
+from multiprocessing import Pool
+import json
+from datetime import datetime
 import numpy as np
 from astropy.convolution import Gaussian1DKernel, convolve
 from astropy.time import Time
-from datetime import datetime
 import peakutils
 import pandas as pd
-import json
-import pickle
-from multiprocessing import Pool
 from PyQt5.QtWidgets import QWidget, QGridLayout, QApplication, QPushButton, \
     QMessageBox, QLabel, QLineEdit, QSlider, QDesktopWidget, QLCDNumber
 from PyQt5 import QtCore
@@ -27,7 +27,7 @@ from PyQt5.QtGui import QColor
 
 from utils.ploting_qt5 import Plot
 from utils.help import indexies
-from velocityDensity import computeGauss2
+from utils.help import compute_gauss
 from parsers.configparser_ import ConfigParser
 
 
@@ -485,7 +485,7 @@ class Analyzer(QWidget):
             pointx, pointy = line.get_data()
             ind = event.ind
 
-            if (pointx[ind].size > 1):
+            if pointx[ind].size > 1:
                 print("Too many points selected")
             else:
                 y_list = self.y1array.tolist()
@@ -507,7 +507,7 @@ class Analyzer(QWidget):
             pointx, pointy = line.get_data()
             ind = event.ind
 
-            if (pointx[ind].size > 1):
+            if pointx[ind].size > 1:
                 print("Too many points selected")
             else:
                 y_list = self.y2array.tolist()
@@ -518,7 +518,8 @@ class Analyzer(QWidget):
                     p = np.poly1d(pf)
                     self.y_bad_point_right.append(self.y2array[index])
                     self.x_bad_points_right.append(self.xdata[index])
-                    self.badplot_2_right[0].set_data(self.x_bad_points_right, self.y_bad_point_right)
+                    self.badplot_2_right[0].\
+                        set_data(self.x_bad_points_right, self.y_bad_point_right)
                     self.y2array[index] = p(self.xdata[index])
                     event.canvas.draw()
                     event.canvas.flush_events()
@@ -612,16 +613,24 @@ class Analyzer(QWidget):
 
         # u1 plot
         self.plot_10 = Plot()
-        self.plot_10.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Left Polarization", (1, 0), "linear")
-        self.plot_10.plot(self.xarray, self.y1array, 'ko', label='Data Points a', markersize=4, picker=5)
+        self.plot_10.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', ''
+                                                                      'Flux density (Jy)',
+                               "Left Polarization", (1, 0), "linear")
+        self.plot_10.plot(self.xarray, self.y1array, 'ko',
+                          label='Data Points a', markersize=4, picker=5)
 
         # u9 plot
         self.plot_11 = Plot()
-        self.plot_11.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Right Polarization", (1, 1), "linear")
-        self.plot_11.plot(self.xarray, self.y2array, 'ko', label='Data Points', markersize=4, picker=5)
+        self.plot_11.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', ''
+                                                                      'Flux density (Jy)',
+                               "Right Polarization", (1, 1), "linear")
+        self.plot_11.plot(self.xarray, self.y2array, 'ko',
+                          label='Data Points', markersize=4, picker=5)
 
-        self.badplot_1_left = self.plot_10.plot(self.x_bad_points_left, self.y_bad_point_left, 'rx', markersize=10)
-        self.badplot_2_right = self.plot_11.plot(self.x_bad_points_right, self.y_bad_point_right, 'rx', markersize=10)
+        self.badplot_1_left = self.plot_10.plot(self.x_bad_points_left,
+                                                self.y_bad_point_left, 'rx', markersize=10)
+        self.badplot_2_right = self.plot_11.plot(self.x_bad_points_right,
+                                                 self.y_bad_point_right, 'rx', markersize=10)
 
         self.plot_10.fig.canvas.mpl_connect('pick_event', self._on_left_click)
         self.plot_11.fig.canvas.mpl_connect('pick_event', self._on_right_click)
@@ -708,19 +717,23 @@ class Analyzer(QWidget):
 
         # u1 plot
         self.plot_5 = Plot()
-        self.plot_5.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Left Polarization", (1, 0),
+        self.plot_5.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
+                              'Flux density (Jy)', "Left Polarization", (1, 0),
                               "linear")
-        self.plot_5.plot(self.polyx, self.polyu1, 'ko', label='Data Points', markersize=1)
-        # self.plot_5.plot(self.xarray[self.m:self.n], self.ceb_1(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
-        self.plot_5.plot(self.xarray, self.p_u1(self.xarray), 'b', label='Numpy polyfit', markersize=1)
+        self.plot_5.plot(self.polyx, self.polyu1, 'ko',
+                         label='Data Points', markersize=1)
+        self.plot_5.plot(self.xarray, self.p_u1(self.xarray),
+                         'b', label='Numpy polyfit', markersize=1)
 
         # u9 plot
         self.plot_6 = Plot()
-        self.plot_6.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Right Polarization", (1, 1),
+        self.plot_6.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
+                              'Flux density (Jy)', "Right Polarization", (1, 1),
                               "linear")
-        self.plot_6.plot(self.polyx, self.polyu9, 'ko', label='Data Points', markersize=1)
-        # self.plot_6.plot(self.xarray[self.m:self.n], self.ceb_2(self.xarray[self.m:self.n]), 'r', label='Chebyshev polynomial', markersize=1)
-        self.plot_6.plot(self.xarray, self.p_u9(self.xarray), 'b', label='Numpy polyfit', markersize=1)
+        self.plot_6.plot(self.polyx, self.polyu9,
+                         'ko', label='Data Points', markersize=1)
+        self.plot_6.plot(self.xarray, self.p_u9(self.xarray),
+                         'b', label='Numpy polyfit', markersize=1)
 
         self.grid.addWidget(self.plot_5, 0, 0)
         self.grid.addWidget(self.plot_6, 0, 1)
@@ -797,23 +810,35 @@ class Analyzer(QWidget):
 
         # u1
         self.plot_7 = Plot()
-        self.plot_7.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Left Polarization", (1, 0), "linear")
-        self.plot_7.plot(self.xarray, self.z1, 'b', label='Signal - polynomial', markersize=1)
-        self.plot_7.plot(self.xarray[indexes_for_ceb], self.z1[indexes_for_ceb], 'dr', label="Local Maximums for signal", markersize=2)
+        self.plot_7.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
+                              'Flux density (Jy)', "Left Polarization", (1, 0), "linear")
+        self.plot_7.plot(self.xarray, self.z1,
+                         'b', label='Signal - polynomial', markersize=1)
+        self.plot_7.plot(self.xarray[indexes_for_ceb],
+                         self.z1[indexes_for_ceb],
+                         'dr', label="Local Maximums for signal", markersize=2)
         self.plot_7.annotations(self.xarray[indexes_for_ceb], self.z1[indexes_for_ceb])
 
         # u9
         self.plot_8 = Plot()
-        self.plot_8.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Right Polarization", (1, 1), "linear")
-        self.plot_8.plot(self.xarray, self.z2, 'b', label='Signal - polynomial', markersize=1)
-        self.plot_8.plot(self.xarray[indexes_for_ceb2], self.z2[indexes_for_ceb2], 'dr', label="Local Maximums for signal", markersize=2)
+        self.plot_8.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
+                              'Flux density (Jy)', "Right Polarization", (1, 1), "linear")
+        self.plot_8.plot(self.xarray, self.z2,
+                         'b', label='Signal - polynomial', markersize=1)
+        self.plot_8.plot(self.xarray[indexes_for_ceb2],
+                         self.z2[indexes_for_ceb2],
+                         'dr', label="Local Maximums for signal", markersize=2)
         self.plot_8.annotations(self.xarray[indexes_for_ceb2], self.z2[indexes_for_ceb2])
 
         # uAVG
         self.plot_9 = Plot()
-        self.plot_9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', 'Flux density (Jy)', "Average Polarization", (1, 2), "linear")
-        self.plot_9.plot(self.xarray, self.avg_y, 'b', label='Signal - polynomial', markersize=1)
-        self.plot_9.plot(self.xarray[indexes_for_avg], self.avg_y[indexes_for_avg], 'dr', label="Local Maximums for signal", markersize=2)
+        self.plot_9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
+                              'Flux density (Jy)', "Average Polarization", (1, 2), "linear")
+        self.plot_9.plot(self.xarray, self.avg_y,
+                         'b', label='Signal - polynomial', markersize=1)
+        self.plot_9.plot(self.xarray[indexes_for_avg],
+                         self.avg_y[indexes_for_avg],
+                         'dr', label="Local Maximums for signal", markersize=2)
         self.plot_9.annotations(self.xarray[indexes_for_avg], self.avg_y[indexes_for_avg])
 
         self.grid.addWidget(self.plot_7, 0, 0)
@@ -858,7 +883,8 @@ class Analyzer(QWidget):
             max_amplitude_list_tmp_u1 = list()
             max_amplitude_list_tmp_u9 = list()
             max_amplitude_list_tmp_uavg = list()
-            for i in range(index - self.index_range_for_local_maxima, index + self.index_range_for_local_maxima):
+            for i in range(index - self.index_range_for_local_maxima,
+                           index + self.index_range_for_local_maxima):
                 max_amplitude_list_tmp_u1.append(self.z1[i])
                 max_amplitude_list_tmp_u9.append(self.z2[i])
                 max_amplitude_list_tmp_uavg.append(self.avg_y[i])
@@ -904,34 +930,47 @@ class Analyzer(QWidget):
         else:
             result[self.expername]["type"] = "DBBC"
 
-        gauss_lines = getConfigs("gauss_lines", self.source + "_" + getArgs("line")).replace(" ", "").split(",")
-        gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines, gaussianaAmplitudes, gaussianaMean, gaussianaSTD = computeGauss2(self.xarray, self.avg_y_NotSmoohtData, gauss_lines)
+        gauss_lines = get_configs("gauss_lines",
+                                 self.source + "_" + getArgs("line")).replace(" ", "").split(",")
+        gaussianAreas, sts, gg_fit, velocity, ampvid, gaussLines, \
+        gaussianaAmplitudes, gaussianaMean, gaussianaSTD = \
+            compute_gauss(self.xarray, self.avg_y_NotSmoohtData, gauss_lines)
 
         result[self.expername]["areas"] = gaussianAreas
         result[self.expername]["gauss_amp"] = gaussianaAmplitudes
         result[self.expername]["gauss_mean"] = gaussianaMean
         result[self.expername]["gauss_STD"] = gaussianaSTD
 
-        cuts = getConfigs('cuts', self.source + "_" + getArgs("line")).split(";")
+        cuts = get_configs('cuts', self.source + "_" + get_args("line")).split(";")
         cuts = [c.split(",") for c in cuts]
 
-        result[self.expername]["AVG_STON_LEFT"] = STON(self.xarray, self.z1_SmoohtData, cuts)
-        result[self.expername]["AVG_STON_RIGHT"] = STON(self.xarray, self.z2_SmoohtData, cuts)
-        result[self.expername]["AVG_STON_AVG"] = STON(self.xarray, self.avg_y_SmoohtData, cuts)
+        result[self.expername]["AVG_STON_LEFT"] = \
+            STON(self.xarray, self.z1_SmoohtData, cuts)
+        result[self.expername]["AVG_STON_RIGHT"] = \
+            STON(self.xarray, self.z2_SmoohtData, cuts)
+        result[self.expername]["AVG_STON_AVG"] = \
+            STON(self.xarray, self.avg_y_SmoohtData, cuts)
 
         resultFile = open(self.resultFilePath + resultFileName, "w")
         resultFile.write(json.dumps(result, indent=2))
         resultFile.close()
 
-        args = parseArguments()
         totalResults = [self.xarray, self.z1_SmoohtData, self.z2_SmoohtData, self.avg_y_SmoohtData]
-        output_file_name = self.output + self.source + "/"  + str(args.__dict__["line"]) + "/" + self.source + "_" + self.time.replace(":", "_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
+        output_file_name = self.output + self.source + "/" + get_args("line") + "/" + \
+                           self.source + "_" + self.time.replace(":", "_") + "_" + \
+                           self.date.replace(" ", "_") + "_" + \
+                           self.location + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
 
         np.savetxt(output_file_name, np.transpose(totalResults))
 
-        totalResults = [self.xarray, self.z1_NotSmoohtData, self.z2_NotSmoohtData, self.avg_y_NotSmoohtData]
-        output_file_name = self.output + "/NotSmooht/" +self.source + "/"  + str(args.__dict__["line"]) + "/" + self.source + "_" + self.time.replace(":","_") + "_" + self.date.replace(" ", "_") + "_" + self.location + "_" + str(self.iteration_number) + ".dat"
+        totalResults = [self.xarray, self.z1_NotSmoohtData,
+                        self.z2_NotSmoohtData, self.avg_y_NotSmoohtData]
+        output_file_name = self.output + "/NotSmooht/" + \
+                           self.source + "/" + get_args("line") + "/" + \
+                           self.source + "_" + self.time.replace(":", "_") + \
+                           "_" + self.date.replace(" ", "_") + "_" + \
+                           self.location + "_" + str(self.iteration_number) + ".dat"
         output_file_name = output_file_name.replace(" ", "")
         np.savetxt(output_file_name, np.transpose(totalResults))
 
@@ -947,9 +986,7 @@ class Analyzer(QWidget):
         del self
 
 
-class Main(object):
-    __slots__ = ('datafile', 'dataFilesPath', 'resultFilePath', 'output', 'cuts', 'source_velocities', 'index_range_for_local_maxima', 'noGUI', 'skipsmooth', 'calibType', 'line')
-
+class Main:
     def __init__(self):
         args = parseArguments()
         self.datafile = str(args.__dict__["datafile"])
@@ -969,17 +1006,23 @@ class Main(object):
         source = self.datafile.split("/")[-1].split(".")[0].split("_")[0]
         cuts = config.get('cuts', source + "_" + str(self.line)).split(";")
         self.cuts = [c.split(",") for c in cuts]
-        self.source_velocities = config.get('velocities', source + "_" + str(self.line)).replace(" ", "").split(",")
-        self.index_range_for_local_maxima = int(config.get('parameters', "index_range_for_local_maxima"))
-        self.noGUI = args.noGUI
+        self.source_velocities = config.get('velocities',
+                                            source + "_" +
+                                            str(self.line)).replace(" ", "").split(",")
+        self.index_range_for_local_maxima = int(config.get('parameters',
+                                                           "index_range_for_local_maxima"))
         self.calibType = str(args.__dict__["calibType"])
 
     def execute(self):
         qApp = QApplication(sys.argv)
-        aw = Analyzer(self.dataFilesPath + "/" + self.calibType + "/" + self.line + "/" + self.datafile, self.resultFilePath, self.source_velocities, self.cuts, self.output, self.index_range_for_local_maxima, self.skipsmooth, self.calibType, self.line)
+        aw = Analyzer(self.dataFilesPath + "/" +
+                      self.calibType + "/" + self.line + "/" + self.datafile,
+                      self.resultFilePath, self.source_velocities, self.cuts, self.output,
+                      self.index_range_for_local_maxima, self.skipsmooth, self.calibType, self.line)
         aw.show()
         aw.showMaximized()
         sys.exit(qApp.exec_())
+
 
 def main():
     Main().execute()
