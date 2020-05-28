@@ -650,7 +650,8 @@ class Analyzer(QWidget):
 
         result_file.create_dataset("amplitude", data=total_results)
         print("specie", specie)
-        result_file.create_dataset("specie", specie.encode('utf-8'), dtype=h5py.string_dtype())
+        specie = [specie.encode("ascii", "ignore")]
+        result_file.create_dataset("specie", (len(specie),1),'S10', specie)
         result_file.close()
 
     def get_data_file_for_scan(self, scan_name):

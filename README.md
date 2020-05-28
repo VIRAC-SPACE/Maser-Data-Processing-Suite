@@ -27,7 +27,7 @@ MDPS is maser data processing suite, with user friendly GUI. Currently it allows
   - H5py 2.10.0 
   - ExperimentsLogReader 2.2.2
   - SciPy 1.4.1
-  - PeakUtils
+  - PeakUtils 1.3.3
   - pandas 1.0.3 
   - mplcursors 0.3
   - jplephem 2.14
