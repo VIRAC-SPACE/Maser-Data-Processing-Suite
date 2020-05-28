@@ -835,9 +835,9 @@ class Analyzer(QWidget):
         index_range_for_local_maxima = int(get_configs('parameters',
                                                        "index_range_for_local_maxima"))
         date = "_".join([self.data_file.split("/")[-1].split(".")[0].split("_")[1],
-                         self.datafile.split("/")[-1].split(".")[0].split("_")[2],
-                         self.datafile.split("/")[-1].split(".")[0].split("_")[3]])
-        time = datafile.split("/")[-1].split(".")[0].split("_")[-3]
+                         self.data_file.split("/")[-1].split(".")[0].split("_")[2],
+                         self.data_file.split("/")[-1].split(".")[0].split("_")[3]])
+        time = self.data_file.split("/")[-1].split(".")[0].split("_")[-3]
 
         if os.path.isfile(result_file_path + result_file_name):
             pass
@@ -883,7 +883,7 @@ class Analyzer(QWidget):
             max_apmlitudes_u9[max] = [source_velocities[max], max_apmlitudes_u9[max]]
             max_apmlitudes_uavg[max] = [source_velocities[max], max_apmlitudes_uavg[max]]
 
-        time = self.time + "_" + self.date.replace(" ", "_")
+        time = time + "_" + date.replace(" ", "_")
 
     def center(self):
         """
