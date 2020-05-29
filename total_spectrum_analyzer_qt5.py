@@ -8,19 +8,22 @@ import sys
 import os
 import argparse
 import json
+from datetime import datetime
 from multiprocessing import Pool
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QGridLayout, \
     QPushButton, QLabel, QLineEdit, QSlider, QLCDNumber, QMessageBox
 from PyQt5.QtGui import QIcon
 from PyQt5.QtGui import QColor
 from PyQt5.QtCore import Qt
+from PyQt5 import QtCore
 import h5py
 import numpy as np
 import pandas as pd
 from astropy.convolution import Gaussian1DKernel, convolve
+from astropy.time import Time
 import peakutils
 from parsers.configparser_ import ConfigParser
-from utils.help import indexies
+from utils.help import indexies, compute_gauss
 from utils.ploting_qt5 import Plot
 
 
@@ -32,14 +35,17 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='''plotting tool. ''', epilog="""PRE PLOTTER.""")
     parser.add_argument("datafile", help="Experiment correlation file name", type=str)
     parser.add_argument("line", help="Experiment correlation file name", type=int)
+    parser.add_argument("-c", "--config", help="Configuration cfg file",
+                        type=str, default="config/config.cfg")
+    parser.add_argument("-r", "--rawdata", help="Use raw data, skip smoothing", action='store_true')
+    parser.add_argument("-t", "--calibType", help="Type of calibration", default="SDR")
+    parser.add_argument("-tr", "--threshold",
+                        help="Set threshold for outlier filter", type=float, default=1.0)
     parser.add_argument("-f", "--filter",
                         help="Set the amount of times to filter data to remove noise spikes, "
                              "higher than 5 makes little difference",
                         type=int, default=0, choices=range(0, 11), metavar="[0-10]")
-    parser.add_argument("-tr", "--threshold",
-                        help="Set threshold for outlier filter", type=float, default=1.0)
-    parser.add_argument("-c", "--config", help="Configuration cfg file",
-                        type=str, default="config/config.cfg")
+    parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 1.0')
     args = parser.parse_args()
     return args
 
@@ -122,6 +128,38 @@ def replace_bad_points(xdata, ydata, x_bad_point, y_bad_point, data):
         else:
             ydata[index] = data[index, 1]
     return tempx, tempy
+
+
+def signal_to_noise_ratio(frequency, amplitude, cuts):
+    """
+
+    :param frequency: frequency
+    :param amplitude: amplitude
+    :param cuts: signal region
+    :return: signal to noise ratio
+    """
+    cuts_index = list()
+    cuts_index.append(0)
+    for cut in cuts:
+        cuts_index.append((np.abs(frequency - float(cut[0]))).argmin())
+        cuts_index.append((np.abs(frequency - float(cut[1]))).argmin())
+    cuts_index.append(-1)
+    y_array = list()
+    i = 0
+    j = 1
+    while i != len(cuts_index):
+        y_array.append(amplitude[cuts_index[i]: cuts_index[j]])
+        i = i + 2
+        j = j + 2
+    non_signal_amplitude = list()
+    for point in y_array:
+        for point_one in point:
+            non_signal_amplitude.append(point_one)
+
+    non_signal_amplitude = np.array(non_signal_amplitude)
+    std = np.std(non_signal_amplitude)
+    ston = std * 3
+    return ston
 
 
 class Analyzer(QWidget):
@@ -827,7 +865,7 @@ class Analyzer(QWidget):
         :return: None
         """
         result_file_name = self.source + "_" + self.line + ".json"
-        result_file_path = get_configs("path", "resultFilePath")
+        result_file_path = get_configs("paths", "resultFilePath")
         expername = self.data_file.split("/")[-1].split(".")[0]
         source_velocities = get_configs('velocities',
                                         self.source + "_" +
@@ -837,7 +875,11 @@ class Analyzer(QWidget):
         date = "_".join([self.data_file.split("/")[-1].split(".")[0].split("_")[1],
                          self.data_file.split("/")[-1].split(".")[0].split("_")[2],
                          self.data_file.split("/")[-1].split(".")[0].split("_")[3]])
-        time = self.data_file.split("/")[-1].split(".")[0].split("_")[-3]
+        time_tmp = self.data_file.split("/")[-1].split(".")[0].split("_")[-3]
+        location = self.data_file.split("/")[-1].split(".")[0].split("_")[-2]
+        iteration_number = self.data_file.split("/")[-1].split(".")[0].split("_")[-1]
+        gauss_lines = get_configs("gauss_lines",
+                                  self.source + "_" + get_args("line")).replace(" ", "").split(",")
 
         if os.path.isfile(result_file_path + result_file_name):
             pass
@@ -878,12 +920,71 @@ class Analyzer(QWidget):
         max_apmlitudes_u9 = [np.max(value) for value in max_amplitude_list_u9]
         max_apmlitudes_uavg = [np.max(value) for value in max_amplitude_list_uavg]
 
-        for max in range(0, len(max_apmlitudes_u1)):
-            max_apmlitudes_u1[max] = [source_velocities[max], max_apmlitudes_u1[max]]
-            max_apmlitudes_u9[max] = [source_velocities[max], max_apmlitudes_u9[max]]
-            max_apmlitudes_uavg[max] = [source_velocities[max], max_apmlitudes_uavg[max]]
+        for maximum in range(0, len(max_apmlitudes_u1)):
+            max_apmlitudes_u1[maximum] = [source_velocities[maximum], max_apmlitudes_u1[maximum]]
+            max_apmlitudes_u9[maximum] = [source_velocities[maximum], max_apmlitudes_u9[maximum]]
+            max_apmlitudes_uavg[maximum] = \
+                [source_velocities[maximum], max_apmlitudes_uavg[maximum]]
 
-        time = time + "_" + date.replace(" ", "_")
+        time = time_tmp + "_" + date.replace(" ", "_")
+        try:
+            time2 = datetime.strptime(time, "%H:%M:%S_%d_%b_%Y").isoformat()
+            time3 = Time(time2, format='isot')
+            mjd = time3.mjd
+            result[expername]["modifiedJulianDays"] = mjd
+        except ValueError as error:
+            print("Cannot crate modified Julian Days", error)
+        except:
+            print("Unexpected error:", sys.exc_info()[0])
+
+        result[expername]["location"] = location
+        result[expername]["Date"] = date
+        result[expername]["Iteration_number"] = int(iteration_number)
+        result[expername]["time"] = time_tmp
+        result[expername]["specie"] = self.specie
+
+        result[expername]["polarizationU1"] = max_apmlitudes_u1
+        result[expername]["polarizationU9"] = max_apmlitudes_u9
+        result[expername]["polarizationAVG"] = max_apmlitudes_uavg
+        result[expername]["flag"] = False
+        if get_args("calibType") == "SDR":
+            result[expername]["type"] = "SDR"
+        else:
+            result[expername]["type"] = "DBBC"
+        gaussian_areas, _, _, _, _, gauss_lines, \
+        gaussiana_amplitudes, gaussiana_mean, gaussiana_std = \
+            compute_gauss(self.xdata, self.avg_y_not_smoohtData, gauss_lines)
+
+        result[expername]["areas"] = gaussian_areas
+        result[expername]["gauss_amp"] = gaussiana_amplitudes
+        result[expername]["gauss_mean"] = gaussiana_mean
+        result[expername]["gauss_STD"] = gaussiana_std
+
+        result[expername]["AVG_STON_LEFT"] = \
+            signal_to_noise_ratio(self.xdata, self.z1_smooht_data, self.cuts)
+        result[expername]["AVG_STON_RIGHT"] = \
+            signal_to_noise_ratio(self.xdata, self.z2_smooht_data, self.cuts)
+        result[expername]["AVG_STON_AVG"] = \
+            signal_to_noise_ratio(self.xdata, self.avg_y_not_smoohtData, self.cuts)
+
+        with open(result_file_path + result_file_name, "w") as output:
+            output.write(json.dumps(result, indent=2))
+
+        total_results = np.transpose([self.xdata, self.z1_smooht_data,
+                                      self.z2_smooht_data, self.avg_y_smooht_data])
+        total_results2 = np.transpose([self.xdata, self.z1_not_smooht_data,
+                                       self.z2_not_smooht_data, self.avg_y_not_smoohtData])
+        result_file = h5py.File(self.data_file, "a")
+        if "amplitude_corrected" in result_file:
+            amplitude_corrected = result_file["amplitude_corrected"]
+            amplitude_corrected_not_smooht = result_file["amplitude_corrected_not_smooht"]
+            amplitude_corrected[...] = total_results
+            amplitude_corrected_not_smooht[...] = total_results2
+        else:
+            result_file.create_dataset("amplitude_corrected", data=total_results)
+            result_file.create_dataset("amplitude_corrected_not_smooht", data=total_results2)
+        result_file.close()
+        self._quit()
 
     def center(self):
         """
@@ -894,6 +995,19 @@ class Analyzer(QWidget):
         centre_position = QDesktopWidget().availableGeometry().center()
         frame_geometry.moveCenter(centre_position)
         self.move(frame_geometry.topLeft())
+
+    @QtCore.pyqtSlot()
+    def _quit(self):
+        """
+
+        :return: None
+        """
+        for i in reversed(range(self.grid.count())):
+            self.grid.itemAt(i).widget().deleteLater()
+
+        self.hide()
+        self.close()
+        del self
 
 
 def main():
