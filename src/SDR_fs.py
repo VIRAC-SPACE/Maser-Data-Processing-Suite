@@ -467,7 +467,7 @@ class Analyzer(QWidget):
 
         time = list(set([int(t.split("_")[-1].split(".")[0]
                              [2:len(t.split("_")[-1].split(".")[0]) - 2])
-                         for t in self.data_files]))
+                         for t in self.DataFiles]))
         self.plot_tsys.plot(time, self.Tsys_r_left_list, '*b', label="Tsys_r_left")
         self.plot_tsys.plot(time, self.Tsys_r_right_list, '*r', label="Tsys_r_right")
         self.plot_tsys.plot(time, self.Tsys_s_left_list, '*g', label="Tsys_s_left")
