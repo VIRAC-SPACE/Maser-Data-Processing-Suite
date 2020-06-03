@@ -53,7 +53,7 @@ def get_configs(section, key):
     return config.get_config(section, key)
 
 
-def find_log_file(log_list, iteration, line):
+def find_log_file(log_list, iteration):
     """
 
     :param log_list: list of log files
@@ -61,15 +61,16 @@ def find_log_file(log_list, iteration, line):
     :param line: frequency
     :return:
     """
-    tmpl = -1
-    for log in range(0, len(log_list)):
-        iteration_tmp = log_list[log].split("/")[-1].split(".")[0].split("_")[-1]
-        lin = log_list[log].split("/")[-1].split(".")[0].split("_")[-2]
-
-        if lin + "_" + iteration_tmp == "f" + line + "_" + iteration:
+    tmpl = ""
+    for log in log_list:
+        if iteration in log:
             tmpl = log
             break
-    if tmpl == -1:
+
+    else:
+        tmpl = log_list[-1]
+
+    if tmpl == "":
         LOGGER.warning("Warning " + "log for iteration " +
                        iteration + " do not exist log file " +
                        log_list[-1] + " will be used instead!")
@@ -107,7 +108,7 @@ def create_log_file_list(path, source, line):
     :param source: source
     :return: all log files for source
     """
-    return [log for log in os.listdir(path) if log.startswith(source)]
+    return [log for log in os.listdir(path) if log.startswith(source) and line in log]
 
 
 def main():
@@ -119,6 +120,7 @@ def main():
     data_files_path = get_configs('paths', "dataFilePath")
     result_path = get_configs('paths', "resultFilePath")
     log_path = get_configs('paths', "logPath")
+    output_path = get_configs('paths', "outputFilePath")
 
     if os.path.exists(data_files_path):
         sdr_iterations = create_iteration_list(data_files_path, source_name, line)
@@ -155,53 +157,21 @@ def main():
 
     processed_iteration.sort(key=int, reverse=False)
 
-    try:
-        for i in sdr_iterations:
-            if i not in processed_iteration:
-                print(i, str(logfile_list [find_log_file(logfile_list, i, get_args("line"))]))
-                sys.exit()
-                frequency_shifting_parameter = source_name + " " + \
-                                               get_args("line") + " " + i + " " + \
-                                               str(logfile_list
-                                                   [find_log_file(logfile_list, i,
-                                                                  get_args("line"))])
-                LOGGER.info("Executing python3 " + "sdr_fs.py " +
-                            frequency_shifting_parameter)
-                os.system("python3 " + "sdr_fs.py " +
-                          frequency_shifting_parameter)
-        sys.exit()
-        data_files = list()
-        print(sdr_path + "/" + get_args("line"))
-        if os.path.exists(sdr_path + "/" + get_args("line")):
-            for data in os.listdir(sdr_path + "/" + get_args("line")):
-                if data.startswith(source_name) and data.endswith(".dat"):
-                    data_files.append(data)
+    for iteration in sdr_iterations:
+        if iteration not in processed_iteration:
+            log_file = find_log_file(logfile_list, iteration)
+            sdr_fs_parameter = source_name + " " + line + " " + iteration + " " + log_file
+            LOGGER.info("Executing python3 " + "sdr_fs.py " + sdr_fs_parameter)
+            os.system("python3 " + "sdr_fs.py " + sdr_fs_parameter)
 
-            for d in data_files:
-                if d.split(".")[0].split("_")[-1] not in sdr_processed_iteration:
-                    LOGGER.info("Executing python3 " +
-                                "src/totalSpectrumAnalyer_qt5.py " + d + " " + get_args("line"))
-                    os.system("python3 " +
-                              "src/totalSpectrumAnalyer_qt5.py " + d + " " + get_args("line"))
-
-    except IOError as e:
-        print("IO Error", e)
-        sys.exit(1)
-
-    except IndexError as e:
-        print("Index Error", e)
-        sys.exit(1)
-
-    except ValueError as e:
-        print("Cannot crate modified Julian Days", e)
-
-    except TypeError as e:
-        print("TypeError", e)
-        sys.exit(1)
-
-    except:
-        print("Unexpected error:", sys.exc_info()[0])
-        sys.exit(1)
+    output_files = os.listdir(output_path + "/" + line)
+    for output_file in output_files:
+        if output_file.split(".")[0].split("_")[-1] not in processed_iteration:
+            if output_file.startswith(source_name):
+                LOGGER.info("Executing python3 " +
+                            "total_spectrum_analyer_qt5.py " + output_file + " " + line)
+                os.system("python3 " +
+                          "total_spectrum_analyzer_qt5.py " + output_file + " " + line)
 
 
 if __name__ == "__main__":

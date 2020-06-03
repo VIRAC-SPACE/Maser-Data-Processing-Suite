@@ -608,7 +608,12 @@ class Analyzer(QWidget):
         hour = scan_1["date"].split("T")[1].split(":")[0]
         minute = scan_1["date"].split("T")[1].split(":")[1]
         right = scan_1["date"].split("T")[1].split(":")[2]
-        result_file_name = get_configs("paths", "outputFilePath") + \
+
+        if not os.path.exists(get_configs("paths", "outputFilePath") + "/" + get_args("line")):
+            os.makedirs(get_configs("paths", "outputFilePath") + "/" + get_args("line"))
+
+        result_file_name = get_configs("paths", "outputFilePath") + "/" + \
+                           get_args("line") + "/" + \
                            get_args("source") + "_" + day + "_" + month + "_" + year + "_" + \
                            hour + ":" + minute + ":" + right + "_" + station + "_" + \
                            get_args("iteration_number") + ".h5"

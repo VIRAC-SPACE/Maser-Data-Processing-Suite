@@ -243,7 +243,7 @@ class Analyzer(QWidget):
         self.avg_y = None
         self.polynomial_order = 3
         self.change_parms = False
-        self.data_file = get_configs("paths", "outputFilePath") + get_args("datafile")
+        self.data_file = get_configs("paths", "outputFilePath") + "/" + get_args("line") + "/" + get_args("datafile")
         self.data, self.specie = get_data(self.data_file)
         self.xdata = self.data[:, 0]
         self.ydata_left = self.data[:, 1]

@@ -6,6 +6,7 @@
 # Table of Contents
 * [Capabilities of MDPS](#capabilities-of-MDPS)
 * [Dependencies](#dependencies)
+* [Processing SDR output](#Processing-SDR-output)
 * [Changelog](#changelog)
 * [Getting Help](#getting-help)
 * [Acknowledgements](#acknowledgements)
@@ -32,6 +33,15 @@ MDPS is maser data processing suite, with user friendly GUI. Currently it allows
   - mplcursors 0.3
   - jplephem 2.14
   - configparser 5.0.0
+  
+## Processing SDR output
+SDR for each scan creates four files **r0** **r1** **s0** **s1**. File name is calibrator_<SASID>_SURIs.txt
+
+| **Scripts** | **Description** |
+| --- | --- |
+| main.py | Automatically call sdr_fs.py and total_spectrum_analyzer_qt5.py |
+| sdr_fs.py | Process four output files from SDR |
+| total_spectrum_analyzer_qt5.py | Process sdr_fs.py output|
 
 ## Changelog
 
