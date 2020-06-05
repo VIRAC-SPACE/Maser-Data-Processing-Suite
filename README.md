@@ -47,6 +47,10 @@ SDR for each scan creates four files **r0** **r1** **s0** **s1**. File name is &
 Script sdr_fs.py us frequency shifting algorithm described by publication: 
 * Winkel, B., Kraus, A. and Bach, U., 2012. Unbiased flux calibration methods for spectral-line radio observations. Astronomy & Astrophysics, 540, p.A140. (https://www.aanda.org/articles/aa/pdf/2012/04/aa18092-11.pdf)
 
+SDR back-end is described in this publication:
+* M. Bleiders et al., Spectral Line Registration Back-end based on USRP X300 Software Defined Radio, Journal of Astronomical Instrumentation, doi: 10.1142/S22511717205000099, 2020.
+(https://www.worldscientific.com/doi/abs/10.1142/S2251171720500099)
+
 It creates output file with name  &lt;source&gt; _&lt;Day&gt; _&lt;Month&gt; _&lt;Year&gt; _&lt;Hour&gt; :&lt;Minute&gt; :&lt;Seconde&gt; _&lt;station name&gt; _&lt;iteration&gt;.h5 that file, has hdf5 format. With table amplitude, that have colons velocity, amplitude for left and right polarization. 
 
 Script sdr_fs.py it average all scans, smooth data and create output for monitoring. It append sdr_fs.py output with these tables amplitude_corrected, amplitude_corrected_not_smooht.
