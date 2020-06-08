@@ -10,6 +10,7 @@ import os
 import argparse
 import json
 import numpy as np
+import h5py
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, \
     QGridLayout, QLabel, QLineEdit, QComboBox, QPushButton
 from PyQt5.QtGui import QIcon
@@ -146,6 +147,9 @@ class MonitoringView(PlottingView):
         self.source = source
         self.line = line
         self.specter_view = None
+        self.new_spectre = True
+        self.multiple_spectre = True
+        self.specter_plots_files = set()
 
         result_path = get_configs("paths", "resultFilePath")
         result_file_name = source + "_" + line + ".json"
@@ -203,13 +207,37 @@ class MonitoringView(PlottingView):
         """
         index = int(event.ind[0])
         iteration = self.iterations[index]
-        print(iteration)
-        print( [f for f in os.listdir(get_configs("paths", "outputFilePath") + "/" + self.line) if str(iteration) in f])
-        output_files = [f for f in os.listdir(get_configs("paths", "outputFilePath") + "/" + self.line) if f.startswith(self.source) and str(iteration) in f]
-        print(output_files)
-        #output_file = get_configs("paths", "outputFilePath") + "/" + self.line + "/" + self.source + "_"
-        self.specter_view = SpecterView()
-        self.specter_view.show()
+        file = [f for f in (os.listdir(get_configs("paths", "outputFilePath") + "/" + self.line))
+                if str(iteration) in f and f.startswith(self.source)]
+        if len(file) > 0:
+            if self.new_spectre:
+                output_file = get_configs("paths", "outputFilePath") \
+                              + "/" + self.line + "/" + file[0]
+                self.specter_plots_files.add(output_file)
+                self.specter_view = SpecterView(self.specter_plots_files, self.source)
+                self.specter_view.show()
+                self.new_spectre = False
+
+            else:
+                output_file = get_configs("paths", "outputFilePath") \
+                              + "/" + self.line + "/" + file[0]
+                self.specter_plots_files.add(output_file)
+                self.specter_view.set_specter_plots_files(self.specter_plots_files)
+
+        else:
+            print("No output files for iteration " + str(iteration))
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Shift:
+            self.new_spectre = True
+
+        elif event.key() == Qt.Key_Alt:
+            if self.multiple_spectre:
+                self.multiple_spectre = False
+                print("single spectre")
+            else:
+                self.multiple_spectre = True
+                print("multiple spectre")
 
 
 class SpecterView(PlottingView):
@@ -217,12 +245,58 @@ class SpecterView(PlottingView):
     Monitoring View
     """
 
-    def __init__(self):
+    def __init__(self, spectre_files, source):
         PlottingView.__init__(self)
         self.grid = QGridLayout()
         self.grid.setSpacing(10)
         self.setLayout(self.grid)
         self.setWindowTitle("Spectre")
+        self.spectre_files = list(spectre_files)
+        self.source = source
+        self.polarization = "AVG"
+        source_name = get_configs("Full_source_name", self.source)
+
+        self.specter_plot = Plot()
+        self.specter_plot.creatPlot(self.grid, "Velocity (km sec$^{-1}$)",
+                                    "Flux density (Jy)", source_name, (1, 0), "linear")
+        self.specter_plot.set_tick_params(axis="x", direction="in",
+                                          which="both", length=16,
+                                          width=2, labelsize=12, rotation=0)
+        self.specter_plot.set_tick_params(axis="y", direction="in",
+                                          which="major", length=16,
+                                          width=2, labelsize=12, rotation=0)
+        self.specter_plot.set_tick_params(axis="y", direction="in",
+                                          which="minor", length=10,
+                                          width=1.5, labelsize=12, rotation=0)
+        self.add_widget(self.specter_plot, 0, 0)
+        self.plot()
+
+    def plot(self):
+        print("yes")
+        symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
+        amplitude_colon = 3
+        if self.polarization == "U1":
+            amplitude_colon = 1
+        elif self.polarization == "U9":
+            amplitude_colon = 2
+        elif self.polarization == "AVG" or self.polarization == "ALL":
+            amplitude_colon = 3
+        for spectre_file in self.spectre_files:
+            index = self.spectre_files.index(spectre_file)
+            data = h5py.File(spectre_file, 'r')['amplitude_corrected'][()]
+            x = data[:, 0]
+            y = data[:, amplitude_colon]
+            tmp = spectre_file.split("/")[-1].split(".")[0].split("_")
+            plot_name = "".join([tmp[1], tmp[2], tmp[3], tmp[4]])
+            self.specter_plot.plot(x, y, symbols[index], label=plot_name)
+
+    def set_specter_plots_files(self, specter_plots_files):
+        self.spectre_files.extend(specter_plots_files)
+        self.spectre_files = list(set(self.spectre_files))
+        self.plot()
+        self.specter_plot.draw()
+        self.specter_plot.canvasShow()
+
 
 def main():
     """
