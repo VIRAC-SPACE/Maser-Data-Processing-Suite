@@ -12,10 +12,11 @@ import json
 import numpy as np
 import h5py
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, \
-    QGridLayout, QLabel, QLineEdit, QComboBox, QPushButton
+    QGridLayout, QLabel, QLineEdit, QComboBox, QPushButton, QGroupBox
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
 from utils.ploting_qt5 import Plot
+from utils.help import find_nearest_index
 from parsers.configparser_ import ConfigParser
 
 
@@ -54,10 +55,23 @@ def get_configs(section, key):
     return config.get_config(section, key)
 
 
+def create_label(experiment):
+    """
+
+    :param experiment: experiment type object
+    :return: label for monitoring view cursor
+    """
+    return "Station is " + experiment.location.lower() + "\n" + "Date is " + \
+           " ".join(experiment.Date.split("_")) + "\n" + "Iteration number " + \
+           str(experiment.Iteration_number) + "\n" + "Specie " + \
+           experiment.specie + "\n" + "Type " + experiment.type
+
+
 class PlottingView(QWidget):
     """
     Base class for all views
     """
+
     def __init__(self):
         super(PlottingView, self).__init__()
         self.setWindowIcon(QIcon('viraclogo.png'))
@@ -65,6 +79,13 @@ class PlottingView(QWidget):
         self.grid = QGridLayout()
 
     def add_widget(self, widget, row, colomn):
+        """
+
+        :param widget: widget
+        :param row: row
+        :param colomn: colomn
+        :return: None
+        """
         self.grid.addWidget(widget, row, colomn)
 
     def center(self):
@@ -102,13 +123,17 @@ class Monitoring(PlottingView):
         choose_source_button.clicked.connect(self.plot_monitoring)
         choose_source_button.setStyleSheet("background-color: green")
         self.add_widget(choose_source_button, 1, 3)
+        self.flag = "All"
         combo_box2 = QComboBox(self)
         combo_box2.addItem("All")
         combo_box2.addItem("Not Flag")
-        #comboBox2.activated[str].connect(self.setFlags)
+        combo_box2.activated[str].connect(self.set_flag)
         self.add_widget(combo_box2, 1, 2)
         self.monitoring_plot = None
         self.monitoring_view = None
+
+    def set_flag(self, flag):
+        self.flag = flag
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Return:
@@ -122,15 +147,8 @@ class Monitoring(PlottingView):
         """
         if len(self.source_input.text()) > 1:
             self.monitoring_view = MonitoringView(self.source_input.text(),
-                                                  self.source_line_input.text())
+                                                  self.source_line_input.text(), self.flag)
             self.monitoring_view.show()
-
-
-def create_label(experiment):
-    return "Station is " + experiment.location.lower() + "\n" + "Date is " + \
-           " ".join(experiment.Date.split("_")) + "\n" + "Iteration number " + \
-           str(experiment.Iteration_number) + "\n" + "Specie " + \
-           experiment.specie + "\n" + "Type " + experiment.type
 
 
 class MonitoringView(PlottingView):
@@ -138,28 +156,39 @@ class MonitoringView(PlottingView):
     Monitoring View
     """
 
-    def __init__(self, source, line):
+    def __init__(self, source, line, flag):
         PlottingView.__init__(self)
         self.grid = QGridLayout()
         self.grid.setSpacing(10)
         self.setLayout(self.grid)
         self.setWindowTitle("Monitoring")
+        self.add_widget(self.create_control_group(), 0, 1)
         self.source = source
         self.line = line
+        self.flag = flag
+        self.polarization = "polarization AVG"
         self.specter_view = None
         self.new_spectre = True
         self.multiple_spectre = True
+        self.spectrum_set = set()
         self.specter_plots_files = set()
+        self.lines = []
+        self.flagged_points = []
+        self.flags = []
+        self.un_flags = []
 
         result_path = get_configs("paths", "resultFilePath")
-        result_file_name = source + "_" + line + ".json"
+        result_file_name = self.source + "_" + self.line + ".json"
 
         with open(result_path + "/" + result_file_name) as result_file:
             result_data = json.load(result_file)
 
-        experiments = [MonitoringView.Experiment(**result_data[exper]) for exper in result_data]
-        experiments.sort(key=lambda e: e.modifiedJulianDays)
-        labels2 = [create_label(e) for e in experiments]
+        self.experiments = [MonitoringView.Experiment(**result_data[experiment])
+                            for experiment in result_data]
+        if self.flag == "Not Flag":
+            self.experiments = [e for e in self.experiments if not e.flag]
+        self.experiments.sort(key=lambda e: e.modifiedJulianDays)
+        labels2 = [create_label(e) for e in self.experiments]
 
         self.monitoring_plot = Plot()
         self.monitoring_plot.creatPlot(self.grid, "Time", "Flux density (Jy)",
@@ -167,24 +196,37 @@ class MonitoringView(PlottingView):
 
         symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
         colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
-        dates = [e.modifiedJulianDays for e in experiments]
+        dates = [e.modifiedJulianDays for e in self.experiments]
         source_velocities = get_configs('velocities', self.source + "_" + self.line).split(",")
         source_velocities = [x.strip() for x in source_velocities]
         monitoring_results = [[dates]]
-        self.iterations = [e.Iteration_number for e in experiments]
+        self.iterations = [e.Iteration_number for e in self.experiments]
 
+        self.line_dict = {"left": list(),
+                          "right": list(),
+                          "avg": list()}
         for i in range(0, len(source_velocities)):
-            self.monitoring_plot.plot(dates, [e.polarizationU1[i][1] for e in experiments],
-                                      symbols[i] + colors[i],
-                                      fontsize=8, visible=False, picker=False)
-            self.monitoring_plot.plot(dates, [e.polarizationU9[i][1] for e in experiments],
-                                      symbols[i] + colors[i],
-                                      fontsize=8, visible=False, picker=False)
-            self.monitoring_plot.plot(dates, [e.polarizationAVG[i][1] for e in experiments],
-                                      symbols[i] + colors[i], fontsize=8,
-                                      label="Velocity " + source_velocities[i],
-                                      visible=True, picker=5)
-            monitoring_results.append([e.polarizationAVG[i][1] for e in experiments])
+            l1 = self.monitoring_plot.plot(dates,
+                                           [e.polarizationU1[i][1] for e in self.experiments],
+                                           symbols[i] + colors[i],
+                                           fontsize=8, visible=False, picker=False)
+            l2 = self.monitoring_plot.plot(dates,
+                                           [e.polarizationU9[i][1] for e in self.experiments],
+                                           symbols[i] + colors[i],
+                                           fontsize=8, visible=False, picker=False)
+            l3 = self.monitoring_plot.plot(dates,
+                                           [e.polarizationAVG[i][1] for e in self.experiments],
+                                           symbols[i] + colors[i], fontsize=8,
+                                           label="Velocity " + source_velocities[i],
+                                           visible=True, picker=5)
+            monitoring_results.append([e.polarizationAVG[i][1] for e in self.experiments])
+
+            self.lines.append(l1)
+            self.lines.append(l2)
+            self.lines.append(l3)
+            self.line_dict["left"].append(l1)
+            self.line_dict["right"].append(l2)
+            self.line_dict["avg"].append(l3)
 
         np.save(get_configs("paths", "monitoringFilePath") +
                 self.source + "_" + str(self.line), np.transpose(monitoring_results))
@@ -198,6 +240,16 @@ class MonitoringView(PlottingView):
         """
 
         def __init__(self, **entries):
+            self.flag = None
+            self.modifiedJulianDays = None
+            self.Iteration_number = None
+            self.polarizationAVG = None
+            self.polarizationU9 = None
+            self.polarizationU1 = None
+            self.location = None
+            self.Date = None
+            self.specie = None
+            self.type = None
             self.__dict__.update(entries)
 
     def choose_spectrum(self, event):
@@ -205,27 +257,101 @@ class MonitoringView(PlottingView):
 
         :return: None
         """
-        index = int(event.ind[0])
-        iteration = self.iterations[index]
-        file = [f for f in (os.listdir(get_configs("paths", "outputFilePath") + "/" + self.line))
-                if str(iteration) in f and f.startswith(self.source)]
-        if len(file) > 0:
-            if self.new_spectre:
-                output_file = get_configs("paths", "outputFilePath") \
-                              + "/" + self.line + "/" + file[0]
-                self.specter_plots_files.add(output_file)
-                self.specter_view = SpecterView(self.specter_plots_files, self.source)
-                self.specter_view.show()
-                self.new_spectre = False
-
-            else:
-                output_file = get_configs("paths", "outputFilePath") \
-                              + "/" + self.line + "/" + file[0]
-                self.specter_plots_files.add(output_file)
-                self.specter_view.set_specter_plots_files(self.specter_plots_files)
-
+        try:
+            ind = event.ind[0]
+        except AttributeError as error:
+            print("Attribute Error", error, sys.exc_info()[0])
         else:
-            print("No output files for iteration " + str(iteration))
+            this_line = event.artist
+            xdata = this_line.get_xdata()
+            ydata = this_line.get_ydata()
+            result_path = get_configs("paths", "resultFilePath")
+            result_file_name = self.source + "_" + self.line + ".json"
+            iteration = self.iterations[ind]
+            date = [e.Date for e in self.experiments][ind]
+
+            with open(result_path + result_file_name) as result_data:
+                results = json.load(result_data)
+
+            if event.mouseevent.button == 1:
+                file = [f for f in (os.listdir(get_configs("paths", "outputFilePath")
+                                               + "/" + self.line))
+                        if str(iteration) in f and f.startswith(self.source)]
+                if len(file) > 0:
+                    if self.new_spectre:
+                        self.specter_plots_files.clear()
+                        output_file = get_configs("paths", "outputFilePath") + "/" + \
+                                      self.line + "/" + file[0]
+                        self.specter_plots_files.add(output_file)
+                        self.specter_view = SpecterView(self.specter_plots_files,
+                                                        self.source, self.polarization)
+                        self.spectrum_set.add(self.specter_view)
+                        self.specter_view.show()
+                        self.new_spectre = False
+
+                    else:
+                        output_file = get_configs("paths", "outputFilePath") \
+                                      + "/" + self.line + "/" + file[0]
+                        self.specter_plots_files.add(output_file)
+                        self.specter_view.set_specter_plots_files(self.specter_plots_files)
+
+                else:
+                    print("No output files for iteration " + str(iteration))
+
+            elif event.mouseevent.button == 2:
+                if len(self.flagged_points) > 0:
+                    if (xdata[ind], ydata[ind]) not in self.un_flags:
+                        selected_point = (xdata[ind], ydata[ind])
+                        flagged_points_data = list(set([(point.get_xdata()[0],
+                                                         point.get_ydata()[0]) for
+                                                        point in self.flagged_points]))
+                        unflag_index = find_nearest_index(flagged_points_data, selected_point)
+                        if unflag_index != 0:
+                            unflag_index -= 1
+
+                        self.flagged_points[unflag_index].set_visible(False)
+                        self.flagged_points[unflag_index].remove()
+                        self.flagged_points.pop(unflag_index)
+                        self.flags.pop(unflag_index)
+                        self.monitoring_plot.canvasShow()
+
+                        for experiment in results:
+                            if experiment.endswith("_" + str(iteration)) and \
+                                    results[experiment]["time"].replace(":", "_") + "_" + \
+                                    results[experiment]["Date"] == date:
+                                results[experiment]["flag"] = False
+                                print(experiment, "is un flag")
+
+                        with open(get_configs("paths", "resultFilePath") +
+                                  result_file_name, "w") as result_data:
+                            result_data.write(json.dumps(results, indent=2))
+
+                        self.un_flags.append((xdata[ind], ydata[ind]))
+
+            elif event.mouseevent.button == 3:
+                if (xdata[ind], ydata[ind]) not in self.flags:
+                    flagged_point = self.monitoring_plot.plot(xdata[ind],
+                                                              ydata[ind], "rx", markersize=10)[0]
+                    self.flagged_points.append(flagged_point)
+                    self.monitoring_plot.canvasShow()
+
+                    if len(self.un_flags) > 0:
+                        index_tmp = find_nearest_index(self.un_flags, (xdata[ind], ydata[ind]))
+                        if index_tmp > 0:
+                            index_tmp -= 1
+                        self.un_flags.pop(index_tmp)
+
+                    for experiment in results:
+                        if experiment.endswith("_" + str(iteration)) and \
+                                results[experiment]["time"].replace(":", "_") + "_" + \
+                                results[experiment]["Date"] == date:
+                            results[experiment]["flag"] = True
+                            print(experiment, "is flag")
+
+                    with open(get_configs("paths", "resultFilePath") +
+                              result_file_name, "w") as result_data:
+                        result_data.write(json.dumps(results, indent=2))
+                    self.flags.append((xdata[ind], ydata[ind]))
 
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Shift:
@@ -239,21 +365,88 @@ class MonitoringView(PlottingView):
                 self.multiple_spectre = True
                 print("multiple spectre")
 
+    def set_polarization(self, polarization):
+        self.polarization = polarization
+        self.change_visible_lines(polarization)
+
+    def create_control_group(self):
+        group_box = QGroupBox("")
+        group_box.setFixedWidth(120)
+        group_box.setFixedHeight(120)
+        control_grid = QGridLayout()
+        polarization_combo_box = QComboBox(self)
+        polarization_combo_box.addItem("polarization AVG")
+        polarization_combo_box.addItem("polarization left")
+        polarization_combo_box.addItem("polarization right")
+        polarization_combo_box.addItem("ALL")
+        polarization_combo_box.activated[str].connect(self.set_polarization)
+        control_grid.addWidget(polarization_combo_box, 5, 0)
+        group_box.setLayout(control_grid)
+        return group_box
+
+    def change_visible_lines(self, polarization):
+        if polarization == "ALL":
+            for line in self.lines:
+                line[0].set_picker(5)
+                line[0].set_visible(True)
+
+        elif polarization == "polarization AVG":
+            for line in self.line_dict["avg"]:
+                line[0].set_picker(5)
+                line[0].set_visible(True)
+
+            for line in self.line_dict["left"]:
+                line[0].set_picker(False)
+                line[0].set_visible(False)
+
+            for line in self.line_dict["right"]:
+                line[0].set_picker(False)
+                line[0].set_visible(False)
+
+        elif polarization == "polarization left":
+            for line in self.line_dict["left"]:
+                line[0].set_picker(5)
+                line[0].set_visible(True)
+
+            for line in self.line_dict["avg"]:
+                line[0].set_picker(False)
+                line[0].set_visible(False)
+
+            for line in self.line_dict["right"]:
+                line[0].set_picker(False)
+                line[0].set_visible(False)
+
+        elif polarization == "polarization right":
+            for line in self.line_dict["right"]:
+                line[0].set_picker(5)
+                line[0].set_visible(True)
+
+            for line in self.line_dict["left"]:
+                line[0].set_picker(False)
+                line[0].set_visible(False)
+
+            for line in self.line_dict["avg"]:
+                line[0].set_picker(False)
+                line[0].set_visible(False)
+
+        self.monitoring_plot.canvasShow()
+
 
 class SpecterView(PlottingView):
     """
     Monitoring View
     """
 
-    def __init__(self, spectre_files, source):
+    def __init__(self, spectre_files, source, polarization):
         PlottingView.__init__(self)
         self.grid = QGridLayout()
         self.grid.setSpacing(10)
         self.setLayout(self.grid)
         self.setWindowTitle("Spectre")
-        self.spectre_files = list(spectre_files)
+        self.spectre_files = list(set(spectre_files))
         self.source = source
-        self.polarization = "AVG"
+        self.polarization = polarization
+        self.plot_set = set()
         source_name = get_configs("Full_source_name", self.source)
 
         self.specter_plot = Plot()
@@ -272,14 +465,13 @@ class SpecterView(PlottingView):
         self.plot()
 
     def plot(self):
-        print("yes")
         symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
         amplitude_colon = 3
-        if self.polarization == "U1":
+        if self.polarization == "polarization left":
             amplitude_colon = 1
-        elif self.polarization == "U9":
+        elif self.polarization == "polarization right":
             amplitude_colon = 2
-        elif self.polarization == "AVG" or self.polarization == "ALL":
+        elif self.polarization == "polarization AVG" or self.polarization == "ALL":
             amplitude_colon = 3
         for spectre_file in self.spectre_files:
             index = self.spectre_files.index(spectre_file)
@@ -287,10 +479,17 @@ class SpecterView(PlottingView):
             x = data[:, 0]
             y = data[:, amplitude_colon]
             tmp = spectre_file.split("/")[-1].split(".")[0].split("_")
-            plot_name = "".join([tmp[1], tmp[2], tmp[3], tmp[4]])
-            self.specter_plot.plot(x, y, symbols[index], label=plot_name)
+            plot_name = " ".join([tmp[4], tmp[1], tmp[2], tmp[3]])
+            if plot_name not in self.plot_set:
+                self.specter_plot.plot(x, y, symbols[index], label=plot_name)
+                self.plot_set.add(plot_name)
 
     def set_specter_plots_files(self, specter_plots_files):
+        """
+
+        :param specter_plots_files: total_spectrum_analyser_qt5.py output files
+        :return: None
+        """
         self.spectre_files.extend(specter_plots_files)
         self.spectre_files = list(set(self.spectre_files))
         self.plot()
