@@ -10,6 +10,8 @@ import os
 import argparse
 import json
 import numpy as np
+from numpy import genfromtxt
+from scipy.interpolate import griddata
 from astropy.timeseries import LombScargle
 import h5py
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, \
@@ -169,6 +171,7 @@ class MonitoringView(PlottingView):
         self.polarization = "polarization AVG"
         self.specter_view = None
         self.period_view = None
+        self.maps_view = None
         self.component_input = None
         self.add_widget(self.create_control_group(), 0, 1)
         self.new_spectre = True
@@ -390,6 +393,9 @@ class MonitoringView(PlottingView):
         self.component_input = QLineEdit()
         self.component_input.setFixedWidth(100)
         control_grid.addWidget(self.component_input, 0, 0)
+        plot_maps_button = QPushButton('Plot maps', self)
+        plot_maps_button.clicked.connect(self.create_map_view)
+        control_grid.addWidget(plot_maps_button, 2, 0)
         group_box.setLayout(control_grid)
         return group_box
 
@@ -452,6 +458,10 @@ class MonitoringView(PlottingView):
             self.period_view.show()
         else:
             print("wrong velocity selected")
+
+    def create_map_view(self):
+        self.maps_view = MapsView()
+        self.maps_view.show()
 
 
 class SpecterView(PlottingView):
@@ -584,6 +594,57 @@ class PeriodView(PlottingView):
         self.period_plot.plot(period_days, power, self.plot_simbol,
                               label="polarization AVG " + "Velocity " + self.velocity_name,
                               rasterized=True)
+
+
+class MapsView(PlottingView):
+    """
+    Maps View
+    """
+    def __init__(self, mjd, source):
+        PlottingView.__init__(self)
+        self.grid = QGridLayout()
+        self.grid.setSpacing(10)
+        self.setLayout(self.grid)
+        self.setWindowTitle(" ")
+        self.mjd = mjd
+        self.source = source
+        self.output_files = os.listdir(get_configs("oaths", "outputFilePath"))
+
+        days = self.mjd[-1] - self.mjd[0]
+        vmax, vmin = self.get_max_man_velocity()
+        vrange = vmax - vmin
+        sources_vrange = genfromtxt('DB_vrange.csv', names=True, delimiter=',', dtype=None, encoding=None)
+
+        i = 0
+        found_vrange = False
+        found_ind = -1
+        for source in sources_vrange:
+            if str(source[0]) == self.source:
+                found_vrange = True
+                found_ind = i
+                vmin = source[1]
+                vmax = source[2]
+            i = i + 1
+
+        velocity = []
+        observed_flux = []
+        observed_time = []
+
+        x = np.arange(vmax, vmin, 0.01)
+        y = np.arange(0, days, 0.5)
+        X, Y = np.meshgrid(x, y)
+        Z = griddata((velocity, observed_time), observed_flux, (X[:], Y[:]), method='linear')
+
+    def get_max_man_velocity(self):
+        max_velocitys = []
+        min_velocitys = []
+        for file in self.output_files:
+            data = h5py.File(file, "r")["amplitude_corrected"][()]
+            velocity = data[:, 0]
+            max_velocitys.append(max(velocity))
+            min_velocitys.append(min(velocity))
+
+        return max(max_velocitys, min_velocitys)
 
 
 def main():
