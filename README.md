@@ -5,7 +5,7 @@
 ## Dependencies
 # Table of Contents
 * [Capabilities of MDPS](#capabilities-of-MDPS)
-* [Dependencies](#dependencies)
+* [Dependencies](#Dependencies)
 * [Configuration of MDPS](#Configuration-of-MDPS)
 * [Directory structure](#Directory-structure)
 * [Processing SDR output](#Processing-SDR-output)
