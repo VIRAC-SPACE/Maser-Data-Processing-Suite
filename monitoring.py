@@ -13,6 +13,7 @@ import numpy as np
 from numpy import genfromtxt
 from scipy.interpolate import griddata
 from astropy.timeseries import LombScargle
+from astropy.io import ascii
 import h5py
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, \
     QGridLayout, QLabel, QLineEdit, QComboBox, QPushButton, QGroupBox
@@ -460,7 +461,7 @@ class MonitoringView(PlottingView):
             print("wrong velocity selected")
 
     def create_map_view(self):
-        self.maps_view = MapsView()
+        self.maps_view = MapsView(self.dates, self.source, self.line)
         self.maps_view.show()
 
 
@@ -600,7 +601,7 @@ class MapsView(PlottingView):
     """
     Maps View
     """
-    def __init__(self, mjd, source):
+    def __init__(self, mjd, source, line):
         PlottingView.__init__(self)
         self.grid = QGridLayout()
         self.grid.setSpacing(10)
@@ -608,43 +609,68 @@ class MapsView(PlottingView):
         self.setWindowTitle(" ")
         self.mjd = mjd
         self.source = source
-        self.output_files = os.listdir(get_configs("oaths", "outputFilePath"))
+        self.line = line
+        self.output_files = os.listdir(get_configs("paths", "outputFilePath") + self.line)
 
         days = self.mjd[-1] - self.mjd[0]
-        vmax, vmin = self.get_max_man_velocity()
+        sources_vrange = ascii.read('DB_vrange.csv')
+        source_vrange_index = sources_vrange['name'].tolist().index(self.source)
+        vmin = dict(sources_vrange)["vmin"][source_vrange_index]
+        vmax = dict(sources_vrange)["vmax"][source_vrange_index]
+
+        if vmin is None or vmax is None:
+            vmin, vmax, velocity, observed_flux, observed_time = self.get_max_min_velocity(vmin, vmax)
+
+        else:
+            _, _, velocity, observed_flux, observed_time = self.get_max_min_velocity(vmin, vmax)
+
+        print(observed_time)
+
         vrange = vmax - vmin
-        sources_vrange = genfromtxt('DB_vrange.csv', names=True, delimiter=',', dtype=None, encoding=None)
-
-        i = 0
-        found_vrange = False
-        found_ind = -1
-        for source in sources_vrange:
-            if str(source[0]) == self.source:
-                found_vrange = True
-                found_ind = i
-                vmin = source[1]
-                vmax = source[2]
-            i = i + 1
-
-        velocity = []
-        observed_flux = []
-        observed_time = []
 
         x = np.arange(vmax, vmin, 0.01)
         y = np.arange(0, days, 0.5)
         X, Y = np.meshgrid(x, y)
         Z = griddata((velocity, observed_time), observed_flux, (X[:], Y[:]), method='linear')
 
-    def get_max_man_velocity(self):
+        self.map_plot = Plot()
+        self.map_plot.creatPlot(self.grid, "Velocity (km/s)", "JD (days) -  "
+                               + str(observed_time[0]), None, (1, 0), "log")
+        lvls = np.linspace(int(np.min(observed_flux)), int(np.max(observed_flux)), 10)
+        cs = self.map_plot.contourf(X, Y, Z, levels=lvls)
+
+        self.add_widget(self.map_plot, 0, 0)
+
+    def get_max_min_velocity(self, vmin, vmax):
         max_velocitys = []
         min_velocitys = []
+        velocity_ = []
+        observed_flux = []
+        observed_time = []
+
         for file in self.output_files:
-            data = h5py.File(file, "r")["amplitude_corrected"][()]
+            data = h5py.File(get_configs("paths", "outputFilePath") +
+                             self.line + "/" +
+                             file, "r")["amplitude_corrected"][()]
             velocity = data[:, 0]
+            amplitude = data[:, 3]
+            mjd = file.split("_")[1]
+
             max_velocitys.append(max(velocity))
             min_velocitys.append(min(velocity))
 
-        return max(max_velocitys, min_velocitys)
+            for i in range(0, len(velocity)):
+                if vmin and vmax:
+                    if vmin <= velocity[i] <= vmax:
+                        velocity_.append(velocity[i])
+                        observed_flux.append(amplitude[i])
+                        observed_time.append(mjd)
+                else:
+                    velocity_.append(velocity[i])
+                    observed_flux.append(amplitude[i])
+                    observed_time.append(mjd)
+
+        return max(max_velocitys), min(min_velocitys), velocity_, observed_flux, observed_time
 
 
 def main():
