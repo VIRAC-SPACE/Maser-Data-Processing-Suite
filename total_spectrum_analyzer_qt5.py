@@ -35,7 +35,6 @@ def parse_arguments():
     parser.add_argument("line", help="Experiment correlation file name", type=int)
     parser.add_argument("-c", "--config", help="Configuration cfg file",
                         type=str, default="config/config.cfg")
-    parser.add_argument("-r", "--rawdata", help="Use raw data, skip smoothing", action='store_true')
     parser.add_argument("-t", "--calibType", help="Type of calibration", default="SDR")
     parser.add_argument("-tr", "--threshold",
                         help="Set threshold for outlier filter", type=float, default=1.0)
@@ -793,17 +792,6 @@ class Analyzer(QWidget):
         self.z1_smooht_data = convolve(self.local_max_array_u1, g1, boundary='extend')
         self.z2_smooht_data = convolve(self.local_max_array_u9, g2, boundary='extend')
         self.avg_y_smooht_data = (self.z1_smooht_data + self.z2_smooht_data) / 2
-
-        # Smoohting
-        if get_args("rawdata"):
-            self.z1 = self.local_max_array_u1
-            self.z2 = self.local_max_array_u9
-        else:
-            g1 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
-            g2 = Gaussian1DKernel(stddev=3, x_size=19, mode='center', factor=100)
-
-            self.z1 = convolve(self.local_max_array_u1, g1, boundary='extend')
-            self.z2 = convolve(self.local_max_array_u9, g2, boundary='extend')
 
         three_sigma_u1 = 3 * np.std(self.polyu1)
         three_sigma_u9 = 3 * np.std(self.polyu9)

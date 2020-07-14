@@ -1,17 +1,15 @@
 # MDPS -  Maser Data Processing Suite
 
 # Table of Contents
-
-## Dependencies
-# Table of Contents
-* [Capabilities of MDPS](#capabilities-of-MDPS)
-* [Dependencies](#Dependencies)
-* [Configuration of MDPS](#Configuration-of-MDPS)
-* [Directory structure](#Directory-structure)
-* [Processing SDR output](#Processing-SDR-output)
-* [Changelog](#changelog)
-* [Getting Help](#getting-help)
-* [Acknowledgements](#acknowledgements)
+- [Capabilities of MDPS](#capabilities-of-mdps)
+- [Dependencies](#dependencies)
+- [Configuration of MDPS](#configuration-of-mdps)
+- [Directory structure](#directory-structure)
+- [Processing SDR output](#processing-sdr-output)
+- [Monitoring](#monitoring)
+- [Changelog](#changelog)
+- [Getting Help](#getting-help)
+- [Acknowledgements](#acknowledgements)
 
 ## Capabilities of MDPS
 MDPS is maser data processing suite, with user friendly GUI. Currently it allows users to perform:
@@ -35,54 +33,26 @@ MDPS is maser data processing suite, with user friendly GUI. Currently it allows
   - mplcursors 0.3
   - jplephem 2.14
   - configparser 5.0.0
+- de435.bsp(https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de435.bsp)
 
 ## Configuration of MDPS
-MDPS consist of two configuration files: 1) config.cfg, 2) plot.cfg, both are located in directory config. Configuration file plot.cfg have only one section main that contain matplotlib configuration see more in https://matplotlib.org/3.2.1/tutorials/introductory/customizing.html. Configuration file config.cfg have these sections paths, parameters, velocities, sources, cuts, base_frequencies_SDR, base_frequencies_DBBC, stations, gauss_lines, Full_source_name. The paths sections contains all of the data input and output paths. The parameters section are collection of hard coded parameters used in data processing. The velocities section is to use to find local maximum that are monitored. The section sources contains RA, DEC and epoch for observed source. The cuts section is signal regions that are used to compute signal to noise. The sections base_frequencies_SDR and base_frequencies_DBBC is used to compute Dopler effect. The section stations contains stations coordinates. The section gauss_lines is used to compute Gauss approximation of spectre. The section Full_source_name is used for visualize data. 
+MDPS consist of two configuration files: 1) config.cfg, 2) plot.cfg, both are located in directory config. Configuration file plot.cfg have only one section _main_ that contain matplotlib configuration see more in https://matplotlib.org/3.2.1/tutorials/introductory/customizing.html. Configuration file config.cfg have these _sections paths, parameters, velocities, sources, cuts, base_frequencies_SDR, base_frequencies_DBBC, stations, gauss_lines, Full_source_name_. The _paths_ sections contains all of the data input and output paths. The _parameters_ section are collection of hard coded parameters used in data processing. The _velocities_ section is to use to find local maximum that are monitored. The section _sources_ contains RA, DEC and epoch for observed source. The _cuts_ section is signal regions that are used to compute signal to noise. The sections _base_frequencies_SDR and base_frequencies_DBBC_ is used to compute Dopler effect. The section _stations_ contains stations coordinates. The section _gauss_lines_ is used to compute Gauss approximation of spectre. The section _Full_source_name_ is used for visualize data. 
 
 ## Directory structure
-MDPS use 5 (dataFilePath, logPath, outputFilePath, resultFilePath, prettyLogsPath) different directories. The directory dataFilePath contains SDR output, directory logPath contain SDR logs, directory outputFilePath contain script sdr_fs.py and script total_spectrum_analyzer_qt5.py outputs, directory resultFilePath contains monitoring files, directory prettyLogsPath contains ExperimentsLogReader output products.
+MDPS use 5 (**dataFilePath**, **logPath**, **outputFilePath**, **resultFilePath**, **prettyLogsPath**) different directories. The directory dataFilePath contains SDR output, directory logPath contain SDR logs, directory outputFilePath contain script _sdr_fs.py_ and script _total_spectrum_analyzer_qt5.py_ outputs, directory resultFilePath contains monitoring files, directory prettyLogsPath contains ExperimentsLogReader output products.
 
 ## Processing SDR output
-SDR for each scan creates four files **r0** **r1** **s0** **s1**. File name is &lt;source&gt; __f&lt;frequency&gt; _&lt; &lt;station label&gt; _&lt;iteration&gt; _no&lt;scan number&gt;&lt;r0, r1, s0, s1&gt;.dat file type is ASCII. 
-Script sdr_fs.py us frequency shifting algorithm described by publication: 
+SDR for each scan creates four files **r0** **r1** **s0** **s1**. File name is &lt;source&gt; __f&lt;frequency&gt; _&lt;station label&gt; _&lt;iteration&gt; _no&lt;scan number&gt;&lt;r0, r1, s0, s1&gt;.dat file type is ASCII. 
+Script _sdr_fs.py_ us frequency shifting algorithm described by publication: 
 * Winkel, B., Kraus, A. and Bach, U., 2012. Unbiased flux calibration methods for spectral-line radio observations. Astronomy & Astrophysics, 540, p.A140. (https://www.aanda.org/articles/aa/pdf/2012/04/aa18092-11.pdf)
 
-SDR back-end is described in this publication:
+VIRAC SDR back-end is described in this publication:
 * M. Bleiders et al., Spectral Line Registration Back-end based on USRP X300 Software Defined Radio, Journal of Astronomical Instrumentation, doi: 10.1142/S22511717205000099, 2020.
 (https://www.worldscientific.com/doi/abs/10.1142/S2251171720500099)
 
-It creates output file with name  &lt;source&gt; _&lt;Day&gt; _&lt;Month&gt; _&lt;Year&gt; _&lt;Hour&gt; :&lt;Minute&gt; :&lt;Seconde&gt; _&lt;station name&gt; _&lt;iteration&gt;.h5 that file, has hdf5 format. With table amplitude, that have colons velocity, amplitude for left and right polarization. 
+It creates output file with name  &lt;source&gt; _&lt;MJD&gt; _&lt;station name&gt; _&lt;iteration&gt;.h5 that file, has hdf5 format. With table amplitude, that have colons velocity and amplitude for left and right polarization. 
 
-Script sdr_fs.py it average all scans, smooth data and create output for monitoring. It append sdr_fs.py output with these tables amplitude_corrected, amplitude_corrected_not_smooht.
-Script sdr_fs.py have these: source, line, iteration_number and log_file mandatory parameters. Parameter source is observed source, line is observed frequency, iteration_number is observation iteration number and parameter log_file is log file generated by SDR.
-
-The sdr_fs.py script can be run with additional options:
-
--v or --version to display current version
-
--h or --help for help
-
--c or --config to point to configuration file. Default path is: config/config.cfg
-
-
-Script total_spectrum_analyzer_qt5.py have mandatory parameters datafile and line. Parameter datafile is output of script sdr_fs.py. Parameter line is observed frequency. 
-
-The total_spectrum_analyzer_qt5.py script can be run with additional options:
-
--v or --version to display current version
-
--h or --help for help
-
--c or --config to point to configuration file. Default path is: config/config.cfg
-
--r or --rawdata data will not be smoothed 
-
--t or --calibType Type of calibration SDR od DBBC. Default is SDR. 
-
--tr or --threshold threshold for outlier filter
-           
--f or --filter Set the amount of times to filter data to remove noise spikes [0 - 10]. Default is 0.
-
+Script _total_spectrum_analyzer_qt5.py_  smooth data and create output for monitoring. It appends _sdr_fs.py_ output with these tables amplitude_corrected, amplitude_corrected_not_smooht.
 
 The main.py script have source and line mandatory parameters. 
 The main.py script can be run with additional options:
@@ -98,6 +68,10 @@ The main.py script can be run with additional options:
 | main.py | Automatically call sdr_fs.py and total_spectrum_analyzer_qt5.py |
 | sdr_fs.py | Process four output files from SDR |
 | total_spectrum_analyzer_qt5.py | Process sdr_fs.py output|
+
+## Monitoring
+
+To view monitoring script _monitoring.py_ must be executed, this script has no parametrs. After executing this script users will see GUI form that will ask to set observed source and frequency, after user will see flux density (Jy) of average polarization as function of time. By clicking on each point user will see spectre of that observation. User have options to change polarizations from average to left or right. User also two other options _plot periods_ and _plot maps_. The option _plot periods_ show _Lomb-Scargle Periodogram_ using https://docs.astropy.org/en/stable/api/astropy.timeseries.LombScargle.html. The option _plot maps_ create map of monitoring x axis is velocity, y axis is time color is flux density (Jy).   
 
 ## Changelog
 
