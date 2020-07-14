@@ -9,7 +9,7 @@ import sys
 import os
 import re
 import argparse
-import datetime
+from datetime import datetime
 from functools import reduce
 import scipy.constants
 import numpy as np
@@ -481,7 +481,7 @@ class Analyzer(QWidget):
             scan_number = self.scan_pairs[p][0][0]
             scan_1 = self.logs[str(scan_number)]
             string_time = scan_1["date"].replace("T", " ")
-            t = datetime.datetime.strptime(scan_1["date"], '%Y-%m-%dT%H:%M:%S')
+            t = datetime.strptime(scan_1["date"], '%Y-%m-%dT%H:%M:%S')
             time = t.isoformat()
             date = Time(time, format='isot', scale='utc')
 
@@ -597,25 +597,29 @@ class Analyzer(QWidget):
         self.plot_tsys.plot(time, self.tsys_s_left_list, '*g', label="Tsys_s_left")
         self.plot_tsys.plot(time, self.tsys_s_right_list, '*y', label="Tsys_s_right")
 
-        # source_day_Month_year_houre:minute:righte_station_iteration.dat
         day = scan_1["date"].split("-")[2][0:2]
         month = scan_1["date"].split("-")[1]
         months = {"Jan": "1", "Feb": "2", "Mar": "3", "Apr": "4", "May": "5",
                   "Jun": "6", "Jul": "7", "Aug": "8", "Sep": "9", "Oct": "10",
                   "Nov": "11", "Dec": "12"}
+
         month = list(months.keys())[int(month) - 1]
         year = scan_1["date"].split("-")[0]
         hour = scan_1["date"].split("T")[1].split(":")[0]
         minute = scan_1["date"].split("T")[1].split(":")[1]
-        right = scan_1["date"].split("T")[1].split(":")[2]
+        second = scan_1["date"].split("T")[1].split(":")[2]
 
         if not os.path.exists(get_configs("paths", "outputFilePath") + "/" + get_args("line")):
             os.makedirs(get_configs("paths", "outputFilePath") + "/" + get_args("line"))
 
+        mjd = Time(datetime.strptime(day + "_" + month + "_" + year + "_" +
+                                     hour + ":" + minute + ":" + second,
+                                     "%d_%b_%Y_%H:%M:%S").isoformat(), format='isot').mjd
+
         result_file_name = get_configs("paths", "outputFilePath") + "/" + \
                            get_args("line") + "/" + \
-                           get_args("source") + "_" + day + "_" + month + "_" + year + "_" + \
-                           hour + ":" + minute + ":" + right + "_" + station + "_" + \
+                           get_args("source") + "_" + str(mjd) + "_" + \
+                           station + "_" + \
                            get_args("iteration_number") + ".h5"
 
         result_file = h5py.File(result_file_name, "w")

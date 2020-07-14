@@ -8,7 +8,6 @@ import sys
 import os
 import argparse
 import json
-from datetime import datetime
 from multiprocessing import Pool
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, QGridLayout, \
     QPushButton, QLabel, QLineEdit, QSlider, QLCDNumber, QMessageBox
@@ -20,7 +19,6 @@ import h5py
 import numpy as np
 import pandas as pd
 from astropy.convolution import Gaussian1DKernel, convolve
-from astropy.time import Time
 import peakutils
 from parsers.configparser_ import ConfigParser
 from utils.help import indexies, compute_gauss
@@ -866,18 +864,17 @@ class Analyzer(QWidget):
         """
         result_file_name = self.source + "_" + self.line + ".json"
         result_file_path = get_configs("paths", "resultFilePath")
-        expername = self.data_file.split("/")[-1].split(".")[0]
+        expername = ".".join([self.data_file.split("/")[-1].split(".")[0],
+                             self.data_file.split("/")[-1].split(".")[1]])
+        print(expername)
         source_velocities = get_configs('velocities',
                                         self.source + "_" +
                                         str(self.line)).replace(" ", "").split(",")
         index_range_for_local_maxima = int(get_configs('parameters',
                                                        "index_range_for_local_maxima"))
-        date = "_".join([self.data_file.split("/")[-1].split(".")[0].split("_")[1],
-                         self.data_file.split("/")[-1].split(".")[0].split("_")[2],
-                         self.data_file.split("/")[-1].split(".")[0].split("_")[3]])
-        time_tmp = self.data_file.split("/")[-1].split(".")[0].split("_")[-3]
-        location = self.data_file.split("/")[-1].split(".")[0].split("_")[-2]
-        iteration_number = self.data_file.split("/")[-1].split(".")[0].split("_")[-1]
+        mjd = expername.split("_")[1]
+        location = expername.split("_")[2]
+        iteration_number = expername.split("_")[3]
         gauss_lines = get_configs("gauss_lines",
                                   self.source + "_" + get_args("line")).replace(" ", "").split(",")
 
@@ -926,21 +923,9 @@ class Analyzer(QWidget):
             max_apmlitudes_uavg[maximum] = \
                 [source_velocities[maximum], max_apmlitudes_uavg[maximum]]
 
-        time = time_tmp + "_" + date.replace(" ", "_")
-        try:
-            time2 = datetime.strptime(time, "%H:%M:%S_%d_%b_%Y").isoformat()
-            time3 = Time(time2, format='isot')
-            mjd = time3.mjd
-            result[expername]["modifiedJulianDays"] = mjd
-        except ValueError as error:
-            print("Cannot crate modified Julian Days", error)
-        except:
-            print("Unexpected error:", sys.exc_info()[0])
-
+        result[expername]["modifiedJulianDays"] = mjd
         result[expername]["location"] = location
-        result[expername]["Date"] = date
         result[expername]["Iteration_number"] = int(iteration_number)
-        result[expername]["time"] = time_tmp
         result[expername]["specie"] = self.specie
 
         result[expername]["polarizationU1"] = max_apmlitudes_u1

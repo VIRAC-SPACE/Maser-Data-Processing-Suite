@@ -168,7 +168,7 @@ def main():
         if output_file.split(".")[0].split("_")[-1] not in processed_iteration:
             if output_file.startswith(source_name):
                 LOGGER.info("Executing python3 " +
-                            "total_spectrum_analyer_qt5.py " + output_file + " " + line)
+                            "total_spectrum_analyzer_qt5.py " + output_file + " " + line)
                 os.system("python3 " +
                           "total_spectrum_analyzer_qt5.py " + output_file + " " + line)
 

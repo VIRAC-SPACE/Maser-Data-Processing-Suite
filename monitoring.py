@@ -4,16 +4,18 @@
 """
 Monitoring tool
 """
+import math
 
 import sys
 import os
 import argparse
 import json
 import numpy as np
-from numpy import genfromtxt
 from scipy.interpolate import griddata
 from astropy.timeseries import LombScargle
 from astropy.io import ascii
+from astropy.time import Time
+from matplotlib.ticker import MaxNLocator
 import h5py
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, \
     QGridLayout, QLabel, QLineEdit, QComboBox, QPushButton, QGroupBox
@@ -66,7 +68,7 @@ def create_label(experiment):
     :return: label for monitoring view cursor
     """
     return "Station is " + experiment.location.lower() + "\n" + "Date is " + \
-           " ".join(experiment.Date.split("_")) + "\n" + "Iteration number " + \
+           Time(experiment.modifiedJulianDays, format='mjd').strftime('%d %b %Y') + "\n" + "Iteration number " + \
            str(experiment.Iteration_number) + "\n" + "Specie " + \
            experiment.specie + "\n" + "Type " + experiment.type
 
@@ -194,7 +196,7 @@ class MonitoringView(PlottingView):
                             for experiment in result_data]
         if self.flag == "Not Flag":
             self.experiments = [e for e in self.experiments if not e.flag]
-        self.experiments.sort(key=lambda e: e.modifiedJulianDays)
+        self.experiments.sort(key=lambda e: np.float(e.modifiedJulianDays))
         labels2 = [create_label(e) for e in self.experiments]
 
         self.monitoring_plot = Plot()
@@ -203,7 +205,7 @@ class MonitoringView(PlottingView):
 
         symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
         colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
-        self.dates = [e.modifiedJulianDays for e in self.experiments]
+        self.dates = [np.float(e.modifiedJulianDays) for e in self.experiments]
         self.source_velocities = get_configs('velocities', self.source + "_" + self.line).split(",")
         self.source_velocities = [x.strip() for x in self.source_velocities]
         monitoring_results = [[self.dates]]
@@ -511,8 +513,8 @@ class SpecterView(PlottingView):
             data = h5py.File(spectre_file, 'r')['amplitude_corrected'][()]
             x = data[:, 0]
             y = data[:, amplitude_colon]
-            tmp = spectre_file.split("/")[-1].split(".")[0].split("_")
-            plot_name = " ".join([tmp[4], tmp[1], tmp[2], tmp[3]])
+            plot_name = ".".join([spectre_file.split("/")[-1].split(".")[0],
+                                  spectre_file.split("/")[-1].split(".")[1]])
             if plot_name not in self.plot_set:
                 self.specter_plot.plot(x, y, symbols[index], label=plot_name)
                 self.plot_set.add(plot_name)
@@ -575,6 +577,7 @@ class PeriodView(PlottingView):
         frequency, power = ls.autopower(method='fastchi2', normalization='model',
                                         nyquist_factor=nyquist_factor,
                                         minimum_frequency=minimum_frequency,
+                                        #maximum_frequency=maximum_frequency,
                                         samples_per_peak=20)
 
         false_alarm = ls.false_alarm_probability(power.max(), method="bootstrap",
@@ -624,11 +627,9 @@ class MapsView(PlottingView):
         else:
             _, _, velocity, observed_flux, observed_time = self.get_max_min_velocity(vmin, vmax)
 
-        print(observed_time)
-
         vrange = vmax - vmin
 
-        x = np.arange(vmax, vmin, 0.01)
+        x = np.arange(vmin, vmax, 0.01)
         y = np.arange(0, days, 0.5)
         X, Y = np.meshgrid(x, y)
         Z = griddata((velocity, observed_time), observed_flux, (X[:], Y[:]), method='linear')
@@ -638,6 +639,10 @@ class MapsView(PlottingView):
                                + str(observed_time[0]), None, (1, 0), "log")
         lvls = np.linspace(int(np.min(observed_flux)), int(np.max(observed_flux)), 10)
         cs = self.map_plot.contourf(X, Y, Z, levels=lvls)
+        cbar = self.map_plot.colorbar(cs)
+        cbar.set_clim(vmin=0)  # ,vmax=max_flux_limit
+        cbar.ax.set_ylabel(r'$Flux~(\mathrm{Jy})$')
+        cbar.locator = MaxNLocator(nbins=50)
 
         self.add_widget(self.map_plot, 0, 0)
 
@@ -664,11 +669,11 @@ class MapsView(PlottingView):
                     if vmin <= velocity[i] <= vmax:
                         velocity_.append(velocity[i])
                         observed_flux.append(amplitude[i])
-                        observed_time.append(mjd)
+                        observed_time.append(np.float(mjd))
                 else:
                     velocity_.append(velocity[i])
                     observed_flux.append(amplitude[i])
-                    observed_time.append(mjd)
+                    observed_time.append(np.float(mjd))
 
         return max(max_velocitys), min(min_velocitys), velocity_, observed_flux, observed_time
 
