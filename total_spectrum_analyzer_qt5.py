@@ -854,7 +854,6 @@ class Analyzer(QWidget):
         result_file_path = get_configs("paths", "resultFilePath")
         expername = ".".join([self.data_file.split("/")[-1].split(".")[0],
                              self.data_file.split("/")[-1].split(".")[1]])
-        print(expername)
         source_velocities = get_configs('velocities',
                                         self.source + "_" +
                                         str(self.line)).replace(" ", "").split(",")

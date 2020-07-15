@@ -2,6 +2,8 @@
  embedded pyqt5 GUI to matplotlib
 """
 from __future__ import unicode_literals
+
+import os
 import matplotlib
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib.backends.backend_qt5agg as qt5agg
@@ -13,10 +15,12 @@ import numpy as np
 from PyQt5 import QtWidgets
 from parsers.configparser_ import ConfigParser
 
-CONFIG_PARSER = ConfigParser("config/plot.cfg")
-CONFIG_ITEMS = CONFIG_PARSER.get_items("main")
-for key, value in CONFIG_ITEMS.items():
-    rcParams[key] = value
+if os.path.exists("config/plot.cfg"):
+    CONFIG_PARSER = ConfigParser("config/plot.cfg")
+    CONFIG_ITEMS = CONFIG_PARSER.get_items("main")
+    for key, value in CONFIG_ITEMS.items():
+        rcParams[key] = value
+
 matplotlib.use('Qt5Agg')
 
 
