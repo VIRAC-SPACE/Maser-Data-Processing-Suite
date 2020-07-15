@@ -4,11 +4,11 @@
 """
 creates spectre movie
 """
-import subprocess
 
 import sys
 import os
 import argparse
+import subprocess
 import json
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon
@@ -31,8 +31,8 @@ def parse_arguments():
 
     :return: dict with passed args to script
     """
-    parser = argparse.ArgumentParser(description='''Monitoring spectre change in time. ''',
-                                     epilog="""Monitor Spectre.""")
+    parser = argparse.ArgumentParser(description='''Monitoring spectr change in time. ''',
+                                     epilog="""Monitor Spectr.""")
     parser.add_argument("source", help="Source Name", type=str)
     parser.add_argument("line", help="line", type=int)
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="../config/config.cfg")
@@ -116,8 +116,8 @@ class SpectreTime(QWidget):
         """
         file_name = self.output_path + self.sorted_file_names[self.index]
         data = h5py.File(file_name, 'r')['amplitude_corrected'][()]
-        xdata = data[:, [0]]
-        ydata = data[:, [3]]
+        xdata = data[:, 0]
+        ydata = data[:, 3]
 
         modified_julian_days = file_name.split("_")[1]
         date = Time(modified_julian_days, format='mjd').strftime('%d %b %Y')
