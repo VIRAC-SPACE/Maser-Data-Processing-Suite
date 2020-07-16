@@ -33,6 +33,7 @@ MDPS is maser data processing suite, with user friendly GUI. Currently it allows
   - mplcursors 0.3
   - jplephem 2.14
   - configparser 5.0.0
+  - tabulate 0.8.7
 - de435.bsp(https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de435.bsp)
 
 ## Configuration of MDPS

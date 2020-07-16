@@ -178,8 +178,8 @@ def main():
             ax2.plot(rt32_x, rt32_y, symbols[index], c=colors[index], linewidth=0.5, markersize=10)
             ax2.errorbar(xdata[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')
 
-    ax1.yaxis.set_ticks_position( 'both' )
-    ax1.xaxis.set_ticks_position( 'both' )
+    ax1.yaxis.set_ticks_position('both')
+    ax1.xaxis.set_ticks_position('both')
     ax1.tick_params(axis="x", direction="in",
                     which="both", length=16,
                     width=2, labelsize=12,

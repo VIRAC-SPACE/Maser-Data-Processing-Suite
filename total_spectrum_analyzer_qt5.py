@@ -796,50 +796,49 @@ class Analyzer(QWidget):
         three_sigma_u1 = 3 * np.std(self.polyu1)
         three_sigma_u9 = 3 * np.std(self.polyu9)
         polyu_avg = (self.polyu1 + self.polyu9) / 2
-        self.avg_y = (self.z1 + self.z2) / 2
         three_sigma_uavg = 3 * np.std(polyu_avg)
 
-        smart_tres_u1 = 2.5 * three_sigma_u1 / np.max(self.z1)
-        smart_tres_u9 = 2.5 * three_sigma_u9 / np.max(self.z2)
-        smart_tres_uavg = 2.5 * three_sigma_uavg / np.max(self.avg_y)
+        smart_tres_u1 = 2.5 * three_sigma_u1 / np.max(self.z1_smooht_data)
+        smart_tres_u9 = 2.5 * three_sigma_u9 / np.max(self.z2_smooht_data)
+        smart_tres_uavg = 2.5 * three_sigma_uavg / np.max(self.avg_y_smooht_data)
 
         # indexsu apreikinasana
-        indexes_for_ceb = peakutils.indexes(self.z1, thres=smart_tres_u1, min_dist=3)
-        indexes_for_ceb2 = peakutils.indexes(self.z2, thres=smart_tres_u9, min_dist=3)
-        indexes_for_avg = peakutils.indexes(self.avg_y, thres=smart_tres_uavg, min_dist=3)
+        indexes_for_ceb = peakutils.indexes(self.z1_smooht_data, thres=smart_tres_u1, min_dist=3)
+        indexes_for_ceb2 = peakutils.indexes(self.z2_smooht_data, thres=smart_tres_u9, min_dist=3)
+        indexes_for_avg = peakutils.indexes(self.avg_y_smooht_data, thres=smart_tres_uavg, min_dist=3)
 
         # u1
         self.plot_7 = Plot()
         self.plot_7.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
                               'Flux density (Jy)', "Left Polarization", (1, 0), "linear")
-        self.plot_7.plot(self.xdata, self.z1,
+        self.plot_7.plot(self.xdata, self.z1_smooht_data,
                          'b', label='Signal - polynomial', markersize=1)
         self.plot_7.plot(self.xdata[indexes_for_ceb],
-                         self.z1[indexes_for_ceb],
+                         self.z1_smooht_data[indexes_for_ceb],
                          'dr', label="Local Maximums for signal", markersize=2)
-        self.plot_7.annotations(self.xdata[indexes_for_ceb], self.z1[indexes_for_ceb])
+        self.plot_7.annotations(self.xdata[indexes_for_ceb],self.z1_smooht_data[indexes_for_ceb])
 
         # u9
         self.plot_8 = Plot()
         self.plot_8.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
                               'Flux density (Jy)', "Right Polarization", (1, 1), "linear")
-        self.plot_8.plot(self.xdata, self.z2,
+        self.plot_8.plot(self.xdata, self.z2_smooht_data,
                          'b', label='Signal - polynomial', markersize=1)
         self.plot_8.plot(self.xdata[indexes_for_ceb2],
-                         self.z2[indexes_for_ceb2],
+                         self.z2_smooht_data[indexes_for_ceb2],
                          'dr', label="Local Maximums for signal", markersize=2)
-        self.plot_8.annotations(self.xdata[indexes_for_ceb2], self.z2[indexes_for_ceb2])
+        self.plot_8.annotations(self.xdata[indexes_for_ceb2], self.z2_smooht_data[indexes_for_ceb2])
 
         # uAVG
         self.plot_9 = Plot()
         self.plot_9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
                               'Flux density (Jy)', "Average Polarization", (1, 2), "linear")
-        self.plot_9.plot(self.xdata, self.avg_y,
+        self.plot_9.plot(self.xdata, self.avg_y_smooht_data,
                          'b', label='Signal - polynomial', markersize=1)
         self.plot_9.plot(self.xdata[indexes_for_avg],
-                         self.avg_y[indexes_for_avg],
+                         self.avg_y_smooht_data[indexes_for_avg],
                          'dr', label="Local Maximums for signal", markersize=2)
-        self.plot_9.annotations(self.xdata[indexes_for_avg], self.avg_y[indexes_for_avg])
+        self.plot_9.annotations(self.xdata[indexes_for_avg], self.avg_y_smooht_data[indexes_for_avg])
 
         self.grid.addWidget(self.plot_7, 0, 0)
         self.grid.addWidget(self.plot_8, 0, 1)
@@ -893,9 +892,9 @@ class Analyzer(QWidget):
             max_amplitude_list_tmp_uavg = list()
             for i in range(index - index_range_for_local_maxima,
                            index + index_range_for_local_maxima):
-                max_amplitude_list_tmp_u1.append(self.z1[i])
-                max_amplitude_list_tmp_u9.append(self.z2[i])
-                max_amplitude_list_tmp_uavg.append(self.avg_y[i])
+                max_amplitude_list_tmp_u1.append(self.z1_smooht_data[i])
+                max_amplitude_list_tmp_u9.append(self.z2_smooht_data[i])
+                max_amplitude_list_tmp_uavg.append(self.avg_y_smooht_data[i])
             max_amplitude_list_u1.append(max_amplitude_list_tmp_u1)
             max_amplitude_list_u9.append(max_amplitude_list_tmp_u9)
             max_amplitude_list_uavg.append(max_amplitude_list_tmp_uavg)
