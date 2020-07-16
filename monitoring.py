@@ -208,7 +208,7 @@ class MonitoringView(PlottingView):
         self.dates = [np.float(e.modifiedJulianDays) for e in self.experiments]
         self.source_velocities = get_configs('velocities', self.source + "_" + self.line).split(",")
         self.source_velocities = [x.strip() for x in self.source_velocities]
-        monitoring_results = [[self.dates]]
+        monitoring_results = [np.array([self.dates])]
         self.iterations = [e.Iteration_number for e in self.experiments]
 
         self.line_dict = {"left": list(),
@@ -228,7 +228,7 @@ class MonitoringView(PlottingView):
                                            symbols[i] + colors[i], fontsize=8,
                                            label="Velocity " + self.source_velocities[i],
                                            visible=True, picker=5)
-            monitoring_results.append([e.polarizationAVG[i][1] for e in self.experiments])
+            monitoring_results.append(np.array([e.polarizationAVG[i][1] for e in self.experiments]))
 
             self.lines.append(l1)
             self.lines.append(l2)

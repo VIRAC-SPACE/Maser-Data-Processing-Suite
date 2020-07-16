@@ -104,7 +104,8 @@ def read_monitoring_files(monitoring_files, sources):
 
         for c in range(1, column_nr+1):
             if c - 1 in idexie_for_lines_to_plot:
-                tmp = divide_list_with_num(np.load(file, allow_pickle=True), np.mean(np.load(file, allow_pickle=True)))
+                print(np.load(file, allow_pickle=True))
+                tmp = np.load(file, allow_pickle=True) / np.mean(np.load(file, allow_pickle=True))
                 lines[source]["y_data"].append(tmp)
 
     return lines
