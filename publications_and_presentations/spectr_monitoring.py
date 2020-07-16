@@ -31,7 +31,7 @@ def parse_arguments():
 
     :return: dict with passed args to script
     """
-    parser = argparse.ArgumentParser(description='''Monitoring velocity amplitudes in time. ''', epilog="""Monitor.""")
+    parser = argparse.ArgumentParser(description='''Monitoring velocity amplitudes in time. ''')
     parser.add_argument("source", help="Source Name", type=str)
     parser.add_argument("line", help="line", type=int)
     parser.add_argument("-b", "--base", help="Base component", type=int, default=-1)
@@ -130,10 +130,10 @@ def main():
 
     for spectr_file in spectr_files:
         file = get_configs("paths", "outputFilePath") + "/" + get_args("line") + "/" + spectr_file
-        spectre_data = h5py.File(file, 'r')['amplitude_corrected'][()]
+        spectr_data = h5py.File(file, 'r')['amplitude_corrected'][()]
 
-        xdata_ = spectre_data[:, 0]
-        ydata_ = spectre_data[:, 3]
+        xdata_ = spectr_data[:, 0]
+        ydata_ = spectr_data[:, 3]
 
         ax1.plot(xdata_, ydata_, symbols_2[i])
         i += 1

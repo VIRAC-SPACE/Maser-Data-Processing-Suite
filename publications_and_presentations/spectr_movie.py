@@ -31,8 +31,7 @@ def parse_arguments():
 
     :return: dict with passed args to script
     """
-    parser = argparse.ArgumentParser(description='''Monitoring spectr change in time. ''',
-                                     epilog="""Monitor Spectr.""")
+    parser = argparse.ArgumentParser(description='''Monitoring spectr change in time. ''')
     parser.add_argument("source", help="Source Name", type=str)
     parser.add_argument("line", help="line", type=int)
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="../config/config.cfg")
