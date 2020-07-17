@@ -120,13 +120,3 @@ def compute_gauss(xarray, avg_y_not_smooht_data, gauss_lines):
 
         return (gaussian_areas, sts, gg_fit, velocity, ampvid,
                 gauss_lines, gaussiana_amplitudes, gaussiana_mean, gaussiana_std)
-
-
-def divide_list_with_num(lst, num):
-    """
-
-    :param lst: list
-    :param num: number
-    :return: list divided by number
-    """
-    return [x / num for x in lst]
