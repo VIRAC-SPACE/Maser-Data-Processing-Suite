@@ -206,7 +206,6 @@ def main():
 
     t = Time(x, format='mjd', scale='utc', out_subfmt='date')
     t.format = 'isot'
-    newvalues = [datetime.strptime(i.value, "%Y-%m-%d") for i in t]
 
     fig.autofmt_xdate()
     plt.yscale("log")
@@ -219,7 +218,7 @@ def main():
                     length=16, width=2, labelsize=12)
     ax1.tick_params(axis="y", direction="in",
                     which="minor", length=10, width=1.5)
-    y_ticks = list(set(y_ticks))
+
     ax1.grid(False)
     plt.xticks(rotation=0, ha='right')
     plt.show()

@@ -76,14 +76,14 @@ def main():
                          "cepa_58836.88149305555_IRBENE_1258.h5",
                          "cepa_58836.889375_IRBENE_1260.h5"]
 
-    spectr_files_for_all_sourses = [spectr_files_cepa]
+    spectr_files_for_all_sources = [spectr_files_cepa]
 
     density_low = []
     density_middle = []
     density_high = []
     file_name_index = 0
 
-    for source in spectr_files_for_all_sourses:
+    for source in spectr_files_for_all_sources:
         for file_name in source:
             file = get_configs("paths", "outputFilePath") + "/6668/" + file_name
             spectr_data = h5py.File(file, 'r')['amplitude_corrected'][()]
