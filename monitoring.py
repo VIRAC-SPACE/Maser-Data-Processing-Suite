@@ -614,6 +614,7 @@ class MapsView(PlottingView):
         self.source = source
         self.line = line
         self.output_files = os.listdir(get_configs("paths", "outputFilePath") + self.line)
+        self.output_files = [of for of in self.output_files if of.startswith(self.source)]
 
         days = self.mjd[-1] - self.mjd[0]
         sources_vrange = ascii.read('DB_vrange.csv')
