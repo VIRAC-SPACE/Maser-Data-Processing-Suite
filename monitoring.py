@@ -4,17 +4,16 @@
 """
 Monitoring tool
 """
-import math
-
 import sys
 import os
 import argparse
 import json
 import numpy as np
-from scipy.interpolate import griddata
+from matplotlib import ticker
 from astropy.timeseries import LombScargle
 from astropy.io import ascii
 from astropy.time import Time
+import matplotlib.tri as mtri
 from matplotlib.ticker import MaxNLocator
 import h5py
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, \
@@ -628,23 +627,20 @@ class MapsView(PlottingView):
         else:
             _, _, velocity, observed_flux, observed_time = self.get_max_min_velocity(vmin, vmax)
 
-        vrange = vmax - vmin
-
-        x = np.arange(vmin, vmax, 0.01)
-        y = np.arange(0, days, 0.5)
-        X, Y = np.meshgrid(x, y)
-        Z = griddata((velocity, observed_time), observed_flux, (X[:], Y[:]), method='linear')
+        triang = mtri.Triangulation(velocity, observed_time)
 
         self.map_plot = Plot()
         self.map_plot.creatPlot(self.grid, "Velocity (km/s)", "JD (days) -  "
-                               + str(observed_time[0]), None, (1, 0), "log")
+                                + str(observed_time[0]), None, (1, 0), "log")
         lvls = np.linspace(int(np.min(observed_flux)), int(np.max(observed_flux)), 10)
-        cs = self.map_plot.contourf(X, Y, Z, levels=lvls)
+        cs = self.map_plot.graph.tricontourf(triang, observed_flux, levels=lvls,
+                                             antialiased=True, Locator=ticker.LogLocator())
+        self.map_plot.graph.tricontour(triang, observed_flux, levels=lvls,
+                                        antialiased=True, Locator=ticker.LogLocator(), color="red")
         cbar = self.map_plot.colorbar(cs)
-        cbar.set_clim(vmin=0)  # ,vmax=max_flux_limit
+        cbar.set_clim(vmin=0)
         cbar.ax.set_ylabel(r'$Flux~(\mathrm{Jy})$')
         cbar.locator = MaxNLocator(nbins=50)
-
         self.add_widget(self.map_plot, 0, 0)
 
     def get_max_min_velocity(self, vmin, vmax):
