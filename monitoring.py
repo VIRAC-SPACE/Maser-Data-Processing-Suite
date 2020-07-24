@@ -628,20 +628,18 @@ class MapsView(PlottingView):
             _, _, velocity, observed_flux, observed_time = self.get_max_min_velocity(vmin, vmax)
 
         triang = mtri.Triangulation(velocity, observed_time)
-
         self.map_plot = Plot()
-        self.map_plot.creatPlot(self.grid, "Velocity (km/s)", "JD (days) -  "
-                                + str(observed_time[0]), None, (1, 0), "log")
-        lvls = np.linspace(int(np.min(observed_flux)), int(np.max(observed_flux)), 10)
+        self.map_plot.creatPlot(self.grid, "Velocity (km/s)", "MJD (days) -  "
+                                + str(days), None, (1, 0), "log")
+        lvls = np.linspace(int(np.min(observed_flux)), int(np.max(observed_flux)), 10000)
         cs = self.map_plot.graph.tricontourf(triang, observed_flux, levels=lvls,
                                              antialiased=True, Locator=ticker.LogLocator())
-        self.map_plot.graph.tricontour(triang, observed_flux, levels=lvls,
-                                        antialiased=True, Locator=ticker.LogLocator(), color="red")
         cbar = self.map_plot.colorbar(cs)
         cbar.set_clim(vmin=0)
         cbar.ax.set_ylabel(r'$Flux~(\mathrm{Jy})$')
-        cbar.locator = MaxNLocator(nbins=50)
+        cbar.locator = MaxNLocator()
         self.add_widget(self.map_plot, 0, 0)
+
 
     def get_max_min_velocity(self, vmin, vmax):
         max_velocitys = []
