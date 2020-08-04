@@ -111,4 +111,4 @@ This software was written by Jānis Šteinbergs under the supervision of Artis A
 
 This work is the result of project implementation: «Physical and chemical processes in the interstellar medium», No 1.1.1.1/16/A/213 supported by ERDF​.
 
-This work was supported by Latvian Council of Science Project Nr.: lzp-2018/1-0292.
+This work was supported by Latvian Council of Science Project “Research of Galactic Masers” Nr.: lzp-2018/1-0291.

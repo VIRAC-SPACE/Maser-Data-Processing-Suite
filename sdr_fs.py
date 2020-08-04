@@ -4,13 +4,13 @@
 """
 SDR output data processing tool
 """
-
 import sys
 import os
 import re
 import argparse
 from datetime import datetime
 from functools import reduce
+import warnings
 import scipy.constants
 import numpy as np
 from astropy.time import Time
@@ -22,6 +22,7 @@ from parsers.configparser_ import ConfigParser
 from utils.vlsr import lsr
 from utils.help import find_nearest_index
 from utils.ploting_qt5 import Plot
+warnings.filterwarnings("ignore")
 
 
 def parse_arguments():
@@ -80,40 +81,45 @@ def dopler(observed_frequency, velocity_receiver, base_frequency):
 def signal_to_noise_ratio(frequency, amplitude, cuts):
     """
 
-    :param frequency: frequency
+    :param frequency: velocity
     :param amplitude: amplitude
     :param cuts: signal region
     :return: signal to noise ratio
     """
+
     cuts_index = list()
     cuts_index.append(0)
+    cuts_index2 = list()
 
     for cut in cuts:
         cuts_index.append((np.abs(frequency - float(cut[0]))).argmin())
         cuts_index.append((np.abs(frequency - float(cut[1]))).argmin())
+        cuts_index2.append((np.abs(frequency - float(cut[0]))).argmin())
+        cuts_index2.append((np.abs(frequency - float(cut[1]))).argmin())
 
+    cuts_index = sorted(cuts_index)
     cuts_index.append(-1)
+    cuts_index2 = sorted(cuts_index2)
 
-    y_array = list()
+    non_signal_amplitude = list()
+    signal_amplitude = list()
 
     i = 0
     j = 1
-
     while i != len(cuts_index):
-        y_array.append(amplitude[cuts_index[i]: cuts_index[j]])
+        non_signal_amplitude.extend(amplitude[cuts_index[i]: cuts_index[j]])
         i = i + 2
         j = j + 2
 
-    non_signal_amplitude = list()
-
-    for point in y_array:
-        for point_one in point:
-            non_signal_amplitude.append(point_one)
-
-    non_signal_amplitude = np.array(non_signal_amplitude)
+    m = 0
+    n = 1
+    while m != len(cuts_index2):
+        signal_amplitude.extend(amplitude[cuts_index2[m]: cuts_index2[n]])
+        m = m + 2
+        n = n + 2
 
     std = np.std(non_signal_amplitude)
-    max_value = np.max(amplitude)
+    max_value = np.max(signal_amplitude)
 
     ston = max_value / (std * 3)
     return ston
@@ -366,8 +372,6 @@ class Analyzer(QWidget):
             file3 = self.data_dir + self.get_data_file_for_scan(pair[1][1])  # s1
             file4 = self.data_dir + self.get_data_file_for_scan(pair[1][0])  # r1
 
-            print("data files", file1, file2, file3, file4)
-
             frequency_a = get_data(file1)[0]  # r0
             p_sig_left = get_data(file1)[1]  # r0
             p_sig_right = get_data(file1)[2]  # r0
@@ -405,15 +409,6 @@ class Analyzer(QWidget):
             self.tsys_r_right_list.append(tsys_r_right)
             self.tsys_s_left_list.append(tsys_s_left)
             self.tsys_s_right_list.append(tsys_s_right)
-
-            ston_left = signal_to_noise_ratio(self.x, self.sf_left, self.cuts)
-            ston_right = signal_to_noise_ratio(self.x, self.sf_right, self.cuts)
-            stone_avg = signal_to_noise_ratio(self.x, ((np.array(self.sf_left) +
-                                                        np.array(self.sf_right)) / 2), self.cuts)
-
-            self.ston_list_left.append(ston_left)
-            self.ston_list_right.append(ston_right)
-            self.ston_list_avg.append(stone_avg)
 
             if self.index == len(self.scan_pairs) - 1:
                 self.next_pair_button.setText('Move to total results')
@@ -485,8 +480,6 @@ class Analyzer(QWidget):
             time = t.isoformat()
             date = Time(time, format='isot', scale='utc')
 
-            print("station_coordinates", station_coordinates)
-
             source_cordinations = get_configs("sources", get_args("source")).split(",")
             source_cordinations = [sc.strip() for sc in source_cordinations]
             RA = source_cordinations[0]
@@ -513,9 +506,9 @@ class Analyzer(QWidget):
             else:
                 dec_str = dec[0] + "d" + dec[1] + "m" + dec[2] + "s"
 
-            print("Vel Total params", ra_str, dec_str, date, string_time, x, y, z)
+            if p == 0:
+                print("Vel Total params", ra_str, dec_str, date, string_time, x, y, z)
             vel_total = lsr(ra_str, dec_str, date, string_time, x, y, z)
-            print("vel_total", vel_total)
 
             line = get_configs('base_frequencies_SDR', "f" +
                                get_args("line")).replace(" ", "").split(",")
@@ -523,13 +516,10 @@ class Analyzer(QWidget):
             line_s = line[1]
             specie = line_s
 
-            print("specie", specie, "\n")
             local_oscillator = float(self.logs["header"]["f_obs,LO,IF"][1])
             velocities = dopler((self.x + local_oscillator) * (10 ** 6), vel_total, line_f)
             velocity_list.append(velocities)
 
-            print("Velocity max value is", np.max(velocities),
-                  "velocity min value is ", np.min(velocities))
             velocity_max.append(np.max(velocities))
             velocity_min.append(np.min(velocities))
 
@@ -537,23 +527,17 @@ class Analyzer(QWidget):
         y__left_avg = []
         y__right_avg = []
 
-        print("Velocity minimum from max value is", np.min(velocity_max),
-              "velocity maximum for min value is ", np.max(velocity_min))
         left_cut = np.max(velocity_min)
         right_cut = np.min(velocity_max)
 
         for p in range(0, len(velocity_list)):
             index_left = find_nearest_index(velocity_list[p], left_cut)
             index_right = find_nearest_index(velocity_list[p], right_cut)
-            print("index left ", index_left, "index right", index_right)
-
             y__left_avg.append(self.sf_left[p][index_right:index_left])
             y__right_avg.append(self.sf_right[p][index_right:index_left])
             velocities_avg.append(velocity_list[p][index_right:index_left])
-            print(len(velocity_list[p][index_right:index_left]))
 
         max_points_count = np.max([len(m) for m in velocities_avg])
-        print("max_points_count", max_points_count)
         for s in range(0, len(velocity_list)):
 
             if len(velocities_avg[s]) < max_points_count:
@@ -564,6 +548,14 @@ class Analyzer(QWidget):
 
             if len(y__right_avg[s]) < max_points_count:
                 y__right_avg[s] = np.append(y__right_avg[s], 0)
+
+            ston_left = signal_to_noise_ratio(velocities, y__left_avg[s], self.cuts)
+            ston_right = signal_to_noise_ratio(velocities, y__right_avg[s], self.cuts)
+            stone_avg = signal_to_noise_ratio(velocities, ((np.array(y__left_avg[s]) +
+                                                            np.array(y__right_avg[s])) / 2), self.cuts)
+            self.ston_list_left.append(ston_left)
+            self.ston_list_right.append(ston_right)
+            self.ston_list_avg.append(stone_avg)
 
         velocities_avg = reduce(lambda x, y: x + y, velocities_avg)
         y__left_avg = reduce(lambda x, y: x + y, y__left_avg)
@@ -623,6 +615,7 @@ class Analyzer(QWidget):
                            get_args("iteration_number") + ".h5"
 
         result_file = h5py.File(result_file_name, "w")
+        print("output_file_name", result_file_name)
 
         sys_temp_out = np.transpose(np.array([time, self.tsys_r_left_list,
                                               self.tsys_r_right_list,
@@ -641,7 +634,7 @@ class Analyzer(QWidget):
         self.plot_ston = Plot()
         self.plot_ston.creatPlot(self.grid, 'Pair', 'Ratio', "Signal to Noise", (3, 1), "linear")
         self.plot_ston.plot(time, self.ston_list_left, '*r', label="left Polarization")
-        self.plot_ston.plot(time, self.ston_list_right, 'og', label="fight Polarization")
+        self.plot_ston.plot(time, self.ston_list_right, 'og', label="right Polarization")
         self.plot_ston.plot(time, self.ston_list_avg, 'vb', label="AVG Polarization")
 
         print("Average signal to noise for left polarization", np.mean(self.ston_list_left))
@@ -658,7 +651,6 @@ class Analyzer(QWidget):
                                                np.transpose(y__right_avg)]))
 
         result_file.create_dataset("amplitude", data=total_results)
-        print("specie", specie)
         specie = [specie.encode("ascii", "ignore")]
         result_file.create_dataset("specie", (len(specie),1),'S10', specie)
         result_file.close()
@@ -690,8 +682,6 @@ class Analyzer(QWidget):
         file3 = self.data_dir + self.get_data_file_for_scan(pair[1][1])  # s1
         file4 = self.data_dir + self.get_data_file_for_scan(pair[1][0])  # r1
 
-        print("data files", file1, file2, file3, file4)
-
         frequency_a, p_sig_left, p_sig_right = get_data(file1)  # s0
         frequency_b, p_ref_left, p_ref_right = get_data(file2)  # r0
         frequency_c, p_sig_on_left, p_sig_on_right = get_data(file3)  # s1
@@ -720,16 +710,6 @@ class Analyzer(QWidget):
         self.tsys_r_right_list.append(tsys_r_right)
         self.tsys_s_left_list.append(tsys_s_left)
         self.tsys_s_right_list.append(tsys_s_right)
-
-        ston_left = signal_to_noise_ratio(self.x, self.sf_left, self.cuts)
-        ston_right = signal_to_noise_ratio(self.x, self.sf_right, self.cuts)
-        stone_avg = signal_to_noise_ratio(self.x,
-                                          ((np.array(self.sf_left) + np.array(self.sf_right)) / 2),
-                                          self.cuts)
-
-        self.ston_list_left.append(ston_left)
-        self.ston_list_right.append(ston_right)
-        self.ston_list_avg.append(stone_avg)
 
         # plot1
         self.plot_start__left_a = Plot()
