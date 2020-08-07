@@ -609,7 +609,7 @@ class Analyzer(QWidget):
                                      "%d_%b_%Y_%H:%M:%S").isoformat(), format='isot').mjd
 
         result_file_name = get_configs("paths", "outputFilePath") + "/" + \
-                           get_args("line") + "/" + \
+                           get_args("line") + "/" + get_args("source") + "/" +\
                            get_args("source") + "_" + str(mjd) + "_" + \
                            station + "_" + \
                            get_args("iteration_number") + ".h5"

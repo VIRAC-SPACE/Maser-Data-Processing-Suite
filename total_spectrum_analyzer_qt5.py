@@ -31,8 +31,8 @@ def parse_arguments():
     :return: dict with passed args to script
     """
     parser = argparse.ArgumentParser(description='''plotting tool. ''', epilog="""PRE PLOTTER.""")
-    parser.add_argument("datafile", help="Experiment correlation file name", type=str)
-    parser.add_argument("line", help="Experiment correlation file name", type=int)
+    parser.add_argument("datafile", help="output file", type=str)
+    parser.add_argument("line", help="Observed frequency", type=int)
     parser.add_argument("-c", "--config", help="Configuration cfg file",
                         type=str, default="config/config.cfg")
     parser.add_argument("-t", "--calibType", help="Type of calibration", default="SDR")
@@ -240,12 +240,15 @@ class Analyzer(QWidget):
         self.avg_y = None
         self.polynomial_order = 3
         self.change_parms = False
-        self.data_file = get_configs("paths", "outputFilePath") + "/" + get_args("line") + "/" + get_args("datafile")
+        self.source = get_args("datafile").split(".")[0].split("_")[0]
+        self.data_file = get_configs("paths", "outputFilePath") + "/" + \
+                         get_args("line") + "/" + \
+                         self.source + "/" + \
+                         get_args("datafile")
         self.data, self.specie = get_data(self.data_file)
         self.xdata = self.data[:, 0]
         self.ydata_left = self.data[:, 1]
         self.ydata_right = self.data[:, 2]
-        self.source = self.data_file.split("/")[-1].split(".")[0].split("_")[0]
         self.line = get_args("line")
         self.cuts = get_configs('cuts', self.source + "_" + str(self.line)).split(";")
         self.cuts = [c.split(",") for c in self.cuts]
@@ -892,9 +895,9 @@ class Analyzer(QWidget):
             max_amplitude_list_tmp_uavg = list()
             for i in range(index - index_range_for_local_maxima,
                            index + index_range_for_local_maxima):
-                max_amplitude_list_tmp_u1.append(self.z1_smooht_data[i])
-                max_amplitude_list_tmp_u9.append(self.z2_smooht_data[i])
-                max_amplitude_list_tmp_uavg.append(self.avg_y_smooht_data[i])
+                max_amplitude_list_tmp_u1.append(self.z1_not_smooht_data[i])
+                max_amplitude_list_tmp_u9.append(self.z2_not_smooht_data[i])
+                max_amplitude_list_tmp_uavg.append(self.avg_y_not_smoohtData[i])
             max_amplitude_list_u1.append(max_amplitude_list_tmp_u1)
             max_amplitude_list_u9.append(max_amplitude_list_tmp_u9)
             max_amplitude_list_uavg.append(max_amplitude_list_tmp_uavg)
@@ -932,9 +935,9 @@ class Analyzer(QWidget):
         result[expername]["gauss_STD"] = gaussiana_std
 
         result[expername]["AVG_STON_LEFT"] = \
-            signal_to_noise_ratio(self.xdata, self.z1_smooht_data, self.cuts)
+            signal_to_noise_ratio(self.xdata, self.z1_not_smooht_data, self.cuts)
         result[expername]["AVG_STON_RIGHT"] = \
-            signal_to_noise_ratio(self.xdata, self.z2_smooht_data, self.cuts)
+            signal_to_noise_ratio(self.xdata, self.z2_not_smooht_data, self.cuts)
         result[expername]["AVG_STON_AVG"] = \
             signal_to_noise_ratio(self.xdata, self.avg_y_not_smoohtData, self.cuts)
 

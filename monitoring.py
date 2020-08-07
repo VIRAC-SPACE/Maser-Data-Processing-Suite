@@ -283,13 +283,13 @@ class MonitoringView(PlottingView):
 
             if event.mouseevent.button == 1:
                 file = [f for f in (os.listdir(get_configs("paths", "outputFilePath")
-                                               + "/" + self.line))
+                                               + "/" + self.line + "/" + self.source + "/"))
                         if str(iteration) in f and f.startswith(self.source)]
                 if len(file) > 0:
                     if self.new_spectre:
                         self.specter_plots_files.clear()
                         output_file = get_configs("paths", "outputFilePath") + "/" + \
-                                      self.line + "/" + file[0]
+                                      self.line + "/" + "/" + self.source + "/" + file[0]
                         self.specter_plots_files.add(output_file)
                         self.specter_view = SpecterView(self.specter_plots_files,
                                                         self.source, self.polarization)
@@ -299,7 +299,7 @@ class MonitoringView(PlottingView):
 
                     else:
                         output_file = get_configs("paths", "outputFilePath") \
-                                      + "/" + self.line + "/" + file[0]
+                                      + "/" + self.line + "/" + "/" + self.source + "/" + file[0]
                         self.specter_plots_files.add(output_file)
                         self.specter_view.set_specter_plots_files(self.specter_plots_files)
 
@@ -612,7 +612,7 @@ class MapsView(PlottingView):
         self.mjd = mjd
         self.source = source
         self.line = line
-        self.output_files = os.listdir(get_configs("paths", "outputFilePath") + self.line)
+        self.output_files = os.listdir(get_configs("paths", "outputFilePath") + self.line + "/" + self.source)
         self.output_files = [of for of in self.output_files if of.startswith(self.source)]
 
         days = self.mjd[-1] - self.mjd[0]
@@ -634,12 +634,12 @@ class MapsView(PlottingView):
         lvls = np.linspace(int(np.min(observed_flux)), int(np.max(observed_flux)), 10000)
         cs = self.map_plot.graph.tricontourf(triang, observed_flux, levels=lvls,
                                              antialiased=True, Locator=ticker.LogLocator())
+
+        cs.set_clim(vmin=0)
         cbar = self.map_plot.colorbar(cs)
-        cbar.set_clim(vmin=0)
         cbar.ax.set_ylabel(r'$Flux~(\mathrm{Jy})$')
         cbar.locator = MaxNLocator()
         self.add_widget(self.map_plot, 0, 0)
-
 
     def get_max_min_velocity(self, vmin, vmax):
         max_velocitys = []

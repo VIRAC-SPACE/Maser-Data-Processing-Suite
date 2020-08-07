@@ -163,7 +163,7 @@ def main():
             LOGGER.info("Executing python3 " + "sdr_fs.py " + sdr_fs_parameter)
             os.system("python3 " + "sdr_fs.py " + sdr_fs_parameter)
 
-    output_files = os.listdir(output_path + "/" + line)
+    output_files = os.listdir(output_path + "/" + line + "/" + source_name)
     for output_file in output_files:
         if output_file.split(".")[0].split("_")[-1] not in processed_iteration:
             if output_file.startswith(source_name):
