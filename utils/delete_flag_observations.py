@@ -127,6 +127,8 @@ def main():
         choice2 = input("Should this experiment  " + exper + " be deleted  from result file Y/n " )
         if choice2 == "Y" or choice2 == "y":
             del result_data[exper]
+            with open(result_file_name, "w") as result_file2:
+                result_file2.write(json.dumps(result_data, indent=2))
             print("experiment  " + exper + " are deleted from result file " + result_file_name)
 
         if station == "IRBENE":
