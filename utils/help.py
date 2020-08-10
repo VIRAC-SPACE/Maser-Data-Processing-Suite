@@ -1,5 +1,5 @@
 """
-common used fuctions
+common used functions
 """
 
 from functools import reduce
@@ -8,6 +8,25 @@ import numpy as np
 from astropy.time import Time
 from astropy.modeling import models
 from astropy.modeling.fitting import LevMarLSQFitter
+
+
+class Experiment:
+    """
+     Experiment class
+    """
+
+    def __init__(self, **entries):
+        self.flag = None
+        self.modifiedJulianDays = None
+        self.Iteration_number = None
+        self.polarizationAVG = None
+        self.polarizationU9 = None
+        self.polarizationU1 = None
+        self.location = None
+        self.Date = None
+        self.specie = None
+        self.type = None
+        self.__dict__.update(entries)
 
 
 def file_len(file_name):
@@ -21,6 +40,10 @@ def file_len(file_name):
         for i, _ in enumerate(file):
             pass
     return i + 1
+
+
+def get_iteration_from_output_file(file):
+    return int(file.split(".")[1].split("_")[-1])
 
 
 def indexies(array, value):

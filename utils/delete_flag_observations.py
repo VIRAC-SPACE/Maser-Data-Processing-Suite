@@ -10,6 +10,8 @@ import argparse
 import shutil
 import json
 
+from help import Experiment, get_iteration_from_output_file
+
 PACKAGE_PARENT = '..'
 SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
 sys.path.append(os.path.normpath(os.path.join( SCRIPT_DIR, PACKAGE_PARENT)))
@@ -53,10 +55,6 @@ def get_configs(section, key):
     return config.get_config(section, key)
 
 
-def get_iteration_from_output_file(file):
-    return int(file.split(".")[1].split("_")[-1])
-
-
 def get_station_from_output_file(file):
     return file.split(".")[1].split("_")[-2]
 
@@ -73,25 +71,6 @@ def get_flagged_result_name(result_data, iteration, station):
             exper = experiment
             break
     return exper
-
-
-class Experiment:
-    """
-     Experiment class
-    """
-
-    def __init__(self, **entries):
-        self.flag = None
-        self.modifiedJulianDays = None
-        self.Iteration_number = None
-        self.polarizationAVG = None
-        self.polarizationU9 = None
-        self.polarizationU1 = None
-        self.location = None
-        self.Date = None
-        self.specie = None
-        self.type = None
-        self.__dict__.update(entries)
 
 
 def main():
@@ -136,7 +115,7 @@ def main():
         elif station == "IRBENE16":
             st = "ib"
         data_file_dir = get_configs("paths", "dataFilePath") + source + "_f" + line + "_" + st + "_" + str(iteration)
-        choice3 = input("Should this data file directory "  + data_file_dir + " be deleted Y/n ")
+        choice3 = input("Should this data file directory " + data_file_dir + " be deleted Y/n ")
         if choice3 == "Y" or choice3 == "y":
             shutil.rmtree(data_file_dir)
             print("Data file directory " + data_file_dir + " are deleted")
