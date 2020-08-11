@@ -67,7 +67,7 @@ def create_info_dict_from_output_file(file):
 def get_flagged_result_name(result_data, iteration, station):
     exper = ""
     for experiment in result_data:
-        if str(iteration) in experiment and station in experiment:
+        if str(iteration) in experiment and station in experiment and result_data[experiment]["flag"]:
             exper = experiment
             break
     return exper
@@ -104,7 +104,7 @@ def main():
 
     for flag_info in flagged_experiment_info:
         iteration = flag_info["iteration_number"]
-        station =  flag_info["station"]
+        station = flag_info["station"]
         exper = get_flagged_result_name(result_data, iteration, station)
         choice2 = input("Should this experiment  " + exper + " be deleted  from result file Y/n " )
         if choice2 == "Y" or choice2 == "y":
