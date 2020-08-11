@@ -96,8 +96,11 @@ def main():
         del_outpu_file = output_file_dir + file
         choice = input("Should file " + del_outpu_file + " be deleted Y/n ")
         if choice == "Y" or choice == "y":
-            os.remove(del_outpu_file)
-            print(del_outpu_file + " are deleted")
+            try:
+                os.remove(del_outpu_file)
+                print(del_outpu_file + " are deleted")
+            except OSError as error:
+                print( "Error: %s : %s" % (del_outpu_file, error.strerror) )
 
     for flag_info in flagged_experiment_info:
         iteration = flag_info["iteration_number"]
@@ -117,8 +120,12 @@ def main():
         data_file_dir = get_configs("paths", "dataFilePath") + source + "_f" + line + "_" + st + "_" + str(iteration)
         choice3 = input("Should this data file directory " + data_file_dir + " be deleted Y/n ")
         if choice3 == "Y" or choice3 == "y":
-            shutil.rmtree(data_file_dir)
-            print("Data file directory " + data_file_dir + " are deleted")
+            try:
+                shutil.rmtree(data_file_dir)
+                print( "Data file directory " + data_file_dir + " are deleted" )
+            except OSError as error:
+                print( "Error: %s : %s" % (data_file_dir, error.strerror) )
+
 
     sys.exit(0)
 

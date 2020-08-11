@@ -65,8 +65,8 @@ def correct_output_file(output_dir, file, factor):
     output_data = h5py.File(output_dir + file, "a")
     amplitude_corrected = output_data["amplitude_corrected"]
     amplitude_corrected_not_smooht = output_data["amplitude_corrected_not_smooht"]
-    amplitude_corrected[...] = output_data["amplitude_corrected"][()] * factor
-    amplitude_corrected_not_smooht[...] = output_data["amplitude_corrected_not_smooht"][()] * factor
+    amplitude_corrected[...] = output_data["amplitude_corrected"][()][:,1:] * factor
+    amplitude_corrected_not_smooht[...] = output_data["amplitude_corrected_not_smooht"][()][:,1:] * factor
     output_data.close()
 
 
