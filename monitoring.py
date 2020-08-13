@@ -14,7 +14,6 @@ from astropy.timeseries import LombScargle
 from astropy.io import ascii
 from astropy.time import Time
 import matplotlib.tri as mtri
-from matplotlib.ticker import MaxNLocator
 import h5py
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, \
     QGridLayout, QLabel, QLineEdit, QComboBox, QPushButton, QGroupBox
@@ -509,14 +508,18 @@ class SpecterView(PlottingView):
             amplitude_colon = 3
         for spectre_file in self.spectre_files:
             index = self.spectre_files.index(spectre_file)
-            data = h5py.File(spectre_file, 'r')['amplitude_corrected'][()]
-            x = data[:, 0]
-            y = data[:, amplitude_colon]
-            plot_name = ".".join([spectre_file.split("/")[-1].split(".")[0],
-                                  spectre_file.split("/")[-1].split(".")[1]])
-            if plot_name not in self.plot_set:
-                self.specter_plot.plot(x, y, symbols[index], label=plot_name)
-                self.plot_set.add(plot_name)
+            data_file = h5py.File(spectre_file, 'r')
+            if "amplitude_corrected_not_smooht" in data_file:
+                data = data_file['amplitude_corrected_not_smooht'][()]
+                x = data[:, 0]
+                y = data[:, amplitude_colon]
+                plot_name = ".".join([spectre_file.split("/")[-1].split(".")[0],
+                                      spectre_file.split("/")[-1].split(".")[1]])
+                if plot_name not in self.plot_set:
+                    self.specter_plot.plot(x, y, symbols[index], label=plot_name)
+                    self.plot_set.add(plot_name)
+            else:
+                print("Output " + spectre_file + " file has no amplitude_corrected_not_smooht colomm")
 
     def set_specter_plots_files(self, specter_plots_files):
         """
@@ -627,18 +630,20 @@ class MapsView(PlottingView):
         else:
             _, _, velocity, observed_flux, observed_time = self.get_max_min_velocity(vmin, vmax)
 
+        observed_flux = list(np.array(observed_flux).clip(min=1.5))
         triang = mtri.Triangulation(velocity, observed_time)
+
         self.map_plot = Plot()
         self.map_plot.creatPlot(self.grid, "Velocity (km/s)", "MJD (days) -  "
                                 + str(days), None, (1, 0), "log")
-        lvls = np.linspace(int(np.min(observed_flux)), int(np.max(observed_flux)), 10000)
+        lvls = np.linspace(int(np.min(observed_flux)), int(np.max(observed_flux)), 1000)
         cs = self.map_plot.graph.tricontourf(triang, observed_flux, levels=lvls,
-                                             antialiased=True, Locator=ticker.LogLocator())
+                                             antialiased=False, Locator=ticker.LogLocator, cmap="jet")
 
         cs.set_clim(vmin=0)
         cbar = self.map_plot.colorbar(cs)
         cbar.ax.set_ylabel(r'$Flux~(\mathrm{Jy})$')
-        cbar.locator = MaxNLocator()
+        cbar.locator = ticker.LogLocator()
         self.add_widget(self.map_plot, 0, 0)
 
     def get_max_min_velocity(self, vmin, vmax):
@@ -649,26 +654,28 @@ class MapsView(PlottingView):
         observed_time = []
 
         for file in self.output_files:
-            data = h5py.File(get_configs("paths", "outputFilePath") +
-                             self.line + "/" +
-                             file, "r")["amplitude_corrected"][()]
-            velocity = data[:, 0]
-            amplitude = data[:, 3]
-            mjd = file.split("_")[1]
+            data_file = h5py.File(get_configs("paths", "outputFilePath") +
+                                  self.line + "/" +
+                                  self.source + "/" + file, "r")
+            if "amplitude_corrected_not_smooht" in data_file:
+                data = data_file["amplitude_corrected_not_smooht"][()]
+                velocity = data[:, 0]
+                amplitude = data[:, 3]
+                mjd = file.split("_")[1]
 
-            max_velocitys.append(max(velocity))
-            min_velocitys.append(min(velocity))
+                max_velocitys.append(max(velocity))
+                min_velocitys.append(min(velocity))
 
-            for i in range(0, len(velocity)):
-                if vmin and vmax:
-                    if vmin <= velocity[i] <= vmax:
+                for i in range(0, len(velocity)):
+                    if vmin or vmax:
+                        if vmin <= velocity[i] <= vmax:
+                            velocity_.append(velocity[i])
+                            observed_flux.append(amplitude[i])
+                            observed_time.append(np.float(mjd))
+                    else:
                         velocity_.append(velocity[i])
                         observed_flux.append(amplitude[i])
                         observed_time.append(np.float(mjd))
-                else:
-                    velocity_.append(velocity[i])
-                    observed_flux.append(amplitude[i])
-                    observed_time.append(np.float(mjd))
 
         return max(max_velocitys), min(min_velocitys), velocity_, observed_flux, observed_time
 
