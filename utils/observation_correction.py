@@ -9,6 +9,7 @@ import os
 import argparse
 import json
 import h5py
+import numpy as np
 from help import Experiment, get_iteration_from_output_file
 
 PACKAGE_PARENT = '..'
@@ -65,23 +66,29 @@ def correct_output_file(output_dir, file, factor):
     output_data = h5py.File(output_dir + file, "a")
     amplitude_corrected = output_data["amplitude_corrected"]
     amplitude_corrected_not_smooht = output_data["amplitude_corrected_not_smooht"]
-    amplitude_corrected[...] = output_data["amplitude_corrected"][()][:,1:] * factor
-    amplitude_corrected_not_smooht[...] = output_data["amplitude_corrected_not_smooht"][()][:,1:] * factor
+    tmp = len(amplitude_corrected_not_smooht[:, 0])
+    amplitude_corrected[...] = np.concatenate((amplitude_corrected[()][:, 0].reshape(tmp,1), output_data["amplitude_corrected"][()][:, 1:] * factor), axis=1)
+    amplitude_corrected_not_smooht[...] = np.concatenate((amplitude_corrected_not_smooht[()][:, 0].reshape(tmp,1), output_data["amplitude_corrected_not_smooht"][()][:, 1:] * factor), axis=1)
     output_data.close()
 
 
-def correct_result_file(result_file_name, iteration_to_fix, factor, station, type):
+def correct_result_file(result_file_name, iteration_to_fix, factor, station, type_of_back_end):
+    iteration_to_fix = [str(i) for i in iteration_to_fix]
+
     with open(result_file_name, "r") as result_file:
         result_data = json.load(result_file)
 
     for experiment in result_data:
-        if experiment.split("_")[-1] in iteration_to_fix and \
-                station in experiment and \
-                result_data[experiment]["type"] == type:
+        if str(experiment.split("_")[-1]) in iteration_to_fix and \
+                station == experiment.split("_")[-2] and \
+                result_data[experiment]["type"] == type_of_back_end:
             for v in range(0, len(result_data[experiment]["polarizationU1"])):
-                result_data[experiment]["polarizationU1"][v][1] = result_data[experiment]["polarizationU1"][v][1] * factor
-                result_data[experiment]["polarizationU9"][v][1] = result_data[experiment]["polarizationU9"][v][1] * factor
-                result_data[experiment]["polarizationAVG"][v][1] = result_data[experiment]["polarizationAVG"][v][1] * factor
+                result_data[experiment]["polarizationU1"][v][1] = result_data[experiment]["polarizationU1"][v][1] * \
+                                                                  factor
+                result_data[experiment]["polarizationU9"][v][1] = result_data[experiment]["polarizationU9"][v][1] * \
+                                                                  factor
+                result_data[experiment]["polarizationAVG"][v][1] = result_data[experiment]["polarizationAVG"][v][1] * \
+                                                                   factor
 
     result_file = open(result_file_name, "w")
     result_file.write(json.dumps(result_data, indent=2))
@@ -93,7 +100,7 @@ def main():
         replace("[", "").replace("]", ""). \
         replace("'", "").split(",")
 
-    type = get_args("type").upper()
+    type_of_back_end = get_args("type").upper()
     iteration_to_fix = [int(i.strip()) for i in iteration_to_fix]
     result_file_path = get_configs("paths", "resultFilePath")
     source = get_args("source")
@@ -107,10 +114,10 @@ def main():
     output_dir = get_configs("paths", "outputFilePath") + "/" + get_args("line") + "/" + get_args("source") + "/"
     experiments = [Experiment(**result_data[experiment]) for experiment in result_data]
 
-    mdj_for_experiments_to_fix = [experiment.modifiedJulianDays for experiment in experiments
+    mdj_for_experiments_to_fix = [str(experiment.modifiedJulianDays) for experiment in experiments
                                   if experiment.Iteration_number in iteration_to_fix and
                                   experiment.location == station and
-                                  experiment.type == type
+                                  experiment.type == type_of_back_end
                                   ]
 
     for file in os.listdir(output_dir):
@@ -118,7 +125,7 @@ def main():
                 get_mjd_from_output_file(file) in mdj_for_experiments_to_fix:
             correct_output_file(output_dir, file,factor)
 
-    correct_result_file( result_file_name, iteration_to_fix, factor, station, type )
+    correct_result_file(result_file_name, iteration_to_fix, factor, station, type_of_back_end)
     sys.exit()
 
 
