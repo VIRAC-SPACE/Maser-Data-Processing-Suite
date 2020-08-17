@@ -276,19 +276,19 @@ class MonitoringView(PlottingView):
             result_file_name = self.source + "_" + self.line + ".json"
             iteration = self.iterations[ind]
             date = [e.Date for e in self.experiments][ind]
+            mjd = [e.modifiedJulianDays for e in self.experiments][ind]
+            station = [e.location for e in self.experiments][ind]
 
             with open(result_path + result_file_name) as result_data:
                 results = json.load(result_data)
 
             if event.mouseevent.button == 1:
-                file = [f for f in (os.listdir(get_configs("paths", "outputFilePath")
-                                               + "/" + self.line + "/" + self.source + "/"))
-                        if str(iteration) in f and f.startswith(self.source)]
-                if len(file) > 0:
+                output_file = get_configs("paths", "outputFilePath") + self.line + "/" + self.source + "/" + \
+                              self.source + "_" + str(mjd) + "_" + \
+                              str(station) + "_" + str(iteration) + ".h5"
+                if os.path.isfile(output_file):
                     if self.new_spectre:
                         self.specter_plots_files.clear()
-                        output_file = get_configs("paths", "outputFilePath") + "/" + \
-                                      self.line + "/" + "/" + self.source + "/" + file[0]
                         self.specter_plots_files.add(output_file)
                         self.specter_view = SpecterView(self.specter_plots_files,
                                                         self.source, self.polarization)
@@ -297,8 +297,6 @@ class MonitoringView(PlottingView):
                         self.new_spectre = False
 
                     else:
-                        output_file = get_configs("paths", "outputFilePath") \
-                                      + "/" + self.line + "/" + "/" + self.source + "/" + file[0]
                         self.specter_plots_files.add(output_file)
                         self.specter_view.set_specter_plots_files(self.specter_plots_files)
 
