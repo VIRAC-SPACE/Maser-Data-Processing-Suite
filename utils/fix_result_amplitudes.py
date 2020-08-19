@@ -114,7 +114,7 @@ def change_result_amplitudes(output_files, result_file, output_file_path, source
                         result_json[key]["polarizationAVG"] = max_apmlitudes_uavg
 
         else:
-            print( "Output " + output_file + " file has no amplitude_corrected_not_smooht colomm" )
+            print("Output " + output_file + " file has no amplitude_corrected_not_smooht colomm")
 
     result_file = open(result_file, "w")
     result_file.write(json.dumps(result_json, indent=2))

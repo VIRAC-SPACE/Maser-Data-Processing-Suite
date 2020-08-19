@@ -10,6 +10,7 @@ import argparse
 import json
 import logging
 import coloredlogs
+import h5py
 from parsers.configparser_ import ConfigParser
 
 coloredlogs.install(level='PRODUCTION')
@@ -167,10 +168,13 @@ def main():
     for output_file in output_files:
         if output_file.split(".")[0].split("_")[-1] not in processed_iteration:
             if output_file.startswith(source_name):
-                LOGGER.info("Executing python3 " +
-                            "total_spectrum_analyzer_qt5.py " + output_file + " " + line)
-                os.system("python3 " +
-                          "total_spectrum_analyzer_qt5.py " + output_file + " " + line)
+                with h5py.File(get_configs("paths", "outputFilePath") + output_file, "r") as input_data_file:
+                    input_file_keys = list(input_data_file.keys())
+                if "amplitude" in input_file_keys:
+                    LOGGER.info("Executing python3 " +
+                                "total_spectrum_analyzer_qt5.py " + output_file + " " + line)
+                    os.system("python3 " +
+                              "total_spectrum_analyzer_qt5.py " + output_file + " " + line)
 
 
 if __name__ == "__main__":
