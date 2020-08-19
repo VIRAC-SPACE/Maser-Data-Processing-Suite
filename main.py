@@ -168,7 +168,8 @@ def main():
     for output_file in output_files:
         if output_file.split(".")[0].split("_")[-1] not in processed_iteration:
             if output_file.startswith(source_name):
-                with h5py.File(get_configs("paths", "outputFilePath") + output_file, "r") as input_data_file:
+                with h5py.File(get_configs("paths", "outputFilePath") + get_args("line") +
+                               "/" + get_args("source") + "/" + output_file, "r") as input_data_file:
                     input_file_keys = list(input_data_file.keys())
                 if "amplitude" in input_file_keys:
                     LOGGER.info("Executing python3 " +
