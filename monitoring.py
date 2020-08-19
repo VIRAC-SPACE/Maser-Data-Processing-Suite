@@ -275,6 +275,7 @@ class MonitoringView(PlottingView):
             result_path = get_configs("paths", "resultFilePath")
             result_file_name = self.source + "_" + self.line + ".json"
             iteration = self.iterations[ind]
+            time = [e.time for e in self.experiments][ind]
             date = [e.Date for e in self.experiments][ind]
             mjd = [e.modifiedJulianDays for e in self.experiments][ind]
             station = [e.location for e in self.experiments][ind]
@@ -323,7 +324,7 @@ class MonitoringView(PlottingView):
                         for experiment in results:
                             if experiment.endswith("_" + str(iteration)) and \
                                     results[experiment]["time"].replace(":", "_") + "_" + \
-                                    results[experiment]["Date"] == date:
+                                    results[experiment]["Date"] == time.replace(":", "_") + "_" + date:
                                 results[experiment]["flag"] = False
                                 print(experiment, "is un flag")
 
@@ -349,7 +350,7 @@ class MonitoringView(PlottingView):
                     for experiment in results:
                         if experiment.endswith("_" + str(iteration)) and \
                                 results[experiment]["time"].replace(":", "_") + "_" + \
-                                results[experiment]["Date"] == date:
+                                results[experiment]["Date"] == time.replace(":", "_") + "_" + date:
                             results[experiment]["flag"] = True
                             print(experiment, "is flag")
 

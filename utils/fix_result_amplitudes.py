@@ -124,7 +124,7 @@ def change_result_amplitudes(output_files, result_file, output_file_path, source
 def main():
     output_file_path = get_configs('paths', "outputFilePath")
     result_file_path = get_configs('paths', "resultFilePath")
-    source_velocities = get_configs('velocities', get_args("source")).replace(" ", "").split(",")
+    source_velocities = get_configs('velocities', get_args("source") + "_" + get_args("line")).replace(" ", "").split(",")
     index_range_for_local_maxima = int( get_configs('parameters', "index_range_for_local_maxima"))
     result_file = result_file_path + get_args("source") + "_" + get_args("line") + ".json"
     output_files = os.listdir(output_file_path + get_args("line") + "/" + get_args("source"))
