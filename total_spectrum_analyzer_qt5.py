@@ -401,7 +401,7 @@ class Analyzer(QWidget):
                                'Flux density (Jy)', "Left Polarization", (1, 0),
                                "linear")
         self.plot_10.plot(self.xdata, self.ydata_left,
-                          'ko', label='Data Points a', markersize=4, picker=5)
+                          'ko', label='Data Points a', markersize=4, pickradius=5)
 
         # u9 plot
         self.plot_11 = Plot()
@@ -409,7 +409,7 @@ class Analyzer(QWidget):
                                'Flux density (Jy)', "Right Polarization", (1, 1),
                                "linear")
         self.plot_11.plot(self.xdata, self.ydata_right,
-                          'ko', label='Data Points', markersize=4, picker=5)
+                          'ko', label='Data Points', markersize=4, pickradius=5)
 
         self.badplot_1_left = self.plot_10.plot(self.x_bad_points_left,
                                                 self.y_bad_point_left, 'rx', markersize=10)
@@ -439,10 +439,11 @@ class Analyzer(QWidget):
         self.grid.removeWidget(self.change_params_buttons)
         del self.change_params_buttons
 
-        self.plot_poly.hide()
-        self.plot_poly.close()
-        self.grid.removeWidget(self.plot_poly)
-        del self.plot_poly
+        if self.plot_poly:
+            self.plot_poly.hide()
+            self.plot_poly.close()
+            self.grid.removeWidget(self.plot_poly)
+            del self.plot_poly
 
         self.change_data_button = QPushButton("Change Data", self)
         self.change_data_button.clicked.connect(self.change_data)
@@ -599,6 +600,7 @@ class Analyzer(QWidget):
                          self.ydata_right[int(value - 1)], 'ro', markersize=1)
 
         self.plot_1.canvasShow()
+        self.plot_2.canvasShow()
         self.previous_n = value
 
     def _on_right_click(self, event):
