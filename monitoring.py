@@ -256,6 +256,7 @@ class MonitoringView(PlottingView):
             self.location = None
             self.Date = None
             self.specie = None
+            self.time = None
             self.type = None
             self.__dict__.update(entries)
 
