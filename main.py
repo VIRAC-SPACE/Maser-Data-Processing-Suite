@@ -26,7 +26,7 @@ def parse_arguments():
     parser.add_argument("source", help="Source Name", type=str)
     parser.add_argument("line", help="frequency", type=int)
     parser.add_argument("-c", "--config", help="Configuration "
-                                               "cfg file", type=str, default="config/config.cfg")
+                                                "cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 3.0')
     args = parser.parse_args()
     return args
@@ -72,8 +72,8 @@ def find_log_file(log_list, iteration):
 
     if tmpl == "":
         LOGGER.warning("Warning " + "log for iteration " +
-                       iteration + " do not exist log file " +
-                       log_list[-1] + " will be used instead!")
+                        iteration + " do not exist log file " +
+                        log_list[-1] + " will be used instead!")
     return tmpl
 
 
@@ -95,7 +95,7 @@ def create_iteration_list(path, source, line):
     :return: None
     """
     iterations = [get_iteration(iteration) for iteration in os.listdir(path) if
-                  source in iteration and line in iteration]
+                  source in iteration and line in iteration and os.path.isdir(path + iteration)]
     iterations.sort(key=int, reverse=False)
     return iterations
 
@@ -143,6 +143,7 @@ def main():
         result = json.load(result_data)
 
     processed_iteration = list()
+    processed_iteration2 = list()
 
     for experiment in result:
         if experiment.split("_")[-1] in sdr_iterations and \
@@ -151,11 +152,14 @@ def main():
             processed_iteration.append(experiment.split("_")[-1])
 
         if experiment.split("_")[-1] in processed_iteration and \
-                experiment.split("_")[-1] in processed_iteration and \
-                result[experiment]["type"] == "SDR" and result[experiment]["flag"] == True:
+                result[experiment]["type"] == "SDR" and result[experiment]["flag"]:
             processed_iteration.remove(experiment.split("_")[-1])
 
+        if experiment.split("_")[-1] not in processed_iteration2:
+            processed_iteration2.append(experiment.split("_")[-1])
+
     processed_iteration.sort(key=int, reverse=False)
+    processed_iteration2.sort(key=int, reverse=False)
 
     for iteration in sdr_iterations:
         if iteration not in processed_iteration:
@@ -166,18 +170,18 @@ def main():
 
     output_files = os.listdir(output_path + "/" + line + "/" + source_name)
     for output_file in output_files:
-        if output_file.split(".")[0].split("_")[-1] not in processed_iteration:
+        if output_file.split("_")[-1].split(".")[0] not in processed_iteration2:
             if output_file.startswith(source_name):
                 with h5py.File(get_configs("paths", "outputFilePath") + get_args("line") +
-                               "/" + get_args("source") + "/" + output_file, "r") as input_data_file:
-                    input_file_keys = list(input_data_file.keys())
+                                "/" + get_args("source") + "/" + output_file, "r") as input_data_file:
+                    input_file_keys = list( input_data_file.keys())
                 if "amplitude" in input_file_keys:
                     LOGGER.info("Executing python3 " +
-                                "total_spectrum_analyzer_qt5.py " + output_file + " " + line)
+                                 "total_spectrum_analyzer_qt5.py " + output_file + " " + line)
                     os.system("python3 " +
-                              "total_spectrum_analyzer_qt5.py " + output_file + " " + line)
+                               "total_spectrum_analyzer_qt5.py " + output_file + " " + line)
 
 
 if __name__ == "__main__":
     main()
-    sys.exit(0)
+    sys.exit( 0 )
