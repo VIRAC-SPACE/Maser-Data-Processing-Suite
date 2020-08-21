@@ -401,7 +401,7 @@ class Analyzer(QWidget):
                                'Flux density (Jy)', "Left Polarization", (1, 0),
                                "linear")
         self.plot_10.plot(self.xdata, self.ydata_left,
-                          'ko', label='Data Points a', markersize=4, pickradius=5)
+                          'ko', label='Data Points a', markersize=4, picker=5)
 
         # u9 plot
         self.plot_11 = Plot()
@@ -409,15 +409,15 @@ class Analyzer(QWidget):
                                'Flux density (Jy)', "Right Polarization", (1, 1),
                                "linear")
         self.plot_11.plot(self.xdata, self.ydata_right,
-                          'ko', label='Data Points', markersize=4, pickradius=5)
+                          'ko', label='Data Points', markersize=4, picker=5)
 
         self.badplot_1_left = self.plot_10.plot(self.x_bad_points_left,
                                                 self.y_bad_point_left, 'rx', markersize=10)
         self.badplot_2_right = self.plot_11.plot(self.x_bad_points_right,
                                                  self.y_bad_point_right, 'rx', markersize=10)
 
-        self.plot_10.fig.canvas.mpl_connect('pick_event', self._on_left_click)
-        self.plot_11.fig.canvas.mpl_connect('pick_event', self._on_right_click)
+        self.plot_10.fig.canvas.mpl_connect('pick_event', self.on_left_click)
+        self.plot_11.fig.canvas.mpl_connect('pick_event', self.on_right_click)
 
         self.grid.addWidget(self.plot_10, 0, 0)
         self.grid.addWidget(self.plot_11, 0, 1)
@@ -458,12 +458,15 @@ class Analyzer(QWidget):
         self.plot_1 = Plot()
         self.plot_1.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
                               'Flux density (Jy)', "u1 Polarization", (1, 0), "linear")
-        self.plot_1.plot(self.xdata, self.ydata_right, 'ko', label='Data Points', markersize=1)
+        self.plot_1.plot(self.xdata, self.ydata_right, 'ko', label='Data Points', markersize=1, picker=5)
 
         self.plot_2 = Plot()
         self.plot_2.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
                               'Flux density (Jy)', "u9 Polarization", (1, 1), "linear")
-        self.plot_2.plot(self.xdata, self.ydata_right, 'ko', label='Data Points', markersize=1)
+        self.plot_2.plot(self.xdata, self.ydata_right, 'ko', label='Data Points', markersize=1, picker=5)
+
+        self.plot_1.fig.canvas.mpl_connect('pick_event', self.on_left_click)
+        self.plot_2.fig.canvas.mpl_connect('pick_event', self.on_right_click)
 
         self.grid.addWidget(self.plot_1, 0, 0)
         self.grid.addWidget(self.plot_2, 0, 1)
@@ -603,7 +606,7 @@ class Analyzer(QWidget):
         self.plot_2.canvasShow()
         self.previous_n = value
 
-    def _on_right_click(self, event):
+    def on_right_click(self, event):
         """
 
         :param event: event
@@ -631,7 +634,7 @@ class Analyzer(QWidget):
                     event.canvas.draw()
                     event.canvas.flush_events()
 
-    def _on_left_click(self, event):
+    def on_left_click(self, event):
         """
 
         :param event: event
