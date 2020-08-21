@@ -115,18 +115,18 @@ def read_monitoring_files(monitoring_files, sources):
         date = data[0][0]
         source = file.split("/")[-1].split(".")[0].split("_")[0]
         lines_to_plot = velocities_to_plot_for_source[source]
-        tmp = get_configs("velocities", source + "_6668").split(",")
+        tmp = get_configs("velocities", source + "_" + get_args("line")).split(",")
         tmp = [v.strip().replace(" ", "") for v in tmp]
         idexie_for_lines_to_plot = []
         for tmpl in lines_to_plot:
             idexie_for_lines_to_plot.append(tmp.index(tmpl))
 
         lines[source]["date"] = date
-        column_nr = len(get_configs("velocities", source + "_6668").split(","))
+        column_nr = len(get_configs("velocities", source + "_" + get_args("line")).split(","))
 
         for c in range(1, column_nr+1):
             if c - 1 in idexie_for_lines_to_plot:
-                tmp = data[c] / data[c]
+                tmp = data[c] / np.mean(data[c])
                 lines[source]["y_data"].append(tmp)
 
     return lines
@@ -138,7 +138,7 @@ def get_iterations_from_mjd(star_time, stop_time):
     result_file_path = get_configs("paths", "resultFilePath")
 
     for source in source_list:
-        result_file = result_file_path + source + "_6668.json"
+        result_file = result_file_path + source + "_" + get_args("line") + ".json"
 
         with open(result_file) as result_data:
             result = json.load(result_data)
@@ -178,20 +178,18 @@ def main():
         date = lines[source]["date"]
         slider_min.append(min(date))
         slider_max.append(max(date))
-        velocities = get_configs("velocities", source + "_" + get_args("line")).split(",")
-        velocities = [v.strip() for v in velocities]
         velocities_tmp = get_velocities_tmp(source)
 
         i = 0
         for y_data in lines[source]["y_data"]:
             z = np.polyfit(date, y_data, 2)
             p = np.poly1d(z)
-            fit = str(z[0]) + " * x1**2 "
+            fit = str(z[0]) + " * x**2 "
 
             if "-" in str(z[1]):
-                fit += " + " + str(z[1]) + " * x1 "
+                fit += " + " + str(z[1]) + " * x "
             else:
-                fit += " + " + str(z[1]) + " * x1"
+                fit += " + " + str(z[1]) + " * x "
 
             if "-" in str(z[2]):
                 fit += " + " + str(z[2])
@@ -243,7 +241,7 @@ def main():
 
         print("Iteration list for time range ", a, b, get_iterations_from_mjd(a, b))
 
-        xtmp = np.arange( a, b )
+        xtmp = np.arange(a, b)
         data = {}
         columns = []
 
@@ -255,29 +253,29 @@ def main():
             i = find_nearest_index(x, a)
             j = find_nearest_index(x, b)
 
-            z = np.polyfit( x[i:j], y[i:j], 2 )
-            p = np.poly1d( z )
+            z = np.polyfit(x[i:j], y[i:j], 2)
+            p = np.poly1d(z)
 
-            fit = str( z[0] ) + " * x1**2 "
+            fit = str(z[0]) + " * x**2 "
 
-            if "-" in str( z[1] ):
-                fit += " + " + str( z[1] ) + " * x1 "
+            if "-" in str(z[1]):
+                fit += " + " + str(z[1]) + " * x "
             else:
-                fit += " + " + str( z[1] ) + " * x1"
+                fit += " + " + str(z[1]) + " * x"
 
-            if "-" in str( z[2] ):
-                fit += " + " + str( z[2] )
+            if "-" in str(z[2]):
+                fit += " + " + str(z[2])
             else:
-                fit += " + " + str( z[2] )
+                fit += " + " + str(z[2])
 
-            equation = lambdify('x1', fit, 'numpy')
+            equation = lambdify('x', fit, 'numpy')
             ytmp = equation(xtmp)
             data["_".join(old_label.split(" ")[0:3])] = ytmp
-            columns.append("_".join( old_label.split(" ")[0:3]))
+            columns.append("_".join(old_label.split(" ")[0:3]))
             new_label = " ".join(old_label.split(" ")[0:3]) + " " + "y=" + fit
             lines2[t][0].set_label(new_label)
             trends[t][0].set_xdata(x[i:j])
-            trends[t][0].set_ydata(p( x[i:j]))
+            trends[t][0].set_ydata(p(x[i:j]))
 
         df = DataFrame(data, columns=columns)
         corr = df.corr()
