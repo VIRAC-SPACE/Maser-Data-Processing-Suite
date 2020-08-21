@@ -155,7 +155,7 @@ def main():
                 result[experiment]["type"] == "SDR" and result[experiment]["flag"]:
             processed_iteration.remove(experiment.split("_")[-1])
 
-        if experiment.split("_")[-1] not in processed_iteration2:
+        if experiment.split("_")[-1] not in processed_iteration2 and result[experiment]["type"] == "SDR":
             processed_iteration2.append(experiment.split("_")[-1])
 
     processed_iteration.sort(key=int, reverse=False)
