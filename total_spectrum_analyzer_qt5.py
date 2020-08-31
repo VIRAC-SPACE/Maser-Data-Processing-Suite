@@ -920,7 +920,6 @@ class Analyzer(QWidget):
         result[expername]["modifiedJulianDays"] = mjd
         result[expername]["location"] = location
         result[expername]["Iteration_number"] = int(iteration_number)
-        result[expername]["specie"] = self.specie
 
         result[expername]["polarizationU1"] = max_apmlitudes_u1
         result[expername]["polarizationU9"] = max_apmlitudes_u9

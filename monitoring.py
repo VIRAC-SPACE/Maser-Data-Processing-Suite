@@ -67,8 +67,8 @@ def create_label(experiment):
     """
     return "Station is " + experiment.location.lower() + "\n" + "Date is " + \
            Time(experiment.modifiedJulianDays, format='mjd').strftime('%d %b %Y') + "\n" + "Iteration number " + \
-           str(experiment.Iteration_number) + "\n" + "Specie " + \
-           experiment.specie + "\n" + "Type " + experiment.type
+           str(experiment.Iteration_number) + "\n" \
+           + "Backend type " + experiment.type
 
 
 class PlottingView(QWidget):
