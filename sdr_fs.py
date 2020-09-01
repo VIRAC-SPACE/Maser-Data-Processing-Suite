@@ -211,6 +211,44 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
     tsys_s_left = np.mean(tsys_off_2_left[s_i:e_i])
     tsys_s_right = np.mean(tsys_off_2_right[s_i:e_i])
 
+    tsyss = [tsys_r_left, tsys_r_right, tsys_s_left, tsys_s_right]
+
+    def get_iter_name(index):
+        if len(index) == 3:
+            return "00" + index
+        elif len(index) == 4:
+            return "0" + index
+
+    tmp = logs["header"]["source"] + "_f" + get_args("line") + "_" + \
+          logs["header"]["station,id"][1] + "_" + \
+          logs["header"]["exp_name"].split("_")[-1] + "_" + "no"
+
+    tmp2 = logs["header"]["source"] + "_f" + get_args("line") + "_" + \
+           logs["header"]["station,id"][1] + "_" + \
+           logs["header"]["exp_name"].split( "_" )[-1]
+
+    scan_files_to_delete = [get_configs("paths", "dataFilePath") + tmp2 + "/" + tmp + get_iter_name(indextmp) + ".dat"
+                            for indextmp in (np.array(pair).flatten())]
+
+    delete_scan_files = False
+    if any(tsys < 0 for tsys in tsyss):
+        delete_scan_files = True
+        print("System temperature is negative")
+
+    if any(tsys > 300 for tsys in tsyss):
+        delete_scan_files = True
+        print("System temperature is bigger than 300")
+
+    if delete_scan_files:
+        for scan_file in scan_files_to_delete:
+            choice = input("Should this data file" + scan_file + " be deleted Y/n ")
+            if choice == "Y" or choice == "y":
+                try:
+                    os.remove(scan_file)
+                    print("Data file " + scan_file + " are deleted")
+                except OSError as error:
+                    print("Error: %s : %s" % (scan_file, error.strerror))
+
     elvation = (float(logs[pair[0][0]]["AzEl"][1]) + float(logs[pair[0][1]]["AzEl"][1]) + float(
         logs[pair[1][0]]["AzEl"][1]) + float(logs[pair[1][1]]["AzEl"][1])) / 4
 
