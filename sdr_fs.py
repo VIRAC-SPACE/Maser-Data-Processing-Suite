@@ -241,7 +241,7 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
 
     if delete_scan_files:
         for scan_file in scan_files_to_delete:
-            choice = input("Should this data file" + scan_file + " be deleted Y/n ")
+            choice = input("Should this data file " + scan_file + " be deleted Y/n ")
             if choice == "Y" or choice == "y":
                 try:
                     os.remove(scan_file)
