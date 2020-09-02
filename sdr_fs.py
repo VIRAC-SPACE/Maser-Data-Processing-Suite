@@ -218,6 +218,8 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
             return "00" + index
         elif len(index) == 4:
             return "0" + index
+        else:
+            return index
 
     tmp = logs["header"]["source"] + "_f" + get_args("line") + "_" + \
           logs["header"]["station,id"][1] + "_" + \
