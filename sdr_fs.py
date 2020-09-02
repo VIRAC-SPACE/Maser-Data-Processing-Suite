@@ -652,6 +652,14 @@ class Analyzer(QWidget):
                            station + "_" + \
                            get_args("iteration_number") + ".h5"
 
+        if not os.path.exists(get_configs("paths", "outputFilePath") + "/" + get_args("line") + "/"):
+            os.makedirs(get_configs("paths", "outputFilePath") + "/" + get_args("line") + "/")
+
+        if not os.path.exists(get_configs("paths", "outputFilePath") + "/" +
+                              get_args("line") + "/" + get_args("source") + "/"):
+            os.makedirs(get_configs("paths", "outputFilePath") + "/" +
+                        get_args("line") + "/" + get_args("source") + "/")
+
         result_file = h5py.File(result_file_name, "w")
         print("output_file_name", result_file_name)
 
