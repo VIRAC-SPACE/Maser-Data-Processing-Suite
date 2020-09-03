@@ -266,7 +266,7 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
     sf_right = ta_right / ((float(logs["header"]["DPFU"][1])) * np.polyval(g_el, elvation))
 
     return sf_left[s_i:e_i], sf_right[s_i:e_i], frequency_a[s_i:e_i], \
-           tsys_r_left, tsys_r_right, tsys_s_left, tsys_s_right
+           tsys_r_left, tsys_r_right, tsys_s_left, tsys_s_right, delete_scan_files
 
 
 def get_scan_name(data_file_name):
@@ -436,19 +436,20 @@ class Analyzer(QWidget):
             p_ref_on_right = np.fft.fftshift(p_ref_on_right)  # s1
 
             sf_left, sf_right, frequency_a1, tsys_r_left, \
-            tsys_r_right, tsys_s_left, tsys_s_right = frequency_shifting(
+            tsys_r_right, tsys_s_left, tsys_s_right, delete_scan_files = frequency_shifting(
                 p_sig_left, p_sig_right, p_ref_left, p_ref_right,
                 p_sig_on_left, p_sig_on_right, p_ref_on_left,
                 p_ref_on_right, frequency_a, self.logs, pair)
 
-            self.sf_left.append(sf_left)
-            self.sf_right.append(sf_right)
-            self.x = frequency_a1
+            if not delete_scan_files:
+                self.sf_left.append(sf_left)
+                self.sf_right.append(sf_right)
+                self.x = frequency_a1
 
-            self.tsys_r_left_list.append(tsys_r_left)
-            self.tsys_r_right_list.append(tsys_r_right)
-            self.tsys_s_left_list.append(tsys_s_left)
-            self.tsys_s_right_list.append(tsys_s_right)
+                self.tsys_r_left_list.append(tsys_r_left)
+                self.tsys_r_right_list.append(tsys_r_right)
+                self.tsys_s_left_list.append(tsys_s_left)
+                self.tsys_s_right_list.append(tsys_s_right)
 
             if self.index == len(self.scan_pairs) - 1:
                 self.next_pair_button.setText('Move to total results')
@@ -745,53 +746,54 @@ class Analyzer(QWidget):
         p_ref_on_left = np.fft.fftshift(p_ref_on_left)  # r1
         p_ref_on_right = np.fft.fftshift(p_ref_on_right)  # r1
 
-        sf_left, sf_right, frequency_a1, tsys_r_left, tsys_r_right, tsys_s_left, tsys_s_right = \
+        sf_left, sf_right, frequency_a1, tsys_r_left, tsys_r_right, tsys_s_left, tsys_s_right, delete_scan_files = \
             frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left,
                                p_sig_on_right, p_ref_on_left,
                                p_ref_on_right, frequency_a, self.logs, pair)
 
-        self.sf_left.append(sf_left)
-        self.sf_right.append(sf_right)
-        self.x = frequency_a1
+        if not delete_scan_files:
+            self.sf_left.append(sf_left)
+            self.sf_right.append(sf_right)
+            self.x = frequency_a1
 
-        self.tsys_r_left_list.append(tsys_r_left)
-        self.tsys_r_right_list.append(tsys_r_right)
-        self.tsys_s_left_list.append(tsys_s_left)
-        self.tsys_s_right_list.append(tsys_s_right)
+            self.tsys_r_left_list.append(tsys_r_left)
+            self.tsys_r_right_list.append(tsys_r_right)
+            self.tsys_s_left_list.append(tsys_s_left)
+            self.tsys_s_right_list.append(tsys_s_right)
 
-        # plot1
-        self.plot_start__left_a = Plot()
-        self.plot_start__left_a.creatPlot(self.grid, 'Frequency Mhz',
-                                          'Amplitude', "Left Polarization", (1, 0), "linear")
-        self.plot_start__left_a.plot(frequency_a, p_sig_left, 'b', label=str(index + 1) + "s0")
-        self.plot_start__left_a.plot(frequency_b, p_ref_left, 'g', label=str(index + 1) + "r0")
-        self.plot_start__left_a.plot(frequency_c, p_sig_on_left, 'r', label=str(index + 1) + "s1")
-        self.plot_start__left_a.plot(frequency_d, p_ref_on_left, 'y', label=str(index + 1) + "r1")
-        self.grid.addWidget(self.plot_start__left_a, 0, 0)
+            # plot1
+            self.plot_start__left_a = Plot()
+            self.plot_start__left_a.creatPlot(self.grid, 'Frequency Mhz',
+                                              'Amplitude', "Left Polarization", (1, 0), "linear")
+            self.plot_start__left_a.plot(frequency_a, p_sig_left, 'b', label=str(index + 1) + "s0")
+            self.plot_start__left_a.plot(frequency_b, p_ref_left, 'g', label=str(index + 1) + "r0")
+            self.plot_start__left_a.plot(frequency_c, p_sig_on_left, 'r', label=str(index + 1) + "s1")
+            self.plot_start__left_a.plot(frequency_d, p_ref_on_left, 'y', label=str(index + 1) + "r1")
+            self.grid.addWidget(self.plot_start__left_a, 0, 0)
 
-        # plot2
-        self.plot_start__right_b = Plot()
-        self.plot_start__right_b.creatPlot(self.grid, 'Frequency Mhz',
-                                           'Amplitude', "Right Polarization", (1, 1), "linear")
-        self.plot_start__right_b.plot(frequency_a, p_sig_right, 'b', label=str(index + 1) + "s0")
-        self.plot_start__right_b.plot(frequency_b, p_ref_right, 'g', label=str(index + 1) + "r0")
-        self.plot_start__right_b.plot(frequency_c, p_sig_on_right, 'r', label=str(index + 1) + "s1")
-        self.plot_start__right_b.plot(frequency_d, p_ref_on_right, 'y', label=str(index + 1) + "r1")
-        self.grid.addWidget(self.plot_start__right_b, 0, 1)
+            # plot2
+            self.plot_start__right_b = Plot()
+            self.plot_start__right_b.creatPlot(self.grid, 'Frequency Mhz',
+                                               'Amplitude', "Right Polarization", (1, 1), "linear")
+            self.plot_start__right_b.plot(frequency_a, p_sig_right, 'b', label=str(index + 1) + "s0")
+            self.plot_start__right_b.plot(frequency_b, p_ref_right, 'g', label=str(index + 1) + "r0")
+            self.plot_start__right_b.plot(frequency_c, p_sig_on_right, 'r', label=str(index + 1) + "s1")
+            self.plot_start__right_b.plot(frequency_d, p_ref_on_right, 'y', label=str(index + 1) + "r1")
+            self.grid.addWidget(self.plot_start__right_b, 0, 1)
 
-        # plot3
-        self.total__left = Plot()
-        self.total__left.creatPlot(self.grid, 'Frequency Mhz',
-                                   'Flux density (Jy)', "", (4, 0), "linear")
-        self.total__left.plot(self.x, sf_left, 'b', label=str(index + 1))
-        self.grid.addWidget(self.total__left, 3, 0)
+            # plot3
+            self.total__left = Plot()
+            self.total__left.creatPlot(self.grid, 'Frequency Mhz',
+                                       'Flux density (Jy)', "", (4, 0), "linear")
+            self.total__left.plot(self.x, sf_left, 'b', label=str(index + 1))
+            self.grid.addWidget(self.total__left, 3, 0)
 
-        # plot4
-        self.total__right = Plot()
-        self.total__right.creatPlot(self.grid,
-                                    'Frequency Mhz', 'Flux density (Jy)', "", (4, 1), "linear")
-        self.total__right.plot(self.x, sf_right, 'b', label=str(index + 1))
-        self.grid.addWidget(self.total__right, 3, 1)
+            # plot4
+            self.total__right = Plot()
+            self.total__right.creatPlot(self.grid,
+                                        'Frequency Mhz', 'Flux density (Jy)', "", (4, 1), "linear")
+            self.total__right.plot(self.x, sf_right, 'b', label=str(index + 1))
+            self.grid.addWidget(self.total__right, 3, 1)
 
         if index == len(self.scan_pairs) - 1:
             self.next_pair_button.setText('Move to total results')
