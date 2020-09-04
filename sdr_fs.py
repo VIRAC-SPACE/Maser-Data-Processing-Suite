@@ -450,6 +450,8 @@ class Analyzer(QWidget):
                 self.tsys_r_right_list.append(tsys_r_right)
                 self.tsys_s_left_list.append(tsys_s_left)
                 self.tsys_s_right_list.append(tsys_s_right)
+            else:
+                self.scan_pairs.remove(pair)
 
             if self.index == len(self.scan_pairs) - 1:
                 self.next_pair_button.setText('Move to total results')
@@ -794,6 +796,8 @@ class Analyzer(QWidget):
                                         'Frequency Mhz', 'Flux density (Jy)', "", (4, 1), "linear")
             self.total__right.plot(self.x, sf_right, 'b', label=str(index + 1))
             self.grid.addWidget(self.total__right, 3, 1)
+        else:
+            self.scan_pairs.remove(pair) 
 
         if index == len(self.scan_pairs) - 1:
             self.next_pair_button.setText('Move to total results')

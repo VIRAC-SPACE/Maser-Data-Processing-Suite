@@ -638,9 +638,9 @@ class MapsView(PlottingView):
                                 + str(days), None, (1, 0), "log")
         lvls = np.linspace(int(np.min(observed_flux)), int(np.max(observed_flux)), 1000)
         cs = self.map_plot.graph.tricontourf(triang, observed_flux, levels=lvls,
-                                             antialiased=False, Locator=ticker.LogLocator, cmap="jet")
+                                             antialiased=False, locator=ticker.LogLocator, cmap="jet")
 
-        cs.set_clim(vmin=0)
+        cs.set_clim(vmin=1.5)
         cbar = self.map_plot.colorbar(cs)
         cbar.ax.set_ylabel(r'$Flux~(\mathrm{Jy})$')
         cbar.locator = ticker.LogLocator()
