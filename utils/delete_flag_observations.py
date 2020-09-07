@@ -122,10 +122,18 @@ def main():
         if choice3 == "Y" or choice3 == "y":
             try:
                 shutil.rmtree(data_file_dir)
-                print( "Data file directory " + data_file_dir + " are deleted" )
+                print("Data file directory " + data_file_dir + " are deleted")
             except OSError as error:
-                print( "Error: %s : %s" % (data_file_dir, error.strerror) )
+                print("Error: %s : %s" % (data_file_dir, error.strerror))
 
+        log_file = get_configs("paths", "logPath") + source + "_" + "f" + line + "_" + st + "_" + str(iteration)
+        choice4 = input("Should this log file " + log_file + " be deleted Y/n ")
+        if choice4 == "Y" or choice4 == "y":
+            try:
+                os.remove(log_file)
+                print("Log file " + log_file + " are deleted")
+            except OSError as error:
+                print("Error: %s : %s" % (log_file, error.strerror))
 
     sys.exit(0)
 
