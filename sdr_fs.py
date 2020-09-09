@@ -15,6 +15,7 @@ import scipy.constants
 import numpy as np
 from astropy.time import Time
 import h5py
+from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtWidgets import QWidget, QApplication, QDesktopWidget, QGridLayout, QPushButton
 from PyQt5.QtGui import QIcon
 from ExperimentsLogReader.experimentsLogReader import LogReaderFactory, LogTypes
@@ -393,10 +394,13 @@ class Analyzer(QWidget):
             pass
 
         else:
-            self.plot_start__left_a.removePolt()
-            self.plot_start__right_b.removePolt()
-            self.index = self.index + 1
-            self.plot_pair(self.index)
+            if self.plot_start__left_a or self.plot_start__right_b:
+                if self.plot_start__left_a:
+                    self.plot_start__left_a.removePolt()
+                if self.plot_start__right_b:
+                    self.plot_start__right_b.removePolt()
+                self.index = self.index + 1
+                self.plot_pair(self.index)
 
     def skip_all(self):
         """
@@ -466,30 +470,34 @@ class Analyzer(QWidget):
 
         :return: None
         """
-        self.grid.removeWidget(self.plot_start__left_a)
-        self.grid.removeWidget(self.plot_start__right_b)
-        self.grid.removeWidget(self.total__left)
-        self.grid.removeWidget(self.total__right)
 
-        self.plot_start__left_a.hide()
-        self.plot_start__right_b.hide()
-        self.total__left.hide()
-        self.total__right.hide()
+        if self.plot_start__left_a or self.plot_start__right_b:
+            self.grid.removeWidget(self.plot_start__left_a)
+            self.grid.removeWidget(self.plot_start__right_b)
 
-        self.plot_start__left_a.close()
-        self.plot_start__right_b.close()
-        self.total__left.close()
-        self.total__right.close()
+            self.plot_start__left_a.hide()
+            self.plot_start__right_b.hide()
 
-        self.plot_start__left_a.removePolt()
-        self.plot_start__right_b.removePolt()
-        self.total__left.removePolt()
-        self.total__right.removePolt()
+            self.plot_start__left_a.close()
+            self.plot_start__right_b.close()
 
-        del self.plot_start__left_a
-        del self.plot_start__right_b
-        del self.total__left
-        del self.total__right
+            self.plot_start__left_a.removePolt()
+            self.plot_start__right_b.removePolt()
+
+            del self.plot_start__left_a
+            del self.plot_start__right_b
+
+        if self.total__left or self.total__right:
+            self.grid.removeWidget(self.total__left)
+            self.grid.removeWidget(self.total__right)
+            self.total__left.hide()
+            self.total__right.hide()
+            self.total__left.close()
+            self.total__right.close()
+            self.total__left.removePolt()
+            self.total__right.removePolt()
+            del self.total__left
+            del self.total__right
 
         self.grid.removeWidget(self.next_pair_button)
         self.next_pair_button.hide()
@@ -573,7 +581,7 @@ class Analyzer(QWidget):
         left_cut = np.max(velocity_min)
         right_cut = np.min(velocity_max)
 
-        for p in range(0, len(velocity_list)):
+        for p in range(0, len(self.sf_left)):
             index_left = find_nearest_index(velocity_list[p], left_cut)
             index_right = find_nearest_index(velocity_list[p], right_cut)
             y__left_avg.append(self.sf_left[p][index_right:index_left])
@@ -581,7 +589,7 @@ class Analyzer(QWidget):
             velocities_avg.append(velocity_list[p][index_right:index_left])
 
         max_points_count = np.max([len(m) for m in velocities_avg])
-        for s in range(0, len(velocity_list)):
+        for s in range(0, len(y__left_avg)):
 
             if len(velocities_avg[s]) < max_points_count:
                 velocities_avg[s] = np.append(velocities_avg[s], np.max(velocity_min))
@@ -624,9 +632,15 @@ class Analyzer(QWidget):
         self.plot_tsys.creatPlot(self.grid, 'Time', 'System temperature',
                                  "System temperature in time", (3, 0), "linear")
 
+        data_files = os.listdir(self.data_dir)
         time = list(set([int(t.split("_")[-1].split(".")[0]
                              [2:len(t.split("_")[-1].split(".")[0]) - 2])
-                         for t in self.data_files]))
+                         for t in data_files]))
+
+        time = list(time)
+        while len(time) != len(self.tsys_r_left_list):
+            time.pop()
+
         self.plot_tsys.plot(time, self.tsys_r_left_list, '*b', label="Tsys_r_left")
         self.plot_tsys.plot(time, self.tsys_r_right_list, '*r', label="Tsys_r_right")
         self.plot_tsys.plot(time, self.tsys_s_left_list, '*g', label="Tsys_s_left")
