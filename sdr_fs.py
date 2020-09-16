@@ -15,7 +15,6 @@ import scipy.constants
 import numpy as np
 from astropy.time import Time
 import h5py
-from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtWidgets import QWidget, QApplication, QDesktopWidget, QGridLayout, QPushButton
 from PyQt5.QtGui import QIcon
 from ExperimentsLogReader.experimentsLogReader import LogReaderFactory, LogTypes
@@ -382,7 +381,6 @@ class Analyzer(QWidget):
             scan_pairs.append(
                 ((str(scan) + "r" + "0", str(scan) + "s" + "0"),
                  (str(scan) + "r" + "1", str(scan) + "s" + "1")))
-
         return scan_pairs
 
     def next_pair(self):
@@ -400,7 +398,7 @@ class Analyzer(QWidget):
                 if self.plot_start__right_b:
                     self.plot_start__right_b.removePolt()
                 self.index = self.index + 1
-                self.plot_pair(self.index)
+            self.plot_pair(self.index)
 
     def skip_all(self):
         """
@@ -454,14 +452,15 @@ class Analyzer(QWidget):
                 self.tsys_r_right_list.append(tsys_r_right)
                 self.tsys_s_left_list.append(tsys_s_left)
                 self.tsys_s_right_list.append(tsys_s_right)
+
+                self.index += 1
+
             else:
                 self.scan_pairs.remove(pair)
 
             if self.index == len(self.scan_pairs) - 1:
                 self.next_pair_button.setText('Move to total results')
                 self.next_pair_button.clicked.connect(self.plot_total_results)
-
-            self.index += 1
 
         self.plot_total_results()
 
@@ -781,34 +780,36 @@ class Analyzer(QWidget):
             self.plot_start__left_a = Plot()
             self.plot_start__left_a.creatPlot(self.grid, 'Frequency Mhz',
                                               'Amplitude', "Left Polarization", (1, 0), "linear")
-            self.plot_start__left_a.plot(frequency_a, p_sig_left, 'b', label=str(index + 1) + "s0")
-            self.plot_start__left_a.plot(frequency_b, p_ref_left, 'g', label=str(index + 1) + "r0")
-            self.plot_start__left_a.plot(frequency_c, p_sig_on_left, 'r', label=str(index + 1) + "s1")
-            self.plot_start__left_a.plot(frequency_d, p_ref_on_left, 'y', label=str(index + 1) + "r1")
+            self.plot_start__left_a.plot(frequency_a, p_sig_left, 'b', label=pair[0][1])
+            self.plot_start__left_a.plot(frequency_b, p_ref_left, 'g', label=pair[0][0])
+            self.plot_start__left_a.plot(frequency_c, p_sig_on_left, 'r', label=pair[1][1])
+            self.plot_start__left_a.plot(frequency_d, p_ref_on_left, 'y', label=pair[1][0])
             self.grid.addWidget(self.plot_start__left_a, 0, 0)
 
             # plot2
             self.plot_start__right_b = Plot()
             self.plot_start__right_b.creatPlot(self.grid, 'Frequency Mhz',
                                                'Amplitude', "Right Polarization", (1, 1), "linear")
-            self.plot_start__right_b.plot(frequency_a, p_sig_right, 'b', label=str(index + 1) + "s0")
-            self.plot_start__right_b.plot(frequency_b, p_ref_right, 'g', label=str(index + 1) + "r0")
-            self.plot_start__right_b.plot(frequency_c, p_sig_on_right, 'r', label=str(index + 1) + "s1")
-            self.plot_start__right_b.plot(frequency_d, p_ref_on_right, 'y', label=str(index + 1) + "r1")
+            self.plot_start__right_b.plot(frequency_a, p_sig_right, 'b', label=pair[0][1])
+            self.plot_start__right_b.plot(frequency_b, p_ref_right, 'g', label=pair[0][0])
+            self.plot_start__right_b.plot(frequency_c, p_sig_on_right, 'r', label=pair[1][1])
+            self.plot_start__right_b.plot(frequency_d, p_ref_on_right, 'y', label=pair[1][0])
             self.grid.addWidget(self.plot_start__right_b, 0, 1)
+
+            scan_name = re.findall("[0-9]+", pair[0][0])[0]
 
             # plot3
             self.total__left = Plot()
             self.total__left.creatPlot(self.grid, 'Frequency Mhz',
                                        'Flux density (Jy)', "", (4, 0), "linear")
-            self.total__left.plot(self.x, sf_left, 'b', label=str(index + 1))
+            self.total__left.plot(self.x, sf_left, 'b', label=scan_name)
             self.grid.addWidget(self.total__left, 3, 0)
 
             # plot4
             self.total__right = Plot()
             self.total__right.creatPlot(self.grid,
                                         'Frequency Mhz', 'Flux density (Jy)', "", (4, 1), "linear")
-            self.total__right.plot(self.x, sf_right, 'b', label=str(index + 1))
+            self.total__right.plot(self.x, sf_right, 'b', label=scan_name)
             self.grid.addWidget(self.total__right, 3, 1)
         else:
             self.scan_pairs.remove(pair) 
