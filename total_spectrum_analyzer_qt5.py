@@ -457,12 +457,12 @@ class Analyzer(QWidget):
 
         self.plot_1 = Plot()
         self.plot_1.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
-                              'Flux density (Jy)', "u1 Polarization", (1, 0), "linear")
+                              'Flux density (Jy)', "Left Polarization", (1, 0), "linear")
         self.plot_1.plot(self.xdata, self.ydata_right, 'ko', label='Data Points', markersize=1, picker=5)
 
         self.plot_2 = Plot()
         self.plot_2.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
-                              'Flux density (Jy)', "u9 Polarization", (1, 1), "linear")
+                              'Flux density (Jy)', "Right Polarization", (1, 1), "linear")
         self.plot_2.plot(self.xdata, self.ydata_right, 'ko', label='Data Points', markersize=1, picker=5)
 
         self.plot_1.fig.canvas.mpl_connect('pick_event', self.on_left_click)
