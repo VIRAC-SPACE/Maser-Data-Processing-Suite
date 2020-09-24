@@ -177,7 +177,7 @@ def main():
 
     for spectr_file in spectr_files:
         file = get_configs("paths", "outputFilePath") + "/" + get_args("line") + "/" + spectr_file
-        spectr_data = h5py.File(file, 'r')['amplitude_corrected'][()]
+        spectr_data = h5py.File(file, 'r')['amplitude_corrected_not_smooht'][()]
 
         xdata_ = spectr_data[:, 0]
         ydata_ = spectr_data[:, 3]
