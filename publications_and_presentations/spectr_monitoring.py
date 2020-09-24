@@ -23,7 +23,7 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.
 sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 
 from parsers.configparser_ import ConfigParser
-from utils.help import convert_datetime_object_to_mjd
+from utils.help import convert_datetime_object_to_mjd, file_len, correct_numpy_read_data
 
 
 def parse_arguments():
@@ -104,26 +104,73 @@ def main():
                             old_dates.append(time_stamp)
 
     old_dates = [convert_datetime_object_to_mjd(datetime.datetime.strptime(d, '%Y-%m-%d_%H:%M:%S')) for d in old_dates]
-    component_count = len(get_configs("velocities", get_args("source") + "_6668").replace(" ", "").split(","))
-    data_file = get_configs("paths", "monitoringFilePath") + get_args("source") + "_" + get_args("line") + ".npy"
-    data = np.load(data_file, allow_pickle=True)
-    xdata = data[0][0]
-    print("Number of observations", len(xdata))
+    component_count = len(get_configs("velocities", get_args("source") + "_" + get_args("line")).replace(" ", "").split(","))
+    new_monitoring_file = get_configs("paths", "monitoringFilePath") + get_args("source") + "_" + get_args("line") + ".npy"
+    old_monitoring_file = get_configs("paths", "oldMonitoringFilePath") + get_args("source") + ".dat"
 
-    components = [i for i in range( 1, component_count + 1 )]
+    if os.path.isfile(old_monitoring_file) and os.path.isfile(new_monitoring_file):
+        new_data = np.load(new_monitoring_file, allow_pickle=True)
+        new_x = new_data[0][0]
+        old_data = np.loadtxt(old_monitoring_file, dtype=str).reshape(
+            (file_len(old_monitoring_file), component_count + 1))
+        old_x = correct_numpy_read_data(old_data[:, [0]])
+        old_x = [convert_datetime_object_to_mjd(datetime.datetime.strptime(x, "%Y-%m-%d%H:%M:%S")) for x in old_x]
+        old_data[:, [0]] = old_x[0]
+        x = old_x + list(new_x)
+        print("Number of observations", len(x))
+        old_data_tmp = []
+        for tmp in range(0, len(new_data)):
+            old_data_tmp.append([])
+        tmp2 = 0
+        for j in range(0, old_data.shape[1]):
+            for i in range(0, old_data.shape[0]):
+                old_data_tmp[tmp2].append(old_data[i][j])
+            old_data_tmp[tmp2] = np.array(old_data_tmp[tmp2]).reshape(old_data.shape[0],)
+            tmp2 += 1
+        old_data = np.array(old_data_tmp)
+        new_data[0] = new_data[0][0]
+        data = []
+
+        for tmp3 in range(0, old_data.shape[0]):
+            data_tmp = np.concatenate((old_data[tmp3], new_data[tmp3]), axis=0)
+            data.append(data_tmp)
+
+        data = np.array(data)
+        old = True
+
+    elif os.path.isfile(old_monitoring_file):
+        old_data = np.loadtxt(old_monitoring_file, dtype=str).reshape(
+            (file_len(old_monitoring_file), component_count + 1))
+        old_x = correct_numpy_read_data(old_data[:, [0]])
+        old_x = [convert_datetime_object_to_mjd(datetime.datetime.strptime(x, "%Y-%m-%d%H:%M:%S")) for x in old_x]
+        old_data[:, [0]] = old_x[0]
+        data = old_data
+        x = list(old_x)
+        print("Number of observations", len(x))
+        old = True
+
+    else:
+        new_data = np.load(new_monitoring_file, allow_pickle=True)
+        new_x = new_data[0][0]
+        data = new_data
+        x = list(new_x)
+        print("Number of observations", len(x))
+        old = False
+
+    components = [i for i in range(1, component_count + 1)]
     symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', '#FF33E6']
-    velocity = get_configs("velocities", get_args("source") + "_6668").replace(" ", "").split(",")
+    velocity = get_configs("velocities", get_args("source") + "_" + get_args("line")).replace(" ", "").split(",")
 
-    f, (ax1, ax2) = plt.subplots( 1, 2, gridspec_kw={'width_ratios': [2, 4]}, figsize=(19.8, 9.3) )
+    f, (ax1, ax2) = plt.subplots(1, 2, gridspec_kw={'width_ratios': [2, 4]}, figsize=(19.8, 9.3))
     f.tight_layout(pad=2, h_pad=2, w_pad=2, rect=None)
     f.subplots_adjust( wspace=0.1, right=0.876, bottom=0.076, top=0.945)
     f.suptitle(get_configs("Full_source_name", get_args("source")),
                horizontalalignment="center", verticalalignment="center", x=0.4)
 
-    spectr_files = ["cepa_58891.388703703706_IRBENE_1290.h5",
-                     "cepa_58836.87358796296_IRBENE_1256.h5",
-                     "cepa_58836.889375_IRBENE_1260.h5"]
+    spectr_files = ["cepa/cepa_58862.42024305555_IRBENE16_1282.h5",
+                     "cepa/cepa_58836.87358796296_IRBENE_1256.h5",
+                     "cepa/cepa_58836.889375_IRBENE_1260.h5"]
 
     symbols_2 = [".", "-.", "-"]
     i = 0
@@ -138,14 +185,14 @@ def main():
         ax1.plot(xdata_, ydata_, symbols_2[i])
         i += 1
 
-    ax1.set_xlim(-42.0, -33.0)
+    ax1.set_xlim(-8.0, 4.0)
     ax1.set_xlabel("Velocity (km sec$^{-1}$)")
     ax1.set_ylabel("Flux density (Jy)")
-    ax1.set_ylim(-1.5, 6 )
+    ax1.set_ylim(0, 1300)
 
     ax2.plot([], [], ' ', label="km sec$^{-1}$")
 
-    with open( get_configs("paths", "resultFilePath") + "/" + get_args("source") + "_6668.json", "r") as result_data:
+    with open(get_configs("paths", "resultFilePath") + "/" + get_args("source") + "_" + get_args("line") + ".json", "r") as result_data:
         result_data = json.load(result_data)
 
     rt32_observation_dates = old_dates
@@ -155,28 +202,28 @@ def main():
             mjd = result_data[observation]["modifiedJulianDays"]
             rt32_observation_dates.append(mjd)
 
-    rt32_x = [rt32 for rt32 in xdata if rt32 in rt32_observation_dates]
-    rt32_x_indexies = [xdata.tolist().index(rt32) for rt32 in xdata if rt32 in rt32_observation_dates]
+    rt32_x = [rt32 for rt32 in x if rt32 in rt32_observation_dates]
+    rt32_x_indexies = [x.index(rt32) for rt32 in x if rt32 in rt32_observation_dates]
 
     for component in components:
         index = components.index(component)
         if len(get_args("not_show")) != 0:
             if index + 1 != 3:
-                y = data[:, index + 1]
-                ax2.plot(xdata, y, symbols[index], color=colors[index],
+                y = data[:, index + 1].astype('float64')
+                ax2.plot(x, y, symbols[index], color=colors[index],
                           linewidth=0.5,
                           markersize=5,
                           label=str(velocity[index]))
-                ax2.errorbar(xdata[0], y[0],
+                ax2.errorbar(x[0], y[0],
                              yerr=1.5 + 0.05 * y[0],
                              xerr=None, ls='none',
                              ecolor='k')  # 1st point error bar
         else:
-            y = data[index + 1]
+            y = data[index + 1].astype('float64')
             rt32_y = np.array(y)[rt32_x_indexies]
-            ax2.plot(xdata, y, symbols[index], c=colors[index], linewidth=0.5, markersize=4, label=str( velocity[index]))
+            ax2.plot(x, y, symbols[index], c=colors[index], linewidth=0.5, markersize=4, label=str(velocity[index]))
             ax2.plot(rt32_x, rt32_y, symbols[index], c=colors[index], linewidth=0.5, markersize=10)
-            ax2.errorbar(xdata[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')
+            ax2.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')
 
     ax1.yaxis.set_ticks_position('both')
     ax1.xaxis.set_ticks_position('both')
@@ -207,7 +254,7 @@ def main():
                     which="minor", length=10,
                     width=1.5)
     ax2.set_xlabel("MJD")
-    ax2.legend( bbox_to_anchor=(1, 0.5, 0.3, 0.3), loc='upper left', borderaxespad=0.5 )
+    ax2.legend(bbox_to_anchor=(1, 0.5, 0.3, 0.3), loc='upper left', borderaxespad=0.5)
     plt.show()
     f.savefig("monitoring_" + get_args("source") + ".eps", format="eps", dpi=5000, papertype="a4")
 

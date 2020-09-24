@@ -78,20 +78,21 @@ def main():
     new_monitoring_file = get_configs("paths", "monitoringFilePath") + \
                           get_args("source") + "_" + \
                           get_args("line") + ".npy"
+
     print(new_monitoring_file)
-    compunet_count = len( get_configs("velocities",
+    component_count = len(get_configs("velocities",
                                       get_args("source") + "_" +
                                       get_args("line")).replace(" ", "").split(","))
     velocity = get_configs("velocities",
                            get_args("source") + "_" +
                            get_args("line")).replace(" ", "").split(",")
-    components = [i for i in range(1, compunet_count + 1)]
+    components = [i for i in range(1, component_count + 1)]
 
     if os.path.isfile(old_monitoring_file) and os.path.isfile(new_monitoring_file):
         new_data = np.load(new_monitoring_file, allow_pickle=True)
         new_x = new_data[0][0]
         old_data = np.loadtxt(old_monitoring_file, dtype=str).reshape(
-            (file_len( old_monitoring_file), compunet_count + 1))
+            (file_len(old_monitoring_file), component_count + 1))
         old_x = correct_numpy_read_data(old_data[:, [0]])
         old_x = [convert_datetime_object_to_mjd(datetime.strptime(x, "%Y-%m-%d%H:%M:%S")) for x in old_x]
         old_data[:, [0]] = old_x[0]
@@ -118,7 +119,7 @@ def main():
 
     elif os.path.isfile(old_monitoring_file):
         old_data = np.loadtxt(old_monitoring_file, dtype=str).reshape(
-            (file_len(old_monitoring_file), compunet_count + 1))
+            (file_len(old_monitoring_file), component_count + 1))
         old_x = correct_numpy_read_data(old_data[:, [0]])
         old_x = [convert_datetime_object_to_mjd( datetime.strptime(x, "%Y-%m-%d%H:%M:%S")) for x in old_x]
         old_data[:, [0]] = old_x[0]
@@ -137,8 +138,8 @@ def main():
     print("Nmbers of observations", len(x))
     print("Observations per month", (len(x) / ((np.max(x) - np.min(x)) / 365)) / 12)
 
-    fig = plt.figure( "Monitoring", figsize=(4, 3), dpi=75 )
-    ax1 = fig.add_subplot( 111 )
+    fig = plt.figure("Monitoring", figsize=(4, 3), dpi=75)
+    ax1 = fig.add_subplot(111)
 
     symbols = ["*-", "o-", "v-", "^-", "<-", ">-", "1-", "2-", "3-", "4-"]
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
