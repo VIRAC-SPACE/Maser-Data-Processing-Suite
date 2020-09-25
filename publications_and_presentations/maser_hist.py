@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-For definite (low, middle, high) output files for give sources compute are under spectr curve and display histogram
+For definite (low, middle, high) output files for give sources compute spectral density and display histogram
 """
 import sys
 import os
@@ -25,8 +25,8 @@ def parse_arguments():
 
     :return: dict with passed args to script
     """
-    parser = argparse.ArgumentParser(description='''For definite (low, middle, high) 
-    output files for give sources compute are under spectr curve and display histogram. ''')
+    parser = argparse.ArgumentParser(description='''For definite (low, middle, high) output files for give sources 
+    compute spectral density and display histogram. ''')
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="../config/config.cfg")
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 2.0')
     args = parser.parse_args()
@@ -86,7 +86,7 @@ def main():
     for source in spectr_files_for_all_sources:
         for file_name in source:
             file = get_configs("paths", "outputFilePath") + "/6668/" + file_name
-            spectr_data = h5py.File(file, 'r')['amplitude_corrected'][()]
+            spectr_data = h5py.File(file, 'r')['amplitude_corrected_not_smooht'][()]
 
             xdata_ = spectr_data[:, 0]
             ydata_ = spectr_data[:, 3]
