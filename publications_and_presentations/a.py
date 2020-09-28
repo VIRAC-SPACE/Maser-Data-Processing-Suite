@@ -137,13 +137,39 @@ def main():
                                                               [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y]) - np.mean(y) *
                                                       reduce(lambda x, y: x + y, [i * (1.5 + 0.05 * i) ** 2 for i in y]))
                                                      / (N - 1)) - 1) / np.mean(y)
-                variability_indexes.append(variability_index)
-                function_indexes.append(function_index)
-                mean_of_y.append(np.mean(y))
+                if not np.isnan(function_index):
+                    variability_indexes.append(variability_index)
+                    function_indexes.append(function_index)
+                    mean_of_y.append(np.mean(y))
+                    print("source, variability_index, function_index, mean_of_y, component", source, variability_index,
+                          function_index, np.mean(mean_of_y), component)
+    color = []
+    for vi in variability_indexes:
+        if vi < 0.5:
+            color.append("blue")
+        else:
+            color.append("red")
+    size = []
+    for my in mean_of_y:
+        if 0.5 < my <= 20:
+            size.append(10)
+        elif 20 < my <= 200:
+            size.append(20)
+        elif 200 < my <= 800:
+            size.append(30)
+        elif 800 < my <= 2000:
+            size.append(40)
+        elif 2000 < my <= 20000:
+            size.append(50)
 
-    plt.scatter(function_indexes, variability_indexes, c=mean_of_y, cmap="jet")
-    plt.ylabel("Variability index")
-    plt.xlabel("Function indexes")
+    scatter = plt.scatter(variability_indexes, function_indexes, s=size, c=color, alpha=0.3)
+    plt.legend(*scatter.legend_elements(), title="10: 0.5 < Jy <= 20 \n"
+                                                 "20: 20 < Jy <= 200\n"
+                                                 "30: 200 < Jy <= 800\n"
+                                                 "40: 800 < Jy <= 2000\n"
+                                                 "50: 2000 < Jy <= 20000")
+    plt.ylabel("Function indexes")
+    plt.xlabel("Variability index")
     plt.show()
     sys.exit(0)
 
