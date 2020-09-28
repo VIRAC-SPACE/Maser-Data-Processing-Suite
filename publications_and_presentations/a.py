@@ -69,9 +69,12 @@ def main():
     variability_indexes = []
     mean_of_y = []
     for source in all_sources:
+
         new_monitoring_file = new_monitoring_file_path + "/" + source + "_" + get_args("line") + ".npy"
         old_monitoring_file = old_monitoring_file_path + "/" + source + ".dat"
-
+        new_data = None
+        old_data = None
+        data = None
         if os.path.isfile(old_monitoring_file) and os.path.isfile(new_monitoring_file):
             component_count = len(get_configs("velocities",
                                               source + "_" +
@@ -147,7 +150,10 @@ def main():
                         mean_of_y.append(np.mean(y))
                         print("source, variability_index, function_index, mean_of_y, component", source, variability_index,
                               function_index, np.mean(y), component)
-                del data, y, variability_index, function_index
+
+                    del y, variability_index, function_index
+                del data
+        del new_monitoring_file, old_monitoring_file
     color = []
     for vi in variability_indexes:
         if vi < 0.5:
@@ -155,6 +161,7 @@ def main():
         else:
             color.append("red")
     size = []
+    print(sorted(mean_of_y))
     for my in mean_of_y:
         if 0.5 < my <= 20:
             size.append(10)
@@ -164,10 +171,10 @@ def main():
             size.append(30)
         elif 800 < my <= 2000:
             size.append(40)
-        elif 2000 < my <= 14000:
+        elif 2000 < my <= 15000:
             size.append(50)
 
-    scatter = plt.scatter(variability_indexes, function_indexes, c=color, alpha=0.3)
+    scatter = plt.scatter(variability_indexes, function_indexes, s=size, c=color, alpha=0.3)
     plt.legend(*scatter.legend_elements(), title="10: 0.5 < Jy <= 20 \n"
                                                  "20: 20 < Jy <= 200\n"
                                                  "30: 200 < Jy <= 800\n"
