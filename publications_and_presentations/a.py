@@ -63,7 +63,7 @@ def main():
     new_monitoring_file_path = get_configs("paths", "monitoringFilePath")
 
     all_sources = list(get_configs_items("sources").keys())
-    all_sources = ["g50p03"]
+    #all_sources = ["g50p03"]
 
     function_indexes = []
     variability_indexes = []
@@ -155,7 +155,6 @@ def main():
         else:
             color.append("red")
     size = []
-    print(sorted(mean_of_y))
     for my in mean_of_y:
         if 0.5 < my <= 20:
             size.append(10)
