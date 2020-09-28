@@ -78,8 +78,6 @@ def main():
     new_monitoring_file = get_configs("paths", "monitoringFilePath") + \
                           get_args("source") + "_" + \
                           get_args("line") + ".npy"
-
-    print(new_monitoring_file)
     component_count = len(get_configs("velocities",
                                       get_args("source") + "_" +
                                       get_args("line")).replace(" ", "").split(","))
@@ -165,6 +163,7 @@ def main():
         y = data[index + 1]
         y = [np.float128(yi) for yi in y]
         N = len(y)
+        print("y",  np.mean(y))
         ax1.plot(x, y, symbols[index] + colors[index], linewidth=0.5, markersize=5)
         ax1.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
         result_org.append(y)

@@ -4,7 +4,6 @@
 """
 For given output files compute compute spectral density
 """
-import os
 import h5py
 import numpy as np
 import argparse

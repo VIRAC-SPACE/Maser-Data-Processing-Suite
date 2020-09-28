@@ -63,6 +63,7 @@ def main():
     new_monitoring_file_path = get_configs("paths", "monitoringFilePath")
 
     all_sources = list(get_configs_items("sources").keys())
+    all_sources = ["g50p03"]
 
     function_indexes = []
     variability_indexes = []
@@ -77,11 +78,13 @@ def main():
                                               get_args("line")).replace(" ", "").split(","))
             components = [i for i in range(1, component_count + 1)]
             new_data = np.load(new_monitoring_file, allow_pickle=True)
+            new_x = new_data[0][0]
             old_data = np.loadtxt(old_monitoring_file, dtype=str).reshape(
                 (file_len(old_monitoring_file), component_count + 1))
             old_x = correct_numpy_read_data(old_data[:, [0]])
             old_x = [convert_datetime_object_to_mjd(datetime.strptime(x, "%Y-%m-%d%H:%M:%S")) for x in old_x]
             old_data[:, [0]] = old_x[0]
+            x = old_x + list(new_x)
             old_data_tmp = []
             for tmp in range(0, len(new_data)):
                 old_data_tmp.append([])
@@ -123,26 +126,28 @@ def main():
             components = []
             data = None
 
-        for component in components:
+        if len(components) > 0:
             if data is not None:
-                index = components.index(component)
-                y = data[index + 1]
-                y = [np.float128(yi) for yi in y]
-                N = len(y)
+                for component in components:
+                    index = components.index(component)
+                    y = data[index + 1]
+                    y = [np.float128(yi) for yi in y]
+                    N = len(y)
 
-                variability_index = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y))) \
-                                                  / ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
-                function_index = np.sqrt((N / reduce(lambda x, y: x + y, [(1.5 + 0.05 * i) ** 2 for i in y])) *
-                                                    ((reduce(lambda x, y: x + y,
-                                                              [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y]) - np.mean(y) *
-                                                      reduce(lambda x, y: x + y, [i * (1.5 + 0.05 * i) ** 2 for i in y]))
-                                                     / (N - 1)) - 1) / np.mean(y)
-                if not np.isnan(function_index):
-                    variability_indexes.append(variability_index)
-                    function_indexes.append(function_index)
-                    mean_of_y.append(np.mean(y))
-                    print("source, variability_index, function_index, mean_of_y, component", source, variability_index,
-                          function_index, np.mean(mean_of_y), component)
+                    variability_index = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y))) \
+                                                      / ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
+                    function_index = np.sqrt((N / reduce(lambda x, y: x + y, [(1.5 + 0.05 * i) ** 2 for i in y])) *
+                                                        ((reduce(lambda x, y: x + y,
+                                                                  [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y]) - np.mean(y) *
+                                                          reduce(lambda x, y: x + y, [i * (1.5 + 0.05 * i) ** 2 for i in y]))
+                                                         / (N - 1)) - 1) / np.mean(y)
+                    if not np.isnan(function_index):
+                        variability_indexes.append(variability_index)
+                        function_indexes.append(function_index)
+                        mean_of_y.append(np.mean(y))
+                        print("source, variability_index, function_index, mean_of_y, component", source, variability_index,
+                              function_index, np.mean(y), component)
+                del data, y, variability_index, function_index
     color = []
     for vi in variability_indexes:
         if vi < 0.5:
@@ -150,6 +155,7 @@ def main():
         else:
             color.append("red")
     size = []
+    print(sorted(mean_of_y))
     for my in mean_of_y:
         if 0.5 < my <= 20:
             size.append(10)
@@ -159,15 +165,15 @@ def main():
             size.append(30)
         elif 800 < my <= 2000:
             size.append(40)
-        elif 2000 < my <= 20000:
+        elif 2000 < my <= 14000:
             size.append(50)
 
-    scatter = plt.scatter(variability_indexes, function_indexes, s=size, c=color, alpha=0.3)
+    scatter = plt.scatter(variability_indexes, function_indexes, c=color, alpha=0.3)
     plt.legend(*scatter.legend_elements(), title="10: 0.5 < Jy <= 20 \n"
                                                  "20: 20 < Jy <= 200\n"
                                                  "30: 200 < Jy <= 800\n"
                                                  "40: 800 < Jy <= 2000\n"
-                                                 "50: 2000 < Jy <= 20000")
+                                                 "50: 2000 < Jy <= 14000")
     plt.ylabel("Function indexes")
     plt.xlabel("Variability index")
     plt.show()
