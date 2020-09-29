@@ -69,15 +69,17 @@ def main():
     variability_indexes = []
     mean_of_y = []
     for source in all_sources:
-
+        old = False
+        new = False
+        both = False
         new_monitoring_file = new_monitoring_file_path + "/" + source + "_" + get_args("line") + ".npy"
         old_monitoring_file = old_monitoring_file_path + "/" + source + ".dat"
         new_data = None
         old_data = None
         data = None
+
         if os.path.isfile(old_monitoring_file) and os.path.isfile(new_monitoring_file):
-            component_count = len(get_configs("velocities",
-                                              source + "_" +
+            component_count = len(get_configs("velocities", source + "_" +
                                               get_args("line")).replace(" ", "").split(","))
             components = [i for i in range(1, component_count + 1)]
             new_data = np.load(new_monitoring_file, allow_pickle=True)
@@ -86,7 +88,7 @@ def main():
                 (file_len(old_monitoring_file), component_count + 1))
             old_x = correct_numpy_read_data(old_data[:, [0]])
             old_x = [convert_datetime_object_to_mjd(datetime.strptime(x, "%Y-%m-%d%H:%M:%S")) for x in old_x]
-            old_data[:, [0]] = old_x[0]
+            old_data[:, 0] = old_x
             x = old_x + list(new_x)
             old_data_tmp = []
             for tmp in range(0, len(new_data)):
@@ -101,30 +103,33 @@ def main():
             new_data[0] = new_data[0][0]
             data = []
 
-            for tmp3 in range(0, old_data.shape[0]):
+            for tmp3 in range( 0, old_data.shape[0] ):
                 data_tmp = np.concatenate((old_data[tmp3], new_data[tmp3]), axis=0)
                 data.append(data_tmp)
             data = np.array(data)
+            both = True
 
         elif os.path.isfile(old_monitoring_file) and not os.path.isfile(new_monitoring_file):
-            component_count = len(get_configs("velocities",
-                                              source + "_" +
+            component_count = len(get_configs("velocities", source + "_" +
                                               get_args("line")).replace(" ", "").split(","))
             components = [i for i in range(1, component_count + 1)]
             old_data = np.loadtxt(old_monitoring_file, dtype=str).reshape(
                 (file_len(old_monitoring_file), component_count + 1))
             old_x = correct_numpy_read_data(old_data[:, [0]])
             old_x = [convert_datetime_object_to_mjd(datetime.strptime(x, "%Y-%m-%d%H:%M:%S")) for x in old_x]
-            old_data[:, [0]] = old_x[0]
+            old_data[:, 0] = old_x
             data = old_data
+            x = list(old_x)
+            old = True
 
         elif not os.path.isfile(old_monitoring_file) and os.path.isfile(new_monitoring_file):
-            component_count = len(get_configs("velocities",
-                                              source + "_" +
+            component_count = len(get_configs("velocities", source + "_" +
                                               get_args("line")).replace(" ", "").split(","))
             components = [i for i in range(1, component_count + 1)]
             new_data = np.load(new_monitoring_file, allow_pickle=True)
             data = new_data
+            new = True
+
         else:
             components = []
             data = None
@@ -132,8 +137,13 @@ def main():
         if len(components) > 0:
             if data is not None:
                 for component in components:
-                    index = components.index(component)
-                    y = data[index + 1]
+                    index = components.index( component )
+                    if old:
+                        y = data[:, index + 1]
+                    elif both:
+                        y = data[index + 1, :]
+                    else:
+                        y = data[index + 1]
                     y = [np.float128(yi) for yi in y]
                     N = len(y)
 
@@ -161,7 +171,7 @@ def main():
         else:
             color.append("red")
     size = []
-    print(sorted(mean_of_y))
+
     for my in mean_of_y:
         if 0.5 < my <= 20:
             size.append(10)
@@ -171,17 +181,17 @@ def main():
             size.append(30)
         elif 800 < my <= 2000:
             size.append(40)
-        elif 2000 < my <= 15000:
+        elif 2000 < my <= 3005:
             size.append(50)
 
     scatter = plt.scatter(variability_indexes, function_indexes, s=size, c=color, alpha=0.3)
-    plt.legend(*scatter.legend_elements(), title="10: 0.5 < Jy <= 20 \n"
-                                                 "20: 20 < Jy <= 200\n"
-                                                 "30: 200 < Jy <= 800\n"
-                                                 "40: 800 < Jy <= 2000\n"
-                                                 "50: 2000 < Jy <= 14000")
-    plt.ylabel("Function indexes")
+    handles, labels = scatter.legend_elements(prop="sizes", alpha=0.6)
+    ranges = ["0.5 < Jy <= 20", "20 < Jy <= 200", "200 < Jy <= 800", "800 < Jy <= 2000"]
+    labels = [labels[l] + " " + ranges[l] for l in range(0, len(ranges))]
+    plt.legend(handles, labels)
+
     plt.xlabel("Variability index")
+    plt.ylabel("Function indexes")
     plt.show()
     sys.exit(0)
 

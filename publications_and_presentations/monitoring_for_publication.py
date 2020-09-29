@@ -70,6 +70,9 @@ def get_configs(section, key):
 
 
 def main():
+    both = False
+    new = False
+    old = False
     configuration_items = get_configs_items()
     for key, value in configuration_items.items():
         rcParams[key] = value
@@ -92,8 +95,8 @@ def main():
         old_data = np.loadtxt(old_monitoring_file, dtype=str).reshape(
             (file_len(old_monitoring_file), component_count + 1))
         old_x = correct_numpy_read_data(old_data[:, [0]])
-        old_x = [convert_datetime_object_to_mjd(datetime.strptime(x, "%Y-%m-%d%H:%M:%S")) for x in old_x]
-        old_data[:, [0]] = old_x[0]
+        old_x = [convert_datetime_object_to_mjd(datetime.strptime(x, "%Y-%m-%d%H:%M:%S" ) ) for x in old_x]
+        old_data[:, 0] = old_x
         x = old_x + list(new_x)
         old_data_tmp = []
         for tmp in range(0, len(new_data)):
@@ -111,16 +114,15 @@ def main():
         for tmp3 in range(0, old_data.shape[0]):
             data_tmp = np.concatenate((old_data[tmp3], new_data[tmp3]), axis=0)
             data.append(data_tmp)
-
         data = np.array(data)
-        old = True
+        both = True
 
     elif os.path.isfile(old_monitoring_file):
         old_data = np.loadtxt(old_monitoring_file, dtype=str).reshape(
             (file_len(old_monitoring_file), component_count + 1))
         old_x = correct_numpy_read_data(old_data[:, [0]])
-        old_x = [convert_datetime_object_to_mjd( datetime.strptime(x, "%Y-%m-%d%H:%M:%S")) for x in old_x]
-        old_data[:, [0]] = old_x[0]
+        old_x = [convert_datetime_object_to_mjd(datetime.strptime(x, "%Y-%m-%d%H:%M:%S")) for x in old_x]
+        old_data[:, 0] = old_x
         data = old_data
         x = list(old_x)
         old = True
@@ -130,7 +132,7 @@ def main():
         new_x = new_data[0][0]
         data = new_data
         x = list(new_x)
-        old = False
+        new = True
 
     print("total time in years", (np.max(x) - np.min(x)) / 365)
     print("Nmbers of observations", len(x))
@@ -160,21 +162,26 @@ def main():
 
     for component in components:
         index = components.index(component)
-        y = data[index + 1]
+        if old:
+            y = data[:, index + 1]
+        elif both:
+            y = data[index + 1, :]
+        else:
+            y = data[index + 1]
+
         y = [np.float128(yi) for yi in y]
         N = len(y)
-        print("y",  np.mean(y))
         ax1.plot(x, y, symbols[index] + colors[index], linewidth=0.5, markersize=5)
         ax1.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
         result_org.append(y)
-        variances[component] = reduce(lambda x, y: x + y, [((i - np.mean(y)) / np.std(y)) ** 2 for i in y] )
+        variances[component] = reduce(lambda x_, y_: x_ + y_, [((i - np.mean(y)) / np.std(y)) ** 2 for i in y])
         variability_indexies[component] = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y)))\
                                           / ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
         variances_normal[component] = variances[component] * (1 / N - 1)
-        fuction_index[component] = np.sqrt((N / reduce(lambda x, y: x + y, [(1.5 + 0.05 * i) ** 2 for i in y] )) *
-                                           ((reduce(lambda x, y: x + y, [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y]) - np.mean(y) *
-                                            reduce(lambda x, y: x + y, [i * (1.5 + 0.05 * i) ** 2 for i in y]))
-                                            / (N - 1)) - 1) / np.mean(y)
+        fuction_index[component] = np.sqrt((N / reduce(lambda x_, y_: x_ + y_, [(1.5 + 0.05 * i) ** 2 for i in y])) *
+                                           ((reduce(lambda x_, y_: x_ + y_, [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y]) -
+                                             np.mean(y) * reduce(lambda x_, y_: x_ + y_, [i * (1.5 + 0.05 * i) ** 2 for i in y]))
+                                           / (N - 1)) - 1) / np.mean(y)
         v = velocity[index]
         print("{:3} &  {:.3f} & {:.3f} & {:.3f}\\\\".
               format(v, np.mean(y), variability_indexies[component], fuction_index[component]))
