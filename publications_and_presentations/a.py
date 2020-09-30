@@ -144,9 +144,8 @@ def main():
                         y = data[index + 1, :]
                     else:
                         y = data[index + 1]
-                    y = [np.float128(yi) for yi in y]
+                    y = np.array([np.float128(yi) for yi in y]).clip(min=0)
                     N = len(y)
-
                     variability_index = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y))) \
                                                       / ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
                     function_index = np.sqrt((N / reduce(lambda x, y: x + y, [(1.5 + 0.05 * i) ** 2 for i in y])) *
@@ -158,8 +157,9 @@ def main():
                         variability_indexes.append(variability_index)
                         function_indexes.append(function_index)
                         mean_of_y.append(np.mean(y))
-                        print("source, variability_index, function_index, mean_of_y, component", source, variability_index,
-                              function_index, np.mean(y), component)
+                        if np.mean(y) > 1000:
+                            print("source, variability_index, function_index, mean_of_y, component", source, variability_index,
+                                  function_index, np.mean(y), component)
 
                     del y, variability_index, function_index
                 del data
@@ -186,7 +186,7 @@ def main():
 
     scatter = plt.scatter(variability_indexes, function_indexes, s=size, c=color, alpha=0.3)
     handles, labels = scatter.legend_elements(prop="sizes", alpha=0.6)
-    ranges = ["0.5 < Jy <= 20", "20 < Jy <= 200", "200 < Jy <= 800", "800 < Jy <= 2000"]
+    ranges = ["0.5 < Jy <= 20", "20 < Jy <= 200", "200 < Jy <= 800", "800 < Jy <= 3000"]
     labels = [labels[l] + " " + ranges[l] for l in range(0, len(ranges))]
     plt.legend(handles, labels)
 

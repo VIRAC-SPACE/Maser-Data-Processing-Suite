@@ -159,7 +159,6 @@ def main():
     print("\multicolumn{{4}}{{l}}{{$N$={:d}, $C(month^{{-1}})$={:.3f})}}"
           " \\\\".format(len(x), (len(x) / ((np.max(x) - np.min(x)) / 365)) / 12))
     print("\hline")
-
     for component in components:
         index = components.index(component)
         if old:
@@ -169,7 +168,7 @@ def main():
         else:
             y = data[index + 1]
 
-        y = [np.float128(yi) for yi in y]
+        y = np.array([np.float128(yi) for yi in y]).clip(min=0)
         N = len(y)
         ax1.plot(x, y, symbols[index] + colors[index], linewidth=0.5, markersize=5)
         ax1.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
