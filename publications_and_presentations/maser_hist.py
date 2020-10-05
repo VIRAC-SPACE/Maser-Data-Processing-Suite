@@ -10,6 +10,7 @@ import argparse
 from matplotlib import rcParams
 from matplotlib.font_manager import FontProperties
 import matplotlib.pyplot as plt
+from matplotlib import rc
 import numpy as np
 import h5py
 
@@ -65,6 +66,7 @@ def get_configs_items():
 
 
 def main():
+    rc('font', family='serif', style='normal', variant='normal', weight='normal', stretch='normal', size=20)
     font_properties = FontProperties()
     font_properties.set_size('small')
 
@@ -72,16 +74,10 @@ def main():
     for key, value in config_items.items():
         rcParams[key] = value
 
-    spectr_files_cepa = ["cepa_58891.388703703706_IRBENE_1290.h5",
-                         "cepa_58836.88149305555_IRBENE_1258.h5",
-                         "cepa_58836.889375_IRBENE_1260.h5"]
-
+    spectr_files_cepa = ["cepa_58891.388703703706_IRBENE_1290.h5"]
     spectr_files_for_all_sources = [spectr_files_cepa]
 
-    density_low = []
-    density_middle = []
-    density_high = []
-    file_name_index = 0
+    density = []
 
     for source in spectr_files_for_all_sources:
         for file_name in source:
@@ -94,24 +90,9 @@ def main():
             area = np.trapz(ydata_, xdata_)
             print(area)
 
-            if file_name_index == 0:
-                density_low.append(area)
-                file_name_index += 1
+            density.append(area)
 
-            elif file_name_index == 1:
-                density_middle.append(area)
-                file_name_index += 1
-
-            elif file_name_index == 2:
-                density_high.append(area)
-                file_name_index = 0
-
-    plt.figure("low")
-    plt.hist(density_low)
-    plt.figure("midle")
-    plt.hist(density_middle)
-    plt.figure("high")
-    plt.hist(density_high)
+    plt.hist(density)
     plt.show()
     sys.exit(0)
 
