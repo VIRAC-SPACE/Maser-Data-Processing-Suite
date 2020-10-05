@@ -5,6 +5,7 @@ from functools import reduce
 from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import rc
 
 PACKAGE_PARENT = '..'
 SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
@@ -59,11 +60,11 @@ def get_configs(section, key):
 
 
 def main():
+    rc('font', family='serif', style='normal', variant='normal', weight='normal', stretch='normal', size=20)
     old_monitoring_file_path = get_configs("paths", "oldMonitoringFilePath")
     new_monitoring_file_path = get_configs("paths", "monitoringFilePath")
 
     all_sources = list(get_configs_items("sources").keys())
-    #all_sources = ["g50p03"]
 
     function_indexes = []
     variability_indexes = []
@@ -103,7 +104,7 @@ def main():
             new_data[0] = new_data[0][0]
             data = []
 
-            for tmp3 in range( 0, old_data.shape[0] ):
+            for tmp3 in range(0, old_data.shape[0]):
                 data_tmp = np.concatenate((old_data[tmp3], new_data[tmp3]), axis=0)
                 data.append(data_tmp)
             data = np.array(data)
@@ -146,13 +147,13 @@ def main():
                         y = data[index + 1]
                     y = np.array([np.float128(yi) for yi in y]).clip(min=0)
                     N = len(y)
-                    variability_index = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y))) \
-                                                      / ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
+                    variability_index = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y))) /\
+                                        ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
                     function_index = np.sqrt((N / reduce(lambda x, y: x + y, [(1.5 + 0.05 * i) ** 2 for i in y])) *
-                                                        ((reduce(lambda x, y: x + y,
-                                                                  [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y]) - np.mean(y) *
-                                                          reduce(lambda x, y: x + y, [i * (1.5 + 0.05 * i) ** 2 for i in y]))
-                                                         / (N - 1)) - 1) / np.mean(y)
+                                             ((reduce(lambda x, y: x + y,
+                                                      [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y]) - np.mean(y) *
+                                               reduce(lambda x, y: x + y, [i * (1.5 + 0.05 * i) ** 2 for i in y]))
+                                              / (N - 1)) - 1) / np.mean(y)
                     if not np.isnan(function_index):
                         variability_indexes.append(variability_index)
                         function_indexes.append(function_index)
@@ -174,20 +175,20 @@ def main():
 
     for my in mean_of_y:
         if 0.5 < my <= 20:
-            size.append(10)
+            size.append(100)
         elif 20 < my <= 200:
-            size.append(20)
+            size.append(200)
         elif 200 < my <= 800:
-            size.append(30)
+            size.append(300)
         elif 800 < my <= 2000:
-            size.append(40)
+            size.append(400)
         elif 2000 < my <= 3005:
-            size.append(50)
+            size.append(500)
 
     scatter = plt.scatter(variability_indexes, function_indexes, s=size, c=color, alpha=0.3)
     handles, labels = scatter.legend_elements(prop="sizes", alpha=0.6)
     ranges = ["0.5 < Jy <= 20", "20 < Jy <= 200", "200 < Jy <= 800", "800 < Jy <= 3000"]
-    labels = [labels[l] + " " + ranges[l] for l in range(0, len(ranges))]
+    labels = [labels[l] + "  " + ranges[l] for l in range(0, len(ranges))]
     plt.legend(handles, labels)
 
     plt.xlabel("Variability index")
