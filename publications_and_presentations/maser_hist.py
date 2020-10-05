@@ -74,7 +74,7 @@ def main():
     for key, value in config_items.items():
         rcParams[key] = value
 
-    spectr_files_for_all_sources =["cepa_58441.31113425926_IRBENE16_241.h5", "afgl5142_58574.31668981481_IRBENE16_34.h5",
+    spectr_files_for_all_sources = ["cepa_58441.31113425926_IRBENE16_241.h5", "afgl5142_58574.31668981481_IRBENE16_34.h5",
                                    "g107p3_58989.78732638889_IRBENE16_150.h5", "g111p26_58775.535532407404_IRBENE16_33.h5",
                                    "g196p454_59069.27920138889_IRBENE16_29.h5", "g22p357_58726.78696759259_IRBENE16_15.h5",
                                    "g24p33_58861.44650462963_IRBENE16_97.h5", "g25p65_58875.316655092596_IRBENE16_37.h5",
@@ -100,7 +100,7 @@ def main():
 
     for file_name in spectr_files_for_all_sources:
         source = file_name.split("_")[0]
-        file = get_configs("paths", "outputFilePath") + "/6668/" + source + "/"+ file_name
+        file = get_configs("paths", "outputFilePath") + "/6668/" + source + "/" + file_name
         spectr_data = h5py.File(file, 'r')['amplitude_corrected_not_smooht'][()]
 
         xdata_ = spectr_data[:, 0]
@@ -112,6 +112,8 @@ def main():
         density.append(area)
 
     plt.hist(density)
+    plt.ylabel("Integral density of flux")
+    plt.ylabel("Number of sources")
     plt.show()
     sys.exit(0)
 

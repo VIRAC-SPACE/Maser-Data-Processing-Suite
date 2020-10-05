@@ -192,7 +192,7 @@ def main():
     plt.legend(handles, labels)
 
     plt.xlabel("Variability index")
-    plt.ylabel("Function indexes")
+    plt.ylabel("Fluctuation index.")
     plt.show()
     sys.exit(0)
 
