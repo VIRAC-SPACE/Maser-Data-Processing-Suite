@@ -100,8 +100,8 @@ class Plot(FigureCanvas):
         for line in self.graph.lines:
             line.set_marker(None)
 
-    def colorbar(self, cs):
-        cbar = self.fig.colorbar(cs)
+    def colorbar(self, cs, **options):
+        cbar = self.fig.colorbar(cs, **options)
         return cbar
 
     def creatPlot(self, grid, x_label, y_label, title, toolbarpos, type):
