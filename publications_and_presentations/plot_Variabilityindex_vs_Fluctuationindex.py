@@ -168,7 +168,7 @@ def main():
                         variability_indexes.append(np.float64(variability_index))
                         fluctuation_indexes.append(np.float64(fluctuation_index))
                         mean_of_y.append(np.float64(np.mean(y)))
-                        if variability_index > 0.5 and fluctuation_index > 1:
+                        if fluctuation_index > 1:
                             source_name = get_configs("Full_source_name", source)
                             outliers.append([variability_index, fluctuation_index, source_name + " " + source_velocities[index]])
 
@@ -197,7 +197,7 @@ def main():
 
     scatter = plt.scatter(variability_indexes, fluctuation_indexes, s=size, c=color, alpha=0.3)
     coef = linregress(variability_indexes, fluctuation_indexes)
-    plt.plot(variability_indexes, np.array(variability_indexes) * coef.slope + coef.intercept , '--k')
+    plt.plot(variability_indexes, np.array(variability_indexes) * coef.slope + coef.intercept, '--k')
     pprint.pprint(coef, indent=4)
     handles, labels = scatter.legend_elements(prop="sizes", alpha=0.6)
     ranges = ["0.5 < Jy <= 20", "20 < Jy <= 200", "200 < Jy <= 800", "800 < Jy <= 3000"]
@@ -205,7 +205,7 @@ def main():
     plt.legend(handles, labels)
 
     for outlier in outliers:
-        plt.text(outlier[0], outlier[1], outlier[2], fontsize=12)
+        plt.text(outlier[0] - 0.045, outlier[1] + 0.045, outlier[2], fontsize=11)
 
     plt.xlabel("Variability index")
     plt.ylabel("Fluctuation index")
