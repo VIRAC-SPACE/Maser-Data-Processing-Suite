@@ -7,6 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rc
 from scipy.stats import linregress
+import pprint
 
 PACKAGE_PARENT = '..'
 SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
@@ -58,12 +59,6 @@ def get_configs(section, key):
     config_file_path = get_args("config")
     config = ConfigParser(config_file_path)
     return config.get_config(section, key)
-
-
-def convert_to_scientific_notation(number):
-    number = str(number).format(":s")
-    tmp = r"$" + number[0:6] + "^{-" + number.split("-")[-1] + "}$"
-    return tmp
 
 
 def main():
@@ -147,6 +142,7 @@ def main():
 
         else:
             components = []
+            source_velocities = []
             data = None
 
         if len(components) > 0:
@@ -163,19 +159,20 @@ def main():
                     N = len(y)
                     variability_index = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y))) /\
                                         ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
-                    flunction_index = np.sqrt((N / reduce(lambda x, y: x + y, [(1.5 + 0.05 * i) ** 2 for i in y])) *
+                    fluctuation_index = np.sqrt((N / reduce(lambda x, y: x + y, [(1.5 + 0.05 * i) ** 2 for i in y])) *
                                              ((reduce(lambda x, y: x + y,
                                                       [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y]) - np.mean(y) *
                                                reduce(lambda x, y: x + y, [i * (1.5 + 0.05 * i) ** 2 for i in y]))
                                               / (N - 1)) - 1) / np.mean(y)
-                    if not np.isnan(flunction_index):
+                    if not np.isnan(fluctuation_index):
                         variability_indexes.append(np.float64(variability_index))
-                        fluctuation_indexes.append(np.float64(flunction_index))
+                        fluctuation_indexes.append(np.float64(fluctuation_index))
                         mean_of_y.append(np.float64(np.mean(y)))
-                        if variability_index > 0.5 and flunction_index > 1:
-                            outliers.append([variability_index, flunction_index, source + " " + source_velocities[index]])
+                        if variability_index > 0.5 and fluctuation_index > 1:
+                            source_name = get_configs("Full_source_name", source)
+                            outliers.append([variability_index, fluctuation_index, source_name + " " + source_velocities[index]])
 
-                    del y, variability_index, flunction_index
+                    del y, variability_index, fluctuation_index
                 del data
         del new_monitoring_file, old_monitoring_file
     color = []
@@ -201,20 +198,14 @@ def main():
     scatter = plt.scatter(variability_indexes, fluctuation_indexes, s=size, c=color, alpha=0.3)
     coef = linregress(variability_indexes, fluctuation_indexes)
     plt.plot(variability_indexes, np.array(variability_indexes) * coef.slope + coef.intercept , '--k')
-    print(coef.rvalue, coef.pvalue, coef.stderr)
-    rot_angle = np.arctan((max(fluctuation_indexes) - min(fluctuation_indexes)) /
-                          (max(variability_indexes) - min(variability_indexes)))
-    reag_text = "rvalue = {:f}  stderr = {:f}".format(coef.rvalue, coef.stderr) + \
-                " pvalue = " + convert_to_scientific_notation(coef.pvalue)
-    plt.text(np.mean(variability_indexes), np.mean(fluctuation_indexes), reag_text,
-             rotation=5, rotation_mode='anchor')
+    pprint.pprint(coef, indent=4)
     handles, labels = scatter.legend_elements(prop="sizes", alpha=0.6)
     ranges = ["0.5 < Jy <= 20", "20 < Jy <= 200", "200 < Jy <= 800", "800 < Jy <= 3000"]
     labels = [labels[l] + "  " + ranges[l] for l in range(0, len(ranges))]
     plt.legend(handles, labels)
 
     for outlier in outliers:
-        plt.text(outlier[0], outlier[1], outlier[2])
+        plt.text(outlier[0], outlier[1], outlier[2], fontsize=12)
 
     plt.xlabel("Variability index")
     plt.ylabel("Fluctuation index")
