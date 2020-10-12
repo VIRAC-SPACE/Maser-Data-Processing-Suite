@@ -6,6 +6,7 @@ from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rc
+from scipy.stats import linregress
 
 PACKAGE_PARENT = '..'
 SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
@@ -59,6 +60,12 @@ def get_configs(section, key):
     return config.get_config(section, key)
 
 
+def convert_to_scientific_notation(number):
+    number = str(number).format(":s")
+    tmp = r"$" + number[0:6] + "^{-" + number.split("-")[-1] + "}$"
+    return tmp
+
+
 def main():
     rc('font', family='serif', style='normal', variant='normal', weight='normal', stretch='normal', size=20)
     old_monitoring_file_path = get_configs("paths", "oldMonitoringFilePath")
@@ -66,9 +73,10 @@ def main():
 
     all_sources = list(get_configs_items("sources").keys())
 
-    function_indexes = []
+    fluctuation_indexes = []
     variability_indexes = []
     mean_of_y = []
+    outliers = []
     for source in all_sources:
         old = False
         new = False
@@ -80,6 +88,8 @@ def main():
         data = None
 
         if os.path.isfile(old_monitoring_file) and os.path.isfile(new_monitoring_file):
+            source_velocities = get_configs('velocities', source + "_" + get_args("line")).split(",")
+            source_velocities = [si.strip() for si in source_velocities]
             component_count = len(get_configs("velocities", source + "_" +
                                               get_args("line")).replace(" ", "").split(","))
             components = [i for i in range(1, component_count + 1)]
@@ -111,6 +121,8 @@ def main():
             both = True
 
         elif os.path.isfile(old_monitoring_file) and not os.path.isfile(new_monitoring_file):
+            source_velocities = get_configs('velocities', source + "_" + get_args("line")).split(",")
+            source_velocities = [si.strip() for si in source_velocities]
             component_count = len(get_configs("velocities", source + "_" +
                                               get_args("line")).replace(" ", "").split(","))
             components = [i for i in range(1, component_count + 1)]
@@ -124,6 +136,8 @@ def main():
             old = True
 
         elif not os.path.isfile(old_monitoring_file) and os.path.isfile(new_monitoring_file):
+            source_velocities = get_configs('velocities', source + "_" + get_args("line")).split(",")
+            source_velocities = [si.strip() for si in source_velocities]
             component_count = len(get_configs("velocities", source + "_" +
                                               get_args("line")).replace(" ", "").split(","))
             components = [i for i in range(1, component_count + 1)]
@@ -138,7 +152,7 @@ def main():
         if len(components) > 0:
             if data is not None:
                 for component in components:
-                    index = components.index( component )
+                    index = components.index(component)
                     if old:
                         y = data[:, index + 1]
                     elif both:
@@ -149,20 +163,19 @@ def main():
                     N = len(y)
                     variability_index = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y))) /\
                                         ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
-                    function_index = np.sqrt((N / reduce(lambda x, y: x + y, [(1.5 + 0.05 * i) ** 2 for i in y])) *
+                    flunction_index = np.sqrt((N / reduce(lambda x, y: x + y, [(1.5 + 0.05 * i) ** 2 for i in y])) *
                                              ((reduce(lambda x, y: x + y,
                                                       [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y]) - np.mean(y) *
                                                reduce(lambda x, y: x + y, [i * (1.5 + 0.05 * i) ** 2 for i in y]))
                                               / (N - 1)) - 1) / np.mean(y)
-                    if not np.isnan(function_index):
-                        variability_indexes.append(variability_index)
-                        function_indexes.append(function_index)
-                        mean_of_y.append(np.mean(y))
-                        if np.mean(y) > 1000:
-                            print("source, variability_index, function_index, mean_of_y, component", source, variability_index,
-                                  function_index, np.mean(y), component)
+                    if not np.isnan(flunction_index):
+                        variability_indexes.append(np.float64(variability_index))
+                        fluctuation_indexes.append(np.float64(flunction_index))
+                        mean_of_y.append(np.float64(np.mean(y)))
+                        if variability_index > 0.5 and flunction_index > 1:
+                            outliers.append([variability_index, flunction_index, source + " " + source_velocities[index]])
 
-                    del y, variability_index, function_index
+                    del y, variability_index, flunction_index
                 del data
         del new_monitoring_file, old_monitoring_file
     color = []
@@ -185,14 +198,26 @@ def main():
         elif 2000 < my <= 3005:
             size.append(500)
 
-    scatter = plt.scatter(variability_indexes, function_indexes, s=size, c=color, alpha=0.3)
+    scatter = plt.scatter(variability_indexes, fluctuation_indexes, s=size, c=color, alpha=0.3)
+    coef = linregress(variability_indexes, fluctuation_indexes)
+    plt.plot(variability_indexes, np.array(variability_indexes) * coef.slope + coef.intercept , '--k')
+    print(coef.rvalue, coef.pvalue, coef.stderr)
+    rot_angle = np.arctan((max(fluctuation_indexes) - min(fluctuation_indexes)) /
+                          (max(variability_indexes) - min(variability_indexes)))
+    reag_text = "rvalue = {:f}  stderr = {:f}".format(coef.rvalue, coef.stderr) + \
+                " pvalue = " + convert_to_scientific_notation(coef.pvalue)
+    plt.text(np.mean(variability_indexes), np.mean(fluctuation_indexes), reag_text,
+             rotation=5, rotation_mode='anchor')
     handles, labels = scatter.legend_elements(prop="sizes", alpha=0.6)
     ranges = ["0.5 < Jy <= 20", "20 < Jy <= 200", "200 < Jy <= 800", "800 < Jy <= 3000"]
     labels = [labels[l] + "  " + ranges[l] for l in range(0, len(ranges))]
     plt.legend(handles, labels)
 
+    for outlier in outliers:
+        plt.text(outlier[0], outlier[1], outlier[2])
+
     plt.xlabel("Variability index")
-    plt.ylabel("Fluctuation index.")
+    plt.ylabel("Fluctuation index")
     plt.show()
     sys.exit(0)
 
