@@ -565,13 +565,14 @@ class PeriodView(PlottingView):
         def get_min_date_delta():
             min_delta = list()
             for x in range(0, len(self.time) - 1):
-                min_delta.append(date_delta(self.time[x], self.time[x + 1]))
-
+                tmp_delta = date_delta(self.time[x], self.time[x + 1])
+                if tmp_delta > 0:
+                    min_delta.append(tmp_delta)
             return np.min(min_delta)
 
         nyquist_factor = 2 * get_max_date_delta()
-        maximum_frequency = 2 * get_min_date_delta()
-        minimum_frequency = 1 / date_delta(self.time[0], self.time[-1])
+        minimum_frequency = (1 / (date_delta(self.time[-1], self.time[0])/2))
+        maximum_frequency = 1 / (2 * get_min_date_delta())
 
         print("nyquist_factor", nyquist_factor)
         print("minimum_frequency", minimum_frequency)
@@ -579,7 +580,7 @@ class PeriodView(PlottingView):
         frequency, power = ls.autopower(method='fastchi2', normalization='model',
                                         nyquist_factor=nyquist_factor,
                                         minimum_frequency=minimum_frequency,
-                                        #maximum_frequency=maximum_frequency,
+                                        maximum_frequency=maximum_frequency,
                                         samples_per_peak=20)
 
         false_alarm = ls.false_alarm_probability(power.max(), method="bootstrap",
@@ -592,7 +593,7 @@ class PeriodView(PlottingView):
 
         period_days = 1. / frequency
         best_period = period_days[np.argmax(power)]
-        print("Best period: {0:.2f} hours".format(24 * best_period))
+        print("Best period: {0:.2f} days".format(best_period))
 
         self.period_plot = Plot()
         self.period_plot.creatPlot(self.grid, "Period (days)", "Power", None, (1, 0), "linear")
@@ -600,7 +601,6 @@ class PeriodView(PlottingView):
         self.period_plot.plot(period_days, power, self.plot_simbol,
                               label="polarization AVG " + "Velocity " + self.velocity_name,
                               rasterized=True)
-
 
 class MapsView(PlottingView):
     """
