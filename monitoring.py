@@ -10,6 +10,7 @@ import argparse
 import json
 import numpy as np
 from matplotlib import ticker
+from obspy.imaging.cm import obspy_sequential
 from astropy.timeseries import LombScargle
 from astropy.io import ascii
 from astropy.time import Time
@@ -19,6 +20,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, \
     QGridLayout, QLabel, QLineEdit, QComboBox, QPushButton, QGroupBox
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
+from obspy.signal.tf_misfit import cwt
 from utils.ploting_qt5 import Plot
 from utils.help import find_nearest_index
 from parsers.configparser_ import ConfigParser
@@ -574,6 +576,41 @@ class PeriodView(PlottingView):
         minimum_frequency = (1 / (date_delta(self.time[-1], self.time[0])/2))
         maximum_frequency = 1 / (2 * get_min_date_delta())
 
+        import pywt
+        import matplotlib.pyplot as plt
+        from scipy.signal import resample
+        new_len = int((np.max(self.time) - np.min(self.time))/get_min_date_delta())
+        resampled_amplitude, resampled_time = resample(self.amplitude, new_len, t=self.time)
+        t0 = resampled_time[0]
+        tmax = resampled_time[-1]
+        dt = (tmax - t0) / len(resampled_time)
+        dt = dt / (24 * 60 * 60)
+        print("new_len", new_len)
+        coef, freqs = pywt.cwt(resampled_amplitude, np.arange(1, len(resampled_time)/4), 'morl', sampling_period=dt)
+        X, Y = np.meshgrid(resampled_time, np.logspace(np.min(np.log10(2 * np.pi / np.abs(freqs))),
+                                          np.max(np.log10(2 * np.pi / np.abs(freqs))), freqs.shape[0]))
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.pcolormesh(X, Y, coef, cmap=obspy_sequential)
+        plt.show()
+        '''
+        #scalogram = cwt(self.amplitude, dt, 100, minimum_frequency, maximum_frequency, 1000, wl="morlet")
+        coefs, freqcs = pywt.cwt(self.amplitude, np.arange(1,29), wavelet="morl")
+        scalogram = freqcs
+        np.log10(2*np.pi /np.abs(scalogram))
+        x, y = np.meshgrid(self.time, np.logspace(np.min(np.log10(2*np.pi /np.abs(scalogram))), np.max(np.log10(2*np.pi /np.abs(scalogram))), scalogram.shape[0]))
+
+      
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.pcolormesh(x, y, np.abs(scalogram), cmap=obspy_sequential)
+        ax.set_xlabel("Time")
+        ax.set_ylabel("Frequency [Hz]")
+        ax.set_yscale('log')
+        ax.set_ylim(np.min(y), np.max(y))
+        plt.show()
+       
         print("nyquist_factor", nyquist_factor)
         print("minimum_frequency", minimum_frequency)
         print("maximum_frequency", maximum_frequency)
@@ -601,6 +638,7 @@ class PeriodView(PlottingView):
         self.period_plot.plot(period_days, power, self.plot_simbol,
                               label="polarization AVG " + "Velocity " + self.velocity_name,
                               rasterized=True)
+        '''
 
 class MapsView(PlottingView):
     """
