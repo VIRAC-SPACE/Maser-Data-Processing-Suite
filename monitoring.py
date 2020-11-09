@@ -579,15 +579,17 @@ class PeriodView(PlottingView):
         import pywt
         import matplotlib.pyplot as plt
         from scipy.signal import resample
-        new_len = int((np.max(self.time) - np.min(self.time))/get_min_date_delta())
-        resampled_amplitude, resampled_time = resample(self.amplitude, new_len, t=self.time)
-        t0 = resampled_time[0]
-        tmax = resampled_time[-1]
-        dt = (tmax - t0) / len(resampled_time)
+        #new_len = int((np.max(self.time) - np.min(self.time))/get_min_date_delta())
+        #resampled_amplitude, resampled_time = resample(self.amplitude, new_len, t=self.time)
+        t0 = self.time[0]
+        print("t0", t0)
+        tmax = self.time[-1]
+        print("tmax", tmax)
+        dt = (tmax - t0) / len(self.time)
         dt = dt / (24 * 60 * 60)
-        print("new_len", new_len)
-        coef, freqs = pywt.cwt(resampled_amplitude, np.arange(1, len(resampled_time)/4), 'morl', sampling_period=dt)
-        X, Y = np.meshgrid(resampled_time, np.logspace(np.min(np.log10(2 * np.pi / np.abs(freqs))),
+        #print("new_len", new_len)
+        coef, freqs = pywt.cwt(self.amplitude, np.arange(1, len(self.time)/4), 'morl', sampling_period=dt)
+        X, Y = np.meshgrid(self.time, np.logspace(np.min(np.log10(2 * np.pi / np.abs(freqs))),
                                           np.max(np.log10(2 * np.pi / np.abs(freqs))), freqs.shape[0]))
         fig = plt.figure()
         ax = fig.add_subplot(111)
