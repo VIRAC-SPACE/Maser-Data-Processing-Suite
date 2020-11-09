@@ -589,7 +589,7 @@ class PeriodView(PlottingView):
         #dt = tmax - t0
         print("dt", dt)
 
-        dt = dt * 24 * 60 * 60
+        #dt = dt * 24 * 60 * 60
         print("dt", dt)
         print("number of points ", len(self.time))
         #print("new_len", new_len)
