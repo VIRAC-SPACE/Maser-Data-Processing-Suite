@@ -583,12 +583,12 @@ class PeriodView(PlottingView):
         #resampled_amplitude, resampled_time = resample(self.amplitude, new_len, t=self.time)
         t0 = self.time[0]
         print("t0", t0)
-        tmax = self.time[1]
+        tmax = self.time[-1]
         print("tmax", tmax)
-        #dt = (tmax - t0) / len(self.time)
+        dt = (tmax - t0) / len(self.time)
         dt = tmax - t0
         print("dt", dt)
-        dt = dt / (24 * 60 * 60)
+        dt = dt * 24 * 60 * 60
         print("dt", dt)
         print("number of points ", len(self.time))
         #print("new_len", new_len)
