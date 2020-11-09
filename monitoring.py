@@ -587,6 +587,7 @@ class PeriodView(PlottingView):
         print("tmax", tmax)
         dt = (tmax - t0) / len(self.time)
         dt = dt / (24 * 60 * 60)
+        print("dt", dt)
         #print("new_len", new_len)
         coef, freqs = pywt.cwt(self.amplitude, np.arange(1, len(self.time)/4), 'morl', sampling_period=dt)
         X, Y = np.meshgrid(self.time, np.logspace(np.min(np.log10(2 * np.pi / np.abs(freqs))),
