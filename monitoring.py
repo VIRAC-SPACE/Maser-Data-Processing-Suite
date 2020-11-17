@@ -11,6 +11,9 @@ import json
 import numpy as np
 from matplotlib import ticker
 from obspy.imaging.cm import obspy_sequential
+import pywt
+import pycwt as wavelet
+from pycwt.helpers import find
 from astropy.timeseries import LombScargle
 from astropy.io import ascii
 from astropy.time import Time
@@ -20,7 +23,6 @@ from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, \
     QGridLayout, QLabel, QLineEdit, QComboBox, QPushButton, QGroupBox
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import Qt
-from obspy.signal.tf_misfit import cwt
 from utils.ploting_qt5 import Plot
 from utils.help import find_nearest_index
 from parsers.configparser_ import ConfigParser
@@ -551,101 +553,125 @@ class PeriodView(PlottingView):
         self.plot_simbol = plot_simbol
         self.velocity_name = velocity_name
 
+        t0 = self.time[0]
+        tmax = self.time[-1]
+        dt = (tmax - t0) / len(self.time)
+
+        nyquist_factor = 2*(1/dt)
+        minimum_frequency = 1 / (tmax - t0)
+        maximum_frequency = 1 / dt
+
+        print("minimum frequency", minimum_frequency, "maximum frequency", maximum_frequency,
+              "nyquist_factor", nyquist_factor)
+
+        print("maximum period", 1/minimum_frequency, "minimum period", 1/maximum_frequency, "in days")
+
         error = np.array(self.amplitude) * 0.1
         ls = LombScargle(self.time, self.amplitude, error, fit_mean=True)
 
-        def date_delta(d1, d2):
-            return abs(d1 - d2)
-
-        def get_max_date_delta():
-            max_delta = list()
-            for x in range(0, len(self.time) - 1):
-                max_delta.append(date_delta(self.time[x], self.time[x + 1]))
-
-            return np.max(max_delta)
-
-        def get_min_date_delta():
-            min_delta = list()
-            for x in range(0, len(self.time) - 1):
-                tmp_delta = date_delta(self.time[x], self.time[x + 1])
-                if tmp_delta > 0:
-                    min_delta.append(tmp_delta)
-            return np.min(min_delta)
-
-        nyquist_factor = 2 * get_max_date_delta()
-        minimum_frequency = (1 / (date_delta(self.time[-1], self.time[0])/2))
-        maximum_frequency = 1 / (2 * get_min_date_delta())
-
-        import pywt
-        import matplotlib.pyplot as plt
-        from scipy.signal import resample
-        #new_len = int((np.max(self.time) - np.min(self.time))/get_min_date_delta())
-        #resampled_amplitude, resampled_time = resample(self.amplitude, new_len, t=self.time)
-        t0 = self.time[0]
-        print("t0", t0)
-        tmax = self.time[-1]
-        print("tmax", tmax)
-        dt = (tmax - t0) / len(self.time)
-        #dt = tmax - t0
-        print("dt", dt)
-
-        #dt = dt * 24 * 60 * 60
-        print("dt", dt)
-        print("number of points ", len(self.time))
-        #print("new_len", new_len)
-        coef, freqs = pywt.cwt(self.amplitude, np.arange(1, len(self.time)/4), 'morl', sampling_period=dt)
-        X, Y = np.meshgrid(self.time, np.logspace(np.min(np.log10(2 * np.pi / np.abs(freqs))),
-                                          np.max(np.log10(2 * np.pi / np.abs(freqs))), freqs.shape[0]))
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.pcolormesh(X, Y, coef, cmap=obspy_sequential)
-        plt.show()
-        '''
-        #scalogram = cwt(self.amplitude, dt, 100, minimum_frequency, maximum_frequency, 1000, wl="morlet")
-        coefs, freqcs = pywt.cwt(self.amplitude, np.arange(1,29), wavelet="morl")
-        scalogram = freqcs
-        np.log10(2*np.pi /np.abs(scalogram))
-        x, y = np.meshgrid(self.time, np.logspace(np.min(np.log10(2*np.pi /np.abs(scalogram))), np.max(np.log10(2*np.pi /np.abs(scalogram))), scalogram.shape[0]))
-
-      
-
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        ax.pcolormesh(x, y, np.abs(scalogram), cmap=obspy_sequential)
-        ax.set_xlabel("Time")
-        ax.set_ylabel("Frequency [Hz]")
-        ax.set_yscale('log')
-        ax.set_ylim(np.min(y), np.max(y))
-        plt.show()
-       
-        print("nyquist_factor", nyquist_factor)
-        print("minimum_frequency", minimum_frequency)
-        print("maximum_frequency", maximum_frequency)
         frequency, power = ls.autopower(method='fastchi2', normalization='model',
                                         nyquist_factor=nyquist_factor,
                                         minimum_frequency=minimum_frequency,
                                         maximum_frequency=maximum_frequency,
                                         samples_per_peak=20)
 
-        false_alarm = ls.false_alarm_probability(power.max(), method="bootstrap",
+        false_alarm_tmp = np.array([0] * len(power))
+        false_alarm = ls.false_alarm_probability(power, method="bootstrap",
                                                  nyquist_factor=nyquist_factor,
                                                  minimum_frequency=minimum_frequency,
                                                  maximum_frequency=maximum_frequency,
                                                  samples_per_peak=20)
 
-        print("max power", power.max(), "false_alarm", false_alarm)
+        power2 = ls.false_alarm_level(false_alarm, method="bootstrap",
+                                                 nyquist_factor=nyquist_factor,
+                                                 minimum_frequency=minimum_frequency,
+                                                 maximum_frequency=maximum_frequency,
+                                                 samples_per_peak=20)
+
+        #false_alarm_tmp[:] = false_alarm
+        #false_alarm = false_alarm_tmp
+
+        print("max power", power.max(), "false_alarm", np.mean(false_alarm))
 
         period_days = 1. / frequency
         best_period = period_days[np.argmax(power)]
         print("Best period: {0:.2f} days".format(best_period))
 
         self.period_plot = Plot()
-        self.period_plot.creatPlot(self.grid, "Period (days)", "Power", None, (1, 0), "linear")
+        self.period_plot.creatPlot(self.grid, "Power", "Period (days)", None, (1, 0), "linear")
         self.add_widget(self.period_plot, 0, 0)
-        self.period_plot.plot(period_days, power, self.plot_simbol,
-                              label="polarization AVG " + "Velocity " + self.velocity_name,
-                              rasterized=True)
+        self.period_plot.plot(power, period_days, self.plot_simbol,
+                              label="Power of  LombScargle for velocity " + self.velocity_name,
+                              rasterized=True, fontsize=8)
+
+        self.period_plot.plot(false_alarm, period_days, "r--",
+                              label="False alarm probability for velocity " + self.velocity_name,
+                              rasterized=True, fontsize=8)
+
+        self.period_plot.plot(power2, period_days, "b--",
+                              label="False alarm level for velocity " + self.velocity_name,
+                              rasterized=True, fontsize=8)
+
+        self.wavelet_plot = Plot()
+        self.wavelet_plot.creatPlot(self.grid, "Time MJD", "Periods (days)", None, (3, 0), "linear")
+        self.add_widget(self.wavelet_plot, 2, 0)
+
+        t = np.arange(0, len(self.time)) * dt + t0
+        p = np.polyfit(t, self.amplitude, 1)
+        dat_notrend = self.amplitude - np.polyval(p, t)
+        std = dat_notrend.std()  # Standard deviation
+        var = std ** 2  # Variance
+        dat_norm = dat_notrend / std  # Normalized dataset
+
+        mother = wavelet.Morlet(6)
+        alpha, _, _ = wavelet.ar1(self.amplitude)
+        wave, scales, freqs, coi, fft, fftfreqs = wavelet.cwt(dat_norm, dt=dt, wavelet=mother, freqs=frequency)
+        power = (np.abs(wave)) ** 2
+        period = 1 / freqs
         '''
+        B = (maximum_frequency - minimum_frequency)/2
+        C = minimum_frequency + B
+        wavelet_name = 'cmor' + str(B) + '-' + str(C)
+        print("wavelet_name", wavelet_name)
+        wav = pywt.ContinuousWavelet(wavelet_name)
+        width = wav.upper_bound - wav.lower_bound
+        scales = np.arange(1, (tmax - t0 - 1) / width)
+        print(scales)
+
+        coef, freqs = pywt.cwt(self.amplitude, scales, wavelet_name, sampling_period=dt)
+        global_wavelet_spectrum = np.mean(np.power(np.abs(coef), 2),  axis=1)
+        wavelet_periods = np.logspace(np.min(np.log10(2 * np.pi / freqs)),
+                                      np.max(np.log10(2 * np.pi / freqs)), freqs.shape[0])
+
+        X, Y = np.meshgrid(self.time, wavelet_periods)
+        '''
+        import matplotlib
+        lvls = np.linspace(int(np.min(power)), int(np.max(power)), 1000)
+        cs = self.wavelet_plot.graph.contourf(t, period, power, lvls, extend='both', cmap=matplotlib.cm.viridis)
+        glbl_power = power.mean(axis=1)
+
+        #cs = self.wavelet_plot.graph.pcolormesh(X, Y, np.power(np.abs(coef), 2), cmap=obspy_sequential)
+
+        cbar = self.wavelet_plot.colorbar(cs, spacing="proportional", drawedges=True,
+                                      label='Power', extendrect=False)
+        #cbar.locator = ticker.LogLocator()
+
+        self.wavelet_plot2 = Plot()
+        self.wavelet_plot2.creatPlot(self.grid, "Power", "Periods (days)", None, (3, 1), "linear")
+        self.add_widget(self.wavelet_plot2, 2, 1)
+        self.wavelet_plot2.plot(glbl_power, period, 'k-', linewidth=1.5)
+
+        from scipy import signal
+        f, t, Zxx = signal.stft(self.amplitude, dt, nperseg=16)
+
+        self.stft_plot = Plot()
+        self.stft_plot.creatPlot(self.grid, "Power", "Periods (days)", None, (1, 1), "linear")
+        self.add_widget(self.stft_plot, 0, 1)
+        lvls = np.linspace(0, int(np.max(np.abs(Zxx))), 1000)
+        X, Y = np.meshgrid(self.time, 1/f)
+        cs2 = self.stft_plot.graph.pcolormesh(X, Y, np.abs(Zxx), vmin=0, extend='both', cmap=matplotlib.cm.viridis)
+        cbar = self.stft_plot.graph.colorbar(cs2, spacing="proportional", drawedges=True, label='Power', extendrect=False)
+
 
 class MapsView(PlottingView):
     """
