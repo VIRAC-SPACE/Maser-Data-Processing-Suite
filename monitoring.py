@@ -553,6 +553,12 @@ class PeriodView(PlottingView):
         self.plot_simbol = plot_simbol
         self.velocity_name = velocity_name
 
+        tmin_index = (np.abs(np.array(self.time) - 58904)).argmin()
+        tmax_index = (np.abs(np.array(self.time) - 59143)).argmin()
+
+        #self.time = self.time[tmin_index:tmax_index]
+        #self.amplitude = self.amplitude[tmin_index:tmax_index]
+
         t0 = self.time[0]
         tmax = self.time[-1]
         dt = (tmax - t0) / len(self.time)
@@ -613,8 +619,8 @@ class PeriodView(PlottingView):
                               rasterized=True, fontsize=8)
 
         self.wavelet_plot = Plot()
-        self.wavelet_plot.creatPlot(self.grid, "Time MJD", "Periods (days)", None, (3, 0), "linear")
-        self.add_widget(self.wavelet_plot, 2, 0)
+        self.wavelet_plot.creatPlot(self.grid, "Time MJD", "Periods (days)", None, (1, 1), "log")
+        self.add_widget(self.wavelet_plot, 0, 1)
 
         t = np.arange(0, len(self.time)) * dt + t0
         p = np.polyfit(t, self.amplitude, 1)
@@ -623,11 +629,26 @@ class PeriodView(PlottingView):
         var = std ** 2  # Variance
         dat_norm = dat_notrend / std  # Normalized dataset
 
-        mother = wavelet.Morlet(6)
-        alpha, _, _ = wavelet.ar1(self.amplitude)
-        wave, scales, freqs, coi, fft, fftfreqs = wavelet.cwt(dat_norm, dt=dt, wavelet=mother, freqs=frequency)
-        power = (np.abs(wave)) ** 2
-        period = 1 / freqs
+        import matplotlib
+        for m in range(0, 100):
+            mother = wavelet.Morlet(1)
+            alpha, _, _ = wavelet.ar1(self.amplitude)
+            wave, scales, freqs, coi, fft, fftfreqs = wavelet.cwt(self.amplitude, dt=dt, wavelet=mother, freqs=frequency,  dj=1/1000)
+            power = np.abs(wave) ** 2
+            period = 1 / freqs
+
+            lvls = np.linspace(int(np.min(power)), int(np.max(power)), 100)
+            cs = self.wavelet_plot.graph.contourf(self.time, period, power, lvls, extend='both', cmap=matplotlib.cm.viridis)
+            #cbar = self.wavelet_plot.colorbar(cs, spacing="proportional", drawedges=True, label='Power', extendrect=False)
+
+            self.wavelet_plot.save_fig("wave_" + str(m), dpi=300, format="png")
+            self.wavelet_plot.graph.clear()
+            #del cbar
+            del cs
+            sys.exit(0)
+            #self.wavelet_plot.fig.clf()
+            #glbl_power = power.mean(axis=1)
+
         '''
         B = (maximum_frequency - minimum_frequency)/2
         C = minimum_frequency + B
@@ -645,32 +666,17 @@ class PeriodView(PlottingView):
 
         X, Y = np.meshgrid(self.time, wavelet_periods)
         '''
-        import matplotlib
-        lvls = np.linspace(int(np.min(power)), int(np.max(power)), 1000)
-        cs = self.wavelet_plot.graph.contourf(t, period, power, lvls, extend='both', cmap=matplotlib.cm.viridis)
-        glbl_power = power.mean(axis=1)
+
 
         #cs = self.wavelet_plot.graph.pcolormesh(X, Y, np.power(np.abs(coef), 2), cmap=obspy_sequential)
 
-        cbar = self.wavelet_plot.colorbar(cs, spacing="proportional", drawedges=True,
-                                      label='Power', extendrect=False)
+
         #cbar.locator = ticker.LogLocator()
 
-        self.wavelet_plot2 = Plot()
-        self.wavelet_plot2.creatPlot(self.grid, "Power", "Periods (days)", None, (3, 1), "linear")
-        self.add_widget(self.wavelet_plot2, 2, 1)
-        self.wavelet_plot2.plot(glbl_power, period, 'k-', linewidth=1.5)
-
-        from scipy import signal
-        f, t, Zxx = signal.stft(self.amplitude, dt, nperseg=16)
-
-        self.stft_plot = Plot()
-        self.stft_plot.creatPlot(self.grid, "Power", "Periods (days)", None, (1, 1), "linear")
-        self.add_widget(self.stft_plot, 0, 1)
-        lvls = np.linspace(0, int(np.max(np.abs(Zxx))), 1000)
-        X, Y = np.meshgrid(self.time, 1/f)
-        cs2 = self.stft_plot.graph.pcolormesh(X, Y, np.abs(Zxx), vmin=0, extend='both', cmap=matplotlib.cm.viridis)
-        cbar = self.stft_plot.graph.colorbar(cs2, spacing="proportional", drawedges=True, label='Power', extendrect=False)
+        #self.wavelet_plot2 = Plot()
+        #self.wavelet_plot2.creatPlot(self.grid, "Power", "Periods (days)", None, (1, 2), "linear")
+        #self.add_widget(self.wavelet_plot2, 0, 2)
+        #self.wavelet_plot2.plot(glbl_power, period, 'k-', linewidth=1.5)
 
 
 class MapsView(PlottingView):
