@@ -324,7 +324,29 @@ class Analyzer(QWidget):
                         get_args("source") + "_f" + get_args("line") + "_" + \
                         self.station[1] + "_" + get_args("iteration_number") + "/"
         self.data_files = os.listdir(self.data_dir)
+        data_files_scans_for_raw_data = []
+
+        for df in self.data_files:
+            data_files_scans_for_raw_data.append(re.findall("[0-9]+", get_scan_name(df))[0])
+
+        scans = list(set(data_files_scans_for_raw_data))
+
+        for scan in scans:
+            if data_files_scans_for_raw_data.count(scan) != 4:
+                print("Scan " + scan + " do not have all data file")
+                bad_files = self.find_data_files_for_bad_scan(scan)
+                for bad_file in bad_files:
+                    choice = input("Should this data file " + self.data_dir + bad_file + " be deleted Y/n ")
+                    if choice == "Y" or choice == "y":
+                        try:
+                            os.remove(self.data_dir + bad_file)
+                            print("Data file " + self.data_dir + bad_file + " are deleted")
+                            self.data_files.remove(bad_file)
+                        except OSError as error:
+                            print("Error: %s : %s" % (self.data_dir + bad_file, error.strerror))
+
         self.scan_pairs = self.create_scan_pairs()
+
         self.grid = QGridLayout()
         self.setLayout(self.grid)
         self.grid.setSpacing(10)
@@ -340,6 +362,13 @@ class Analyzer(QWidget):
         self.total__right = None
 
         self.__UI__()
+
+    def find_data_files_for_bad_scan(self, bad_scan):
+        bad_files = []
+        for file in self.data_files:
+            if bad_scan == re.findall("[0-9]+", file.split(".")[0].split("_")[-1])[0].lstrip("0"):
+               bad_files.append(file)
+        return bad_files
 
     def center(self):
         """
