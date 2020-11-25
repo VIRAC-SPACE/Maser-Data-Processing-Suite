@@ -53,17 +53,17 @@ def get_configs(section, key):
     return config.get_config(section, key)
 
 
-def find_log_file(log_list, iteration):
+def find_log_file(log_list, iteration, station):
     """
 
     :param log_list: list of log files
     :param iteration: iteration of observations
-    :param line: frequency
+    :param station: station of observation
     :return:
     """
     tmpl = ""
     for log in log_list:
-        if "_" + str(iteration) in log:
+        if "_" + str(iteration) in log and station in log:
             tmpl = log
             break
 
@@ -72,8 +72,8 @@ def find_log_file(log_list, iteration):
 
     if tmpl == "":
         LOGGER.warning("Warning " + "log for iteration " +
-                        iteration + " do not exist log file " +
-                        log_list[-1] + " will be used instead!")
+                       iteration + " do not exist log file " +
+                       log_list[-1] + " will be used instead!")
     return tmpl
 
 
@@ -86,18 +86,41 @@ def get_iteration(dir_name):
     return dir_name.split("_")[-1]
 
 
+def get_station(dir_name):
+    """
+
+    :param dir_name:
+    :return: station
+    """
+    return dir_name.split("_")[-2]
+
+
 def create_iteration_list(path, source, line):
     """
 
     :param line: frequency
     :param source: source
     :param path: input file path
-    :return: None
+    :return: iterations list
     """
     iterations = [get_iteration(iteration) for iteration in os.listdir(path) if
                   source in iteration and line in iteration and os.path.isdir(path + iteration)]
     iterations.sort(key=int, reverse=False)
     return iterations
+
+
+def create_station_list(path, source, line):
+    """
+
+    :param line: frequency
+    :param source: source
+    :param path: input file path
+    :return: stations list
+    """
+    iterations = [file for file in os.listdir(path) if source in file and line in file and os.path.isdir(path + file)]
+    iterations.sort(key=get_iteration, reverse=False)
+    stations = [get_station(iteration) for iteration in iterations]
+    return stations
 
 
 def create_log_file_list(path, source, line):
@@ -129,6 +152,7 @@ def main():
 
     log_path = log_path + "SDR/"
     logfile_list = create_log_file_list(log_path, source_name, line)
+    station_list = create_station_list(data_files_path, source_name, line)
     result_file_name = result_path + source_name + "_" + get_args("line") + ".json"
 
     if os.path.isfile(result_file_name):
@@ -161,12 +185,15 @@ def main():
     processed_iteration.sort(key=int, reverse=False)
     processed_iteration2.sort(key=int, reverse=False)
 
+    station_index = 0
     for iteration in sdr_iterations:
         if iteration not in processed_iteration:
-            log_file = find_log_file(logfile_list, iteration)
+            station = station_list[station_index]
+            log_file = find_log_file(logfile_list, iteration, station)
             sdr_fs_parameter = source_name + " " + line + " " + iteration + " " + log_file
             LOGGER.info("Executing python3 " + "sdr_fs.py " + sdr_fs_parameter)
             os.system("python3 " + "sdr_fs.py " + sdr_fs_parameter)
+            station_index += 1
 
     output_files = os.listdir(output_path + "/" + line + "/" + source_name)
     for output_file in output_files:
