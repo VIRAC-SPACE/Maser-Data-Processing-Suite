@@ -63,7 +63,7 @@ def find_log_file(log_list, iteration, station):
     """
     tmpl = ""
     for log in log_list:
-        if "_" + str(iteration) in log and station in log:
+        if "_" + str(iteration) + ".log" in log and station in log:
             tmpl = log
             break
 
