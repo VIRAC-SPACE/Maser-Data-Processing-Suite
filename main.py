@@ -131,7 +131,7 @@ def create_log_file_list(path, source, line):
     :param source: source
     :return: all log files for source
     """
-    return [log for log in os.listdir(path) if log.startswith(source) and line in log]
+    return [log for log in os.listdir(path) if log.startswith(source + "_") and line in log]
 
 
 def main():
