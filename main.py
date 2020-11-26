@@ -220,6 +220,7 @@ def main():
                 with h5py.File(get_configs("paths", "outputFilePath") + get_args("line") +
                                "/" + get_args("source") + "/" + output_file, "r") as input_data_file:
                     input_file_keys = list(input_data_file.keys())
+                    input_data_file.close()
                     if "amplitude" in input_file_keys:
                         LOGGER.info("Executing python3 " +
                                    "total_spectrum_analyzer_qt5.py " + output_file + " " + line)
