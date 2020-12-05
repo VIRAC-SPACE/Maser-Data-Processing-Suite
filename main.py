@@ -69,11 +69,10 @@ def find_log_file(log_list, iteration, station):
 
     else:
         tmpl = log_list[-1]
-
-    if tmpl == "":
         LOGGER.warning("Warning " + "log for iteration " +
                        iteration + " do not exist log file " +
                        log_list[-1] + " will be used instead!")
+
     return tmpl
 
 

@@ -602,6 +602,7 @@ class PeriodView(PlottingView):
                               label="polarization AVG " + "Velocity " + self.velocity_name,
                               rasterized=True)
 
+
 class MapsView(PlottingView):
     """
     Maps View
