@@ -53,29 +53,6 @@ def get_configs(section, key):
     return config.get_config(section, key)
 
 
-def find_log_file(log_list, iteration, station):
-    """
-
-    :param log_list: list of log files
-    :param iteration: iteration of observations
-    :param station: station of observation
-    :return:
-    """
-    tmpl = ""
-    for log in log_list:
-        if "_" + str(iteration) + ".log" in log and station in log:
-            tmpl = log
-            break
-
-    else:
-        tmpl = log_list[-1]
-        LOGGER.warning("Warning " + "log for iteration " +
-                       iteration + " do not exist log file " +
-                       log_list[-1] + " will be used instead!")
-
-    return tmpl
-
-
 def get_iteration(dir_name):
     """
 
@@ -200,7 +177,13 @@ def main():
     for station in stations:
         for iteration in sdr_iterations[station]:
             if iteration not in processed_iteration[station]:
-                log_file = find_log_file(logfile_list, iteration, station)
+                log_file = source_name + "_" + "f" + line + "_" + station + "_" + iteration + ".log"
+                if not os.path.exists(log_path + "/" + log_file):
+                    log_file = logfile_list[-1]
+                    LOGGER.warning("Warning " + "log for iteration " +
+                                   iteration + " do not exist log file " +
+                                   log_file + " will be used instead!")
+
                 sdr_fs_parameter = source_name + " " + line + " " + iteration + " " + log_file
                 LOGGER.info("Executing python3 " + "sdr_fs.py " + sdr_fs_parameter)
                 os.system("python3 " + "sdr_fs.py " + sdr_fs_parameter)
