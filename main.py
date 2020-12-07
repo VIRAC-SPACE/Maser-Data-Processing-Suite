@@ -178,15 +178,12 @@ def main():
         for iteration in sdr_iterations[station]:
             if iteration not in processed_iteration[station]:
                 log_file = source_name + "_" + "f" + line + "_" + station + "_" + iteration + ".log"
-                if not os.path.exists(log_path + "/" + log_file):
-                    log_file = logfile_list[-1]
-                    LOGGER.warning("Warning " + "log for iteration " +
-                                   iteration + " do not exist log file " +
-                                   log_file + " will be used instead!")
-
                 sdr_fs_parameter = source_name + " " + line + " " + iteration + " " + log_file
                 LOGGER.info("Executing python3 " + "sdr_fs.py " + sdr_fs_parameter)
                 os.system("python3 " + "sdr_fs.py " + sdr_fs_parameter)
+
+                if not os.path.exists(log_path + "/" + log_file):
+                    LOGGER.warning("Warning log file " + log_file + " do not exist")
 
     output_files = os.listdir(output_path + "/" + line + "/" + source_name)
     for output_file in output_files:
