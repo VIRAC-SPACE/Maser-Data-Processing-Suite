@@ -109,6 +109,4 @@ Bug reports, feature requests and make contributions (e.g. code patches) can be 
 ## Acknowledgements
 This software was written by Jānis Šteinbergs under the supervision of Artis Aberfelds. If you make use of this software to get results that appear in a publication or presentation please include this acknowledgement: &quot;We have made use of MDPS, a tool developed by Janis Steinbergs.&quot;
 
-This work is the result of project implementation: «Physical and chemical processes in the interstellar medium», No 1.1.1.1/16/A/213 supported by ERDF​.
-
 This work was supported by Latvian Council of Science Project “Research of Galactic Masers” Nr.: lzp-2018/1-0291.
