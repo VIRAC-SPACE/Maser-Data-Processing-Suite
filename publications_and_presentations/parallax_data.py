@@ -41,18 +41,16 @@ def get_configs_items(section):
 
 def main(infile):
     data = ascii.read(infile)
-    x = data["X"]
-    y = data["Y"]
-    px = data["Parallax"]
     sources = data["Source"]
     flux = data["Flux"]
     cflux = data["Cflux"]
-    px = np.array([float(px[i]) for i in range(0, len(px)) if px[i] != "*"])
-    x_ = np.array([float(x[i]) for i in range(0, len(x)) if x[i] != "*"])
-    y_ = np.array([float(y[i]) for i in range(0, len(y)) if y[i] != "*"])
-    flux = np.array([float(flux[i]) for i in range(0, len(flux)) if x[i] != "*"])
-    cflux = np.array([float(cflux[i]) for i in range(0, len(cflux)) if y[i] != "*"])
-    sources = [sources[i] for i in range(0, len(sources)) if y[i] != "*"]
+    distance = data["Distance"]
+    x_ = np.array([float(data["X"][i]) for i in range(0, len(data["X"])) if data["X"][i] != "*"])
+    y_ = np.array([float(data["Y"][i]) for i in range(0, len(data["Y"])) if data["Y"][i] != "*"])
+    flux = np.array([float(flux[i]) for i in range(0, len(flux)) if data["X"][i] != "*"])
+    cflux = np.array([float(cflux[i]) for i in range(0, len(cflux)) if data["Y"][i] != "*"])
+    sources = [sources[i] for i in range(0, len(sources)) if data["Y"][i] != "*"]
+    distance = [float(distance[i]) for i in range(0, len(distance)) if data["Y"][i] != "*"]
 
     old_monitoring_file_path = get_configs("paths", "oldMonitoringFilePath")
     new_monitoring_file_path = get_configs("paths", "monitoringFilePath")
@@ -62,7 +60,8 @@ def main(infile):
 
     fluctuation_indexes = dict()
     variability_indexes = dict()
-    mean_of_y = []
+    mean_of_y = dict()
+    distance_ = dict()
     outliers = []
 
     for source in sources:
@@ -80,6 +79,8 @@ def main(infile):
             old_monitoring_file = old_monitoring_file_path + "/" + source_short_name + ".dat"
             fluctuation_indexes[source_short_name] = []
             variability_indexes[source_short_name] = []
+            mean_of_y[source_short_name] = cflux[sources.index(source)]
+            distance_[source_short_name] = distance[sources.index(source)]
 
             new_data = None
             old_data = None
@@ -167,7 +168,6 @@ def main(infile):
                         if not np.isnan(fluctuation_index):
                             fluctuation_indexes[source_short_name].append(np.float64(variability_index))
                             variability_indexes[source_short_name].append(np.float64(fluctuation_index))
-                            mean_of_y.append(np.float64(np.mean(y_data)))
                             if fluctuation_index > 1:
                                 source_name = get_configs("Full_source_name", source_short_name)
                                 outliers.append(
@@ -177,31 +177,10 @@ def main(infile):
                     del monitoring_data
             del new_monitoring_file, old_monitoring_file
 
-            '''
-            color = []
-            for vi in variability_indexes:
-                if vi < 0.5:
-                    color.append("blue")
-                else:
-                    color.append("red")
-            size = []
-
-            for my in mean_of_y:
-                if 0.5 < my <= 20:
-                    size.append(100)
-                elif 20 < my <= 200:
-                    size.append(200)
-                elif 200 < my <= 800:
-                    size.append(300)
-                elif 800 < my <= 2000:
-                    size.append(400)
-                elif 2000 < my <= 3005:
-                    size.append(500)
-                    
-            '''
-
     fluctuation_indexes_sizes = []
     variability_indexes_sizes = []
+    fluctuation_indexes_vs_variability_indexes_sizes = []
+    fluctuation_indexes_vs_variability_color = []
     for source in sources:
         try:
             source_short_name = all_sources_short_name[all_sources_full_name.index(source)]
@@ -211,6 +190,26 @@ def main(infile):
             fluctuation_indexes_sizes.append(np.mean(fluctuation_indexes[source_short_name]))
             variability_indexes_sizes.append(np.mean(variability_indexes[source_short_name]))
 
+            vi = np.mean(variability_indexes[source_short_name])
+            if vi < 0.5:
+                fluctuation_indexes_vs_variability_color.append("blue")
+            else:
+                fluctuation_indexes_vs_variability_color.append("red")
+
+            my = mean_of_y[source_short_name]
+            if 0.5 < my <= 20:
+                fluctuation_indexes_vs_variability_indexes_sizes.append(100)
+            elif 20 < my <= 200:
+                fluctuation_indexes_vs_variability_indexes_sizes.append(200)
+            elif 200 < my <= 800:
+                fluctuation_indexes_vs_variability_indexes_sizes.append(300)
+            elif 800 < my <= 2000:
+                fluctuation_indexes_vs_variability_indexes_sizes.append(400)
+            elif 2000 < my <= 3005:
+                fluctuation_indexes_vs_variability_indexes_sizes.append(500)
+            else:
+                fluctuation_indexes_vs_variability_indexes_sizes.append(600)
+
     plt.figure(dpi=150)
     plt.scatter(x_, y_, s=0.1 * flux)
     plt.xlim(min(x_) - 0.3, max(x_) + 0.3)
@@ -218,7 +217,6 @@ def main(infile):
     plt.xlabel("X [Kpc]")
     plt.ylabel("Y [Kpc]")
     plt.title("Flux")
-    plt.show()
 
     plt.figure(dpi=150)
     plt.scatter(x_, y_, s=0.1 * cflux)
@@ -227,7 +225,6 @@ def main(infile):
     plt.xlabel("X [Kpc]")
     plt.ylabel("Y [Kpc]")
     plt.title("CFlux")
-    plt.show()
 
     plt.figure(dpi=150)
     plt.scatter(x_, y_, s=100 * np.array(fluctuation_indexes_sizes))
@@ -236,7 +233,6 @@ def main(infile):
     plt.xlabel("X [Kpc]")
     plt.ylabel("Y [Kpc]")
     plt.title("fluctuation indexes")
-    plt.show()
 
     plt.figure(dpi=150)
     plt.scatter(x_, y_, s=100 * np.array(variability_indexes_sizes))
@@ -245,6 +241,21 @@ def main(infile):
     plt.xlabel("X [Kpc]")
     plt.ylabel("Y [Kpc]")
     plt.title("Variability indexes")
+
+    plt.figure(dpi=150)
+    plt.scatter(variability_indexes_sizes, fluctuation_indexes_sizes,
+                s=fluctuation_indexes_vs_variability_indexes_sizes, c=fluctuation_indexes_vs_variability_color)
+    plt.xlabel("Variability indexes")
+    plt.ylabel("Fluctuation indexes")
+    plt.title("Variability indexes vs Fluctuation indexes")
+
+    plt.figure(dpi=150)
+    plt.scatter(distance, cflux,
+                s=fluctuation_indexes_vs_variability_indexes_sizes, c=fluctuation_indexes_vs_variability_color)
+    plt.xlabel("Distance [Kpc]")
+    plt.ylabel("Flux")
+    plt.title("Flux vs Distance")
+
     plt.show()
 
 
