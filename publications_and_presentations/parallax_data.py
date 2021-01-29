@@ -191,6 +191,7 @@ def main(infile):
     fig4, ax4 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
     fig5, ax5 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
     fig6, ax6 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+    fig7, ax7 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
 
     axs = [ax1, ax2, ax3, ax4]
     for ax in axs:
@@ -204,6 +205,10 @@ def main(infile):
     ax6.set_xlabel("Distance [Kpc]")
     ax6.set_ylabel("Flux density (Jy)")
     ax6.set_title("Flux vs Distance")
+
+    ax7.xlabel("Variability indexes")
+    ax7.ylabel("Fluctuation indexes")
+    ax7.title("Variability indexes vs Fluctuation indexes")
 
     for maser in masers:
         if maser.x != "*" and maser.y != "*":
@@ -221,8 +226,10 @@ def main(infile):
 
         collor1 = []
         size1 = []
+        size2 = []
         variability_indexes = maser.variability_indexes
         means_y = maser.mean_of_y
+        absolute_mean_of_y = maser.absolute_mean_of_y
         for vi in variability_indexes:
             if vi < 0.5:
                 collor1.append("blue")
@@ -245,57 +252,31 @@ def main(infile):
             size1.append(ss)
 
             if maser.distance != "*":
-                ax6.scatter(float(maser.distance), my, s=ss)
+                my_index = means_y.index(my)
+                vi_tmp = variability_indexes[my_index]
+                if vi_tmp < 0.5:
+                    ax6.scatter(float(maser.distance), my, s=ss, c="b")
+                else:
+                    ax6.scatter(float(maser.distance), my, s=ss, c="r")
+
+        for my2 in absolute_mean_of_y:
+            if 0.5 < my2 <= 20:
+                sss = 100
+            elif 20 < my2 <= 200:
+                sss = 200
+            elif 200 < my2 <= 800:
+               sss = 300
+            elif 800 < my2 <= 2000:
+                sss = 400
+            elif 2000 < my2 <= 3005:
+                sss = 500
+            else:
+                sss = 600
+            size2.append(sss)
+
         ax5.scatter(maser.variability_indexes, maser.fluctuation_indexes, c=collor1, s=size1)
+        ax7.scatter(maser.variability_indexes, maser.fluctuation_indexes, c=collor1, s=size2)
 
-
-        #s=fluctuation_indexes_vs_variability_indexes_sizes, c=fluctuation_indexes_vs_variability_color
-
-
-
-
-    '''
-    for source in sources:
-        try:
-            source_short_name = all_sources_short_name[all_sources_full_name.index(source)]
-        except ValueError:
-            print(source, " is not in config file")
-        else:
-            fluctuation_indexes_sizes.append(np.mean(fluctuation_indexes[source_short_name]))
-            variability_indexes_sizes.append(np.mean(variability_indexes[source_short_name]))
-            mean_of_y_.append(np.mean(mean_of_y[source_short_name]))
-
-            vi = np.mean(variability_indexes[source_short_name])
-            if vi < 0.5:
-                fluctuation_indexes_vs_variability_color.append("blue")
-            else:
-                fluctuation_indexes_vs_variability_color.append("red")
-
-            my = np.mean(mean_of_y[source_short_name])
-            
-
-            my = np.mean(absolute_mean_of_y[source_short_name])
-            if 0.5 < my <= 20:
-                fluctuation_indexes_vs_variability_indexes_sizes_absolute.append(100)
-            elif 20 < my <= 200:
-                fluctuation_indexes_vs_variability_indexes_sizes_absolute.append(200)
-            elif 200 < my <= 800:
-                fluctuation_indexes_vs_variability_indexes_sizes_absolute.append(300)
-            elif 800 < my <= 2000:
-                fluctuation_indexes_vs_variability_indexes_sizes_absolute.append(400)
-            elif 2000 < my <= 3005:
-                fluctuation_indexes_vs_variability_indexes_sizes_absolute.append(500)
-            else:
-                fluctuation_indexes_vs_variability_indexes_sizes_absolute.append(600)
-
-    plt.figure(dpi=150)
-    plt.scatter(variability_indexes_sizes, fluctuation_indexes_sizes,
-                s=fluctuation_indexes_vs_variability_indexes_sizes_absolute, c=fluctuation_indexes_vs_variability_color)
-    plt.xlabel("Variability indexes")
-    plt.ylabel("Fluctuation indexes")
-    plt.title("Variability indexes vs Fluctuation indexes")
-    
-    '''
     plt.show()
 
 
