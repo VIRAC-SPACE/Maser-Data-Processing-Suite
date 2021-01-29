@@ -200,15 +200,15 @@ def main(infile):
 
     ax5.set_xlabel("Variability indexes")
     ax5.set_ylabel("Fluctuation indexes")
-    ax5.set_title("Variability indexes vs Fluctuation indexes")
+    ax5.set_title("Variability indexes vs Fluctuation indexes Flux")
 
     ax6.set_xlabel("Distance [Kpc]")
     ax6.set_ylabel("Flux density (Jy)")
     ax6.set_title("Flux vs Distance")
 
-    ax7.xlabel("Variability indexes")
-    ax7.ylabel("Fluctuation indexes")
-    ax7.title("Variability indexes vs Fluctuation indexes")
+    ax7.set_xlabel("Variability indexes")
+    ax7.set_ylabel("Fluctuation indexes")
+    ax7.set_title("Variability indexes vs Fluctuation indexes Absolute Flux")
 
     for maser in masers:
         if maser.x != "*" and maser.y != "*":
@@ -274,8 +274,11 @@ def main(infile):
                 sss = 600
             size2.append(sss)
 
-        ax5.scatter(maser.variability_indexes, maser.fluctuation_indexes, c=collor1, s=size1)
-        ax7.scatter(maser.variability_indexes, maser.fluctuation_indexes, c=collor1, s=size2)
+        if len(size1) > 0:
+            ax5.scatter(maser.variability_indexes, maser.fluctuation_indexes, c=collor1, s=size1)
+
+        if len(size2) > 0:
+            ax7.scatter(maser.variability_indexes, maser.fluctuation_indexes, c=collor1, s=size2)
 
     plt.show()
 
