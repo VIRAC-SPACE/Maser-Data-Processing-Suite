@@ -146,6 +146,8 @@ def main(infile):
 
             if len(components) > 0:
                 if monitoring_data is not None:
+                    largest_y_mean_index = -1
+                    largest_y_mean = 0
                     for component in components:
                         index = components.index(component)
                         if old:
@@ -155,6 +157,10 @@ def main(infile):
                         else:
                             y_data = monitoring_data[index + 1]
                         y_data = np.array([np.float128(yi) for yi in y_data]).clip(min=0)
+                        if np.mean(y_data) > largest_y_mean:
+                            largest_y_mean = np.mean(y_data)
+                            largest_y_mean_index = index
+
                         N = len(y_data)
                         variability_index = ((np.max(y_data) - np.std(y_data)) -
                                              (np.min(y_data) + np.std(y_data))) / \
@@ -174,14 +180,24 @@ def main(infile):
                             maser.fluctuation_indexes.append(np.float64(fluctuation_index))
                             maser.mean_of_y.append(np.float64(np.mean(y_data)))
                             maser.flux.extend(y_data)
-                            if maser.distance != "*":
-                                maser.absolute_mean_of_y.append(np.float64(np.mean(y_data)) *
-                                                                (np.float64(maser.distance) / 2) ** 2)
-
-                            #if fluctuation_index > 1:
-                                #maser.outlier = True
-
                         del y_data, variability_index, fluctuation_index
+
+                    for component in components:
+                        index2 = components.index(component)
+                        if index2 == largest_y_mean_index:
+                            if old:
+                                y_data2 = monitoring_data[:, index2 + 1]
+                            elif both:
+                                y_data2 = monitoring_data[index2 + 1, :]
+                            else:
+                                y_data2 = monitoring_data[index2 + 1]
+                            y_data2 = np.array([np.float128(yi) for yi in y_data2]).clip(min=0)
+
+                            if maser.distance != "*":
+                                maser.absolute_mean_of_y.append(np.float64(np.mean(y_data2)) *
+                                                                (np.float64(maser.distance) / 2) ** 2)
+                            del y_data2
+
                     del monitoring_data
                 del new_monitoring_file, old_monitoring_file
 
@@ -251,14 +267,6 @@ def main(infile):
                 ss = 600
             size1.append(ss)
 
-            if maser.distance != "*":
-                my_index = means_y.index(my)
-                vi_tmp = variability_indexes[my_index]
-                if vi_tmp < 0.5:
-                    ax6.scatter(float(maser.distance), my, s=ss, c="b")
-                else:
-                    ax6.scatter(float(maser.distance), my, s=ss, c="r")
-
         for my2 in absolute_mean_of_y:
             if 0.5 < my2 <= 20:
                 sss = 100
@@ -274,6 +282,14 @@ def main(infile):
                 sss = 600
             size2.append(sss)
 
+            if maser.distance != "*":
+                my_index = absolute_mean_of_y.index(my2)
+                vi_tmp = variability_indexes[my_index]
+                if vi_tmp < 0.5:
+                    ax6.scatter(float(maser.distance), my2, s=sss, c="b")
+                else:
+                    ax6.scatter(float(maser.distance), my2, s=sss, c="r")
+            
         if len(size1) > 0:
             ax5.scatter(maser.variability_indexes, maser.fluctuation_indexes, c=collor1, s=size1)
 
