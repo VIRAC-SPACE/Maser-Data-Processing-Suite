@@ -59,9 +59,10 @@ def main(infile):
     y = data["Y"]
 
     Maser = namedtuple('Maser', 'long_name short_name x y flux distance '
-                                'fluctuation_indexes variability_indexes mean_of_y absolute_mean_of_y, outlier')
+                                'fluctuation_indexes variability_indexes mean_of_y absolute_mean_of_y, '
+                                'absolute_mean_of_y2, outlier')
 
-    masers = [Maser(sources[i], get_maser_short_name(sources[i]), x[i], y[i], [], distance[i], [], [], [], [],
+    masers = [Maser(sources[i], get_maser_short_name(sources[i]), x[i], y[i], [], distance[i], [], [], [], [], [],
                     outlier=False) for i in range(0, len(sources))]
 
     old_monitoring_file_path = get_configs("paths", "oldMonitoringFilePath")
@@ -196,6 +197,7 @@ def main(infile):
                             if maser.distance != "*":
                                 maser.absolute_mean_of_y.append(np.float64(np.mean(y_data2)) *
                                                                 (np.float64(maser.distance) / 2) ** 2)
+                                maser.absolute_mean_of_y2.append(np.float64(np.mean(y_data2)))
                             del y_data2
 
                     del monitoring_data
@@ -208,6 +210,7 @@ def main(infile):
     fig5, ax5 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
     fig6, ax6 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
     fig7, ax7 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+    fig8, ax8 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
 
     axs = [ax1, ax2, ax3, ax4]
     for ax in axs:
@@ -220,11 +223,15 @@ def main(infile):
 
     ax6.set_xlabel("Distance [Kpc]")
     ax6.set_ylabel("Flux density (Jy)")
-    ax6.set_title("Flux vs Distance")
+    ax6.set_title("Flux vs Distance Absolute Flux")
 
     ax7.set_xlabel("Variability indexes")
     ax7.set_ylabel("Fluctuation indexes")
     ax7.set_title("Variability indexes vs Fluctuation indexes Absolute Flux")
+
+    ax8.set_xlabel("Distance [Kpc]")
+    ax8.set_ylabel("Flux density (Jy)")
+    ax8.set_title("Flux vs Distance Flux")
 
     for maser in masers:
         if maser.x != "*" and maser.y != "*":
@@ -243,9 +250,11 @@ def main(infile):
         collor1 = []
         size1 = []
         size2 = []
+        size3 = []
         variability_indexes = maser.variability_indexes
         means_y = maser.mean_of_y
         absolute_mean_of_y = maser.absolute_mean_of_y
+        absolute_mean_of_y2 = maser.absolute_mean_of_y2
         for vi in variability_indexes:
             if vi < 0.5:
                 collor1.append("blue")
@@ -258,7 +267,7 @@ def main(infile):
             elif 20 < my <= 200:
                 ss = 200
             elif 200 < my <= 800:
-               ss = 300
+                ss = 300
             elif 800 < my <= 2000:
                 ss = 400
             elif 2000 < my <= 3005:
@@ -273,7 +282,7 @@ def main(infile):
             elif 20 < my2 <= 200:
                 sss = 200
             elif 200 < my2 <= 800:
-               sss = 300
+                sss = 300
             elif 800 < my2 <= 2000:
                 sss = 400
             elif 2000 < my2 <= 3005:
@@ -289,7 +298,30 @@ def main(infile):
                     ax6.scatter(float(maser.distance), my2, s=sss, c="b")
                 else:
                     ax6.scatter(float(maser.distance), my2, s=sss, c="r")
-            
+
+        for my3 in absolute_mean_of_y2:
+            if 0.5 < my3 <= 20:
+                ssss = 100
+            elif 20 < my3 <= 200:
+                ssss = 200
+            elif 200 < my3 <= 800:
+                ssss = 300
+            elif 800 < my3 <= 2000:
+                ssss = 400
+            elif 2000 < my3 <= 3005:
+                ssss = 500
+            else:
+                ssss = 600
+            size3.append(ssss)
+
+            if maser.distance != "*":
+                my_index2 = absolute_mean_of_y2.index(my3)
+                vi_tmp2 = variability_indexes[my_index2]
+                if vi_tmp2 < 0.5:
+                    ax8.scatter(float(maser.distance), my3, s=ssss, c="b")
+                else:
+                    ax8.scatter(float(maser.distance), my3, s=ssss, c="r")
+
         if len(size1) > 0:
             ax5.scatter(maser.variability_indexes, maser.fluctuation_indexes, c=collor1, s=size1)
 
