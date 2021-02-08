@@ -632,6 +632,9 @@ class Analyzer(QWidget):
             ston_right = signal_to_noise_ratio(velocities, y__right_avg[s], self.cuts)
             stone_avg = signal_to_noise_ratio(velocities, ((np.array(y__left_avg[s]) +
                                                             np.array(y__right_avg[s])) / 2), self.cuts)
+
+            tmp_output_file_name = get_args("source") + "_" + get_args("iteration_number") + "_" + str(s) + ".txt"
+            np.savetxt(tmp_output_file_name, np.array([y__left_avg[s], y__right_avg[s]]).reshape(len(y__left_avg[s]), 2))
             self.ston_list_left.append(ston_left)
             self.ston_list_right.append(ston_right)
             self.ston_list_avg.append(stone_avg)
@@ -709,7 +712,6 @@ class Analyzer(QWidget):
 
         result_file = h5py.File(result_file_name, "w")
         print("output_file_name", result_file_name)
-
         sys_temp_out = np.transpose(np.array([time, self.tsys_r_left_list,
                                               self.tsys_r_right_list,
                                               self.tsys_s_left_list, self.tsys_s_right_list]))
