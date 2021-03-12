@@ -24,6 +24,8 @@ from utils.help import find_nearest_index
 from utils.ploting_qt5 import Plot
 warnings.filterwarnings("ignore")
 
+output = []
+
 
 def parse_arguments():
     """
@@ -78,13 +80,13 @@ def dopler(observed_frequency, velocity_receiver, base_frequency):
     return velocity_source
 
 
-def signal_to_noise_ratio(frequency, amplitude, cuts):
+def split_data_to_signal_and_noise(velocity, amplitude, cuts):
     """
 
-    :param frequency: velocity
+    :param velocity: velocity
     :param amplitude: amplitude
     :param cuts: signal region
-    :return: signal to noise ratio
+    :return: list of signal and list of noise
     """
 
     cuts_index = list()
@@ -92,10 +94,10 @@ def signal_to_noise_ratio(frequency, amplitude, cuts):
     cuts_index2 = list()
 
     for cut in cuts:
-        cuts_index.append((np.abs(frequency - float(cut[0]))).argmin())
-        cuts_index.append((np.abs(frequency - float(cut[1]))).argmin())
-        cuts_index2.append((np.abs(frequency - float(cut[0]))).argmin())
-        cuts_index2.append((np.abs(frequency - float(cut[1]))).argmin())
+        cuts_index.append((np.abs(velocity - float(cut[0]))).argmin())
+        cuts_index.append((np.abs(velocity - float(cut[1]))).argmin())
+        cuts_index2.append((np.abs(velocity - float(cut[0]))).argmin())
+        cuts_index2.append((np.abs(velocity - float(cut[1]))).argmin())
 
     cuts_index = sorted(cuts_index)
     cuts_index.append(-1)
@@ -118,11 +120,31 @@ def signal_to_noise_ratio(frequency, amplitude, cuts):
         m = m + 2
         n = n + 2
 
+    return non_signal_amplitude, signal_amplitude
+
+
+def signal_to_noise_ratio(velocity, amplitude, cuts):
+    """
+
+    :param velocity: velocity
+    :param amplitude: amplitude
+    :param cuts: signal region
+    :return: signal to noise ratio
+    """
+    non_signal_amplitude, signal_amplitude = split_data_to_signal_and_noise(velocity, amplitude, cuts)
+
     std = np.std(non_signal_amplitude)
     max_value = np.max(signal_amplitude)
 
     ston = max_value / (std * 3)
     return ston
+
+
+def rms(noise):
+    std = np.std(noise)
+    number_of_points = len(noise)
+    rms = np.sqrt(sum([(n - std)**2 for n in noise])/number_of_points)
+    return rms
 
 
 def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left,
@@ -264,6 +286,8 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
 
     sf_left = ta_left / ((float(logs["header"]["DPFU"][0])) * np.polyval(g_el, elvation))
     sf_right = ta_right / ((float(logs["header"]["DPFU"][1])) * np.polyval(g_el, elvation))
+
+    output.append([sf_left[s_i:e_i], sf_right[s_i:e_i]])
 
     return sf_left[s_i:e_i], sf_right[s_i:e_i], frequency_a[s_i:e_i], \
            tsys_r_left, tsys_r_right, tsys_s_left, tsys_s_right, delete_scan_files
@@ -414,7 +438,6 @@ class Analyzer(QWidget):
 
     def next_pair(self):
         """
-
         :return: None
         """
         if self.index == len(self.scan_pairs) - 1:
@@ -443,18 +466,18 @@ class Analyzer(QWidget):
             file3 = self.data_dir + self.get_data_file_for_scan(pair[1][1])  # s1
             file4 = self.data_dir + self.get_data_file_for_scan(pair[1][0])  # r1
 
-            frequency_a = get_data(file1)[0]  # r0
-            p_sig_left = get_data(file1)[1]  # r0
-            p_sig_right = get_data(file1)[2]  # r0
+            frequency_a = get_data(file1)[0]  # s0
+            p_sig_left = get_data(file1)[1]  # s0
+            p_sig_right = get_data(file1)[2]  # s0
 
-            p_ref_left = get_data(file2)[1]  # s0
-            p_ref_right = get_data(file2)[2]  # s0
+            p_ref_left = get_data(file2)[1]  # r0
+            p_ref_right = get_data(file2)[2]  # r0
 
-            p_sig_on_left = get_data(file3)[1]  # r1
-            p_sig_on_right = get_data(file3)[2]  # r1
+            p_sig_on_left = get_data(file3)[1]  # s1
+            p_sig_on_right = get_data(file3)[2]  # s1
 
-            p_ref_on_left = get_data(file4)[1]  # s1
-            p_ref_on_right = get_data(file4)[2]  # s1
+            p_ref_on_left = get_data(file4)[1]  # r1
+            p_ref_on_right = get_data(file4)[2]  # r1
 
             # fft shift
             p_sig_left = np.fft.fftshift(p_sig_left)  # r0
@@ -609,15 +632,49 @@ class Analyzer(QWidget):
         left_cut = np.max(velocity_min)
         right_cut = np.min(velocity_max)
 
+        all_rms__left = []
+        all_rms__right = []
         for p in range(0, len(self.sf_left)):
             index_left = find_nearest_index(velocity_list[p], left_cut)
             index_right = find_nearest_index(velocity_list[p], right_cut)
-            y__left_avg.append(self.sf_left[p][index_right:index_left])
-            y__right_avg.append(self.sf_right[p][index_right:index_left])
-            velocities_avg.append(velocity_list[p][index_right:index_left])
+            non_signal_amplitude_left, _ = split_data_to_signal_and_noise(velocity_list[p][index_right:index_left],
+                                           self.sf_left[p][index_right:index_left], self.cuts)
+            non_signal_amplitude_right, _ = split_data_to_signal_and_noise(velocity_list[p][index_right:index_left],
+                                            self.sf_right[p][index_right:index_left], self.cuts)
+
+            rms_left = rms(non_signal_amplitude_left)
+            rms_right = rms(non_signal_amplitude_right)
+            all_rms__left.append(rms_left)
+            all_rms__right.append(rms_right)
+
+        mean_rms__left = np.mean(all_rms__left)
+        mean_rms__right = np.mean(all_rms__right)
+
+        for p in range(0, len(self.sf_left)):
+            index_left = find_nearest_index(velocity_list[p], left_cut)
+            index_right = find_nearest_index(velocity_list[p], right_cut)
+
+            print("rms left", all_rms__left[p], "rms right", all_rms__right[p])
+
+            if all_rms__left[p] < mean_rms__left * 1.3 and all_rms__right[p] < mean_rms__right * 1.3:
+                y__left_avg.append(self.sf_left[p][index_right:index_left])
+                y__right_avg.append(self.sf_right[p][index_right:index_left])
+                velocities_avg.append(velocity_list[p][index_right:index_left])
+            else:
+                print("rms for scan " + str(p) + "is larger than mean rms * 1.3")
 
         max_points_count = np.max([len(m) for m in velocities_avg])
+
+        all_rms__left = []
+        all_rms__right = []
         for s in range(0, len(y__left_avg)):
+            non_signal_amplitude_left, _ = split_data_to_signal_and_noise(velocities, y__left_avg[s], self.cuts)
+            non_signal_amplitude_right, _ = split_data_to_signal_and_noise(velocities, y__right_avg[s], self.cuts)
+            rms_left = rms(non_signal_amplitude_left)
+            rms_right = rms(non_signal_amplitude_right)
+
+            all_rms__left.append(rms_left)
+            all_rms__right.append(rms_right)
 
             if len(velocities_avg[s]) < max_points_count:
                 velocities_avg[s] = np.append(velocities_avg[s], np.max(velocity_min))
@@ -633,8 +690,8 @@ class Analyzer(QWidget):
             stone_avg = signal_to_noise_ratio(velocities, ((np.array(y__left_avg[s]) +
                                                             np.array(y__right_avg[s])) / 2), self.cuts)
 
-            tmp_output_file_name = get_args("source") + "_" + get_args("iteration_number") + "_" + str(s) + ".txt"
-            np.savetxt(tmp_output_file_name, np.array([y__left_avg[s], y__right_avg[s]]).reshape(len(y__left_avg[s]), 2))
+            #tmp_output_file_name = get_args("source") + "_" + get_args("iteration_number") + "_" + str(s) + ".txt"
+            #np.savetxt(tmp_output_file_name, np.array([y__left_avg[s], y__right_avg[s]]).reshape(len(y__left_avg[s]), 2))
             self.ston_list_left.append(ston_left)
             self.ston_list_right.append(ston_right)
             self.ston_list_avg.append(stone_avg)
@@ -642,10 +699,10 @@ class Analyzer(QWidget):
         velocities_avg = reduce(lambda x, y: x + y, velocities_avg)
         y__left_avg = reduce(lambda x, y: x + y, y__left_avg)
         y__right_avg = reduce(lambda x, y: x + y, y__right_avg)
-
-        velocities_avg = velocities_avg / len(self.scan_pairs)
-        y__left_avg = y__left_avg / len(self.scan_pairs)
-        y__right_avg = y__right_avg / len(self.scan_pairs)
+        number_of_scans = len(velocities_avg)
+        velocities_avg = velocities_avg /number_of_scans
+        y__left_avg = y__left_avg / number_of_scans
+        y__right_avg = y__right_avg / number_of_scans
 
         self.plot_velocity__left = Plot()
         self.plot_velocity__left.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
