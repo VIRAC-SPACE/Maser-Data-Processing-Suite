@@ -650,32 +650,28 @@ class Analyzer(QWidget):
         mean_rms__left = np.mean(all_rms__left)
         mean_rms__right = np.mean(all_rms__right)
 
+        print("Max rms for left polarization is " + str(max(all_rms__left)),
+              " Min rms for left polarization is " + str(min(all_rms__left)),
+              "AVG rms for left polarization is " + str(np.mean(all_rms__left)))
+
+        print("Max rms for right polarization is " + str(max(all_rms__right)),
+              " Min rms for right polarization is " + str(min(all_rms__right)),
+              "AVG rms for right polarization is " + str(np.mean(all_rms__right)))
+
         for p in range(0, len(self.sf_left)):
             index_left = find_nearest_index(velocity_list[p], left_cut)
             index_right = find_nearest_index(velocity_list[p], right_cut)
 
-            print("rms left", all_rms__left[p], "rms right", all_rms__right[p])
-
-            if all_rms__left[p] < mean_rms__left * 1.3 and all_rms__right[p] < mean_rms__right * 1.3:
+            if all_rms__left[p] < mean_rms__left * 1.1 and all_rms__right[p] < mean_rms__right * 1.1:
                 y__left_avg.append(self.sf_left[p][index_right:index_left])
                 y__right_avg.append(self.sf_right[p][index_right:index_left])
                 velocities_avg.append(velocity_list[p][index_right:index_left])
             else:
-                print("rms for scan " + str(p) + "is larger than mean rms * 1.3")
+                pass
 
         max_points_count = np.max([len(m) for m in velocities_avg])
 
-        all_rms__left = []
-        all_rms__right = []
         for s in range(0, len(y__left_avg)):
-            non_signal_amplitude_left, _ = split_data_to_signal_and_noise(velocities, y__left_avg[s], self.cuts)
-            non_signal_amplitude_right, _ = split_data_to_signal_and_noise(velocities, y__right_avg[s], self.cuts)
-            rms_left = rms(non_signal_amplitude_left)
-            rms_right = rms(non_signal_amplitude_right)
-
-            all_rms__left.append(rms_left)
-            all_rms__right.append(rms_right)
-
             if len(velocities_avg[s]) < max_points_count:
                 velocities_avg[s] = np.append(velocities_avg[s], np.max(velocity_min))
 
@@ -725,9 +721,15 @@ class Analyzer(QWidget):
                              [2:len(t.split("_")[-1].split(".")[0]) - 2])
                          for t in data_files]))
 
-        time = list(time)
-        while len(time) != len(self.tsys_r_left_list):
-            time.pop()
+        if len(time) < len(self.tsys_r_left_list):
+            while len(time) < len(self.tsys_r_left_list):
+                self.tsys_r_left_list.pop()
+                self.tsys_r_right_list.pop()
+                self.tsys_s_left_list.pop()
+                self.tsys_s_right_list.pop()
+        elif len(time) > len(self.tsys_r_left_list):
+            while len(time) > len(self.tsys_r_left_list):
+                time.pop()
 
         self.plot_tsys.plot(time, self.tsys_r_left_list, '*b', label="Tsys_r_left")
         self.plot_tsys.plot(time, self.tsys_r_right_list, '*r', label="Tsys_r_right")
