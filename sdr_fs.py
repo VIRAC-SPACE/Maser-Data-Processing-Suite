@@ -632,8 +632,8 @@ class Analyzer(QWidget):
         left_cut = np.max(velocity_min)
         right_cut = np.min(velocity_max)
 
-        all_rms__left = []
-        all_rms__right = []
+        all_rms_left = []
+        all_rms_right = []
         for p in range(0, len(self.sf_left)):
             index_left = find_nearest_index(velocity_list[p], left_cut)
             index_right = find_nearest_index(velocity_list[p], right_cut)
@@ -644,25 +644,29 @@ class Analyzer(QWidget):
 
             rms_left = rms(non_signal_amplitude_left)
             rms_right = rms(non_signal_amplitude_right)
-            all_rms__left.append(rms_left)
-            all_rms__right.append(rms_right)
+            all_rms_left.append(rms_left)
+            all_rms_right.append(rms_right)
 
-        mean_rms__left = np.mean(all_rms__left)
-        mean_rms__right = np.mean(all_rms__right)
+        mean_rms_left = np.mean(all_rms_left)
+        mean_rms_right = np.mean(all_rms_right)
 
-        print("Max rms for left polarization is " + str(max(all_rms__left)),
-              " Min rms for left polarization is " + str(min(all_rms__left)),
-              "AVG rms for left polarization is " + str(np.mean(all_rms__left)))
+        std_rms_left = np.std(all_rms_left)
+        std_rms_right = np.std(all_rms_right)
 
-        print("Max rms for right polarization is " + str(max(all_rms__right)),
-              " Min rms for right polarization is " + str(min(all_rms__right)),
-              "AVG rms for right polarization is " + str(np.mean(all_rms__right)))
+        print("Max rms for left polarization is " + str(max(all_rms_left)),
+              " Min rms for left polarization is " + str(min(all_rms_left)),
+              "AVG rms for left polarization is " + str(np.mean(all_rms_left)))
+
+        print("Max rms for right polarization is " + str(max(all_rms_right)),
+              " Min rms for right polarization is " + str(min(all_rms_right)),
+              "AVG rms for right polarization is " + str(np.mean(all_rms_right)))
 
         for p in range(0, len(self.sf_left)):
             index_left = find_nearest_index(velocity_list[p], left_cut)
             index_right = find_nearest_index(velocity_list[p], right_cut)
 
-            if all_rms__left[p] < mean_rms__left * 1.1 and all_rms__right[p] < mean_rms__right * 1.1:
+            if mean_rms_left - 3 * std_rms_left < all_rms_left[p] < mean_rms_left + 3 * std_rms_left \
+                    and mean_rms_right - 3 * std_rms_right < all_rms_right[p] < mean_rms_right + 3 * std_rms_right:
                 y__left_avg.append(self.sf_left[p][index_right:index_left])
                 y__right_avg.append(self.sf_right[p][index_right:index_left])
                 velocities_avg.append(velocity_list[p][index_right:index_left])
