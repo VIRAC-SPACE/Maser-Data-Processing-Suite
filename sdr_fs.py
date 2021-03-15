@@ -696,13 +696,13 @@ class Analyzer(QWidget):
             self.ston_list_right.append(ston_right)
             self.ston_list_avg.append(stone_avg)
 
-        velocities_avg = reduce(lambda x, y: x + y, velocities_avg)
-        y__left_avg = reduce(lambda x, y: x + y, y__left_avg)
-        y__right_avg = reduce(lambda x, y: x + y, y__right_avg)
         number_of_scans = len(velocities_avg)
+        velocities_avg = reduce(lambda x, y: x + y, velocities_avg)
+        y_left_avg = reduce(lambda x, y: x + y, y_left_avg)
+        y_right_avg = reduce(lambda x, y: x + y, y_right_avg)
         velocities_avg = velocities_avg /number_of_scans
-        y__left_avg = y__left_avg / number_of_scans
-        y__right_avg = y__right_avg / number_of_scans
+        y_left_avg = y_left_avg / number_of_scans
+        y_right_avg = y_right_avg / number_of_scans
 
         self.plot_velocity__left = Plot()
         self.plot_velocity__left.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
