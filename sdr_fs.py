@@ -696,10 +696,10 @@ class Analyzer(QWidget):
             self.ston_list_right.append(ston_right)
             self.ston_list_avg.append(stone_avg)
 
+        number_of_scans = len(velocities_avg)
         velocities_avg = reduce(lambda x, y: x + y, velocities_avg)
         y__left_avg = reduce(lambda x, y: x + y, y__left_avg)
         y__right_avg = reduce(lambda x, y: x + y, y__right_avg)
-        number_of_scans = len(velocities_avg)
         velocities_avg = velocities_avg /number_of_scans
         y__left_avg = y__left_avg / number_of_scans
         y__right_avg = y__right_avg / number_of_scans
@@ -798,6 +798,14 @@ class Analyzer(QWidget):
         print("Average signal to noise for left polarization", np.mean(self.ston_list_left))
         print("Average signal to noise for right polarization", np.mean(self.ston_list_right))
         print("Average signal to noise for average polarization", np.mean(self.ston_list_avg))
+
+        non_signal_amplitude_left, _ = split_data_to_signal_and_noise(velocities_avg, y__left_avg, self.cuts)
+        non_signal_amplitude_right, _ = split_data_to_signal_and_noise(velocities_avg, y__right_avg, self.cuts)
+
+        print("Average rms for left polarization", rms((np.array(non_signal_amplitude_left) +
+                                                        np.array(non_signal_amplitude_right))/2))
+        print("Average rms for right polarization", rms(non_signal_amplitude_left))
+        print("Average rms for average polarization", rms(non_signal_amplitude_right))
 
         self.grid.addWidget(self.plot_velocity__left, 0, 0)
         self.grid.addWidget(self.plot_velocity__right, 0, 1)
@@ -906,7 +914,7 @@ class Analyzer(QWidget):
             self.total__right.plot(self.x, sf_right, 'b', label=scan_name)
             self.grid.addWidget(self.total__right, 3, 1)
         else:
-            self.scan_pairs.remove(pair) 
+            self.scan_pairs.remove(pair)
 
         if index == len(self.scan_pairs) - 1:
             self.next_pair_button.setText('Move to total results')
