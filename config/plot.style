@@ -1,0 +1,6 @@
+font.family:serif
+font.sans-serif:Time New Roman
+font.size: 20
+ytick.major.size:12
+ytick.minor.size:12
+ytick.direction:in
