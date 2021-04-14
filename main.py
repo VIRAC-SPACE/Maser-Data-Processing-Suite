@@ -26,7 +26,7 @@ def parse_arguments():
     parser.add_argument("source", help="Source Name", type=str)
     parser.add_argument("line", help="frequency", type=int)
     parser.add_argument("-c", "--config", help="Configuration "
-                                                "cfg file", type=str, default="config/config.cfg")
+                                               "cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 3.0')
     args = parser.parse_args()
     return args
@@ -81,8 +81,9 @@ def create_iteration_list(path, source, line):
     """
     stations = list(set(create_station_list(path, source, line)))
     iterations_for_source_and_line = [file for file in os.listdir(path)
-                                      if source in file and line in file and os.path.isdir(path + file)]
-    iterations_for_station = {station: [] for station in stations} #{get_station(iteration):get_iteration(iteration) for iteration in os.listdir(path) if  source in iteration and line in iteration and os.path.isdir(path + iteration)}
+                                      if source + "_" in file and line in file and os.path.isdir(path + file)]
+    iterations_for_station = {station: [] for station in
+                              stations}  # {get_station(iteration):get_iteration(iteration) for iteration in os.listdir(path) if  source in iteration and line in iteration and os.path.isdir(path + iteration)}
     for iteration in iterations_for_source_and_line:
         iterations_for_station[get_station(iteration)].append(get_iteration(iteration))
 
@@ -100,7 +101,8 @@ def create_station_list(path, source, line):
     :param path: input file path
     :return: stations list
     """
-    iterations = [file for file in os.listdir(path) if source in file and line in file and os.path.isdir(path + file)]
+    iterations = [file for file in os.listdir(path) if
+                  source + "_" in file and line in file and os.path.isdir(path + file)]
     iterations.sort(key=get_iteration, reverse=False)
     stations = [get_station(iteration) for iteration in iterations]
     return stations
@@ -202,7 +204,7 @@ def main():
                     input_data_file.close()
                     if "amplitude" in input_file_keys:
                         LOGGER.info("Executing python3 " +
-                                   "total_spectrum_analyzer_qt5.py " + output_file + " " + line)
+                                    "total_spectrum_analyzer_qt5.py " + output_file + " " + line)
                         os.system("python3 " +
                                   "total_spectrum_analyzer_qt5.py " + output_file + " " + line)
 
