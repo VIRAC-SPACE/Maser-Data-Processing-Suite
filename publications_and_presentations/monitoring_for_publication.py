@@ -89,6 +89,7 @@ def main():
                            get_args("line")).replace(" ", "").split(",")
     components = [i for i in range(1, component_count + 1)]
 
+
     if os.path.isfile(old_monitoring_file) and os.path.isfile(new_monitoring_file):
         new_data = np.load(new_monitoring_file, allow_pickle=True)
         new_x = new_data[0][0]
@@ -154,11 +155,13 @@ def main():
     print("\n")
     print("\hline")
     print("\multicolumn{4}{l}{" + get_configs("Full_source_name", get_args("source")) +
-          "MJD\\textsubscript{{s}}= {:.3f} $T\\textsubscript{{s}}$= "
-          "{:.3f},}}\\\\".format(np.min(x), (np.max(x) - np.min(x)) / 365))
+          "MJD\\textsubscript{{s}}={:d} $T\\textsubscript{{s}}$= "
+          "{:.3f},}}\\\\".format(int(np.min(x)), (np.max(x) - np.min(x)) / 365))
+    
     print("\multicolumn{{4}}{{l}}{{$N$={:d}, $C(month^{{-1}})$={:.3f})}}"
           " \\\\".format(len(x), (len(x) / ((np.max(x) - np.min(x)) / 365)) / 12))
     print("\hline")
+
     for component in components:
         index = components.index(component)
         if old:
@@ -210,7 +213,7 @@ def main():
     ax1.set_xlabel("MJD" )
     ax1.set_ylabel("Flux density (Jy)")
 
-    t = Time(x, format='mjd', scale='utc', out_subfmt='date')
+    t = Time(np.array(x, dtype=float), format='mjd', scale='utc', out_subfmt='date')
     t.format = 'isot'
 
     fig.autofmt_xdate()
