@@ -155,7 +155,7 @@ def main():
     print("\n")
     print("\hline")
     print("\multicolumn{4}{l}{" + get_configs("Full_source_name", get_args("source")) +
-          "MJD\\textsubscript{{s}}={:d} $T\\textsubscript{{s}}$= "
+          " (MJD\\textsubscript{{s}}={:d} $T\\textsubscript{{s}}$= "
           "{:.3f},}}\\\\".format(int(np.min(x)), (np.max(x) - np.min(x)) / 365))
 
     print("\multicolumn{{4}}{{l}}{{$N$={:d}, $C(month^{{-1}})$={:.3f})}}"
