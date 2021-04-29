@@ -157,7 +157,7 @@ def main():
     print("\multicolumn{4}{l}{" + get_configs("Full_source_name", get_args("source")) +
           "MJD\\textsubscript{{s}}={:d} $T\\textsubscript{{s}}$= "
           "{:.3f},}}\\\\".format(int(np.min(x)), (np.max(x) - np.min(x)) / 365))
-    
+
     print("\multicolumn{{4}}{{l}}{{$N$={:d}, $C(month^{{-1}})$={:.3f})}}"
           " \\\\".format(len(x), (len(x) / ((np.max(x) - np.min(x)) / 365)) / 12))
     print("\hline")
@@ -180,10 +180,14 @@ def main():
         variability_indexies[component] = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y)))\
                                           / ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
         variances_normal[component] = variances[component] * (1 / N - 1)
-        fuction_index[component] = np.sqrt((N / reduce(lambda x_, y_: x_ + y_, [(1.5 + 0.05 * i) ** 2 for i in y])) *
-                                           ((reduce(lambda x_, y_: x_ + y_, [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y]) -
-                                             np.mean(y) * reduce(lambda x_, y_: x_ + y_, [i * (1.5 + 0.05 * i) ** 2 for i in y]))
-                                           / (N - 1)) - 1) / np.mean(y)
+
+        fuction_index[component] = np.sqrt(np.abs((N / reduce(lambda x_, y_: x_ + y_, [(1.5 + 0.05 * i) ** 2 for i in y])) *
+                                           ((reduce(lambda x_, y_: x_ + y_,
+                                                    [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y]) -
+                                             np.mean(y) * reduce(lambda x_, y_: x_ + y_,
+                                                                 [i * (1.5 + 0.05 * i) ** 2 for i in y]))
+                                            / (N - 1)) - 1)) / np.mean(y)
+
         v = velocity[index]
         print("{:3} &  {:.3f} & {:.3f} & {:.3f}\\\\".
               format(v, np.mean(y), variability_indexies[component], fuction_index[component]))
