@@ -10,7 +10,6 @@ import argparse
 from datetime import datetime
 from functools import reduce
 import matplotlib.pyplot as plt
-from astropy.time import Time
 from matplotlib import rcParams
 from matplotlib.ticker import StrMethodFormatter
 import numpy as np
@@ -89,14 +88,13 @@ def main():
                            get_args("line")).replace(" ", "").split(",")
     components = [i for i in range(1, component_count + 1)]
 
-
     if os.path.isfile(old_monitoring_file) and os.path.isfile(new_monitoring_file):
         new_data = np.load(new_monitoring_file, allow_pickle=True)
         new_x = new_data[0][0]
         old_data = np.loadtxt(old_monitoring_file, dtype=str).reshape(
             (file_len(old_monitoring_file), component_count + 1))
         old_x = correct_numpy_read_data(old_data[:, [0]])
-        old_x = [convert_datetime_object_to_mjd(datetime.strptime(x, "%Y-%m-%d%H:%M:%S" ) ) for x in old_x]
+        old_x = [convert_datetime_object_to_mjd(datetime.strptime(x, "%Y-%m-%d%H:%M:%S")) for x in old_x]
         old_data[:, 0] = old_x
         x = old_x + list(new_x)
         old_data_tmp = []
@@ -106,7 +104,7 @@ def main():
         for j in range(0, old_data.shape[1]):
             for i in range(0, old_data.shape[0]):
                 old_data_tmp[tmp2].append(old_data[i][j])
-            old_data_tmp[tmp2] = np.array(old_data_tmp[tmp2]).reshape(old_data.shape[0],)
+            old_data_tmp[tmp2] = np.array(old_data_tmp[tmp2]).reshape(old_data.shape[0], )
             tmp2 += 1
         old_data = np.array(old_data_tmp)
         new_data[0] = new_data[0][0]
@@ -147,9 +145,9 @@ def main():
     y_ticks = []
 
     variances = dict()
-    variability_indexies = dict()
+    variability_index = dict()
     variances_normal = dict()
-    fuction_index = dict()
+    fluctuation_index = dict()
     result_org = [x]
 
     print("\n")
@@ -177,20 +175,21 @@ def main():
         ax1.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
         result_org.append(y)
         variances[component] = reduce(lambda x_, y_: x_ + y_, [((i - np.mean(y)) / np.std(y)) ** 2 for i in y])
-        variability_indexies[component] = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y)))\
+        variability_index[component] = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y))) \
                                           / ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
         variances_normal[component] = variances[component] * (1 / N - 1)
 
-        fuction_index[component] = np.sqrt(np.abs((N / reduce(lambda x_, y_: x_ + y_, [(1.5 + 0.05 * i) ** 2 for i in y])) *
-                                           ((reduce(lambda x_, y_: x_ + y_,
-                                                    [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y]) -
-                                             np.mean(y) * reduce(lambda x_, y_: x_ + y_,
-                                                                 [i * (1.5 + 0.05 * i) ** 2 for i in y]))
-                                            / (N - 1)) - 1)) / np.mean(y)
+        fluctuation_index[component] = np.sqrt(
+            np.abs((N / reduce(lambda x_, y_: x_ + y_, [(1.5 + 0.05 * i) ** 2 for i in y])) *
+                   ((reduce(lambda x_, y_: x_ + y_,
+                            [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y]) -
+                     np.mean(y) * reduce(lambda x_, y_: x_ + y_,
+                                         [i * (1.5 + 0.05 * i) ** 2 for i in y]))
+                    / (N - 1)) - 1)) / np.mean(y)
 
         v = velocity[index]
         print("{:3} &  {:.3f} & {:.3f} & {:.3f}\\\\".
-              format(v, np.mean(y), variability_indexies[component], fuction_index[component]))
+              format(v, np.mean(y), variability_index[component], fluctuation_index[component]))
 
         y_min = np.min(y)
         if y_min < 0:
@@ -210,15 +209,12 @@ def main():
     print("\n")
     print("variances", variances)
     print("variances_normal", variances_normal)
-    print("variability indexies", variability_indexies)
+    print("variability indexies", variability_index)
     print("Start time", np.min(x))
 
     plt.title(get_configs("Full_source_name", get_args("source")))
-    ax1.set_xlabel("MJD" )
+    ax1.set_xlabel("MJD")
     ax1.set_ylabel("Flux density (Jy)")
-
-    t = Time(np.array(x, dtype=float), format='mjd', scale='utc', out_subfmt='date')
-    t.format = 'isot'
 
     fig.autofmt_xdate()
     plt.yscale("log")
@@ -243,7 +239,7 @@ def main():
             index = components.index(component)
             y = np.float128(data[index + 1])[0]
             base = np.float128(data[[int(get_args("base"))]])[0]
-            plt.plot(x, y/base, symbols[index] + colors[index], linewidth=0.5, markersize=5)
+            plt.plot(x, y / base, symbols[index] + colors[index], linewidth=0.5, markersize=5)
             result_calib.append(y / base)
 
         plt.grid(False)
