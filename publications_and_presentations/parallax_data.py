@@ -158,6 +158,7 @@ def main(infile):
                         else:
                             y_data = monitoring_data[index + 1]
                         y_data = np.array([np.float128(yi) for yi in y_data]).clip(min=0)
+
                         if np.mean(y_data) > largest_y_mean:
                             largest_y_mean = np.mean(y_data)
                             largest_y_mean_index = index
@@ -240,7 +241,9 @@ def main(infile):
     mean_of_ys = []
     mean_of_ys2 = []
     for maser in masers:
-        if maser.x != "*" and maser.y != "*":
+        if maser.x != "*" and maser.y != "*" and len(maser.mean_of_y) != 0:
+            if len(maser.mean_of_y) == 0:
+                print("yes", maser.short_name, maser.long_name)
             x.append(float(maser.x))
             y.append(float(maser.y))
             size1.append(np.mean(maser.mean_of_y))
@@ -334,7 +337,10 @@ def main(infile):
         scatter = ax.scatter(viss[ax_index], fiss[ax_index], c=colors_vi_fi[ax_index], s=sizes_vi_fi[ax_index],
                              alpha=0.3)
         handles, labels = scatter.legend_elements(prop="sizes", alpha=0.6)
-        ranges = ["0.5 < Jy <= 20", "20 < Jy <= 200", "200 < Jy <= 800"]
+        if len(labels) == 3:
+            ranges = ["0.5 < Jy <= 20", "20 < Jy <= 200", "200 < Jy <= 800"]
+        elif len(labels) == 5:
+            ranges = ["0.5 < Jy <= 20", "20 < Jy <= 200", "200 < Jy <= 800", "800 < Jy <= 2000", "2000 < Jy <= 3005"]
         labels = [labels[l] + "  " + ranges[l] for l in range(0, len(ranges))]
         ax.legend(handles, labels, markerscale=0.7)
         ax.set_xlabel("Variability indexes")
