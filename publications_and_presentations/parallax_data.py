@@ -335,12 +335,12 @@ def main(infile):
         ax.set_title(titles_distances_flux_density[ax_index])
         ax.scatter(distances, ax_distances_flux_density_y[ax_index], s=size7, c=color7, alpha=0.3)
 
-    ax9.scatter(vis, mean_of_ys2, alpha=0.3, c=color5)
-    ax10.scatter(fis, mean_of_ys2, alpha=0.3, c=color5)
-    ax9.set_ylabel("Flux density (Jy)")
-    ax10.set_ylabel("Flux density (Jy)")
-    ax9.set_xlabel("Variability indexes")
-    ax10.set_xlabel("Fluctuation indexes")
+    ax9.scatter(mean_of_ys2, vis, alpha=0.3, c=color5)
+    ax10.scatter(mean_of_ys2, fis, alpha=0.3, c=color5)
+    ax9.set_xlabel("Flux density (Jy)")
+    ax10.set_xlabel("Flux density (Jy)")
+    ax9.set_ylabel("Variability indexes")
+    ax10.set_ylabel("Fluctuation indexes")
     plt.show()
 
 
