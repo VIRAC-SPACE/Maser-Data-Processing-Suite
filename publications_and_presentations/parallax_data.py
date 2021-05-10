@@ -30,6 +30,7 @@ def get_configs(section, key):
 
 
 def main(infile):
+    plt.style.use('../config/plot.style')
     data = ascii.read(infile)
     sources = data["Source"]
     distance = data["Distance"]
