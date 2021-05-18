@@ -458,7 +458,7 @@ class Analyzer(QWidget):
         self.plot_1 = Plot()
         self.plot_1.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
                               'Flux density (Jy)', "Left Polarization", (1, 0), "linear")
-        self.plot_1.plot(self.xdata, self.ydata_right, 'ko', label='Data Points', markersize=1, picker=5)
+        self.plot_1.plot(self.xdata, self.ydata_left, 'ko', label='Data Points', markersize=1, picker=5)
 
         self.plot_2 = Plot()
         self.plot_2.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
