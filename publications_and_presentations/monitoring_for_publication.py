@@ -30,6 +30,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='''Create LATEX tables for publications. ''')
     parser.add_argument("source", help="Source Name", type=str)
     parser.add_argument("line", help="line", type=int)
+    parser.add_argument("-t0", "--start", help="start date in mjd", type=int, default=-1)
+    parser.add_argument("-tn", "--stop", help="stop date in mjd", type=int, default=-1)
     parser.add_argument("-b", "--base", help="Base component", type=int, default=-1)
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="../config/config.cfg")
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 2.0')
@@ -133,6 +135,11 @@ def main():
         x = list(new_x)
         new = True
 
+    if int(get_args("start")) != -1 and int(get_args("stop")) != -1:
+        a = (np.abs(np.array(x) - int(get_args("start")))).argmin()
+        b = (np.abs(np.array(x) - int(get_args("stop")))).argmin()
+        x = x[a:b]
+
     print("total time in years", (np.max(x) - np.min(x)) / 365)
     print("Nmbers of observations", len(x))
     print("Observations per month", (len(x) / ((np.max(x) - np.min(x)) / 365)) / 12)
@@ -140,7 +147,7 @@ def main():
     fig = plt.figure("Monitoring", figsize=(4, 3), dpi=75)
     ax1 = fig.add_subplot(111)
 
-    symbols = ["*-", "o-", "v-", "^-", "<-", ">-", "1-", "2-", "3-", "4-"]
+    symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
     y_ticks = []
 
@@ -170,8 +177,10 @@ def main():
             y = data[index + 1]
 
         y = np.array([np.float128(yi) for yi in y]).clip(min=0)
+        if int(get_args("start")) != -1 and int(get_args("stop")) != -1:
+            y = y[a:b]
         N = len(y)
-        ax1.plot(x, y, symbols[index] + colors[index], linewidth=0.5, markersize=5)
+        ax1.scatter(x, y, color=colors[index], marker=symbols[index])
         ax1.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
         result_org.append(y)
         variances[component] = reduce(lambda x_, y_: x_ + y_, [((i - np.mean(y)) / np.std(y)) ** 2 for i in y])
