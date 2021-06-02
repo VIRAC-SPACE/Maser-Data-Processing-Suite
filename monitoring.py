@@ -642,10 +642,11 @@ class MapsView(PlottingView):
                                              antialiased=False, locator=ticker.LogLocator, cmap="jet")
 
         cs.set_clim(vmin=1.5)
-        cbar = self.map_plot.colorbar(cs, spacing="proportional", drawedges=True,
-                                      label=r'$Flux~(\mathrm{Jy})$', extendrect=False)
+        cbar = self.map_plot.colorbar(cs, spacing="proportional", label=r'$Flux~(\mathrm{Jy})$', extendrect=False)
         cbar.locator = ticker.LogLocator()
         self.add_widget(self.map_plot, 0, 0)
+
+        self.map_plot.save_fig("cepa_maps.pdf", format="pdf")
 
     def get_max_min_velocity(self, vmin, vmax):
         max_velocitys = []
