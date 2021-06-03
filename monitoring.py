@@ -635,7 +635,7 @@ class MapsView(PlottingView):
         triang = mtri.Triangulation(velocity, observed_time)
 
         self.map_plot = Plot()
-        self.map_plot.creatPlot(self.grid, "'Velocity (km sec$^{-1}$)'", "MJD", None, (1, 0), "log")
+        self.map_plot.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', "MJD", None, (1, 0), "log")
         lvls = np.linspace(int(np.min(observed_flux)), int(np.max(observed_flux)), 1000)
         cs = self.map_plot.graph.tricontourf(triang, observed_flux, levels=lvls,
                                              antialiased=False, locator=ticker.LogLocator, cmap="jet")
