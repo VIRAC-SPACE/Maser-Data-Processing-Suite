@@ -1,0 +1,245 @@
+
+
+from threading import Thread
+
+import subprocess
+
+import sys
+import os
+import json
+import logging
+
+import coloredlogs
+import h5py
+import time
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QMainWindow, QApplication
+
+from main_gui_view import Ui_MainGui
+from parsers.configparser_ import ConfigParser
+from sdr_fs import Analyzer as sdr
+from total_spectrum_analyzer_qt5 import Analyzer as total
+
+coloredlogs.install(level='PRODUCTION')
+LOGGER = logging.getLogger('Main')
+
+
+def get_configs(section, key, config_file):
+    """
+
+    :param section: configuration file section
+    :param key: configuration file sections key
+    :param config_file: configuration file path
+    :return: configuration file section key value
+    """
+    config_file_path = config_file
+    config = ConfigParser(config_file_path)
+    return config.get_config(section, key)
+
+
+def get_iteration(dir_name):
+    """
+
+    :param dir_name:
+    :return: iteration number
+    """
+    return dir_name.split("_")[-1]
+
+
+def get_station(dir_name):
+    """
+
+    :param dir_name:
+    :return: station
+    """
+    return dir_name.split("_")[-2]
+
+
+def create_iteration_list(path, source, line):
+    """
+
+    :param line: frequency
+    :param source: source
+    :param path: input file path
+    :return: iterations list
+    """
+    stations = list(set(create_station_list(path, source, line)))
+    iterations_for_source_and_line = [file for file in os.listdir(path)
+                                      if source + "_" in file and line in file and os.path.isdir(path + file)]
+    iterations_for_station = {station: [] for station in stations}
+    for iteration in iterations_for_source_and_line:
+        iterations_for_station[get_station(iteration)].append(get_iteration(iteration))
+
+    for station in stations:
+        iterations_for_station[station].sort(key=int, reverse=False)
+
+    return iterations_for_station
+
+
+def create_station_list(path, source, line):
+    """
+
+    :param line: frequency
+    :param source: source
+    :param path: input file path
+    :return: stations list
+    """
+    iterations = [file for file in os.listdir(path) if
+                  source + "_" in file and line in file and os.path.isdir(path + file)]
+    iterations.sort(key=get_iteration, reverse=False)
+    stations = [get_station(iteration) for iteration in iterations]
+    return stations
+
+
+def create_log_file_list(path, source, line):
+    """
+
+    :param line: frequency
+    :param path: log file path
+    :param source: source
+    :return: all log files for source
+    """
+    return [log for log in os.listdir(path) if log.startswith(source + "_") and line in log]
+
+
+class MainView(QMainWindow):
+    def __init__(self, source_name, line, config, *args, **kwargs):
+        super(MainView, self).__init__(*args, **kwargs)
+        self._ui = Ui_MainGui()
+        self._ui.setupUi(self)
+        self.setWindowTitle('MainGUI')
+        self.setWindowIcon(QIcon('viraclogo.png'))
+        self.source_name = source_name
+        self.line = line
+        self.config = config
+        self._ui.source_label.setText("Source: " + self.source_name)
+        self._ui.line_label.setText("Line: " + self.line)
+        self._ui.progressBar.setValue(0)
+
+        self._ui.run_button.clicked.connect(self.run)
+        self._ui.quit_button.clicked.connect(self.quit)
+
+        self.proc2 = None
+
+    def run(self):
+        data_files_path = get_configs('paths', "dataFilePath", self.config)
+        result_path = get_configs('paths', "resultFilePath", self.config)
+        log_path = get_configs('paths', "logPath", self.config)
+        output_path = get_configs('paths', "outputFilePath", self.config)
+
+        if os.path.exists(data_files_path):
+            sdr_iterations = create_iteration_list(data_files_path, self.source_name, self.line)
+        else:
+            sdr_iterations = []
+
+        log_path = log_path + "SDR/"
+        result_file_name = result_path + self.source_name + "_" + self.line + ".json"
+
+        if os.path.isfile(result_file_name):
+            pass
+        else:
+            os.system("touch " + result_file_name)
+            result_file = open(result_file_name, "w")
+            result_file.write("{ \n" + "\n}")
+            result_file.close()
+
+        with open(result_file_name, "r") as result_data:
+            result = json.load(result_data)
+        stations = list(set(create_station_list(data_files_path, self.source_name, self.line)))
+        processed_iteration = {station: [] for station in stations}
+        processed_iteration2 = {station: [] for station in stations}
+
+        for experiment in result:
+            if get_station(experiment) == "IRBENE16":
+                station = "ib"
+            else:
+                station = "ir"
+
+            iteration_in_result = experiment.split("_")[-1]
+            if iteration_in_result in sdr_iterations[station] and \
+                    iteration_in_result not in \
+                    processed_iteration[station] and result[experiment]["type"] == "SDR":
+                processed_iteration[station].append(get_iteration(experiment))
+
+            if iteration_in_result in processed_iteration[station] and \
+                    result[experiment]["type"] == "SDR" and result[experiment]["flag"]:
+                processed_iteration[station].remove(iteration_in_result)
+
+            if iteration_in_result not in processed_iteration2[station] and result[experiment]["type"] == "SDR":
+                processed_iteration2[station].append(iteration_in_result)
+        for station in stations:
+            processed_iteration[station].sort(key=int, reverse=False)
+            processed_iteration2[station].sort(key=int, reverse=False)
+
+        for station in stations:
+            for iteration in sdr_iterations[station]:
+                if iteration not in processed_iteration[station]:
+                    log_file = self.source_name + "_" + "f" + self.line + "_" + station + "_" + iteration + ".log"
+                    sdr_fs_parameter = self.source_name + " " + self.line + " " + iteration + " " + log_file
+                    LOGGER.info("Executing python3 " + "sdr_fs.py " + sdr_fs_parameter)
+                    args = ["python3",  "sdr_fs.py",  self.source_name, self.line, iteration, log_file]
+                    #try:
+                    #self.q_app = QApplication(sys.argv)
+                    #self.sdr_analyzer = sdr("cepa", "6668", "2", "cepa_f6668_ir_2.log")
+                    #self.sdr_analyzer.show()
+                    t = Thread(target=os.system, args=("python3 " + "sdr_fs.py " + self.source_name + " " +
+                                                       self.line + " " + iteration + " " + log_file,))
+                    t.start()
+                    t.join()
+
+                    try:
+                        while t.isAlive():
+                            time.sleep(0)
+                        else:
+                            del t
+                    except AttributeError:
+                        pass
+                    #os.system("python3 sdr_fs.py cepa 6668 2 cepa_f6668_ir_2.log")
+                    #self.q_app.exec_()
+
+                    #except:
+                    #    pass
+                    #self.proc2 = subprocess.run(args, shell=True)
+                    #self.proc2.wait()
+                    #self.proc2 = subprocess.run(args)
+                    #proc = os.system("python3 " + "sdr_fs.py " + sdr_fs_parameter)
+                    #os.kill(pro, signal.SIGSTOP)
+
+                    if not os.path.exists(log_path + "/" + log_file):
+                        LOGGER.warning("Warning log file " + log_file + " do not exist")
+
+        output_files = os.listdir(output_path + "/" + self.line + "/" + self.source_name)
+        for output_file in output_files:
+            output_file_station = output_file.split("_")[-2].split(".")[0]
+            output_file_iteration = output_file.split("_")[-1].split(".")[0]
+            if output_file_station == "IRBENE16":
+                station = "ib"
+            else:
+                station = "ir"
+
+            if output_file_iteration not in processed_iteration2[station]:
+                if output_file.startswith(self.source_name):
+                    with h5py.File(get_configs("paths", "outputFilePath", self.config) + self.line +
+                                   "/" + self.source_name + "/" + output_file, "r") as input_data_file:
+                        input_file_keys = list(input_data_file.keys())
+                        input_data_file.close()
+                        if "amplitude" in input_file_keys:
+                            LOGGER.info("Executing python3 " +
+                                        "total_spectrum_analyzer_qt5.py " + output_file + " " + self.line)
+                            try:
+                                total_analyzer = total(output_file, self.line)
+                                total_analyzer.show()
+                                #del total_analyzer
+                            except:
+                                pass
+    def quit(self):
+        print("quit")
+        if self.proc2:
+            try:
+                self.proc2.kill()
+                self.proc2.terminate()
+            except AttributeError:
+                pass
+        self.close()
+        self.destroy()
+        sys.exit(1)

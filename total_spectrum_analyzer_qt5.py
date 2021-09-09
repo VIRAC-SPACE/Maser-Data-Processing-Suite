@@ -25,37 +25,6 @@ from utils.help import indexies, compute_gauss
 from utils.ploting_qt5 import Plot
 
 
-def parse_arguments():
-    """
-
-    :return: dict with passed args to script
-    """
-    parser = argparse.ArgumentParser(description='''plotting tool. ''', epilog="""PRE PLOTTER.""")
-    parser.add_argument("datafile", help="output file", type=str)
-    parser.add_argument("line", help="Observed frequency", type=int)
-    parser.add_argument("-c", "--config", help="Configuration cfg file",
-                        type=str, default="config/config.cfg")
-    parser.add_argument("-t", "--calibType", help="Type of calibration", default="SDR")
-    parser.add_argument("-tr", "--threshold",
-                        help="Set threshold for outlier filter", type=float, default=1.0)
-    parser.add_argument("-f", "--filter",
-                        help="Set the amount of times to filter data to remove noise spikes, "
-                             "higher than 5 makes little difference",
-                        type=int, default=0, choices=range(0, 11), metavar="[0-10]")
-    parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 1.0')
-    args = parser.parse_args()
-    return args
-
-
-def get_args(key):
-    """
-
-    :param key: argument key
-    :return: to script passed argument value
-    """
-    return str(parse_arguments().__dict__[key])
-
-
 def get_configs(section, key):
     """
 
@@ -63,7 +32,7 @@ def get_configs(section, key):
     :param key: configuration file sections key
     :return: configuration file section key value
     """
-    config_file_path = get_args("config")
+    config_file_path = "config/config.cfg"
     config = ConfigParser(config_file_path)
     return config.get_config(section, key)
 
@@ -164,7 +133,7 @@ class Analyzer(QWidget):
     GUI application
     """
 
-    def __init__(self):
+    def __init__(self, output_file, line):
         super(Analyzer, self).__init__()
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.center()
@@ -240,26 +209,32 @@ class Analyzer(QWidget):
         self.avg_y = None
         self.polynomial_order = 3
         self.change_parms = False
-        self.source = get_args("datafile").split(".")[0].split("_")[0]
+        self.data_file = output_file
+        self.line = line
+        self.source = self.data_file.split(".")[0].split("_")[0]
         self.data_file = get_configs("paths", "outputFilePath") + "/" + \
-                         get_args("line") + "/" + \
+                         self.line + "/" + \
                          self.source + "/" + \
-                         get_args("datafile")
+                         self.data_file
         self.data, self.specie = get_data(self.data_file)
         self.xdata = self.data[:, 0]
         self.ydata_left = self.data[:, 1]
         self.ydata_right = self.data[:, 2]
-        self.line = get_args("line")
+        self.line = self.line
         self.cuts = get_configs('cuts', self.source + "_" + str(self.line)).split(";")
         self.cuts = [c.split(",") for c in self.cuts]
 
-        if int(get_args("filter")) > 0:
+        self.filter = 0
+        self.threshold = 1.0
+        self.calib_type = "SDR"
+
+        if int(self.filter) > 0:
             x_bad_point = []
             y_bad_point_left = []
             y_bad_point_right = []
 
-            for _ in range(int(get_args("filter"))):
-                outliers_mask = is_outlier(self.data, float(get_args("threshold")))
+            for _ in range(int(self.filter)):
+                outliers_mask = is_outlier(self.data, float(self.threshold))
                 bad_point_index = indexies(outliers_mask, False)
 
                 if _ == 0:
@@ -282,7 +257,7 @@ class Analyzer(QWidget):
                     if mean_y_right[bad_point] != 0:
                         self.ydata_right[bad_point] = mean_y_right[bad_point]
 
-                if _ == int(get_args("filter")) - 1:
+                if _ == int(self.filter) - 1:
                     pool = Pool(processes=4)
 
                     async_result1 = pool. \
@@ -870,7 +845,7 @@ class Analyzer(QWidget):
         location = expername.split("_")[2]
         iteration_number = expername.split("_")[3]
         gauss_lines = get_configs("gauss_lines",
-                                  self.source + "_" + get_args("line")).replace(" ", "").split(",")
+                                  self.source + "_" + self.line).replace(" ", "").split(",")
 
         if os.path.isfile(result_file_path + result_file_name):
             pass
@@ -925,7 +900,7 @@ class Analyzer(QWidget):
         result[expername]["polarizationU9"] = max_apmlitudes_u9
         result[expername]["polarizationAVG"] = max_apmlitudes_uavg
         result[expername]["flag"] = False
-        if get_args("calibType") == "SDR":
+        if self.calib_type == "SDR":
             result[expername]["type"] = "SDR"
         else:
             result[expername]["type"] = "DBBC"
@@ -989,6 +964,27 @@ class Analyzer(QWidget):
 
 
 def main():
+    def parse_arguments():
+        """
+
+        :return: dict with passed args to script
+        """
+        parser = argparse.ArgumentParser( description='''plotting tool. ''', epilog="""PRE PLOTTER.""" )
+        parser.add_argument( "datafile", help="output file", type=str )
+        parser.add_argument( "line", help="Observed frequency", type=int )
+        parser.add_argument( "-c", "--config", help="Configuration cfg file",
+                             type=str, default="config/config.cfg" )
+        parser.add_argument( "-t", "--calibType", help="Type of calibration", default="SDR" )
+        parser.add_argument( "-tr", "--threshold",
+                             help="Set threshold for outlier filter", type=float, default=1.0 )
+        parser.add_argument( "-f", "--filter",
+                             help="Set the amount of times to filter data to remove noise spikes, "
+                                  "higher than 5 makes little difference",
+                             type=int, default=0, choices=range( 0, 11 ), metavar="[0-10]" )
+        parser.add_argument( "-v", "--version", action="version", version='%(prog)s - Version 1.0' )
+        args = parser.parse_args()
+        return args
+
     """
 
     :return: None
@@ -1000,5 +996,5 @@ def main():
     sys.exit(q_app.exec_())
 
 
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+#    main()
