@@ -1,5 +1,7 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
+from multiprocessing import Process
+
 import sys
 import os
 import argparse
@@ -47,71 +49,6 @@ def get_configs(section, key):
     return config.get_config(section, key)
 
 
-def get_iteration(dir_name):
-    """
-
-    :param dir_name:
-    :return: iteration number
-    """
-    return dir_name.split("_")[-1]
-
-
-def get_station(dir_name):
-    """
-
-    :param dir_name:
-    :return: station
-    """
-    return dir_name.split("_")[-2]
-
-
-def create_iteration_list(path, source, line):
-    """
-
-    :param line: frequency
-    :param source: source
-    :param path: input file path
-    :return: iterations list
-    """
-    stations = list(set(create_station_list(path, source, line)))
-    iterations_for_source_and_line = [file for file in os.listdir(path)
-                                      if source + "_" in file and line in file and os.path.isdir(path + file)]
-    iterations_for_station = {station: [] for station in stations}
-    for iteration in iterations_for_source_and_line:
-        iterations_for_station[get_station(iteration)].append(get_iteration(iteration))
-
-    for station in stations:
-        iterations_for_station[station].sort(key=int, reverse=False)
-
-    return iterations_for_station
-
-
-def create_station_list(path, source, line):
-    """
-
-    :param line: frequency
-    :param source: source
-    :param path: input file path
-    :return: stations list
-    """
-    iterations = [file for file in os.listdir(path) if
-                  source + "_" in file and line in file and os.path.isdir(path + file)]
-    iterations.sort(key=get_iteration, reverse=False)
-    stations = [get_station(iteration) for iteration in iterations]
-    return stations
-
-
-def create_log_file_list(path, source, line):
-    """
-
-    :param line: frequency
-    :param path: log file path
-    :param source: source
-    :return: all log files for source
-    """
-    return [log for log in os.listdir(path) if log.startswith(source + "_") and line in log]
-
-
 class MainGUI(QApplication):
     def __init__(self, sys_argv):
         super(MainGUI, self).__init__(sys_argv)
@@ -122,9 +59,21 @@ class MainGUI(QApplication):
 
 
 def main():
+    '''
     app = MainGUI(sys.argv)
-    sys.exit(app.exec_())
+    app.activeModalWidget()
+    app.activePopupWidget()
+    app.activeWindow()
+    app.exec_()
+    '''
+    source_name = get_args("source")
+    line = get_args("line")
+    q_app = QApplication(sys.argv)
+    main_view = MainView(source_name, line, get_args("config"))
+    main_view.show()
+    sys.exit(q_app.exec_())
 
 
 if __name__ == "__main__":
     main()
+    sys.exit(0)

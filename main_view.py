@@ -1,8 +1,4 @@
-
-
-from threading import Thread
-
-import subprocess
+from configparser import NoSectionError
 
 import sys
 import os
@@ -11,14 +7,12 @@ import logging
 
 import coloredlogs
 import h5py
-import time
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QApplication
+from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtCore import QRunnable, QThreadPool, QCoreApplication
 
 from main_gui_view import Ui_MainGui
 from parsers.configparser_ import ConfigParser
-from sdr_fs import Analyzer as sdr
-from total_spectrum_analyzer_qt5 import Analyzer as total
 
 coloredlogs.install(level='PRODUCTION')
 LOGGER = logging.getLogger('Main')
@@ -102,6 +96,50 @@ def create_log_file_list(path, source, line):
     return [log for log in os.listdir(path) if log.startswith(source + "_") and line in log]
 
 
+class RunSDR(QRunnable):
+    def __init__(self, source_name, line, iteration, log_file, progress, update):
+        super().__init__()
+        self.source_name = source_name
+        self.line = line
+        self.iteration = iteration
+        self.log_file = log_file
+        self.progress = progress
+        self.update = update
+
+    def run(self):
+        sdr_fs_parameter = self.source_name + " " + self.line + " " + self.iteration + " " + self.log_file
+        LOGGER.info("Executing python3 " + "sdr_fs.py " + sdr_fs_parameter)
+        try:
+            if not os.path.exists(get_configs("paths", "logPath", "config/config.cfg") + "SDR/" + self.log_file):
+                LOGGER.warning("Warning log file " + self.log_file + " do not exist")
+        except NoSectionError:
+            pass
+        os.system("python3 " + "sdr_fs.py " + self.source_name + " " + str(self.line) + " " +
+                  str(self.iteration) + " " + self.log_file)
+        self.progress.setValue(self.update)
+
+
+class RunTotal(QRunnable):
+    def __init__(self, output_file, line, source_name, progress, update):
+        super().__init__()
+        self.output_file = output_file
+        self.line = line
+        self.source_name = source_name
+        self.progress = progress
+        self.update = update
+
+    def run(self):
+        with h5py.File(get_configs("paths", "outputFilePath", "config/config.cfg") + self.line +
+                       "/" + self.source_name + "/" + self.output_file, "r") as input_data_file:
+            input_file_keys = list(input_data_file.keys())
+            input_data_file.close()
+            if "amplitude" in input_file_keys:
+                total_parameter = self.output_file + " " + self.line
+                LOGGER.info("Executing python3 " + "total_spectrum_analyzer_qt5.py " + total_parameter)
+                os.system("python3 " + "total_spectrum_analyzer_qt5.py " + self.output_file + " " + str(self.line))
+                self.progress.setValue(self.update)
+
+
 class MainView(QMainWindow):
     def __init__(self, source_name, line, config, *args, **kwargs):
         super(MainView, self).__init__(*args, **kwargs)
@@ -114,17 +152,19 @@ class MainView(QMainWindow):
         self.config = config
         self._ui.source_label.setText("Source: " + self.source_name)
         self._ui.line_label.setText("Line: " + self.line)
-        self._ui.progressBar.setValue(0)
-
+        self._ui.sdr_ProgressBar.setValue(0)
+        self._ui.toral_ProgressBar.setValue(0)
         self._ui.run_button.clicked.connect(self.run)
         self._ui.quit_button.clicked.connect(self.quit)
 
-        self.proc2 = None
+        self.run_sdr = None
+        self.sdr_pool = None
+        self.total_pool = None
+        self.run_total = None
 
     def run(self):
         data_files_path = get_configs('paths', "dataFilePath", self.config)
         result_path = get_configs('paths', "resultFilePath", self.config)
-        log_path = get_configs('paths', "logPath", self.config)
         output_path = get_configs('paths', "outputFilePath", self.config)
 
         if os.path.exists(data_files_path):
@@ -132,7 +172,6 @@ class MainView(QMainWindow):
         else:
             sdr_iterations = []
 
-        log_path = log_path + "SDR/"
         result_file_name = result_path + self.source_name + "_" + self.line + ".json"
 
         if os.path.isfile(result_file_name):
@@ -171,44 +210,26 @@ class MainView(QMainWindow):
             processed_iteration[station].sort(key=int, reverse=False)
             processed_iteration2[station].sort(key=int, reverse=False)
 
+        run_sdr_iterations = []
+        for station in stations:
+            for iteration in sdr_iterations[station]:
+                if iteration not in processed_iteration[station]:
+                    run_sdr_iterations.append(iteration)
+
+        self.sdr_pool = QThreadPool.globalInstance()
+        self.sdr_pool.setMaxThreadCount(1)
+        sdr_count = 0
         for station in stations:
             for iteration in sdr_iterations[station]:
                 if iteration not in processed_iteration[station]:
                     log_file = self.source_name + "_" + "f" + self.line + "_" + station + "_" + iteration + ".log"
-                    sdr_fs_parameter = self.source_name + " " + self.line + " " + iteration + " " + log_file
-                    LOGGER.info("Executing python3 " + "sdr_fs.py " + sdr_fs_parameter)
-                    args = ["python3",  "sdr_fs.py",  self.source_name, self.line, iteration, log_file]
-                    #try:
-                    #self.q_app = QApplication(sys.argv)
-                    #self.sdr_analyzer = sdr("cepa", "6668", "2", "cepa_f6668_ir_2.log")
-                    #self.sdr_analyzer.show()
-                    t = Thread(target=os.system, args=("python3 " + "sdr_fs.py " + self.source_name + " " +
-                                                       self.line + " " + iteration + " " + log_file,))
-                    t.start()
-                    t.join()
-
-                    try:
-                        while t.isAlive():
-                            time.sleep(0)
-                        else:
-                            del t
-                    except AttributeError:
-                        pass
-                    #os.system("python3 sdr_fs.py cepa 6668 2 cepa_f6668_ir_2.log")
-                    #self.q_app.exec_()
-
-                    #except:
-                    #    pass
-                    #self.proc2 = subprocess.run(args, shell=True)
-                    #self.proc2.wait()
-                    #self.proc2 = subprocess.run(args)
-                    #proc = os.system("python3 " + "sdr_fs.py " + sdr_fs_parameter)
-                    #os.kill(pro, signal.SIGSTOP)
-
-                    if not os.path.exists(log_path + "/" + log_file):
-                        LOGGER.warning("Warning log file " + log_file + " do not exist")
+                    sdr_count += 1
+                    self.run_sdr = RunSDR(self.source_name, self.line, iteration, log_file, self._ui.sdr_ProgressBar,
+                                          sdr_count/len(run_sdr_iterations) * 100)
+                    self.sdr_pool.start(self.run_sdr)
 
         output_files = os.listdir(output_path + "/" + self.line + "/" + self.source_name)
+        run_total_iterations = []
         for output_file in output_files:
             output_file_station = output_file.split("_")[-2].split(".")[0]
             output_file_iteration = output_file.split("_")[-1].split(".")[0]
@@ -219,27 +240,48 @@ class MainView(QMainWindow):
 
             if output_file_iteration not in processed_iteration2[station]:
                 if output_file.startswith(self.source_name):
-                    with h5py.File(get_configs("paths", "outputFilePath", self.config) + self.line +
-                                   "/" + self.source_name + "/" + output_file, "r") as input_data_file:
-                        input_file_keys = list(input_data_file.keys())
-                        input_data_file.close()
-                        if "amplitude" in input_file_keys:
-                            LOGGER.info("Executing python3 " +
-                                        "total_spectrum_analyzer_qt5.py " + output_file + " " + self.line)
-                            try:
-                                total_analyzer = total(output_file, self.line)
-                                total_analyzer.show()
-                                #del total_analyzer
-                            except:
-                                pass
+                    run_total_iterations.append(output_file)
+
+        self.total_pool = QThreadPool.globalInstance()
+        self.total_pool.setMaxThreadCount(1)
+        total_count = 0
+        for output_file in output_files:
+            output_file_station = output_file.split("_")[-2].split(".")[0]
+            output_file_iteration = output_file.split("_")[-1].split(".")[0]
+            if output_file_station == "IRBENE16":
+                station = "ib"
+            else:
+                station = "ir"
+
+            if output_file_iteration not in processed_iteration2[station]:
+                if output_file.startswith(self.source_name):
+                    total_count += 1
+                    self.run_total = RunTotal(output_file, self.line, self.source_name, self._ui.toral_ProgressBar,
+                                              total_count/len(run_total_iterations) * 100)
+                    self.total_pool.start(self.run_total)
+
     def quit(self):
         print("quit")
-        if self.proc2:
-            try:
-                self.proc2.kill()
-                self.proc2.terminate()
-            except AttributeError:
-                pass
+        try:
+            if self.run_sdr:
+                self.run_sdr.autoDelete()
+                del self.run_sdr
+            if self.sdr_pool:
+                self.sdr_pool.clear()
+                del self.sdr_pool
+            if self.run_total:
+                self.run_total.autoDelete()
+                del self.run_total
+            if self.total_pool:
+                self.total_pool.clear()
+                del self.total_pool
+        except AttributeError:
+            pass
+        except RuntimeError:
+            pass
+
         self.close()
         self.destroy()
+        del self
+        QCoreApplication.instance().quit()
         sys.exit(1)

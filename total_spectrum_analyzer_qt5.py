@@ -134,12 +134,13 @@ class Analyzer(QWidget):
     """
 
     def __init__(self, output_file, line):
-        super(Analyzer, self).__init__()
+        super().__init__()
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.center()
         self.grid = QGridLayout()
         self.setLayout(self.grid)
         self.grid.setSpacing(10)
+
         self.change_params_buttons = None
         self.change_params = False
         self.info_set = set()
@@ -209,11 +210,12 @@ class Analyzer(QWidget):
         self.avg_y = None
         self.polynomial_order = 3
         self.change_parms = False
+
         self.data_file = output_file
         self.line = line
         self.source = self.data_file.split(".")[0].split("_")[0]
         self.data_file = get_configs("paths", "outputFilePath") + "/" + \
-                         self.line + "/" + \
+                         str(self.line) + "/" + \
                          self.source + "/" + \
                          self.data_file
         self.data, self.specie = get_data(self.data_file)
@@ -373,10 +375,12 @@ class Analyzer(QWidget):
         # u1 plot
         self.plot_10 = Plot()
         self.plot_10.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
-                               'Flux density (Jy)', "Left Polarization", (1, 0),
-                               "linear")
+                                'Flux density (Jy)', "Left Polarization", (1, 0),
+                                "linear")
         self.plot_10.plot(self.xdata, self.ydata_left,
-                          'ko', label='Data Points a', markersize=4, picker=5)
+                           'ko', label='Data Points', markersize=4)
+        # self.plot_10.graph.set_pickradius(5)
+        self.grid.addWidget(self.plot_10, 0, 0)
 
         # u9 plot
         self.plot_11 = Plot()
@@ -384,7 +388,8 @@ class Analyzer(QWidget):
                                'Flux density (Jy)', "Right Polarization", (1, 1),
                                "linear")
         self.plot_11.plot(self.xdata, self.ydata_right,
-                          'ko', label='Data Points', markersize=4, picker=5)
+                          'ko', label='Data Points', markersize=4)
+        #self.plot_11.graph.set_pickradius(5)
 
         self.badplot_1_left = self.plot_10.plot(self.x_bad_points_left,
                                                 self.y_bad_point_left, 'rx', markersize=10)
@@ -394,7 +399,6 @@ class Analyzer(QWidget):
         self.plot_10.fig.canvas.mpl_connect('pick_event', self.on_left_click)
         self.plot_11.fig.canvas.mpl_connect('pick_event', self.on_right_click)
 
-        self.grid.addWidget(self.plot_10, 0, 0)
         self.grid.addWidget(self.plot_11, 0, 1)
 
         self.plot_poly_button = QPushButton("Create Polynomial", self)
@@ -799,7 +803,7 @@ class Analyzer(QWidget):
         self.plot_7.plot(self.xdata[indexes_for_ceb],
                          self.z1_smooht_data[indexes_for_ceb],
                          'dr', label="Local Maximums for signal", markersize=2)
-        self.plot_7.annotations(self.xdata[indexes_for_ceb],self.z1_smooht_data[indexes_for_ceb])
+        self.plot_7.annotations(self.xdata[indexes_for_ceb], self.z1_smooht_data[indexes_for_ceb])
 
         # u9
         self.plot_8 = Plot()
@@ -832,7 +836,7 @@ class Analyzer(QWidget):
 
         :return: None
         """
-        result_file_name = self.source + "_" + self.line + ".json"
+        result_file_name = self.source + "_" + str(self.line) + ".json"
         result_file_path = get_configs("paths", "resultFilePath")
         expername = ".".join([self.data_file.split("/")[-1].split(".")[0],
                              self.data_file.split("/")[-1].split(".")[1]])
@@ -845,7 +849,7 @@ class Analyzer(QWidget):
         location = expername.split("_")[2]
         iteration_number = expername.split("_")[3]
         gauss_lines = get_configs("gauss_lines",
-                                  self.source + "_" + self.line).replace(" ", "").split(",")
+                                  self.source + "_" + str(self.line)).replace(" ", "").split(",")
 
         if os.path.isfile(result_file_path + result_file_name):
             pass
@@ -964,37 +968,32 @@ class Analyzer(QWidget):
 
 
 def main():
-    def parse_arguments():
-        """
-
-        :return: dict with passed args to script
-        """
-        parser = argparse.ArgumentParser( description='''plotting tool. ''', epilog="""PRE PLOTTER.""" )
-        parser.add_argument( "datafile", help="output file", type=str )
-        parser.add_argument( "line", help="Observed frequency", type=int )
-        parser.add_argument( "-c", "--config", help="Configuration cfg file",
-                             type=str, default="config/config.cfg" )
-        parser.add_argument( "-t", "--calibType", help="Type of calibration", default="SDR" )
-        parser.add_argument( "-tr", "--threshold",
-                             help="Set threshold for outlier filter", type=float, default=1.0 )
-        parser.add_argument( "-f", "--filter",
-                             help="Set the amount of times to filter data to remove noise spikes, "
-                                  "higher than 5 makes little difference",
-                             type=int, default=0, choices=range( 0, 11 ), metavar="[0-10]" )
-        parser.add_argument( "-v", "--version", action="version", version='%(prog)s - Version 1.0' )
-        args = parser.parse_args()
-        return args
-
     """
 
     :return: None
     """
+    parser = argparse.ArgumentParser(description='''plotting tool. ''', epilog="""PRE PLOTTER.""")
+    parser.add_argument("datafile", help="output file", type=str)
+    parser.add_argument("line", help="Observed frequency", type=int)
+    parser.add_argument("-c", "--config", help="Configuration cfg file",
+                         type=str, default="config/config.cfg")
+    parser.add_argument("-t", "--calibType", help="Type of calibration", default="SDR")
+    parser.add_argument("-tr", "--threshold",
+                         help="Set threshold for outlier filter", type=float, default=1.0)
+    parser.add_argument("-f", "--filter",
+                         help="Set the amount of times to filter data to remove noise spikes, "
+                              "higher than 5 makes little difference",
+                         type=int, default=0, choices=range(0, 11), metavar="[0-10]")
+    parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 1.0')
+    args = parser.parse_args()
+
     q_app = QApplication(sys.argv)
-    application = Analyzer()
+    application = Analyzer(args.datafile, args.line)
     application.show()
     application.showMaximized()
     sys.exit(q_app.exec_())
 
 
-#if __name__ == "__main__":
-#    main()
+if __name__ == "__main__":
+    main()
+    sys.exit()
