@@ -27,26 +27,16 @@ warnings.filterwarnings("ignore")
 
 output = []
 
-'''
-def get_args(key):
+
+def get_configs(section, key, config_):
     """
 
-    :param key: argument key
-    :return: to script passed argument value
-    """
-    return str(parse_arguments().__dict__[key])
-    
-'''
-
-
-def get_configs(section, key):
-    """
-
+    :param config_: configuration file path
     :param section: configuration file section
     :param key: configuration file sections key
     :return: configuration file section key value
     """
-    config_file_path = "config/config.cfg"
+    config_file_path = config_
     config = ConfigParser(config_file_path)
     return config.get_config(section, key)
 
@@ -133,7 +123,7 @@ def rms(noise):
 
 
 def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left,
-                       p_sig_on_right, p_ref_on_left, p_ref_on_right, frequency_a, logs, pair, line):
+                       p_sig_on_right, p_ref_on_left, p_ref_on_right, frequency_a, logs, pair, line, config):
     """
 
     :param line: frequency
@@ -237,7 +227,7 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
            logs["header"]["exp_name"].split("_")[-1]
 
     scan_files_to_delete = [
-        get_configs("paths", "dataFilePath") + tmp2 + "/" + tmp + get_iter_name(indextmp) + ".dat"
+        get_configs("paths", "dataFilePath", config) + tmp2 + "/" + tmp + get_iter_name(indextmp) + ".dat"
         for indextmp in (np.array(pair).flatten())]
 
     delete_scan_files = False
@@ -305,7 +295,7 @@ class Analyzer(QWidget):
     GUI application
     """
 
-    def __init__(self, source, line, iteration_number, log_file):
+    def __init__(self, source, line, iteration_number, log_file, config):
         super().__init__()
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.setWindowTitle("SDR")
@@ -313,9 +303,10 @@ class Analyzer(QWidget):
         self.line = line
         self.iteration_number = iteration_number
         self.log_file = log_file
+        self.config = config
         self.center()
         self.index = 0
-        self.cuts = get_configs('cuts', self.source + "_" + str(self.line)).split(";")
+        self.cuts = get_configs('cuts', self.source + "_" + str(self.line), self.config).split(";")
         self.cuts = [c.split(",") for c in self.cuts]
         self.sf_left = list()
         self.sf_right = list()
@@ -328,22 +319,15 @@ class Analyzer(QWidget):
         self.ston_list_avg = list()
 
         self.logs = LogReaderFactory.getLogReader(LogTypes.SDR,
-                                                   get_configs("paths", "logPath") + "SDR/" +
+                                                   get_configs("paths", "logPath", self.config) + "SDR/" +
                                                    self.log_file,
-                                                   get_configs("paths", "prettyLogsPath") +
+                                                   get_configs("paths", "prettyLogsPath", self.config) +
                                                    self.source + "_" +
                                                    str(self.iteration_number)).getLogs()
-        if self.logs == {'header': {}}:
-            print(self.logs)
-            print("yess")
-            # self.close()
-            # self.destroy()
-            # QApplication.instance().quit()
-            print("yess2")
 
         self.station = self.logs["header"]["station,id"]
-        self.data_dir = get_configs("paths", "dataFilePath") + self.source + "_f" + str(self.line) + "_" + \
-                        self.station[1] + "_" + str(self.iteration_number) + "/"
+        self.data_dir = get_configs("paths", "dataFilePath", self.config) + self.source + "_f" + str(self.line) +\
+                        "_" + self.station[1] + "_" + str(self.iteration_number) + "/"
         self.data_files = os.listdir(self.data_dir)
         data_files_scans_for_raw_data = []
 
@@ -490,7 +474,7 @@ class Analyzer(QWidget):
             tsys_r_right, tsys_s_left, tsys_s_right, delete_scan_files = frequency_shifting(
                 p_sig_left, p_sig_right, p_ref_left, p_ref_right,
                 p_sig_on_left, p_sig_on_right, p_ref_on_left,
-                p_ref_on_right, frequency_a, self.logs, pair, self.line)
+                p_ref_on_right, frequency_a, self.logs, pair, self.line, self.config)
 
             if not delete_scan_files:
                 self.sf_left.append(sf_left)
@@ -561,7 +545,7 @@ class Analyzer(QWidget):
         else:
             station = "IRBENE16"
 
-        station_coordinates = get_configs("stations", station)
+        station_coordinates = get_configs("stations", station, self.config)
         station_coordinates = station_coordinates.replace(" ", "").split(",")
         x = np.float64(station_coordinates[0])
         y = np.float64(station_coordinates[1])
@@ -579,7 +563,7 @@ class Analyzer(QWidget):
             time = t.isoformat()
             date = Time(time, format='isot', scale='utc')
 
-            source_cordinations = get_configs("sources", self.source).split(",")
+            source_cordinations = get_configs("sources", self.source, self.config).split(",")
             source_cordinations = [sc.strip() for sc in source_cordinations]
             RA = source_cordinations[0]
             DEC = source_cordinations[1]
@@ -609,7 +593,7 @@ class Analyzer(QWidget):
                 print("Vel Total params", ra_str, dec_str, date, string_time, x, y, z)
             vel_total = lsr(ra_str, dec_str, date, string_time, x, y, z)
 
-            line = get_configs('base_frequencies_SDR', "f" + self.line).replace(" ", "").split(",")
+            line = get_configs('base_frequencies_SDR', "f" + self.line, self.config).replace(" ", "").split(",")
             line_f = float(line[0]) * (10 ** 9)
             line_s = line[1]
             specie = line_s
@@ -745,25 +729,25 @@ class Analyzer(QWidget):
         minute = scan_1["date"].split("T")[1].split(":")[1]
         second = scan_1["date"].split("T")[1].split(":")[2]
 
-        if not os.path.exists(get_configs("paths", "outputFilePath") + "/" + self.line):
-            os.makedirs(get_configs("paths", "outputFilePath") + "/" + self.line)
+        if not os.path.exists(get_configs("paths", "outputFilePath", self.config) + "/" + self.line):
+            os.makedirs(get_configs("paths", "outputFilePath", self.config) + "/" + self.line)
 
         mjd = Time(datetime.strptime(day + "_" + month + "_" + year + "_" +
                                      hour + ":" + minute + ":" + second,
                                      "%d_%b_%Y_%H:%M:%S").isoformat(), format='isot').mjd
 
-        result_file_name = get_configs("paths", "outputFilePath") + "/" + \
+        result_file_name = get_configs("paths", "outputFilePath", self.config) + "/" + \
                            self.line + "/" + self.source + "/" + \
                            self.source + "_" + str(mjd) + "_" + \
                            station + "_" + \
                            str(self.iteration_number) + ".h5"
 
-        if not os.path.exists(get_configs("paths", "outputFilePath") + "/" + self.line + "/"):
-            os.makedirs(get_configs("paths", "outputFilePath") + "/" + self.line + "/")
+        if not os.path.exists(get_configs("paths", "outputFilePath", self.config) + "/" + self.line + "/"):
+            os.makedirs(get_configs("paths", "outputFilePath", self.config) + "/" + self.line + "/")
 
-        if not os.path.exists(get_configs("paths", "outputFilePath") + "/" +
+        if not os.path.exists(get_configs("paths", "outputFilePath", self.config) + "/" +
                                self.line + "/" + self.source + "/"):
-            os.makedirs(get_configs("paths", "outputFilePath") + "/" +
+            os.makedirs(get_configs("paths", "outputFilePath", self.config) + "/" +
                          self.line + "/" + self.source + "/")
 
         result_file = h5py.File(result_file_name, "w")
@@ -856,7 +840,7 @@ class Analyzer(QWidget):
 
         sf_left, sf_right, frequency_a1, tsys_r_left, tsys_r_right, tsys_s_left, tsys_s_right, delete_scan_files = \
             frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left, p_sig_on_right,
-                               p_ref_on_left, p_ref_on_right, frequency_a, self.logs, pair, self.line)
+                               p_ref_on_left, p_ref_on_right, frequency_a, self.logs, pair, self.line, self.config)
 
         if not delete_scan_files:
             self.sf_left.append(sf_left)
@@ -925,7 +909,7 @@ def main():
     args = parser.parse_args()
 
     q_app = QApplication(sys.argv)
-    application = Analyzer(args.source, args.line, args.iteration_number, args.log_file)
+    application = Analyzer(args.source, args.line, args.iteration_number, args.log_file, args.config)
     application.show()
     sys.exit(q_app.exec_())
 

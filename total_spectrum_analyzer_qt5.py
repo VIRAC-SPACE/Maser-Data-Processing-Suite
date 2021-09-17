@@ -25,14 +25,15 @@ from utils.help import indexies, compute_gauss
 from utils.ploting_qt5 import Plot
 
 
-def get_configs(section, key):
+def get_configs(section, key, config_):
     """
 
+    :param config_: configuration file path
     :param section: configuration file section
     :param key: configuration file sections key
     :return: configuration file section key value
     """
-    config_file_path = "config/config.cfg"
+    config_file_path = config_
     config = ConfigParser(config_file_path)
     return config.get_config(section, key)
 
@@ -133,7 +134,7 @@ class Analyzer(QWidget):
     GUI application
     """
 
-    def __init__(self, output_file, line):
+    def __init__(self, output_file, line, config, calibType, threshold, filter):
         super().__init__()
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.center()
@@ -210,11 +211,11 @@ class Analyzer(QWidget):
         self.avg_y = None
         self.polynomial_order = 3
         self.change_parms = False
-
+        self.config = config
         self.data_file = output_file
         self.line = line
         self.source = self.data_file.split(".")[0].split("_")[0]
-        self.data_file = get_configs("paths", "outputFilePath") + "/" + \
+        self.data_file = get_configs("paths", "outputFilePath",  self.config) + "/" + \
                          str(self.line) + "/" + \
                          self.source + "/" + \
                          self.data_file
@@ -223,12 +224,12 @@ class Analyzer(QWidget):
         self.ydata_left = self.data[:, 1]
         self.ydata_right = self.data[:, 2]
         self.line = self.line
-        self.cuts = get_configs('cuts', self.source + "_" + str(self.line)).split(";")
+        self.cuts = get_configs('cuts', self.source + "_" + str(self.line),  self.config).split(";")
         self.cuts = [c.split(",") for c in self.cuts]
 
-        self.filter = 0
-        self.threshold = 1.0
-        self.calib_type = "SDR"
+        self.filter = filter
+        self.threshold = threshold
+        self.calib_type = calibType
 
         if int(self.filter) > 0:
             x_bad_point = []
@@ -249,9 +250,9 @@ class Analyzer(QWidget):
                 df_y_left = pd.DataFrame(data=self.ydata_left)
                 df_y_right = pd.DataFrame(data=self.ydata_right)
                 mean_y_left = np.nan_to_num(df_y_left.rolling(window=int(
-                    get_configs("parameters", "badPointRange")), center=True).mean())
+                    get_configs("parameters", "badPointRange", self.config)), center=True).mean())
                 mean_y_right = np.nan_to_num(df_y_right.rolling(window=int(
-                    get_configs("parameters", "badPointRange")), center=True).mean())
+                    get_configs("parameters", "badPointRange",  self.config)), center=True).mean())
                 for bad_point in bad_point_index:
                     if mean_y_left[bad_point] != 0:
                         self.ydata_left[bad_point] = mean_y_left[bad_point]
@@ -378,8 +379,7 @@ class Analyzer(QWidget):
                                 'Flux density (Jy)', "Left Polarization", (1, 0),
                                 "linear")
         self.plot_10.plot(self.xdata, self.ydata_left,
-                           'ko', label='Data Points', markersize=4)
-        # self.plot_10.graph.set_pickradius(5)
+                           'ko', label='Data Points', markersize=4, picker=5)
         self.grid.addWidget(self.plot_10, 0, 0)
 
         # u9 plot
@@ -388,8 +388,7 @@ class Analyzer(QWidget):
                                'Flux density (Jy)', "Right Polarization", (1, 1),
                                "linear")
         self.plot_11.plot(self.xdata, self.ydata_right,
-                          'ko', label='Data Points', markersize=4)
-        #self.plot_11.graph.set_pickradius(5)
+                          'ko', label='Data Points', markersize=4, picker=5)
 
         self.badplot_1_left = self.plot_10.plot(self.x_bad_points_left,
                                                 self.y_bad_point_left, 'rx', markersize=10)
@@ -837,19 +836,19 @@ class Analyzer(QWidget):
         :return: None
         """
         result_file_name = self.source + "_" + str(self.line) + ".json"
-        result_file_path = get_configs("paths", "resultFilePath")
+        result_file_path = get_configs("paths", "resultFilePath", self.config)
         expername = ".".join([self.data_file.split("/")[-1].split(".")[0],
                              self.data_file.split("/")[-1].split(".")[1]])
         source_velocities = get_configs('velocities',
                                         self.source + "_" +
-                                        str(self.line)).replace(" ", "").split(",")
+                                        str(self.line),  self.config).replace(" ", "").split(",")
         index_range_for_local_maxima = int(get_configs('parameters',
-                                                       "index_range_for_local_maxima"))
+                                                       "index_range_for_local_maxima",  self.config))
         mjd = expername.split("_")[1]
         location = expername.split("_")[2]
         iteration_number = expername.split("_")[3]
         gauss_lines = get_configs("gauss_lines",
-                                  self.source + "_" + str(self.line)).replace(" ", "").split(",")
+                                  self.source + "_" + str(self.line),  self.config).replace(" ", "").split(",")
 
         if os.path.isfile(result_file_path + result_file_name):
             pass
@@ -988,7 +987,7 @@ def main():
     args = parser.parse_args()
 
     q_app = QApplication(sys.argv)
-    application = Analyzer(args.datafile, args.line)
+    application = Analyzer(args.datafile, args.line, args.config, args.calibType, args.threshold, args.filter)
     application.show()
     application.showMaximized()
     sys.exit(q_app.exec_())

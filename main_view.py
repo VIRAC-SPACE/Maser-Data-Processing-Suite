@@ -57,7 +57,7 @@ def create_iteration_list(path, source, line):
     :param path: input file path
     :return: iterations list
     """
-    stations = list(set(create_station_list(path, source, line)))
+    stations = ["ir", "ib"]
     iterations_for_source_and_line = [file for file in os.listdir(path)
                                       if source + "_" in file and line in file and os.path.isdir(path + file)]
     iterations_for_station = {station: [] for station in stations}
@@ -184,7 +184,7 @@ class MainView(QMainWindow):
 
         with open(result_file_name, "r") as result_data:
             result = json.load(result_data)
-        stations = list(set(create_station_list(data_files_path, self.source_name, self.line)))
+        stations = ["ir", "ib"]
         processed_iteration = {station: [] for station in stations}
         processed_iteration2 = {station: [] for station in stations}
 
