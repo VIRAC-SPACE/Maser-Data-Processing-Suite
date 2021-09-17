@@ -175,6 +175,7 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
     s_i = int(l_spec / 2 - l_spec * avg_interval / 2)
     e_i = int(l_spec / 2 + l_spec * avg_interval / 2)
 
+    '''
     tsys_off_1_left = float(logs["header"]["Tcal"][0]) * ((p_ref_on_left + p_ref_left) -
                                                           np.mean(p_ref_on_left[s_i:e_i] -
                                                                   p_ref_left[s_i:e_i])) / \
@@ -192,7 +193,34 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
     tsys_off_2_right = float(logs["header"]["Tcal"][1]) * ((p_sig_on_right + p_sig_right) -
                                                            np.mean(p_sig_on_right[s_i:e_i]
                                                                    - p_sig_right[s_i:e_i])) / \
-                       (2 * np.mean(p_sig_on_right[s_i:e_i] - p_sig_right[s_i:e_i]))
+                       (2 * np.mean(p_sig_on_right[s_i:e_i] - p_sig_right[s_i:e_i]))                
+    '''
+
+
+
+
+    tsys_off_1_left = ((float(logs["header"]["Tcal"][0]) * ((p_ref_on_left + p_ref_left) -
+                                                          np.mean(p_ref_on_left[s_i:e_i] -
+                                                                  p_ref_left[s_i:e_i])) / \
+                      (2 * np.mean(p_ref_on_left[s_i:e_i] - p_ref_left[s_i:e_i]))) + (float(logs["header"]["Tcal"][0]) *(p_ref_on_left/p_ref_left)))/2
+
+    tsys_off_2_left = ((float(logs["header"]["Tcal"][1]) * ((p_sig_on_left + p_sig_left)
+                                                          - np.mean(p_sig_on_left[s_i:e_i]
+                                                                    - p_sig_left[s_i:e_i])) / \
+                      (2 * np.mean(p_sig_on_left[s_i:e_i] - p_sig_left[s_i:e_i]))) + (float(logs["header"]["Tcal"][0]) *(p_sig_on_left/p_sig_left)))/2
+
+    tsys_off_1_right = ((float(logs["header"]["Tcal"][0]) * ((p_ref_on_right + p_ref_right) -
+                                                           np.mean(p_ref_on_right[s_i:e_i]
+                                                                   - p_ref_right[s_i:e_i])) / \
+                       (2 * np.mean(p_ref_on_right[s_i:e_i] - p_ref_right[s_i:e_i]))) + (float(logs["header"]["Tcal"][0]) *(p_ref_on_right/p_ref_right)))/2
+
+    tsys_off_2_right = ((float(logs["header"]["Tcal"][1]) * ((p_sig_on_right + p_sig_right) -
+                                                           np.mean(p_sig_on_right[s_i:e_i]
+                                                                   - p_sig_right[s_i:e_i])) / \
+                       (2 * np.mean(p_sig_on_right[s_i:e_i] - p_sig_right[s_i:e_i]))) + (float(logs["header"]["Tcal"][0]) *(p_sig_on_right/p_sig_right)))/2
+
+
+
 
     ta_1_caloff_left = tsys_off_1_left * (p_sig_left - p_ref_left) / p_ref_left  # non-cal phase
     ta_1_caloff_right = tsys_off_1_right * \
@@ -689,12 +717,24 @@ class Analyzer(QWidget):
             ston_right = signal_to_noise_ratio(velocities, y__right_avg[s], self.cuts)
             stone_avg = signal_to_noise_ratio(velocities, ((np.array(y__left_avg[s]) +
                                                             np.array(y__right_avg[s])) / 2), self.cuts)
-
-            #tmp_output_file_name = get_args("source") + "_" + get_args("iteration_number") + "_" + str(s) + ".txt"
-            #np.savetxt(tmp_output_file_name, np.array([y__left_avg[s], y__right_avg[s]]).reshape(len(y__left_avg[s]), 2))
             self.ston_list_left.append(ston_left)
             self.ston_list_right.append(ston_right)
             self.ston_list_avg.append(stone_avg)
+
+        import matplotlib.pyplot as plt
+        fig, ax = plt.subplots()
+
+        tmp = np.zeros((len(y__left_avg[0]), len(velocities_avg)))
+
+        for i in range(0, len(velocities_avg)):
+            tmp[:, i] = y__left_avg[i]
+
+        ax.pcolormesh(tmp, cmap="jet", rasterized=True, vmin=np.min(y__left_avg), vmax=np.max(y__left_avg))
+
+        y = np.linspace(-20, 15, 10)
+        y = [round(yi, 3) for yi in y]
+        ax.set_yticklabels(y)
+        plt.show()
 
         number_of_scans = len(velocities_avg)
         velocities_avg = reduce(lambda x, y: x + y, velocities_avg)
@@ -880,7 +920,7 @@ class Analyzer(QWidget):
 
             # plot1
             self.plot_start__left_a = Plot()
-            self.plot_start__left_a.creatPlot(self.grid, 'Frequency Mhz',
+            self.plot_start__left_a.creatPlot(self.grid, 'Frequency MHz',
                                               'Amplitude', "Left Polarization", (1, 0), "linear")
             self.plot_start__left_a.plot(frequency_a, p_sig_left, 'b', label=pair[0][1])
             self.plot_start__left_a.plot(frequency_b, p_ref_left, 'g', label=pair[0][0])
@@ -890,7 +930,7 @@ class Analyzer(QWidget):
 
             # plot2
             self.plot_start__right_b = Plot()
-            self.plot_start__right_b.creatPlot(self.grid, 'Frequency Mhz',
+            self.plot_start__right_b.creatPlot(self.grid, 'Frequency MHz',
                                                'Amplitude', "Right Polarization", (1, 1), "linear")
             self.plot_start__right_b.plot(frequency_a, p_sig_right, 'b', label=pair[0][1])
             self.plot_start__right_b.plot(frequency_b, p_ref_right, 'g', label=pair[0][0])
@@ -902,7 +942,7 @@ class Analyzer(QWidget):
 
             # plot3
             self.total__left = Plot()
-            self.total__left.creatPlot(self.grid, 'Frequency Mhz',
+            self.total__left.creatPlot(self.grid, 'Frequency MHz',
                                        'Flux density (Jy)', "", (4, 0), "linear")
             self.total__left.plot(self.x, sf_left, 'b', label=scan_name)
             self.grid.addWidget(self.total__left, 3, 0)
@@ -910,7 +950,7 @@ class Analyzer(QWidget):
             # plot4
             self.total__right = Plot()
             self.total__right.creatPlot(self.grid,
-                                        'Frequency Mhz', 'Flux density (Jy)', "", (4, 1), "linear")
+                                        'Frequency MHz', 'Flux density (Jy)', "", (4, 1), "linear")
             self.total__right.plot(self.x, sf_right, 'b', label=scan_name)
             self.grid.addWidget(self.total__right, 3, 1)
         else:

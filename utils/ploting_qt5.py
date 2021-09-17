@@ -28,7 +28,7 @@ class Plot(FigureCanvas):
     """
     embedded pyqt5 GUI to matplotlib
     """
-    def __init__(self, parent=None, width=16, height=9, dpi=100):
+    def __init__(self, parent=None, width=16, height=9, dpi=70):
         self.parent = parent
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         FigureCanvas.__init__(self, self.fig)
