@@ -167,6 +167,7 @@ def main():
           " \\\\".format(len(x), (len(x) / ((np.max(x) - np.min(x)) / 365)) / 12))
     print("\hline")
 
+    ax1.plot([], [], ' ', label="km sec$^{-1}$")
     for component in components:
         index = components.index(component)
         if old:
@@ -180,7 +181,11 @@ def main():
         if int(get_args("start")) != -1 and int(get_args("stop")) != -1:
             y = y[a:b]
         N = len(y)
+
         ax1.scatter(x, y, color=colors[index], marker=symbols[index])
+
+        ax1.scatter(x, y, color=colors[index], marker=symbols[index], label=str(velocity[index]))
+
         ax1.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
         result_org.append(y)
         variances[component] = reduce(lambda x_, y_: x_ + y_, [((i - np.mean(y)) / np.std(y)) ** 2 for i in y])
@@ -239,6 +244,7 @@ def main():
 
     ax1.grid(False)
     plt.xticks(rotation=0, ha='right')
+    plt.legend(bbox_to_anchor=(1, 0.5, 0.3, 0.3), loc='upper left', borderaxespad=0.5)
     plt.show()
 
     result_calib = [x]

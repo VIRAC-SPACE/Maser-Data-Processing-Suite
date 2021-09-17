@@ -635,8 +635,7 @@ class MapsView(PlottingView):
         triang = mtri.Triangulation(velocity, observed_time)
 
         self.map_plot = Plot()
-        self.map_plot.creatPlot(self.grid, "Velocity (km/s)", "MJD (days) -  "
-                                + str(days), None, (1, 0), "log")
+        self.map_plot.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', "MJD", None, (1, 0), "log")
         lvls = np.linspace(int(np.min(observed_flux)), int(np.max(observed_flux)), 1000)
         cs = self.map_plot.graph.tricontourf(triang, observed_flux, levels=lvls,
                                              antialiased=False, locator=ticker.LogLocator, cmap="jet")
@@ -645,6 +644,8 @@ class MapsView(PlottingView):
         cbar = self.map_plot.colorbar(cs, spacing="proportional", label=r'$Flux~(\mathrm{Jy})$', extendrect=False)
         cbar.locator = ticker.LogLocator()
         self.add_widget(self.map_plot, 0, 0)
+
+        self.map_plot.save_fig("cepa_maps.pdf", format="pdf", dpi=150)
 
     def get_max_min_velocity(self, vmin, vmax):
         max_velocitys = []
