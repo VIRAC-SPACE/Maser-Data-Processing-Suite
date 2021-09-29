@@ -1,9 +1,6 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
-from multiprocessing import Process
-
 import sys
-import os
 import argparse
 
 from PyQt5.QtWidgets import (QApplication)
@@ -59,13 +56,6 @@ class MainGUI(QApplication):
 
 
 def main():
-    '''
-    app = MainGUI(sys.argv)
-    app.activeModalWidget()
-    app.activePopupWidget()
-    app.activeWindow()
-    app.exec_()
-    '''
     source_name = get_args("source")
     line = get_args("line")
     q_app = QApplication(sys.argv)

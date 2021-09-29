@@ -1,9 +1,8 @@
-from configparser import NoSectionError
-
 import sys
 import os
 import json
 import logging
+from configparser import NoSectionError
 
 import coloredlogs
 import h5py
@@ -129,15 +128,10 @@ class RunTotal(QRunnable):
         self.update = update
 
     def run(self):
-        with h5py.File(get_configs("paths", "outputFilePath", "config/config.cfg") + self.line +
-                       "/" + self.source_name + "/" + self.output_file, "r") as input_data_file:
-            input_file_keys = list(input_data_file.keys())
-            input_data_file.close()
-            if "amplitude" in input_file_keys:
-                total_parameter = self.output_file + " " + self.line
-                LOGGER.info("Executing python3 " + "total_spectrum_analyzer_qt5.py " + total_parameter)
-                os.system("python3 " + "total_spectrum_analyzer_qt5.py " + self.output_file + " " + str(self.line))
-                self.progress.setValue(self.update)
+        total_parameter = self.output_file + " " + self.line
+        LOGGER.info("Executing python3 " + "total_spectrum_analyzer_qt5.py " + total_parameter)
+        os.system("python3 " + "total_spectrum_analyzer_qt5.py " + self.output_file + " " + str(self.line))
+        self.progress.setValue(self.update)
 
 
 class MainView(QMainWindow):
@@ -216,17 +210,23 @@ class MainView(QMainWindow):
                 if iteration not in processed_iteration[station]:
                     run_sdr_iterations.append(iteration)
 
-        self.sdr_pool = QThreadPool.globalInstance()
-        self.sdr_pool.setMaxThreadCount(1)
-        sdr_count = 0
-        for station in stations:
-            for iteration in sdr_iterations[station]:
-                if iteration not in processed_iteration[station]:
-                    log_file = self.source_name + "_" + "f" + self.line + "_" + station + "_" + iteration + ".log"
-                    sdr_count += 1
-                    self.run_sdr = RunSDR(self.source_name, self.line, iteration, log_file, self._ui.sdr_ProgressBar,
-                                          sdr_count/len(run_sdr_iterations) * 100)
-                    self.sdr_pool.start(self.run_sdr)
+        if len(run_sdr_iterations) == 0:
+            print("No SDR iterations")
+        else:
+            self.sdr_pool = QThreadPool.globalInstance()
+            self.sdr_pool.setMaxThreadCount(1)
+            sdr_count = 0
+            for station in stations:
+                for iteration in sdr_iterations[station]:
+                    if iteration not in processed_iteration[station]:
+                        log_file = self.source_name + "_" + "f" + self.line + "_" + station + "_" + iteration + ".log"
+                        sdr_count += 1
+                        self.run_sdr = RunSDR(self.source_name, self.line, iteration, log_file, self._ui.sdr_ProgressBar,
+                                              sdr_count/len(run_sdr_iterations) * 100)
+                        self.sdr_pool.start(self.run_sdr)
+
+        if self.sdr_pool:
+            self.sdr_pool.waitForDone()
 
         output_files = os.listdir(output_path + "/" + self.line + "/" + self.source_name)
         run_total_iterations = []
@@ -240,29 +240,34 @@ class MainView(QMainWindow):
 
             if output_file_iteration not in processed_iteration2[station]:
                 if output_file.startswith(self.source_name):
-                    run_total_iterations.append(output_file)
+                    with h5py.File(get_configs("paths", "outputFilePath", "config/config.cfg") +
+                                   str(self.line) + "/" + self.source_name + "/" + output_file, "r") as input_data_file:
+                        input_file_keys = list(input_data_file.keys())
+                        input_data_file.close()
+                        if "amplitude" in input_file_keys:
+                            run_total_iterations.append(output_file)
 
-        self.total_pool = QThreadPool.globalInstance()
-        self.total_pool.setMaxThreadCount(1)
-        total_count = 0
-        for output_file in output_files:
-            output_file_station = output_file.split("_")[-2].split(".")[0]
-            output_file_iteration = output_file.split("_")[-1].split(".")[0]
-            if output_file_station == "IRBENE16":
-                station = "ib"
-            else:
-                station = "ir"
-
-            if output_file_iteration not in processed_iteration2[station]:
-                if output_file.startswith(self.source_name):
-                    total_count += 1
-                    self.run_total = RunTotal(output_file, self.line, self.source_name, self._ui.toral_ProgressBar,
-                                              total_count/len(run_total_iterations) * 100)
-                    self.total_pool.start(self.run_total)
+        if len(run_total_iterations) == 0:
+            print("No TOTAL iterations")
+        else:
+            self.total_pool = QThreadPool.globalInstance()
+            self.total_pool.setMaxThreadCount(1)
+            total_count = 0
+            for output_file in run_total_iterations:
+                total_count += 1
+                self.run_total = RunTotal(output_file, self.line, self.source_name, self._ui.toral_ProgressBar,
+                                          total_count/len(run_total_iterations) * 100)
+                self.total_pool.start(self.run_total)
 
     def quit(self):
         print("quit")
         try:
+            if self.run_sdr and self.sdr_pool:
+                self.sdr_pool.cancel(self.run_sdr)
+                self.run_sdr.autoDelete()
+                del self.run_sdr
+                self.sdr_pool.clear()
+                del self.sdr_pool
             if self.run_sdr:
                 self.run_sdr.autoDelete()
                 del self.run_sdr

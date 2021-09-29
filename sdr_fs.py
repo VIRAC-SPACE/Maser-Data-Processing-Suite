@@ -27,17 +27,6 @@ warnings.filterwarnings("ignore")
 
 output = []
 
-'''
-def get_args(key):
-    """
-
-    :param key: argument key
-    :return: to script passed argument value
-    """
-    return str(parse_arguments().__dict__[key])
-    
-'''
-
 
 def get_configs(section, key):
     """
