@@ -155,6 +155,42 @@ class Monitoring(PlottingView):
             self.monitoring_view.show()
 
 
+class ChangeView(PlottingView):
+    def __init__(self, component, dates, amplitude):
+        PlottingView.__init__(self)
+        self.grid = QGridLayout()
+        self.grid.setSpacing(10)
+        self.setLayout(self.grid)
+        self.setWindowTitle("Change view")
+        self.component = component
+        self.dates = dates
+        self.amplitude = amplitude
+        self.plot_set = set()
+
+        self.change_plot = Plot()
+        self.change_plot.creatPlot(self.grid, "Time [mjd]", "Flux density (Jy)", component, (1, 0), "linear")
+        self.change_plot.graph.scatter(self.dates, self.amplitude, color="k", s=0.01)
+
+        changes = self.compute_changes()
+        changes_size = np.abs(changes)
+        change_color = []
+
+        for change in changes:
+            if change >= 0:
+                change_color.append("g")
+            else:
+                change_color.append("r")
+
+        self.change_plot.graph.scatter(self.dates, self.amplitude, marker="s", color=change_color, s=changes_size)
+        self.add_widget(self.change_plot, 0, 0)
+
+    def compute_changes(self):
+        changes = [0]
+        for i in range(1, len(self.amplitude)):
+            changes.append(((self.amplitude[i] - self.amplitude[i-1])/self.amplitude[i])*100)
+        return changes
+
+
 class MonitoringView(PlottingView):
     """
     Monitoring View
@@ -174,6 +210,7 @@ class MonitoringView(PlottingView):
         self.period_view = None
         self.maps_view = None
         self.component_input = None
+        self.change_view = None
         self.add_widget(self.create_control_group(), 0, 1)
         self.new_spectre = True
         self.multiple_spectre = True
@@ -397,6 +434,12 @@ class MonitoringView(PlottingView):
         plot_maps_button = QPushButton('Plot maps', self)
         plot_maps_button.clicked.connect(self.create_map_view)
         control_grid.addWidget(plot_maps_button, 2, 0)
+
+        plot_changes_button = QPushButton('Plot changes', self)
+        plot_changes_button.clicked.connect(self.create_change_view)
+        control_grid.addWidget(plot_changes_button, 3, 0)
+
+
         group_box.setLayout(control_grid)
         return group_box
 
@@ -464,6 +507,14 @@ class MonitoringView(PlottingView):
         self.maps_view = MapsView(self.dates, self.source, self.line)
         self.maps_view.show()
 
+    def create_change_view(self):
+        component = self.component_input.text()
+        if component in self.source_velocities:
+            component_index = self.source_velocities.index(component)
+            amplitude = [e.polarizationAVG[component_index][1] for e in self.experiments]
+            component = self.component_input.text()
+            self.change_view = ChangeView(component, self.dates, amplitude)
+            self.change_view.show()
 
 class SpecterView(PlottingView):
     """
