@@ -165,7 +165,7 @@ class ChangeView(PlottingView):
         self.component = component
         self.dates = dates
         self.amplitude = amplitude
-        self.plot_set = set()
+        self.changes_values = []
 
         self.change_plot = Plot()
         self.change_plot.creatPlot(self.grid, "Time [mjd]", "Flux density (Jy)", component, (1, 0), "linear")
@@ -182,6 +182,9 @@ class ChangeView(PlottingView):
                 change_color.append("r")
 
         self.change_plot.graph.scatter(self.dates, self.amplitude, marker="s", color=change_color, s=changes_size)
+        self.change_plot.addCursor(np.round(changes,  decimals=3))
+        self.change_plot.addClickEvent(self.compute)
+
         self.add_widget(self.change_plot, 0, 0)
 
     def compute_changes(self):
@@ -189,6 +192,19 @@ class ChangeView(PlottingView):
         for i in range(1, len(self.amplitude)):
             changes.append(((self.amplitude[i] - self.amplitude[i-1])/self.amplitude[i])*100)
         return changes
+
+    def compute(self, event):
+            if len(self.changes_values) == 0 or len(self.changes_values) == 1:
+                self.changes_values.append(event.ydata)
+                if len(self.changes_values) == 2:
+                    print("changes",((self.changes_values[0] - self.changes_values[1]) / self.changes_values[0]) * 100)
+                    self.changes_values[0] = self.changes_values[1]
+                    self.changes_values[1] = event.ydata
+
+            elif len(self.changes_values) == 2:
+                print("changes", ((self.changes_values[0] - self.changes_values[1])/self.changes_values[0])*100)
+                self.changes_values[0] = self.changes_values[1]
+                self.changes_values[1] = event.ydata
 
 
 class MonitoringView(PlottingView):
