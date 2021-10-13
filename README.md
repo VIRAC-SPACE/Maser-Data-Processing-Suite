@@ -68,6 +68,7 @@ The main.py script has source and line mandatory parameters. The main.py script 
 | **Scripts** | **Description** |
 | --- | --- |
 | main.py | Automatically call sdr_fs.py and total_spectrum_analyzer_qt5.py |
+| main_gui.py | Automatically call sdr_fs.py and total_spectrum_analyzer_qt5.py and show the progress of data processing|
 | sdr_fs.py | Process four output files from SDR |
 | total_spectrum_analyzer_qt5.py | Process sdr_fs.py output|
 
@@ -95,7 +96,11 @@ This package contains various scripts that allow creating visualisations for pre
 
 ## Changelog
 
-Version 1.0
+Version 2.0
+
+Changes since version 2.0 are:
+- Fix plot saving problem
+- created main GUI that show the progress of data processing
 
 First release. Changes since version pre1.0 are:
 - Enable SDR data processing
