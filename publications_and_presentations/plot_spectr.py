@@ -51,6 +51,7 @@ def get_configs(section, key):
 
 
 def main():
+    plt.style.use('config/plot.style')
     table = get_args("table")
     if table not in ["amplitude_corrected", "amplitude_corrected_not_smooht"]:
         print("Wrong table specified. Table not in ['amplitude_corrected', 'amplitude_corrected_not_smooht']")

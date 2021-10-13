@@ -159,18 +159,21 @@ def main():
                     N = len(y)
                     variability_index = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y))) /\
                                         ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
-                    fluctuation_index = np.sqrt((N / reduce(lambda x, y: x + y, [(1.5 + 0.05 * i) ** 2 for i in y])) *
-                                             ((reduce(lambda x, y: x + y,
-                                                      [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y]) - np.mean(y) *
-                                               reduce(lambda x, y: x + y, [i * (1.5 + 0.05 * i) ** 2 for i in y]))
-                                              / (N - 1)) - 1) / np.mean(y)
+                    fluctuation_index = np.sqrt(np.abs((N / reduce(lambda x_, y_: x_ + y_,
+                                                                   [(1.5 + 0.05 * i) ** 2 for i in y]))
+                                                       * ((reduce(lambda x_, y_: x_ + y_,
+                                                                  [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y]) -
+                                                           np.mean(y) * reduce(lambda x_, y_: x_ + y_,
+                                                                               [i * (1.5 + 0.05 * i) ** 2 for i in y]))
+                                                          / (N - 1)) - 1)) / np.mean(y)
                     if not np.isnan(fluctuation_index):
                         variability_indexes.append(np.float64(variability_index))
                         fluctuation_indexes.append(np.float64(fluctuation_index))
                         mean_of_y.append(np.float64(np.mean(y)))
                         if fluctuation_index > 1:
                             source_name = get_configs("Full_source_name", source)
-                            outliers.append([variability_index, fluctuation_index, source_name + " " + source_velocities[index]])
+                            outliers.append([variability_index, fluctuation_index, source_name + " " +
+                                             source_velocities[index]])
 
                     del y, variability_index, fluctuation_index
                 del data

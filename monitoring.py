@@ -155,6 +155,58 @@ class Monitoring(PlottingView):
             self.monitoring_view.show()
 
 
+class ChangeView(PlottingView):
+    def __init__(self, component, dates, amplitude):
+        PlottingView.__init__(self)
+        self.grid = QGridLayout()
+        self.grid.setSpacing(10)
+        self.setLayout(self.grid)
+        self.setWindowTitle("Change view")
+        self.component = component
+        self.dates = dates
+        self.amplitude = amplitude
+        self.changes_values = []
+
+        self.change_plot = Plot()
+        self.change_plot.creatPlot(self.grid, "Time [mjd]", "Flux density (Jy)", component, (1, 0), "linear")
+        self.change_plot.graph.scatter(self.dates, self.amplitude, color="k", s=0.01)
+
+        changes = self.compute_changes()
+        changes_size = np.abs(changes)
+        change_color = []
+
+        for change in changes:
+            if change >= 0:
+                change_color.append("g")
+            else:
+                change_color.append("r")
+
+        self.change_plot.graph.scatter(self.dates, self.amplitude, marker="s", color=change_color, s=changes_size)
+        self.change_plot.addCursor(np.round(changes,  decimals=3))
+        self.change_plot.addClickEvent(self.compute)
+
+        self.add_widget(self.change_plot, 0, 0)
+
+    def compute_changes(self):
+        changes = [0]
+        for i in range(1, len(self.amplitude)):
+            changes.append(((self.amplitude[i] - self.amplitude[i-1])/self.amplitude[i])*100)
+        return changes
+
+    def compute(self, event):
+            if len(self.changes_values) == 0 or len(self.changes_values) == 1:
+                self.changes_values.append(event.ydata)
+                if len(self.changes_values) == 2:
+                    print("changes",((self.changes_values[0] - self.changes_values[1]) / self.changes_values[0]) * 100)
+                    self.changes_values[0] = self.changes_values[1]
+                    self.changes_values[1] = event.ydata
+
+            elif len(self.changes_values) == 2:
+                print("changes", ((self.changes_values[0] - self.changes_values[1])/self.changes_values[0])*100)
+                self.changes_values[0] = self.changes_values[1]
+                self.changes_values[1] = event.ydata
+
+
 class MonitoringView(PlottingView):
     """
     Monitoring View
@@ -174,6 +226,7 @@ class MonitoringView(PlottingView):
         self.period_view = None
         self.maps_view = None
         self.component_input = None
+        self.change_view = None
         self.add_widget(self.create_control_group(), 0, 1)
         self.new_spectre = True
         self.multiple_spectre = True
@@ -397,6 +450,12 @@ class MonitoringView(PlottingView):
         plot_maps_button = QPushButton('Plot maps', self)
         plot_maps_button.clicked.connect(self.create_map_view)
         control_grid.addWidget(plot_maps_button, 2, 0)
+
+        plot_changes_button = QPushButton('Plot changes', self)
+        plot_changes_button.clicked.connect(self.create_change_view)
+        control_grid.addWidget(plot_changes_button, 3, 0)
+
+
         group_box.setLayout(control_grid)
         return group_box
 
@@ -464,6 +523,14 @@ class MonitoringView(PlottingView):
         self.maps_view = MapsView(self.dates, self.source, self.line)
         self.maps_view.show()
 
+    def create_change_view(self):
+        component = self.component_input.text()
+        if component in self.source_velocities:
+            component_index = self.source_velocities.index(component)
+            amplitude = [e.polarizationAVG[component_index][1] for e in self.experiments]
+            component = self.component_input.text()
+            self.change_view = ChangeView(component, self.dates, amplitude)
+            self.change_view.show()
 
 class SpecterView(PlottingView):
     """
@@ -602,6 +669,7 @@ class PeriodView(PlottingView):
                               label="polarization AVG " + "Velocity " + self.velocity_name,
                               rasterized=True)
 
+
 class MapsView(PlottingView):
     """
     Maps View
@@ -634,17 +702,17 @@ class MapsView(PlottingView):
         triang = mtri.Triangulation(velocity, observed_time)
 
         self.map_plot = Plot()
-        self.map_plot.creatPlot(self.grid, "Velocity (km/s)", "MJD (days) -  "
-                                + str(days), None, (1, 0), "log")
+        self.map_plot.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)', "MJD", None, (1, 0), "log")
         lvls = np.linspace(int(np.min(observed_flux)), int(np.max(observed_flux)), 1000)
         cs = self.map_plot.graph.tricontourf(triang, observed_flux, levels=lvls,
                                              antialiased=False, locator=ticker.LogLocator, cmap="jet")
 
         cs.set_clim(vmin=1.5)
-        cbar = self.map_plot.colorbar(cs, spacing="proportional", drawedges=True,
-                                      label=r'$Flux~(\mathrm{Jy})$', extendrect=False)
+        cbar = self.map_plot.colorbar(cs, spacing="proportional", label=r'$Flux~(\mathrm{Jy})$', extendrect=False)
         cbar.locator = ticker.LogLocator()
         self.add_widget(self.map_plot, 0, 0)
+
+        self.map_plot.save_fig("cepa_maps.pdf", format="pdf", dpi=150)
 
     def get_max_min_velocity(self, vmin, vmax):
         max_velocitys = []

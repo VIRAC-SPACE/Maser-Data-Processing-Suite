@@ -22,34 +22,10 @@ from parsers.configparser_ import ConfigParser
 from utils.vlsr import lsr
 from utils.help import find_nearest_index
 from utils.ploting_qt5 import Plot
+
 warnings.filterwarnings("ignore")
 
-
-def parse_arguments():
-    """
-
-    :return: dict with passed args to script
-    """
-    parser = argparse.ArgumentParser(description='''Creates input file for plotting tool. ''',
-                                     epilog="""PRE PLOTTER.""")
-    parser.add_argument("source", help="Experiment source", type=str, default="")
-    parser.add_argument("line", help="frequency", type=str)
-    parser.add_argument("iteration_number", help="iteration number ", type=int)
-    parser.add_argument("log_file", help="Experiment log file name", type=str)
-    parser.add_argument("-c", "--config", help="Configuration cfg file", type=str,
-                        default="config/config.cfg")
-    parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 1.0')
-    args = parser.parse_args()
-    return args
-
-
-def get_args(key):
-    """
-
-    :param key: argument key
-    :return: to script passed argument value
-    """
-    return str(parse_arguments().__dict__[key])
+output = []
 
 
 def get_configs(section, key):
@@ -59,7 +35,7 @@ def get_configs(section, key):
     :param key: configuration file sections key
     :return: configuration file section key value
     """
-    config_file_path = get_args("config")
+    config_file_path = "config/config.cfg"
     config = ConfigParser(config_file_path)
     return config.get_config(section, key)
 
@@ -78,13 +54,13 @@ def dopler(observed_frequency, velocity_receiver, base_frequency):
     return velocity_source
 
 
-def signal_to_noise_ratio(frequency, amplitude, cuts):
+def split_data_to_signal_and_noise(velocity, amplitude, cuts):
     """
 
-    :param frequency: velocity
+    :param velocity: velocity
     :param amplitude: amplitude
     :param cuts: signal region
-    :return: signal to noise ratio
+    :return: list of signal and list of noise
     """
 
     cuts_index = list()
@@ -92,10 +68,10 @@ def signal_to_noise_ratio(frequency, amplitude, cuts):
     cuts_index2 = list()
 
     for cut in cuts:
-        cuts_index.append((np.abs(frequency - float(cut[0]))).argmin())
-        cuts_index.append((np.abs(frequency - float(cut[1]))).argmin())
-        cuts_index2.append((np.abs(frequency - float(cut[0]))).argmin())
-        cuts_index2.append((np.abs(frequency - float(cut[1]))).argmin())
+        cuts_index.append((np.abs(velocity - float(cut[0]))).argmin())
+        cuts_index.append((np.abs(velocity - float(cut[1]))).argmin())
+        cuts_index2.append((np.abs(velocity - float(cut[0]))).argmin())
+        cuts_index2.append((np.abs(velocity - float(cut[1]))).argmin())
 
     cuts_index = sorted(cuts_index)
     cuts_index.append(-1)
@@ -118,6 +94,19 @@ def signal_to_noise_ratio(frequency, amplitude, cuts):
         m = m + 2
         n = n + 2
 
+    return non_signal_amplitude, signal_amplitude
+
+
+def signal_to_noise_ratio(velocity, amplitude, cuts):
+    """
+
+    :param velocity: velocity
+    :param amplitude: amplitude
+    :param cuts: signal region
+    :return: signal to noise ratio
+    """
+    non_signal_amplitude, signal_amplitude = split_data_to_signal_and_noise(velocity, amplitude, cuts)
+
     std = np.std(non_signal_amplitude)
     max_value = np.max(signal_amplitude)
 
@@ -125,10 +114,18 @@ def signal_to_noise_ratio(frequency, amplitude, cuts):
     return ston
 
 
+def rms(noise):
+    std = np.std(noise)
+    number_of_points = len(noise)
+    rms = np.sqrt(sum([(n - std) ** 2 for n in noise]) / number_of_points)
+    return rms
+
+
 def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left,
-                       p_sig_on_right, p_ref_on_left, p_ref_on_right, frequency_a, logs, pair):
+                       p_sig_on_right, p_ref_on_left, p_ref_on_right, frequency_a, logs, pair, line):
     """
 
+    :param line: frequency
     :param p_sig_left: p_sig_left
     :param p_sig_right: p_sig_right
     :param p_ref_left: p_ref_left
@@ -173,8 +170,7 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
                        (2 * np.mean(p_sig_on_right[s_i:e_i] - p_sig_right[s_i:e_i]))
 
     ta_1_caloff_left = tsys_off_1_left * (p_sig_left - p_ref_left) / p_ref_left  # non-cal phase
-    ta_1_caloff_right = tsys_off_1_right * \
-                        (p_sig_right - p_ref_right) / p_ref_right  # non-cal phase
+    ta_1_caloff_right = tsys_off_1_right * (p_sig_right - p_ref_right) / p_ref_right  # non-cal phase
 
     ta_1_calon_left = (tsys_off_1_left + float(logs["header"]["Tcal"][0])) * \
                       (p_sig_on_left - p_ref_on_left) / p_ref_on_left  # cal phase
@@ -221,16 +217,17 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
         else:
             return index
 
-    tmp = logs["header"]["source"] + "_f" + get_args("line") + "_" + \
+    tmp = logs["header"]["source"] + "_f" + str(line) + "_" + \
           logs["header"]["station,id"][1] + "_" + \
           logs["header"]["exp_name"].split("_")[-1] + "_" + "no"
 
-    tmp2 = logs["header"]["source"] + "_f" + get_args("line") + "_" + \
+    tmp2 = logs["header"]["source"] + "_f" + str(line) + "_" + \
            logs["header"]["station,id"][1] + "_" + \
-           logs["header"]["exp_name"].split( "_" )[-1]
+           logs["header"]["exp_name"].split("_")[-1]
 
-    scan_files_to_delete = [get_configs("paths", "dataFilePath") + tmp2 + "/" + tmp + get_iter_name(indextmp) + ".dat"
-                            for indextmp in (np.array(pair).flatten())]
+    scan_files_to_delete = [
+        get_configs("paths", "dataFilePath") + tmp2 + "/" + tmp + get_iter_name(indextmp) + ".dat"
+        for indextmp in (np.array(pair).flatten())]
 
     delete_scan_files = False
     if any(tsys < 0 for tsys in tsyss):
@@ -265,6 +262,8 @@ def frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_o
     sf_left = ta_left / ((float(logs["header"]["DPFU"][0])) * np.polyval(g_el, elvation))
     sf_right = ta_right / ((float(logs["header"]["DPFU"][1])) * np.polyval(g_el, elvation))
 
+    output.append([sf_left[s_i:e_i], sf_right[s_i:e_i]])
+
     return sf_left[s_i:e_i], sf_right[s_i:e_i], frequency_a[s_i:e_i], \
            tsys_r_left, tsys_r_right, tsys_s_left, tsys_s_right, delete_scan_files
 
@@ -275,8 +274,7 @@ def get_scan_name(data_file_name):
     :param data_file_name: data file name
     :return: scan name for data file
     """
-    return data_file_name.split(".")[0].split("_")[4][2:len(data_file_name.split(".")
-                                                            [0].split("_")[4])].lstrip('0')
+    return data_file_name.split(".")[0].split("_")[4][2:len(data_file_name)].lstrip('0')
 
 
 def get_data(data_file_name):
@@ -296,13 +294,17 @@ class Analyzer(QWidget):
     GUI application
     """
 
-    def __init__(self):
+    def __init__(self, source, line, iteration_number, log_file):
         super().__init__()
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.setWindowTitle("SDR")
+        self.source = source
+        self.line = line
+        self.iteration_number = iteration_number
+        self.log_file = log_file
         self.center()
         self.index = 0
-        self.cuts = get_configs('cuts', get_args("source") + "_" + get_args("line")).split(";")
+        self.cuts = get_configs('cuts', self.source + "_" + str(self.line)).split(";")
         self.cuts = [c.split(",") for c in self.cuts]
         self.sf_left = list()
         self.sf_right = list()
@@ -313,18 +315,41 @@ class Analyzer(QWidget):
         self.ston_list_left = list()
         self.ston_list_right = list()
         self.ston_list_avg = list()
+
         self.logs = LogReaderFactory.getLogReader(LogTypes.SDR,
-                                                  get_configs("paths", "logPath") + "SDR/" +
-                                                  get_args("log_file"),
-                                                  get_configs("paths", "prettyLogsPath") +
-                                                  get_args("source") + "_" +
-                                                  get_args("iteration_number")).getLogs()
+                                                   get_configs("paths", "logPath") + "SDR/" +
+                                                   self.log_file,
+                                                   get_configs("paths", "prettyLogsPath") +
+                                                   self.source + "_" +
+                                                   str(self.iteration_number)).getLogs()
+
         self.station = self.logs["header"]["station,id"]
-        self.data_dir = get_configs("paths", "dataFilePath") + \
-                        get_args("source") + "_f" + get_args("line") + "_" + \
-                        self.station[1] + "_" + get_args("iteration_number") + "/"
+        self.data_dir = get_configs("paths", "dataFilePath") + self.source + "_f" + str(self.line) + "_" + \
+                        self.station[1] + "_" + str(self.iteration_number) + "/"
         self.data_files = os.listdir(self.data_dir)
+        data_files_scans_for_raw_data = []
+
+        for df in self.data_files:
+            data_files_scans_for_raw_data.append(re.findall("[0-9]+", get_scan_name(df))[0])
+
+        scans = list(set(data_files_scans_for_raw_data))
+
+        for scan in scans:
+            if data_files_scans_for_raw_data.count(scan) != 4:
+                print("Scan " + scan + " do not have all data file")
+                bad_files = self.find_data_files_for_bad_scan(scan)
+                for bad_file in bad_files:
+                    choice = input("Should this data file " + self.data_dir + bad_file + " be deleted Y/n ")
+                    if choice == "Y" or choice == "y":
+                        try:
+                            os.remove(self.data_dir + bad_file)
+                            print("Data file " + self.data_dir + bad_file + " are deleted")
+                            self.data_files.remove(bad_file)
+                        except OSError as error:
+                            print("Error: %s : %s" % (self.data_dir + bad_file, error.strerror))
+
         self.scan_pairs = self.create_scan_pairs()
+
         self.grid = QGridLayout()
         self.setLayout(self.grid)
         self.grid.setSpacing(10)
@@ -340,6 +365,13 @@ class Analyzer(QWidget):
         self.total__right = None
 
         self.__UI__()
+
+    def find_data_files_for_bad_scan(self, bad_scan):
+        bad_files = []
+        for file in self.data_files:
+            if bad_scan == re.findall("[0-9]+", file.split(".")[0].split("_")[-1])[0].lstrip("0"):
+                bad_files.append(file)
+        return bad_files
 
     def center(self):
         """
@@ -385,7 +417,6 @@ class Analyzer(QWidget):
 
     def next_pair(self):
         """
-
         :return: None
         """
         if self.index == len(self.scan_pairs) - 1:
@@ -414,18 +445,18 @@ class Analyzer(QWidget):
             file3 = self.data_dir + self.get_data_file_for_scan(pair[1][1])  # s1
             file4 = self.data_dir + self.get_data_file_for_scan(pair[1][0])  # r1
 
-            frequency_a = get_data(file1)[0]  # r0
-            p_sig_left = get_data(file1)[1]  # r0
-            p_sig_right = get_data(file1)[2]  # r0
+            frequency_a = get_data(file1)[0]  # s0
+            p_sig_left = get_data(file1)[1]  # s0
+            p_sig_right = get_data(file1)[2]  # s0
 
-            p_ref_left = get_data(file2)[1]  # s0
-            p_ref_right = get_data(file2)[2]  # s0
+            p_ref_left = get_data(file2)[1]  # r0
+            p_ref_right = get_data(file2)[2]  # r0
 
-            p_sig_on_left = get_data(file3)[1]  # r1
-            p_sig_on_right = get_data(file3)[2]  # r1
+            p_sig_on_left = get_data(file3)[1]  # s1
+            p_sig_on_right = get_data(file3)[2]  # s1
 
-            p_ref_on_left = get_data(file4)[1]  # s1
-            p_ref_on_right = get_data(file4)[2]  # s1
+            p_ref_on_left = get_data(file4)[1]  # r1
+            p_ref_on_right = get_data(file4)[2]  # r1
 
             # fft shift
             p_sig_left = np.fft.fftshift(p_sig_left)  # r0
@@ -441,7 +472,7 @@ class Analyzer(QWidget):
             tsys_r_right, tsys_s_left, tsys_s_right, delete_scan_files = frequency_shifting(
                 p_sig_left, p_sig_right, p_ref_left, p_ref_right,
                 p_sig_on_left, p_sig_on_right, p_ref_on_left,
-                p_ref_on_right, frequency_a, self.logs, pair)
+                p_ref_on_right, frequency_a, self.logs, pair, self.line)
 
             if not delete_scan_files:
                 self.sf_left.append(sf_left)
@@ -530,7 +561,7 @@ class Analyzer(QWidget):
             time = t.isoformat()
             date = Time(time, format='isot', scale='utc')
 
-            source_cordinations = get_configs("sources", get_args("source")).split(",")
+            source_cordinations = get_configs("sources", self.source).split(",")
             source_cordinations = [sc.strip() for sc in source_cordinations]
             RA = source_cordinations[0]
             DEC = source_cordinations[1]
@@ -560,8 +591,7 @@ class Analyzer(QWidget):
                 print("Vel Total params", ra_str, dec_str, date, string_time, x, y, z)
             vel_total = lsr(ra_str, dec_str, date, string_time, x, y, z)
 
-            line = get_configs('base_frequencies_SDR', "f" +
-                               get_args("line")).replace(" ", "").split(",")
+            line = get_configs('base_frequencies_SDR', "f" + self.line).replace(" ", "").split(",")
             line_f = float(line[0]) * (10 ** 9)
             line_s = line[1]
             specie = line_s
@@ -580,70 +610,53 @@ class Analyzer(QWidget):
         left_cut = np.max(velocity_min)
         right_cut = np.min(velocity_max)
 
+        all_rms_left = []
+        all_rms_right = []
         for p in range(0, len(self.sf_left)):
             index_left = find_nearest_index(velocity_list[p], left_cut)
             index_right = find_nearest_index(velocity_list[p], right_cut)
-            y__left_avg.append(self.sf_left[p][index_right:index_left])
-            y__right_avg.append(self.sf_right[p][index_right:index_left])
-            velocities_avg.append(velocity_list[p][index_right:index_left])
+            non_signal_amplitude_left, _ = split_data_to_signal_and_noise(velocity_list[p][index_right:index_left],
+                                                                          self.sf_left[p][index_right:index_left],
+                                                                          self.cuts)
+            non_signal_amplitude_right, _ = split_data_to_signal_and_noise(velocity_list[p][index_right:index_left],
+                                                                           self.sf_right[p][index_right:index_left],
+                                                                           self.cuts)
 
-        max_points_count = np.max([len(m) for m in velocities_avg])
-        for s in range(0, len(y__left_avg)):
+            rms_left = rms(non_signal_amplitude_left)
+            rms_right = rms(non_signal_amplitude_right)
+            all_rms_left.append(rms_left)
+            all_rms_right.append(rms_right)
 
-            if len(velocities_avg[s]) < max_points_count:
-                velocities_avg[s] = np.append(velocities_avg[s], np.max(velocity_min))
+        mean_rms_left = np.mean(all_rms_left)
+        mean_rms_right = np.mean(all_rms_right)
 
-            if len(y__left_avg[s]) < max_points_count:
-                y__left_avg[s] = np.append(y__left_avg[s], 0)
+        std_rms_left = np.std(all_rms_left)
+        std_rms_right = np.std(all_rms_right)
 
-            if len(y__right_avg[s]) < max_points_count:
-                y__right_avg[s] = np.append(y__right_avg[s], 0)
+        print("Max rms for left polarization is " + str(max(all_rms_left)),
+              " Min rms for left polarization is " + str(min(all_rms_left)),
+              "AVG rms for left polarization is " + str(np.mean(all_rms_left)))
 
-            ston_left = signal_to_noise_ratio(velocities, y__left_avg[s], self.cuts)
-            ston_right = signal_to_noise_ratio(velocities, y__right_avg[s], self.cuts)
-            stone_avg = signal_to_noise_ratio(velocities, ((np.array(y__left_avg[s]) +
-                                                            np.array(y__right_avg[s])) / 2), self.cuts)
-            self.ston_list_left.append(ston_left)
-            self.ston_list_right.append(ston_right)
-            self.ston_list_avg.append(stone_avg)
+        print("Max rms for right polarization is " + str(max(all_rms_right)),
+               " Min rms for right polarization is " + str(min(all_rms_right)),
+               "AVG rms for right polarization is " + str(np.mean(all_rms_right)))
 
-        velocities_avg = reduce(lambda x, y: x + y, velocities_avg)
-        y__left_avg = reduce(lambda x, y: x + y, y__left_avg)
-        y__right_avg = reduce(lambda x, y: x + y, y__right_avg)
+        for p in range(0, len(self.sf_left)):
+            index_left = find_nearest_index(velocity_list[p], left_cut)
+            index_right = find_nearest_index(velocity_list[p], right_cut)
 
-        velocities_avg = velocities_avg / len(self.scan_pairs)
-        y__left_avg = y__left_avg / len(self.scan_pairs)
-        y__right_avg = y__right_avg / len(self.scan_pairs)
+            if mean_rms_left - 3 * std_rms_left < all_rms_left[p] < mean_rms_left + 3 * std_rms_left \
+                    and mean_rms_right - 3 * std_rms_right < all_rms_right[p] < mean_rms_right + 3 * std_rms_right:
+                y__left_avg.append(self.sf_left[p][index_right:index_left])
+                y__right_avg.append(self.sf_right[p][index_right:index_left])
+                velocities_avg.append(velocity_list[p][index_right:index_left])
+            else:
+                pass
 
-        self.plot_velocity__left = Plot()
-        self.plot_velocity__left.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
-                                           'Flux density (Jy)',
-                                           "Left Polarization", (1, 0), "linear")
-        self.plot_velocity__left.plot(velocities_avg, y__left_avg, 'b')
-
-        self.plot_velocity__right = Plot()
-        self.plot_velocity__right.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
-                                            'Flux density (Jy)',
-                                            "Right Polarization", (1, 1), "linear")
-        self.plot_velocity__right.plot(velocities_avg, y__right_avg, 'b')
-
-        self.plot_tsys = Plot()
-        self.plot_tsys.creatPlot(self.grid, 'Time', 'System temperature',
-                                 "System temperature in time", (3, 0), "linear")
-
-        data_files = os.listdir(self.data_dir)
-        time = list(set([int(t.split("_")[-1].split(".")[0]
-                             [2:len(t.split("_")[-1].split(".")[0]) - 2])
-                         for t in data_files]))
-
-        time = list(time)
-        while len(time) != len(self.tsys_r_left_list):
-            time.pop()
-
-        self.plot_tsys.plot(time, self.tsys_r_left_list, '*b', label="Tsys_r_left")
-        self.plot_tsys.plot(time, self.tsys_r_right_list, '*r', label="Tsys_r_right")
-        self.plot_tsys.plot(time, self.tsys_s_left_list, '*g', label="Tsys_s_left")
-        self.plot_tsys.plot(time, self.tsys_s_right_list, '*y', label="Tsys_s_right")
+        max_points_count_vel = np.max([len(m) for m in velocities_avg])
+        max_points_count_left = np.max([len(m) for m in y__left_avg])
+        max_points_count_right = np.max([len(m) for m in y__right_avg])
+        max_points_count = max(max_points_count_vel, max_points_count_left, max_points_count_right)
 
         day = scan_1["date"].split("-")[2][0:2]
         month = scan_1["date"].split("-")[1]
@@ -657,32 +670,96 @@ class Analyzer(QWidget):
         minute = scan_1["date"].split("T")[1].split(":")[1]
         second = scan_1["date"].split("T")[1].split(":")[2]
 
-        if not os.path.exists(get_configs("paths", "outputFilePath") + "/" + get_args("line")):
-            os.makedirs(get_configs("paths", "outputFilePath") + "/" + get_args("line"))
+        if not os.path.exists(get_configs("paths", "outputFilePath") + "/" + self.line):
+            os.makedirs(get_configs("paths", "outputFilePath") + "/" + self.line)
 
         mjd = Time(datetime.strptime(day + "_" + month + "_" + year + "_" +
-                                     hour + ":" + minute + ":" + second,
-                                     "%d_%b_%Y_%H:%M:%S").isoformat(), format='isot').mjd
+                                       hour + ":" + minute + ":" + second,
+                                       "%d_%b_%Y_%H:%M:%S").isoformat(), format='isot').mjd
 
         result_file_name = get_configs("paths", "outputFilePath") + "/" + \
-                           get_args("line") + "/" + get_args("source") + "/" +\
-                           get_args("source") + "_" + str(mjd) + "_" + \
+                           self.line + "/" + self.source + "/" + \
+                           self.source + "_" + str( mjd ) + "_" + \
                            station + "_" + \
-                           get_args("iteration_number") + ".h5"
+                           str(self.iteration_number) + ".h5"
 
-        if not os.path.exists(get_configs("paths", "outputFilePath") + "/" + get_args("line") + "/"):
-            os.makedirs(get_configs("paths", "outputFilePath") + "/" + get_args("line") + "/")
+        if not os.path.exists(get_configs("paths", "outputFilePath") + "/" + self.line + "/"):
+            os.makedirs(get_configs("paths", "outputFilePath") + "/" + self.line + "/")
 
         if not os.path.exists(get_configs("paths", "outputFilePath") + "/" +
-                              get_args("line") + "/" + get_args("source") + "/"):
+                               self.line + "/" + self.source + "/"):
             os.makedirs(get_configs("paths", "outputFilePath") + "/" +
-                        get_args("line") + "/" + get_args("source") + "/")
+                         self.line + "/" + self.source + "/")
 
         result_file = h5py.File(result_file_name, "w")
         print("output_file_name", result_file_name)
 
-        sys_temp_out = np.transpose(np.array([time, self.tsys_r_left_list,
-                                              self.tsys_r_right_list,
+        for s in range(0, len(y__left_avg)):
+            if len(velocities_avg[s]) < max_points_count:
+                velocities_avg[s] = np.append(velocities_avg[s], np.max(velocity_min))
+
+            if len(y__left_avg[s]) < max_points_count:
+                y__left_avg[s] = np.append(y__left_avg[s], 0)
+
+            if len(y__right_avg[s]) < max_points_count:
+                y__right_avg[s] = np.append(y__right_avg[s], 0)
+
+            ston_left = signal_to_noise_ratio(velocities, y__left_avg[s], self.cuts)
+            ston_right = signal_to_noise_ratio(velocities, y__right_avg[s], self.cuts)
+            stone_avg = signal_to_noise_ratio(velocities, ((np.array(y__left_avg[s]) +
+                                                             np.array(y__right_avg[s])) / 2), self.cuts)
+            self.ston_list_left.append(ston_left)
+            self.ston_list_right.append(ston_right)
+            self.ston_list_avg.append(stone_avg)
+
+            total_results_for_scan = np.zeros((len(velocities_avg[s]), 3))
+            total_results_for_scan[:, 0] = velocities_avg[s]
+            total_results_for_scan[:, 1] = y__left_avg[s]
+            total_results_for_scan[:, 2] = y__right_avg[s]
+            result_file.create_dataset("scan" + str(s + 1), data=total_results_for_scan)
+
+        number_of_scans = len(velocities_avg)
+        velocities_avg = reduce(lambda x, y: x + y, velocities_avg)
+        y__left_avg = reduce(lambda x, y: x + y, y__left_avg)
+        y__right_avg = reduce(lambda x, y: x + y, y__right_avg)
+        velocities_avg = velocities_avg / number_of_scans
+        y__left_avg = y__left_avg / number_of_scans
+        y__right_avg = y__right_avg / number_of_scans
+
+        self.plot_velocity__left = Plot()
+        self.plot_velocity__left.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
+                                           'Flux density (Jy)', "Left Polarization", (1, 0), "linear")
+        self.plot_velocity__left.plot(velocities_avg, y__left_avg, 'b')
+
+        self.plot_velocity__right = Plot()
+        self.plot_velocity__right.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
+                                            'Flux density (Jy)', "Right Polarization", (1, 1), "linear")
+        self.plot_velocity__right.plot(velocities_avg, y__right_avg, 'b')
+
+        self.plot_tsys = Plot()
+        self.plot_tsys.creatPlot(self.grid, 'Time', 'System temperature',
+                                 "System temperature in time", (3, 0), "linear")
+
+        data_files = os.listdir(self.data_dir)
+        time = list(set([int(t.split("_")[-1].split(".")[0]
+                             [2:len(t.split("_")[-1].split(".")[0]) - 2]) for t in data_files]))
+
+        if len(time) < len(self.tsys_r_left_list):
+            while len(time) < len(self.tsys_r_left_list):
+                self.tsys_r_left_list.pop()
+                self.tsys_r_right_list.pop()
+                self.tsys_s_left_list.pop()
+                self.tsys_s_right_list.pop()
+        elif len(time) > len(self.tsys_r_left_list):
+            while len(time) > len(self.tsys_r_left_list):
+                time.pop()
+
+        self.plot_tsys.plot(time, self.tsys_r_left_list, '*b', label="Tsys_r_left")
+        self.plot_tsys.plot(time, self.tsys_r_right_list, '*r', label="Tsys_r_right")
+        self.plot_tsys.plot(time, self.tsys_s_left_list, '*g', label="Tsys_s_left")
+        self.plot_tsys.plot(time, self.tsys_s_right_list, '*y', label="Tsys_s_right")
+
+        sys_temp_out = np.transpose(np.array([time, self.tsys_r_left_list, self.tsys_r_right_list,
                                               self.tsys_s_left_list, self.tsys_s_right_list]))
 
         result_file.create_dataset("system_temperature", data=sys_temp_out)
@@ -705,18 +782,25 @@ class Analyzer(QWidget):
         print("Average signal to noise for right polarization", np.mean(self.ston_list_right))
         print("Average signal to noise for average polarization", np.mean(self.ston_list_avg))
 
+        non_signal_amplitude_left, _ = split_data_to_signal_and_noise(velocities_avg, y__left_avg, self.cuts)
+        non_signal_amplitude_right, _ = split_data_to_signal_and_noise(velocities_avg, y__right_avg, self.cuts)
+
+        print("Average rms for left polarization", rms((np.array(non_signal_amplitude_left) +
+                                                        np.array(non_signal_amplitude_right)) / 2))
+        print("Average rms for right polarization", rms(non_signal_amplitude_left))
+        print("Average rms for average polarization", rms(non_signal_amplitude_right))
+
         self.grid.addWidget(self.plot_velocity__left, 0, 0)
         self.grid.addWidget(self.plot_velocity__right, 0, 1)
         self.grid.addWidget(self.plot_tsys, 2, 0)
         self.grid.addWidget(self.plot_ston, 2, 1)
 
         total_results = np.transpose(np.array([np.transpose(velocities_avg),
-                                               np.transpose(y__left_avg),
-                                               np.transpose(y__right_avg)]))
+                                               np.transpose(y__left_avg), np.transpose(y__right_avg)]))
 
         result_file.create_dataset("amplitude", data=total_results)
         specie = [specie.encode("ascii", "ignore")]
-        result_file.create_dataset("specie", (len(specie),1),'S10', specie)
+        result_file.create_dataset("specie", (len(specie), 1), 'S10', specie)
         result_file.close()
 
     def get_data_file_for_scan(self, scan_name):
@@ -762,9 +846,8 @@ class Analyzer(QWidget):
         p_ref_on_right = np.fft.fftshift(p_ref_on_right)  # r1
 
         sf_left, sf_right, frequency_a1, tsys_r_left, tsys_r_right, tsys_s_left, tsys_s_right, delete_scan_files = \
-            frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left,
-                               p_sig_on_right, p_ref_on_left,
-                               p_ref_on_right, frequency_a, self.logs, pair)
+            frequency_shifting(p_sig_left, p_sig_right, p_ref_left, p_ref_right, p_sig_on_left, p_sig_on_right,
+                               p_ref_on_left, p_ref_on_right, frequency_a, self.logs, pair, self.line)
 
         if not delete_scan_files:
             self.sf_left.append(sf_left)
@@ -800,19 +883,17 @@ class Analyzer(QWidget):
 
             # plot3
             self.total__left = Plot()
-            self.total__left.creatPlot(self.grid, 'Frequency Mhz',
-                                       'Flux density (Jy)', "", (4, 0), "linear")
+            self.total__left.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "", (4, 0), "linear")
             self.total__left.plot(self.x, sf_left, 'b', label=scan_name)
             self.grid.addWidget(self.total__left, 3, 0)
 
             # plot4
             self.total__right = Plot()
-            self.total__right.creatPlot(self.grid,
-                                        'Frequency Mhz', 'Flux density (Jy)', "", (4, 1), "linear")
+            self.total__right.creatPlot(self.grid, 'Frequency Mhz', 'Flux density (Jy)', "", (4, 1), "linear")
             self.total__right.plot(self.x, sf_right, 'b', label=scan_name)
             self.grid.addWidget(self.total__right, 3, 1)
         else:
-            self.scan_pairs.remove(pair) 
+            self.scan_pairs.remove(pair)
 
         if index == len(self.scan_pairs) - 1:
             self.next_pair_button.setText('Move to total results')
@@ -824,11 +905,22 @@ def main():
 
     :return: None
     """
+    parser = argparse.ArgumentParser(description='''Creates input file for plotting tool. ''',
+                                     epilog="""PRE PLOTTER.""")
+    parser.add_argument("source", help="Experiment source", type=str, default="")
+    parser.add_argument("line", help="frequency", type=str)
+    parser.add_argument("iteration_number", help="iteration number ", type=int)
+    parser.add_argument("log_file", help="Experiment log file name", type=str)
+    parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
+    parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 2.0')
+    args = parser.parse_args()
+
     q_app = QApplication(sys.argv)
-    application = Analyzer()
+    application = Analyzer(args.source, args.line, args.iteration_number, args.log_file)
     application.show()
     sys.exit(q_app.exec_())
 
 
 if __name__ == "__main__":
     main()
+    sys.exit()

@@ -68,6 +68,7 @@ The main.py script has source and line mandatory parameters. The main.py script 
 | **Scripts** | **Description** |
 | --- | --- |
 | main.py | Automatically call sdr_fs.py and total_spectrum_analyzer_qt5.py |
+| main_gui.py | Automatically call sdr_fs.py and total_spectrum_analyzer_qt5.py and show the progress of data processing|
 | sdr_fs.py | Process four output files from SDR |
 | total_spectrum_analyzer_qt5.py | Process sdr_fs.py output|
 
@@ -95,7 +96,11 @@ This package contains various scripts that allow creating visualisations for pre
 
 ## Changelog
 
-Version 1.0
+Version 2.0
+
+Changes since version 2.0 are:
+- Fix plot saving problem
+- created main GUI that show the progress of data processing
 
 First release. Changes since version pre1.0 are:
 - Enable SDR data processing
@@ -108,7 +113,5 @@ Bug reports, feature requests and make contributions (e.g. code patches) can be 
 
 ## Acknowledgements
 This software was written by Jānis Šteinbergs under the supervision of Artis Aberfelds. If you make use of this software to get results that appear in a publication or presentation please include this acknowledgement: &quot;We have made use of MDPS, a tool developed by Janis Steinbergs.&quot;
-
-This work is the result of project implementation: «Physical and chemical processes in the interstellar medium», No 1.1.1.1/16/A/213 supported by ERDF​.
 
 This work was supported by Latvian Council of Science Project “Research of Galactic Masers” Nr.: lzp-2018/1-0291.

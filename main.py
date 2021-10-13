@@ -26,7 +26,7 @@ def parse_arguments():
     parser.add_argument("source", help="Source Name", type=str)
     parser.add_argument("line", help="frequency", type=int)
     parser.add_argument("-c", "--config", help="Configuration "
-                                                "cfg file", type=str, default="config/config.cfg")
+                                               "cfg file", type=str, default="config/config.cfg")
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 3.0')
     args = parser.parse_args()
     return args
@@ -53,30 +53,6 @@ def get_configs(section, key):
     return config.get_config(section, key)
 
 
-def find_log_file(log_list, iteration):
-    """
-
-    :param log_list: list of log files
-    :param iteration: iteration of observations
-    :param line: frequency
-    :return:
-    """
-    tmpl = ""
-    for log in log_list:
-        if "_" + str(iteration) in log:
-            tmpl = log
-            break
-
-    else:
-        tmpl = log_list[-1]
-
-    if tmpl == "":
-        LOGGER.warning("Warning " + "log for iteration " +
-                        iteration + " do not exist log file " +
-                        log_list[-1] + " will be used instead!")
-    return tmpl
-
-
 def get_iteration(dir_name):
     """
 
@@ -86,18 +62,50 @@ def get_iteration(dir_name):
     return dir_name.split("_")[-1]
 
 
+def get_station(dir_name):
+    """
+
+    :param dir_name:
+    :return: station
+    """
+    return dir_name.split("_")[-2]
+
+
 def create_iteration_list(path, source, line):
     """
 
     :param line: frequency
     :param source: source
     :param path: input file path
-    :return: None
+    :return: iterations list
     """
-    iterations = [get_iteration(iteration) for iteration in os.listdir(path) if
-                  source in iteration and line in iteration and os.path.isdir(path + iteration)]
-    iterations.sort(key=int, reverse=False)
-    return iterations
+    stations = list(set(create_station_list(path, source, line)))
+    iterations_for_source_and_line = [file for file in os.listdir(path)
+                                      if source + "_" in file and line in file and os.path.isdir(path + file)]
+    iterations_for_station = {station: [] for station in
+                              stations}  # {get_station(iteration):get_iteration(iteration) for iteration in os.listdir(path) if  source in iteration and line in iteration and os.path.isdir(path + iteration)}
+    for iteration in iterations_for_source_and_line:
+        iterations_for_station[get_station(iteration)].append(get_iteration(iteration))
+
+    for station in stations:
+        iterations_for_station[station].sort(key=int, reverse=False)
+
+    return iterations_for_station
+
+
+def create_station_list(path, source, line):
+    """
+
+    :param line: frequency
+    :param source: source
+    :param path: input file path
+    :return: stations list
+    """
+    iterations = [file for file in os.listdir(path) if
+                  source + "_" in file and line in file and os.path.isdir(path + file)]
+    iterations.sort(key=get_iteration, reverse=False)
+    stations = [get_station(iteration) for iteration in iterations]
+    return stations
 
 
 def create_log_file_list(path, source, line):
@@ -108,7 +116,7 @@ def create_log_file_list(path, source, line):
     :param source: source
     :return: all log files for source
     """
-    return [log for log in os.listdir(path) if log.startswith(source) and line in log]
+    return [log for log in os.listdir(path) if log.startswith(source + "_") and line in log]
 
 
 def main():
@@ -142,46 +150,65 @@ def main():
     with open(result_file_name, "r") as result_data:
         result = json.load(result_data)
 
-    processed_iteration = list()
-    processed_iteration2 = list()
-
+    stations = list(set(create_station_list(data_files_path, source_name, line)))
+    processed_iteration = {station: [] for station in stations}
+    processed_iteration2 = {station: [] for station in stations}
     for experiment in result:
-        if experiment.split("_")[-1] in sdr_iterations and \
-                experiment.split("_")[-1] not in \
-                processed_iteration and result[experiment]["type"] == "SDR":
-            processed_iteration.append(experiment.split("_")[-1])
+        if get_station(experiment) == "IRBENE16":
+            station = "ib"
+        else:
+            station = "ir"
 
-        if experiment.split("_")[-1] in processed_iteration and \
+        iteration_in_result = experiment.split("_")[-1]
+        if iteration_in_result in sdr_iterations[station] and \
+                iteration_in_result not in \
+                processed_iteration[station] and result[experiment]["type"] == "SDR":
+            processed_iteration[station].append(get_iteration(experiment))
+
+        if iteration_in_result in processed_iteration[station] and \
                 result[experiment]["type"] == "SDR" and result[experiment]["flag"]:
-            processed_iteration.remove(experiment.split("_")[-1])
+            processed_iteration[station].remove(iteration_in_result)
 
-        if experiment.split("_")[-1] not in processed_iteration2 and result[experiment]["type"] == "SDR":
-            processed_iteration2.append(experiment.split("_")[-1])
+        if iteration_in_result not in processed_iteration2[station] and result[experiment]["type"] == "SDR":
+            processed_iteration2[station].append(iteration_in_result)
 
-    processed_iteration.sort(key=int, reverse=False)
-    processed_iteration2.sort(key=int, reverse=False)
+    for station in stations:
+        processed_iteration[station].sort(key=int, reverse=False)
+        processed_iteration2[station].sort(key=int, reverse=False)
 
-    for iteration in sdr_iterations:
-        if iteration not in processed_iteration:
-            log_file = find_log_file(logfile_list, iteration)
-            sdr_fs_parameter = source_name + " " + line + " " + iteration + " " + log_file
-            LOGGER.info("Executing python3 " + "sdr_fs.py " + sdr_fs_parameter)
-            os.system("python3 " + "sdr_fs.py " + sdr_fs_parameter)
+    for station in stations:
+        for iteration in sdr_iterations[station]:
+            if iteration not in processed_iteration[station]:
+                log_file = source_name + "_" + "f" + line + "_" + station + "_" + iteration + ".log"
+                sdr_fs_parameter = source_name + " " + line + " " + iteration + " " + log_file
+                LOGGER.info("Executing python3 " + "sdr_fs.py " + sdr_fs_parameter)
+                os.system("python3 " + "sdr_fs.py " + sdr_fs_parameter)
+
+                if not os.path.exists(log_path + "/" + log_file):
+                    LOGGER.warning("Warning log file " + log_file + " do not exist")
 
     output_files = os.listdir(output_path + "/" + line + "/" + source_name)
     for output_file in output_files:
-        if output_file.split("_")[-1].split(".")[0] not in processed_iteration2:
+        output_file_station = output_file.split("_")[-2].split(".")[0]
+        output_file_iteration = output_file.split("_")[-1].split(".")[0]
+        if output_file_station == "IRBENE16":
+            station = "ib"
+        else:
+            station = "ir"
+
+        if output_file_iteration not in processed_iteration2[station]:
             if output_file.startswith(source_name):
                 with h5py.File(get_configs("paths", "outputFilePath") + get_args("line") +
-                                "/" + get_args("source") + "/" + output_file, "r") as input_data_file:
-                    input_file_keys = list( input_data_file.keys())
-                if "amplitude" in input_file_keys:
-                    LOGGER.info("Executing python3 " +
-                                 "total_spectrum_analyzer_qt5.py " + output_file + " " + line)
-                    os.system("python3 " +
-                               "total_spectrum_analyzer_qt5.py " + output_file + " " + line)
+                               "/" + get_args("source") + "/" + output_file, "r") as input_data_file:
+                    input_file_keys = list(input_data_file.keys())
+                    input_data_file.close()
+                    if "amplitude" in input_file_keys:
+                        LOGGER.info("Executing python3 " +
+                                    "total_spectrum_analyzer_qt5.py " + output_file + " " + line)
+                        os.system("python3 " +
+                                  "total_spectrum_analyzer_qt5.py " + output_file + " " + line)
 
 
 if __name__ == "__main__":
     main()
-    sys.exit( 0 )
+    sys.exit(0)
