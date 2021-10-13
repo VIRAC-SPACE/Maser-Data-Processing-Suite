@@ -322,13 +322,6 @@ class Analyzer(QWidget):
                                                    get_configs("paths", "prettyLogsPath") +
                                                    self.source + "_" +
                                                    str(self.iteration_number)).getLogs()
-        if self.logs == {'header': {}}:
-            print(self.logs)
-            print("yess")
-            # self.close()
-            # self.destroy()
-            # QApplication.instance().quit()
-            print("yess2")
 
         self.station = self.logs["header"]["station,id"]
         self.data_dir = get_configs("paths", "dataFilePath") + self.source + "_f" + str(self.line) + "_" + \
@@ -660,7 +653,46 @@ class Analyzer(QWidget):
             else:
                 pass
 
-        max_points_count = np.max([len(m) for m in velocities_avg])
+        max_points_count_vel = np.max([len(m) for m in velocities_avg])
+        max_points_count_left = np.max([len(m) for m in y__left_avg])
+        max_points_count_right = np.max([len(m) for m in y__right_avg])
+        max_points_count = max(max_points_count_vel, max_points_count_left, max_points_count_right)
+
+        day = scan_1["date"].split("-")[2][0:2]
+        month = scan_1["date"].split("-")[1]
+        months = {"Jan": "1", "Feb": "2", "Mar": "3", "Apr": "4", "May": "5",
+                  "Jun": "6", "Jul": "7", "Aug": "8", "Sep": "9", "Oct": "10",
+                  "Nov": "11", "Dec": "12"}
+
+        month = list(months.keys())[int(month) - 1]
+        year = scan_1["date"].split("-")[0]
+        hour = scan_1["date"].split("T")[1].split(":")[0]
+        minute = scan_1["date"].split("T")[1].split(":")[1]
+        second = scan_1["date"].split("T")[1].split(":")[2]
+
+        if not os.path.exists(get_configs("paths", "outputFilePath") + "/" + self.line):
+            os.makedirs(get_configs("paths", "outputFilePath") + "/" + self.line)
+
+        mjd = Time(datetime.strptime(day + "_" + month + "_" + year + "_" +
+                                       hour + ":" + minute + ":" + second,
+                                       "%d_%b_%Y_%H:%M:%S").isoformat(), format='isot').mjd
+
+        result_file_name = get_configs("paths", "outputFilePath") + "/" + \
+                           self.line + "/" + self.source + "/" + \
+                           self.source + "_" + str( mjd ) + "_" + \
+                           station + "_" + \
+                           str(self.iteration_number) + ".h5"
+
+        if not os.path.exists(get_configs("paths", "outputFilePath") + "/" + self.line + "/"):
+            os.makedirs(get_configs("paths", "outputFilePath") + "/" + self.line + "/")
+
+        if not os.path.exists(get_configs("paths", "outputFilePath") + "/" +
+                               self.line + "/" + self.source + "/"):
+            os.makedirs(get_configs("paths", "outputFilePath") + "/" +
+                         self.line + "/" + self.source + "/")
+
+        result_file = h5py.File(result_file_name, "w")
+        print("output_file_name", result_file_name)
 
         for s in range(0, len(y__left_avg)):
             if len(velocities_avg[s]) < max_points_count:
@@ -676,10 +708,15 @@ class Analyzer(QWidget):
             ston_right = signal_to_noise_ratio(velocities, y__right_avg[s], self.cuts)
             stone_avg = signal_to_noise_ratio(velocities, ((np.array(y__left_avg[s]) +
                                                              np.array(y__right_avg[s])) / 2), self.cuts)
-
             self.ston_list_left.append(ston_left)
             self.ston_list_right.append(ston_right)
             self.ston_list_avg.append(stone_avg)
+
+            total_results_for_scan = np.zeros((len(velocities_avg[s]), 3))
+            total_results_for_scan[:, 0] = velocities_avg[s]
+            total_results_for_scan[:, 1] = y__left_avg[s]
+            total_results_for_scan[:, 2] = y__right_avg[s]
+            result_file.create_dataset("scan" + str(s + 1), data=total_results_for_scan)
 
         number_of_scans = len(velocities_avg)
         velocities_avg = reduce(lambda x, y: x + y, velocities_avg)
@@ -722,41 +759,6 @@ class Analyzer(QWidget):
         self.plot_tsys.plot(time, self.tsys_s_left_list, '*g', label="Tsys_s_left")
         self.plot_tsys.plot(time, self.tsys_s_right_list, '*y', label="Tsys_s_right")
 
-        day = scan_1["date"].split("-")[2][0:2]
-        month = scan_1["date"].split("-")[1]
-        months = {"Jan": "1", "Feb": "2", "Mar": "3", "Apr": "4", "May": "5",
-                  "Jun": "6", "Jul": "7", "Aug": "8", "Sep": "9", "Oct": "10",
-                  "Nov": "11", "Dec": "12"}
-
-        month = list(months.keys())[int(month) - 1]
-        year = scan_1["date"].split("-")[0]
-        hour = scan_1["date"].split("T")[1].split(":")[0]
-        minute = scan_1["date"].split("T")[1].split(":")[1]
-        second = scan_1["date"].split("T")[1].split(":")[2]
-
-        if not os.path.exists(get_configs("paths", "outputFilePath") + "/" + self.line):
-            os.makedirs(get_configs("paths", "outputFilePath") + "/" + self.line)
-
-        mjd = Time(datetime.strptime(day + "_" + month + "_" + year + "_" +
-                                     hour + ":" + minute + ":" + second,
-                                     "%d_%b_%Y_%H:%M:%S").isoformat(), format='isot').mjd
-
-        result_file_name = get_configs("paths", "outputFilePath") + "/" + \
-                           self.line + "/" + self.source + "/" + \
-                           self.source + "_" + str(mjd) + "_" + \
-                           station + "_" + \
-                           str(self.iteration_number) + ".h5"
-
-        if not os.path.exists(get_configs("paths", "outputFilePath") + "/" + self.line + "/"):
-            os.makedirs(get_configs("paths", "outputFilePath") + "/" + self.line + "/")
-
-        if not os.path.exists(get_configs("paths", "outputFilePath") + "/" +
-                               self.line + "/" + self.source + "/"):
-            os.makedirs(get_configs("paths", "outputFilePath") + "/" +
-                         self.line + "/" + self.source + "/")
-
-        result_file = h5py.File(result_file_name, "w")
-        print("output_file_name", result_file_name)
         sys_temp_out = np.transpose(np.array([time, self.tsys_r_left_list, self.tsys_r_right_list,
                                               self.tsys_s_left_list, self.tsys_s_right_list]))
 
@@ -910,7 +912,7 @@ def main():
     parser.add_argument("iteration_number", help="iteration number ", type=int)
     parser.add_argument("log_file", help="Experiment log file name", type=str)
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="config/config.cfg")
-    parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 1.0')
+    parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 2.0')
     args = parser.parse_args()
 
     q_app = QApplication(sys.argv)

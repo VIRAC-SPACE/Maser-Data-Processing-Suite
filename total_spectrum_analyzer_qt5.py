@@ -984,7 +984,7 @@ def main():
                          help="Set the amount of times to filter data to remove noise spikes, "
                               "higher than 5 makes little difference",
                          type=int, default=0, choices=range(0, 11), metavar="[0-10]")
-    parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 1.0')
+    parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 2.0')
     args = parser.parse_args()
 
     q_app = QApplication(sys.argv)
