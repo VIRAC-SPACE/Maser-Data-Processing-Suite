@@ -13,6 +13,7 @@ from matplotlib import rcParams
 import mplcursors
 import numpy as np
 from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QWidget
 from parsers.configparser_ import ConfigParser
 
 if os.path.exists("config/plot.cfg"):
@@ -28,14 +29,13 @@ class Plot(FigureCanvas):
     """
     embedded pyqt5 GUI to matplotlib
     """
-    def __init__(self, parent=None, width=16, height=9, dpi=70):
-        self.parent = parent
+    def __init__(self, parent=None, width=16, height=9, dpi=100):
         self.fig = Figure(figsize=(width, height), dpi=dpi)
         FigureCanvas.__init__(self, self.fig)
-        self.setParent(self.parent)
         FigureCanvas.setSizePolicy(self, QtWidgets.QSizePolicy.Expanding,
                                    QtWidgets.QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
+        self.main_widget = QWidget(self)
 
     def plot(self, x, y, line, fontsize=20, **options):
         line = self.graph.plot(x, y, line, **options)
@@ -115,7 +115,7 @@ class Plot(FigureCanvas):
         if self.title is not None:
             self.graph.set_title(title)
 
-        self.toolbar = qt5agg.NavigationToolbar2QT(self, self.parent)
+        self.toolbar = qt5agg.NavigationToolbar2QT(self, self.main_widget)
         self.toolbar.update()
         self.grid.addWidget(self.toolbar, toolbarpos[0], toolbarpos[1])
         self.graph.yaxis.set_ticks_position('both')
