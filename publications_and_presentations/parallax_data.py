@@ -192,6 +192,8 @@ def main(infile):
     fig8, ax8 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
     fig9, ax9 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
     fig10, ax10 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+    fig11, ax11 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+    fig12, ax12 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
 
     x = []
     y = []
@@ -218,6 +220,13 @@ def main(infile):
     mean_of_ys = []
     mean_of_ys2 = []
     for maser in masers:
+        if maser.distance != "*":
+            if np.mean(maser.variability_indexes) < 0.5:
+                c = "blue"
+            else:
+                c = "red"
+            ax11.scatter(float(maser.distance), np.mean(maser.fluctuation_indexes), c=c, alpha=0.3)
+            ax12.scatter(float(maser.distance), np.mean(maser.variability_indexes), c=c, alpha=0.3)
         if maser.x != "*" and maser.y != "*" and len(maser.mean_of_y) != 0:
             if len(maser.mean_of_y) == 0:
                 print("yes", maser.short_name, maser.long_name)
@@ -338,10 +347,15 @@ def main(infile):
 
     ax9.scatter(mean_of_ys2, vis, alpha=0.3, c=color5)
     ax10.scatter(mean_of_ys2, fis, alpha=0.3, c=color5)
+
     ax9.set_xlabel("Flux density (Jy)")
     ax10.set_xlabel("Flux density (Jy)")
     ax9.set_ylabel("Variability indexes")
     ax10.set_ylabel("Fluctuation indexes")
+    ax11.set_xlabel("Distance [Kpc]")
+    ax11.set_ylabel("Variability indexes")
+    ax12.set_xlabel("Distance [Kpc]")
+    ax12.set_ylabel("Fluctuation indexes")
     plt.show()
 
 
