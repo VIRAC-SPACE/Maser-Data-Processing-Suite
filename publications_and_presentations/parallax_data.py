@@ -9,7 +9,7 @@ from datetime import datetime
 from astropy.io import ascii
 import astropy.units as u
 import astropy.coordinates as coord
-from astropy.coordinates import FK5
+from astropy.coordinates import FK5, galactocentric_frame_defaults
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -34,6 +34,7 @@ def get_configs(section, key):
 
 
 def main(infile):
+    galactocentric_frame_defaults.set('latest')
     plt.style.use('../config/plot.style')
     data = ascii.read(infile)
     sources = data["Source"]
@@ -210,6 +211,8 @@ def main(infile):
 
     x = []
     y = []
+    x_ = []
+    y_ = []
 
     size1 = []
     size2 = []
@@ -272,7 +275,18 @@ def main(infile):
                 coord_ = coord.SkyCoord(ra=dec_str, dec=dec_str,
                                    distance=[float(maser.distance)] * u.kpc, frame=FK5, equinox='J2000.0')
                 coord_ = coord_.transform_to(coord.Galactocentric)
+                '''x_.append(coord_.x.value)
+                y_.append(coord_.y.value)
                 pixel_coords = from_world_to_pixel(coord_.x.value, coord_.y.value, image_xsize, image_ysize)
+                x.append(pixel_coords[0])
+                y.append(pixel_coords[1])'''
+                coord_ = coord_.galactic
+                lon = coord_.l.value
+                x_.append(np.sin(np.radians(lon)) * float(maser.distance))
+                y_.append(8.5 - np.cos(np.radians(lon)) * float(maser.distance))
+                pixel_coords = from_world_to_pixel(np.sin(np.radians(lon)) * float(maser.distance),
+                                                   8.5 - np.cos(np.radians(lon)) * float(maser.distance),
+                                                   image_xsize, image_ysize)
                 x.append(pixel_coords[0])
                 y.append(pixel_coords[1])
 
