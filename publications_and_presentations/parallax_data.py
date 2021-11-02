@@ -1,11 +1,15 @@
 import sys
 import os
 from collections import namedtuple
+
+from PIL import Image
 from functools import reduce
 import argparse
 from datetime import datetime
-
 from astropy.io import ascii
+import astropy.units as u
+import astropy.coordinates as coord
+from astropy.coordinates import FK5
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -45,6 +49,15 @@ def main(infile):
                     [-1], outlier=False) for i in range(0, len(sources))]
     old_monitoring_file_path = get_configs("paths", "oldMonitoringFilePath")
     new_monitoring_file_path = get_configs("paths", "monitoringFilePath")
+
+    image = Image.open('galaxcy.png')
+    image_xsize, image_ysize = image.size
+
+    def from_world_to_pixel(w_x, w_y, image_xsize, image_ysize):
+        image_centre = (image_xsize / 2, image_ysize / 2)
+        p_x = w_x * 20 + image_centre[0]
+        p_y = w_y * (-1) * 20 + image_centre[1]
+        return p_x, p_y
 
     for maser in masers:
         print("Executing for maser ", maser.name)
@@ -225,17 +238,46 @@ def main(infile):
                 c = "blue"
             else:
                 c = "red"
+            if len(maser.mean_of_y) != 0:
+                size1.append(np.mean(maser.mean_of_y))
+                size2.append(np.mean(maser.absolute_mean_of_y))
+                size3.append(100 * np.array(np.mean(maser.fluctuation_indexes)))
+                size4.append(100 * np.array(np.mean(maser.variability_indexes)))
+                source_cordinations = get_configs("sources", maser.name).split(",")
+                source_cordinations = [sc.strip() for sc in source_cordinations]
+                RA = source_cordinations[0]
+                DEC = source_cordinations[1]
+
+                ra = list()
+                dec = list()
+                ra.append(RA[0:2])
+                ra.append(RA[2:4])
+                ra.append(RA[4:len(RA)])
+
+                if DEC[0] == "-":
+                    dec.append(DEC[0:3])
+                    dec.append(DEC[3:5])
+                    dec.append(DEC[5:len(DEC)])
+                else:
+                    dec.append(DEC[0:2])
+                    dec.append(DEC[2:4])
+                    dec.append(DEC[4:len(DEC)])
+
+                ra_str = ra[0] + "h" + ra[1] + "m" + ra[2] + "s"
+                if int(dec[0]) > 0:
+                    dec_str = "+" + dec[0] + "d" + dec[1] + "m" + dec[2] + "s"
+                else:
+                    dec_str = dec[0] + "d" + dec[1] + "m" + dec[2] + "s"
+
+                coord_ = coord.SkyCoord(ra=dec_str, dec=dec_str,
+                                   distance=[float(maser.distance)] * u.kpc, frame=FK5, equinox='J2000.0')
+                coord_ = coord_.transform_to(coord.Galactocentric)
+                pixel_coords = from_world_to_pixel(coord_.x.value, coord_.y.value, image_xsize, image_ysize)
+                x.append(pixel_coords[0])
+                y.append(pixel_coords[1])
+
             ax11.scatter(float(maser.distance), np.mean(maser.fluctuation_indexes), c=c, alpha=0.3)
             ax12.scatter(float(maser.distance), np.mean(maser.variability_indexes), c=c, alpha=0.3)
-        if maser.x != "*" and maser.y != "*" and len(maser.mean_of_y) != 0:
-            if len(maser.mean_of_y) == 0:
-                print("yes", maser.short_name, maser.long_name)
-            x.append(float(maser.x))
-            y.append(float(maser.y))
-            size1.append(np.mean(maser.mean_of_y))
-            size2.append(np.mean(maser.absolute_mean_of_y))
-            size3.append(100 * np.array(np.mean(maser.fluctuation_indexes)))
-            size4.append(100 * np.array(np.mean(maser.variability_indexes)))
 
         means_y = maser.mean_of_y
         absolute_mean_of_y = maser.absolute_mean_of_y
@@ -303,12 +345,20 @@ def main(infile):
     titles_x_y = ["Flux", "CFlux", "Fluctuation indexes", "Variability indexes"]
     ax_x_y = [ax1, ax2, ax3, ax4]
     sizes_x_y = [size1, size2, size3, size4]
+
     for ax in ax_x_y:
         ax_index = ax_x_y.index(ax)
+        sun = from_world_to_pixel(0, 8.5, image_xsize, image_ysize)
+        gc = from_world_to_pixel(0, 0, image_xsize, image_ysize)
+        ax.scatter(sun[0], sun[1], marker='*', label="sun", color="goldenrod")
+        ax.scatter(gc[0], gc[1],  marker='o', label="GC", color="k")
         ax.scatter(x, y, s=sizes_x_y[ax_index], alpha=0.3)
         ax.set_title(titles_x_y[ax_index])
         ax.set_xlabel("X [Kpc]")
         ax.set_ylabel("Y [Kpc]")
+        im = ax.imshow(image)
+        im.axes.get_xaxis().set_visible(False)
+        im.axes.get_yaxis().set_visible(False)
 
     titles_vi_fi = ["Variability indexes vs Fluctuation indexes Flux",
                     "Variability indexes vs Fluctuation indexes Absolute Flux"]
