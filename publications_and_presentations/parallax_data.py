@@ -2,7 +2,6 @@ import sys
 import os
 from collections import namedtuple
 
-from PIL import Image
 from functools import reduce
 import argparse
 from datetime import datetime
@@ -12,6 +11,7 @@ import astropy.coordinates as coord
 from astropy.coordinates import FK5, galactocentric_frame_defaults
 import numpy as np
 import matplotlib.pyplot as plt
+from mw_plot import MWPlot
 
 PACKAGE_PARENT = '..'
 SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
@@ -50,15 +50,6 @@ def main(infile):
                     [-1], outlier=False) for i in range(0, len(sources))]
     old_monitoring_file_path = get_configs("paths", "oldMonitoringFilePath")
     new_monitoring_file_path = get_configs("paths", "monitoringFilePath")
-
-    image = Image.open('galaxcy.png')
-    image_xsize, image_ysize = image.size
-
-    def from_world_to_pixel(w_x, w_y, image_xsize, image_ysize):
-        image_centre = (image_xsize / 2, image_ysize / 2)
-        p_x = w_x * 20 + image_centre[0]
-        p_y = w_y * (-1) * 20 + image_centre[1]
-        return p_x, p_y
 
     for maser in masers:
         print("Executing for maser ", maser.name)
@@ -196,10 +187,15 @@ def main(infile):
                 del monitoring_data
             del new_monitoring_file, old_monitoring_file
 
-    fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
-    fig2, ax2 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
-    fig3, ax3 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
-    fig4, ax4 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+    mw1 = MWPlot(rot90=45, r0=8.5, radius=20 * u.kpc, unit=u.kpc, coord='galactocentric', annotation=True,
+                 figsize=(16, 16), dpi=150)
+    mw2 = MWPlot(rot90=45, r0=8.5, radius=20 * u.kpc, unit=u.kpc, coord='galactocentric', annotation=True,
+                 figsize=(16, 16), dpi=150)
+    mw3 = MWPlot(rot90=45, r0=8.5, radius=20 * u.kpc, unit=u.kpc, coord='galactocentric', annotation=True,
+                 figsize=(16, 16), dpi=150)
+    mw4 = MWPlot(rot90=45, r0=8.5, radius=20 * u.kpc, unit=u.kpc, coord='galactocentric', annotation=True,
+                 figsize=(16, 16), dpi=150)
+
     fig5, ax5 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
     fig6, ax6 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
     fig7, ax7 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
@@ -209,11 +205,10 @@ def main(infile):
     fig11, ax11 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
     fig12, ax12 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
 
-    x = []
-    y = []
     x_ = []
     y_ = []
 
+    color_ = []
     size1 = []
     size2 = []
     size3 = []
@@ -272,23 +267,17 @@ def main(infile):
                 else:
                     dec_str = dec[0] + "d" + dec[1] + "m" + dec[2] + "s"
 
-                coord_ = coord.SkyCoord(ra=dec_str, dec=dec_str,
-                                   distance=[float(maser.distance)] * u.kpc, frame=FK5, equinox='J2000.0')
-                coord_ = coord_.transform_to(coord.Galactocentric)
-                '''x_.append(coord_.x.value)
-                y_.append(coord_.y.value)
-                pixel_coords = from_world_to_pixel(coord_.x.value, coord_.y.value, image_xsize, image_ysize)
-                x.append(pixel_coords[0])
-                y.append(pixel_coords[1])'''
+                coord_ = coord.SkyCoord(ra=ra_str, dec=dec_str, frame=FK5, equinox='J2000.0')
                 coord_ = coord_.galactic
-                lon = coord_.l.value
+                lon = coord_.l.deg
                 x_.append(np.sin(np.radians(lon)) * float(maser.distance))
                 y_.append(8.5 - np.cos(np.radians(lon)) * float(maser.distance))
-                pixel_coords = from_world_to_pixel(np.sin(np.radians(lon)) * float(maser.distance),
-                                                   8.5 - np.cos(np.radians(lon)) * float(maser.distance),
-                                                   image_xsize, image_ysize)
-                x.append(pixel_coords[0])
-                y.append(pixel_coords[1])
+
+                vi = np.mean(maser.variability_indexes)
+                if vi < 0.5:
+                    color_.append("blue")
+                else:
+                    color_.append("red")
 
             ax11.scatter(float(maser.distance), np.mean(maser.fluctuation_indexes), c=c, alpha=0.3)
             ax12.scatter(float(maser.distance), np.mean(maser.variability_indexes), c=c, alpha=0.3)
@@ -357,22 +346,21 @@ def main(infile):
                 mean_of_ys.append(np.mean(maser.mean_of_y))
 
     titles_x_y = ["Flux", "CFlux", "Fluctuation indexes", "Variability indexes"]
-    ax_x_y = [ax1, ax2, ax3, ax4]
+    ax_x_y = [mw1, mw2, mw3, mw4]
     sizes_x_y = [size1, size2, size3, size4]
 
+    sun = (0, 8.5)
+    gc = (0, 0)
+    color = ["black", "goldenrod"] + color_
+    x__ = [0.0, 8.5] + y_
+    y__ = [0.0, 0.0] + x_
     for ax in ax_x_y:
         ax_index = ax_x_y.index(ax)
-        sun = from_world_to_pixel(0, 8.5, image_xsize, image_ysize)
-        gc = from_world_to_pixel(0, 0, image_xsize, image_ysize)
-        ax.scatter(sun[0], sun[1], marker='*', label="sun", color="goldenrod")
-        ax.scatter(gc[0], gc[1],  marker='o', label="GC", color="k")
-        ax.scatter(x, y, s=sizes_x_y[ax_index], alpha=0.3)
-        ax.set_title(titles_x_y[ax_index])
-        ax.set_xlabel("X [Kpc]")
-        ax.set_ylabel("Y [Kpc]")
-        im = ax.imshow(image)
-        im.axes.get_xaxis().set_visible(False)
-        im.axes.get_yaxis().set_visible(False)
+        size = [20, 20] + sizes_x_y[ax_index]
+        ax.scatter(x=x__ * u.kpc, y=y__ * u.kpc, marker="o", s=size, c=color, alpha=0.3)
+        ax.title = titles_x_y[ax_index]
+        #ax.set_xlabel("X [Kpc]")
+        #ax.set_ylabel("Y [Kpc]")
 
     titles_vi_fi = ["Variability indexes vs Fluctuation indexes Flux",
                     "Variability indexes vs Fluctuation indexes Absolute Flux"]
