@@ -44,10 +44,10 @@ def main(infile):
 
     Maser = namedtuple('Maser', 'name  x y flux distance '
                                 'fluctuation_indexes variability_indexes mean_of_y absolute_mean_of_y, '
-                                'largest_y_mean_index outlier')
+                                'largest_y_mean_index  mean_of_y2 outlier')
 
     masers = [Maser(sources[i], x[i], y[i], [], distance[i], [], [], [], [],
-                    [-1], outlier=False) for i in range(0, len(sources))]
+                    [-1], [], outlier=False) for i in range(0, len(sources))]
     old_monitoring_file_path = get_configs("paths", "oldMonitoringFilePath")
     new_monitoring_file_path = get_configs("paths", "monitoringFilePath")
 
@@ -182,6 +182,8 @@ def main(infile):
                         if maser.distance != "*":
                             maser.absolute_mean_of_y.append(np.float64(np.mean(y_data2)) *
                                                             (np.float64(maser.distance) / 2) ** 2)
+
+                        maser.mean_of_y2.append(np.float64(np.mean(y_data2)))
                         del y_data2
 
                 del monitoring_data
@@ -196,14 +198,14 @@ def main(infile):
     mw4 = MWPlot(rot90=45, r0=8.5, radius=20 * u.kpc, unit=u.kpc, coord='galactocentric', annotation=True,
                  figsize=(16, 16), dpi=150)
 
-    fig5, ax5 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
-    fig6, ax6 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
-    fig7, ax7 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
-    fig8, ax8 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
-    fig9, ax9 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
-    fig10, ax10 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
-    fig11, ax11 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
-    fig12, ax12 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+    fig5, ax5 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)  # fig1
+    fig6, ax6 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)  # fig2
+    fig7, ax7 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)  # fig3
+    fig8, ax8 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)  # fig4
+    fig9, ax9 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)  # fig5
+    fig10, ax10 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)  # fig6
+    fig11, ax11 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)  # fig7
+    fig12, ax12 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)  # fig8
 
     x_ = []
     y_ = []
@@ -230,6 +232,7 @@ def main(infile):
     absolute_mean_of_ys = []
     mean_of_ys = []
     mean_of_ys2 = []
+    mean_of_ys3 = []
     for maser in masers:
         if maser.distance != "*":
             if np.mean(maser.variability_indexes) < 0.5:
@@ -344,6 +347,7 @@ def main(infile):
                 size7.append(sss)
                 absolute_mean_of_ys.append(maser.absolute_mean_of_y[0])
                 mean_of_ys.append(np.mean(maser.mean_of_y))
+                mean_of_ys3.append(maser.mean_of_y2[0])
 
     titles_x_y = ["Flux", "CFlux", "Fluctuation indexes", "Variability indexes"]
     ax_x_y = [mw1, mw2, mw3, mw4]
@@ -389,7 +393,7 @@ def main(infile):
 
     ax_distances_flux_density = [ax6, ax8]
     titles_distances_flux_density = ["Flux vs Distance Absolute Flux", "Flux vs Distance Flux"]
-    ax_distances_flux_density_y = [absolute_mean_of_ys, mean_of_ys]
+    ax_distances_flux_density_y = [absolute_mean_of_ys, mean_of_ys3]
     for ax in ax_distances_flux_density:
         ax_index = ax_distances_flux_density.index(ax)
         ax.set_xlabel("Distance [Kpc]")
