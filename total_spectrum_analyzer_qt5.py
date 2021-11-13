@@ -378,9 +378,8 @@ class Analyzer(QWidget):
                                 'Flux density (Jy)', "Left Polarization", (1, 0),
                                 "linear")
         self.plot_10.plot(self.xdata, self.ydata_left,
-                           'ko', label='Data Points', markersize=4)
+                           'ko', label='Data Points', markersize=4, picker=5)
         # self.plot_10.graph.set_pickradius(5)
-        self.grid.addWidget(self.plot_10, 0, 0)
 
         # u9 plot
         self.plot_11 = Plot()
@@ -388,7 +387,7 @@ class Analyzer(QWidget):
                                'Flux density (Jy)', "Right Polarization", (1, 1),
                                "linear")
         self.plot_11.plot(self.xdata, self.ydata_right,
-                          'ko', label='Data Points', markersize=4)
+                          'ko', label='Data Points', markersize=4, picker=5)
         #self.plot_11.graph.set_pickradius(5)
 
         self.badplot_1_left = self.plot_10.plot(self.x_bad_points_left,
@@ -396,9 +395,10 @@ class Analyzer(QWidget):
         self.badplot_2_right = self.plot_11.plot(self.x_bad_points_right,
                                                  self.y_bad_point_right, 'rx', markersize=10)
 
-        self.plot_10.fig.canvas.mpl_connect('pick_event', self.on_left_click)
-        self.plot_11.fig.canvas.mpl_connect('pick_event', self.on_right_click)
+        self.plot_10.addPickEvent(self.on_left_click)
+        self.plot_11.addPickEvent(self.on_right_click)
 
+        self.grid.addWidget(self.plot_10, 0, 0)
         self.grid.addWidget(self.plot_11, 0, 1)
 
         self.plot_poly_button = QPushButton("Create Polynomial", self)
@@ -444,8 +444,8 @@ class Analyzer(QWidget):
                               'Flux density (Jy)', "Right Polarization", (1, 1), "linear")
         self.plot_2.plot(self.xdata, self.ydata_right, 'ko', label='Data Points', markersize=1, picker=5)
 
-        self.plot_1.fig.canvas.mpl_connect('pick_event', self.on_left_click)
-        self.plot_2.fig.canvas.mpl_connect('pick_event', self.on_right_click)
+        self.plot_1.addPickEvent(self.on_left_click)
+        self.plot_2.addPickEvent(self.on_right_click)
 
         self.grid.addWidget(self.plot_1, 0, 0)
         self.grid.addWidget(self.plot_2, 0, 1)
