@@ -10,6 +10,7 @@ import argparse
 import json
 import numpy as np
 from matplotlib import ticker
+import matplotlib.pylab as plt
 from astropy.timeseries import LombScargle
 from astropy.io import ascii
 from astropy.time import Time
@@ -214,6 +215,8 @@ class MonitoringView(PlottingView):
 
     def __init__(self, source, line, flag):
         PlottingView.__init__(self)
+        self.min_mjd = None
+        self.max_mjd = None
         self.grid = QGridLayout()
         self.grid.setSpacing(10)
         self.setLayout(self.grid)
@@ -247,7 +250,7 @@ class MonitoringView(PlottingView):
                             for experiment in result_data]
         if self.flag == "Not Flag":
             self.experiments = [e for e in self.experiments if not e.flag]
-        self.experiments.sort(key=lambda e: np.float(e.modifiedJulianDays))
+        self.experiments.sort(key=lambda e: float(e.modifiedJulianDays))
         labels2 = [create_label(e) for e in self.experiments]
 
         self.monitoring_plot = Plot()
@@ -256,7 +259,7 @@ class MonitoringView(PlottingView):
 
         symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
         colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
-        self.dates = [np.float(e.modifiedJulianDays) for e in self.experiments]
+        self.dates = [float(e.modifiedJulianDays) for e in self.experiments]
         self.source_velocities = get_configs('velocities', self.source + "_" + self.line).split(",")
         self.source_velocities = [x.strip() for x in self.source_velocities]
         monitoring_results = [np.array([self.dates])]
@@ -329,8 +332,6 @@ class MonitoringView(PlottingView):
             result_path = get_configs("paths", "resultFilePath")
             result_file_name = self.source + "_" + self.line + ".json"
             iteration = self.iterations[ind]
-            time = [e.time for e in self.experiments][ind]
-            date = [e.Date for e in self.experiments][ind]
             mjd = [e.modifiedJulianDays for e in self.experiments][ind]
             station = [e.location for e in self.experiments][ind]
 
@@ -376,9 +377,7 @@ class MonitoringView(PlottingView):
                         self.monitoring_plot.canvasShow()
 
                         for experiment in results:
-                            if experiment.endswith("_" + str(iteration)) and \
-                                    results[experiment]["time"].replace(":", "_") + "_" + \
-                                    results[experiment]["Date"] == time.replace(":", "_") + "_" + date:
+                            if experiment.endswith("_" + str(iteration)) and experiment.split("_")[1] == str(mjd):
                                 results[experiment]["flag"] = False
                                 print(experiment, "is un flag")
 
@@ -402,9 +401,7 @@ class MonitoringView(PlottingView):
                         self.un_flags.pop(index_tmp)
 
                     for experiment in results:
-                        if experiment.endswith("_" + str(iteration)) and \
-                                results[experiment]["time"].replace(":", "_") + "_" + \
-                                results[experiment]["Date"] == time.replace(":", "_") + "_" + date:
+                        if experiment.endswith("_" + str(iteration)) and experiment.split("_")[1] == str(mjd):
                             results[experiment]["flag"] = True
                             print(experiment, "is flag")
 
@@ -432,7 +429,7 @@ class MonitoringView(PlottingView):
     def create_control_group(self):
         group_box = QGroupBox("")
         group_box.setFixedWidth(120)
-        group_box.setFixedHeight(120)
+        group_box.setFixedHeight(150)
         control_grid = QGridLayout()
         polarization_combo_box = QComboBox(self)
         polarization_combo_box.addItem("polarization AVG")
@@ -443,18 +440,23 @@ class MonitoringView(PlottingView):
         control_grid.addWidget(polarization_combo_box, 5, 0)
         plot_periods_button = QPushButton('Plot periods', self)
         plot_periods_button.clicked.connect(self.create_period_view)
-        control_grid.addWidget(plot_periods_button, 1, 0)
+        control_grid.addWidget(plot_periods_button, 3, 0)
+        self.max_mjd = QLineEdit()
+        self.max_mjd.setFixedWidth(100)
+        control_grid.addWidget(self.max_mjd, 0, 0)
+        self.min_mjd = QLineEdit()
+        self.min_mjd.setFixedWidth(100)
+        control_grid.addWidget(self.min_mjd, 1, 0)
         self.component_input = QLineEdit()
         self.component_input.setFixedWidth(100)
-        control_grid.addWidget(self.component_input, 0, 0)
+        control_grid.addWidget(self.component_input, 2, 0)
         plot_maps_button = QPushButton('Plot maps', self)
         plot_maps_button.clicked.connect(self.create_map_view)
-        control_grid.addWidget(plot_maps_button, 2, 0)
+        control_grid.addWidget(plot_maps_button, 4, 0)
 
         plot_changes_button = QPushButton('Plot changes', self)
         plot_changes_button.clicked.connect(self.create_change_view)
-        control_grid.addWidget(plot_changes_button, 3, 0)
-
+        control_grid.addWidget(plot_changes_button, 5, 0)
 
         group_box.setLayout(control_grid)
         return group_box
@@ -508,13 +510,15 @@ class MonitoringView(PlottingView):
 
     def create_period_view(self):
         component = self.component_input.text()
+        max_mjd = self.max_mjd.text()
+        min_mjd = self.min_mjd.text()
         if component in self.source_velocities:
             component_index = self.source_velocities.index(component)
             amplitude = [e.polarizationAVG[component_index][1] for e in self.experiments]
             symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
             colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
             plot_simbol = symbols[component_index] + colors[component_index]
-            self.period_view = PeriodView(self.dates, amplitude, plot_simbol, component)
+            self.period_view = PeriodView(self.dates, amplitude, plot_simbol, component, max_mjd, min_mjd)
             self.period_view.show()
         else:
             print("wrong velocity selected")
@@ -531,6 +535,7 @@ class MonitoringView(PlottingView):
             component = self.component_input.text()
             self.change_view = ChangeView(component, self.dates, amplitude)
             self.change_view.show()
+
 
 class SpecterView(PlottingView):
     """
@@ -605,7 +610,7 @@ class PeriodView(PlottingView):
     """
     Period View
     """
-    def __init__(self, time, amplitude, plot_simbol, velocity_name):
+    def __init__(self, time, amplitude, plot_symbol, velocity_name, max_mjd, min_mjd):
         PlottingView.__init__(self)
         self.grid = QGridLayout()
         self.grid.setSpacing(10)
@@ -613,61 +618,32 @@ class PeriodView(PlottingView):
         self.setWindowTitle("Periods in days ")
         self.time = time
         self.amplitude = amplitude
-        self.plot_simbol = plot_simbol
+        self.plot_symbol = plot_symbol
         self.velocity_name = velocity_name
+        self.max_mjd = max_mjd
+        self.min_mjd = min_mjd
+
+        if self.max_mjd != "" or self.min_mjd != "":
+            self.max_mjd_index = find_nearest_index(self.time, float(self.max_mjd))
+            self.min_mjd_index = find_nearest_index(self.time, float(self.min_mjd))
+            self.time = self.time[self.min_mjd_index:self.max_mjd_index]
+            self.amplitude = self.amplitude[self.min_mjd_index:self.max_mjd_index]
 
         error = np.array(self.amplitude) * 0.1
-        ls = LombScargle(self.time, self.amplitude, error, fit_mean=True)
+        period_range = [10, 100]
+        ls_range = np.linspace(period_range[0], period_range[1], 10000)
+        freq = 1. / ls_range
+        time = np.array(self.time) - self.time[0]
 
-        def date_delta(d1, d2):
-            return abs(d1 - d2)
-
-        def get_max_date_delta():
-            max_delta = list()
-            for x in range(0, len(self.time) - 1):
-                max_delta.append(date_delta(self.time[x], self.time[x + 1]))
-
-            return np.max(max_delta)
-
-        def get_min_date_delta():
-            min_delta = list()
-            for x in range(0, len(self.time) - 1):
-                tmp_delta = date_delta(self.time[x], self.time[x + 1])
-                if tmp_delta > 0:
-                    min_delta.append(tmp_delta)
-            return np.min(min_delta)
-
-        nyquist_factor = 2 * get_max_date_delta()
-        minimum_frequency = (1 / (date_delta(self.time[-1], self.time[0])/2))
-        maximum_frequency = 1 / (2 * get_min_date_delta())
-
-        print("nyquist_factor", nyquist_factor)
-        print("minimum_frequency", minimum_frequency)
-        print("maximum_frequency", maximum_frequency)
-        frequency, power = ls.autopower(method='fastchi2', normalization='model',
-                                        nyquist_factor=nyquist_factor,
-                                        minimum_frequency=minimum_frequency,
-                                        maximum_frequency=maximum_frequency,
-                                        samples_per_peak=20)
-
-        false_alarm = ls.false_alarm_probability(power.max(), method="bootstrap",
-                                                 nyquist_factor=nyquist_factor,
-                                                 minimum_frequency=minimum_frequency,
-                                                 maximum_frequency=maximum_frequency,
-                                                 samples_per_peak=20)
-
-        print("max power", power.max(), "false_alarm", false_alarm)
-
-        period_days = 1. / frequency
-        best_period = period_days[np.argmax(power)]
-        print("Best period: {0:.2f} days".format(best_period))
+        ls = LombScargle(time, self.amplitude, error, fit_mean=True, normalization='model', nterms=1)
+        power = ls.power(freq)
+        times = 1. / freq
 
         self.period_plot = Plot()
         self.period_plot.creatPlot(self.grid, "Period (days)", "Power", None, (1, 0), "linear")
         self.add_widget(self.period_plot, 0, 0)
-        self.period_plot.plot(period_days, power, self.plot_simbol,
-                              label="polarization AVG " + "Velocity " + self.velocity_name,
-                              rasterized=True)
+        self.period_plot.plot(times, power, self.plot_symbol,
+                              label="polarization AVG " + "Velocity " + self.velocity_name, rasterized=True)
 
 
 class MapsView(PlottingView):
@@ -739,11 +715,11 @@ class MapsView(PlottingView):
                         if vmin <= velocity[i] <= vmax:
                             velocity_.append(velocity[i])
                             observed_flux.append(amplitude[i])
-                            observed_time.append(np.float(mjd))
+                            observed_time.append(float(mjd))
                     else:
                         velocity_.append(velocity[i])
                         observed_flux.append(amplitude[i])
-                        observed_time.append(np.float(mjd))
+                        observed_time.append(float(mjd))
 
         return max(max_velocitys), min(min_velocitys), velocity_, observed_flux, observed_time
 
