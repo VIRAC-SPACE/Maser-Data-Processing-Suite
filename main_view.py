@@ -200,6 +200,11 @@ class MainView(QMainWindow):
 
             if iteration_in_result not in processed_iteration2[station] and result[experiment]["type"] == "SDR":
                 processed_iteration2[station].append(iteration_in_result)
+
+            if iteration_in_result in processed_iteration2[station] and \
+                    result[experiment]["type"] == "SDR" and result[experiment]["flag"]:
+                processed_iteration2[station].remove(iteration_in_result)
+
         for station in stations:
             processed_iteration[station].sort(key=int, reverse=False)
             processed_iteration2[station].sort(key=int, reverse=False)
