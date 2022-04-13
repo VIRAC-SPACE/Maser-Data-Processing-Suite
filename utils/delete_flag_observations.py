@@ -126,7 +126,8 @@ def main():
             except OSError as error:
                 print("Error: %s : %s" % (data_file_dir, error.strerror))
 
-        log_file = get_configs("paths", "logPath") + source + "_" + "f" + line + "_" + st + "_" + str(iteration)
+        log_file = get_configs("paths", "logPath") + "SDR/" + source + "_" + "f" + line + "_" + st + "_" + \
+                   str(iteration) + ".log"
         choice4 = input("Should this log file " + log_file + " be deleted Y/n ")
         if choice4 == "Y" or choice4 == "y":
             try:
