@@ -202,8 +202,8 @@ def main():
                     / (N - 1)) - 1)) / np.mean(y)
 
         v = velocity[index]
-        print("{:3} &  {:.3f} & {:.3f} & {:.3f}\\\\".
-              format(v, np.mean(y), variability_index[component], fluctuation_index[component]))
+        print(get_args("source") + " & " + "{} &  {} & {} & {:.1f} & {:3} &  {:.3f} & {:.3f} & {:.3f}\\\\".
+              format(int(x[0]), int(x[-1]), N,  ((int(x[-1]) - int(x[0]))/N)/12,  v, np.mean(y), variability_index[component], fluctuation_index[component]))
 
         y_min = np.min(y)
         if y_min < 0:
