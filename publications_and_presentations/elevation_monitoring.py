@@ -20,11 +20,13 @@ from astropy.time import Time
 
 from ExperimentsLogReader.experimentsLogReader import LogReaderFactory, LogTypes
 
+
 PACKAGE_PARENT = '..'
 SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
 sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 
 from parsers.configparser_ import ConfigParser
+from utils.help import find_nearest_index
 
 
 def parse_arguments():
@@ -86,6 +88,10 @@ def main():
 
     source = get_args("source")
     line = str(get_args("line"))
+    component_count = len(get_configs("velocities", get_args("source") + "_" +
+                          get_args("line")).replace(" ", "").split(","))
+
+    components = [i for i in range( 1, component_count + 1 )]
 
     log_path = get_configs("paths", "logPath") + "SDR/"
     log_files = [file for file in os.listdir(log_path) if file.startswith(source + "_") and "f" + line in file]
@@ -114,15 +120,23 @@ def main():
             print("Wrong log file")
 
     new_monitoring_file = get_configs("paths", "monitoringFilePath") + \
-                          get_args("source") + "_" + get_args("line" ) + ".npy"
+                          get_args("source") + "_" + get_args("line") + ".npy"
     new_data = np.load(new_monitoring_file, allow_pickle=True)
     new_x = new_data[0][0]
 
-    fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
+    both_index = []
+    for m in mjd:
+        both_index.append(find_nearest_index(new_x, m))
 
-    component_count = len(get_configs("velocities", get_args("source") + "_" +
-                                      get_args("line")).replace(" ", "").split(","))
-    components = [i for i in range(1, component_count + 1)]
+    mjd_both = []
+    for index in both_index:
+        mjd_both.append(mjd[index])
+
+    output = np.zeros((len(mjd_both), len(components) + 2))
+    output[:,0] = mjd_both
+    output[:,len(components) + 1] = elevations
+
+    fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)
 
     symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', '#FF33E6']
@@ -130,6 +144,10 @@ def main():
     for component in components:
         index = components.index(component)
         y = new_data[index + 1].astype('float64')
+
+        for index_ in range(0, len(both_index)):
+            output[index_, index + 1] = y[both_index[index_]]
+
         ax1.plot(new_x, y, symbols[index], color=colors[index], linewidth=0.5,
                  markersize=5, label=str(velocity[index]))
 
@@ -145,6 +163,8 @@ def main():
     ax2.legend()
 
     plt.show()
+
+    np.savetxt("output.dat", output)
 
 
 if __name__ == "__main__":
