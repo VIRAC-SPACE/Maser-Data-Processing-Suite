@@ -91,7 +91,7 @@ def main():
     component_count = len(get_configs("velocities", get_args("source") + "_" +
                           get_args("line")).replace(" ", "").split(","))
 
-    components = [i for i in range( 1, component_count + 1 )]
+    components = [i for i in range(1, component_count + 1)]
 
     log_path = get_configs("paths", "logPath") + "SDR/"
     log_files = [file for file in os.listdir(log_path) if file.startswith(source + "_") and "f" + line in file]
@@ -155,9 +155,8 @@ def main():
     ax2.scatter(mjd, elevations, label="elevation")
 
     ax1.set_xlabel("MJD")
-    ax1.set_ylabel("Flux density (Jy)")
+    ax1.set_ylabel("Velocity (km sec$^{-1}$)")
     ax1.legend()
-    ax1.set_yscale("log")
 
     ax2.set_ylabel("Elevation")
     ax2.legend()
