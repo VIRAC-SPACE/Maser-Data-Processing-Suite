@@ -117,7 +117,7 @@ def main():
                  label=str(vel))
 
     ax1.set_xlabel("MJD")
-    ax1.set_ylabel("Flux density (Jy)")
+    ax1.set_ylabel("Velocity (km sec$^{-1}$)")
     ax1.legend()
     plt.show()
 
