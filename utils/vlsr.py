@@ -9,8 +9,8 @@ from jplephem.spk import SPK
 
 
 @u.quantity_input(canon_velocity=(u.meter / u.second))
-def v_sun(source, apex="18h03m50.29s +30d00m16.8s",
-          canon_velocity=19.954 * 1000 * u.meter / u.second):
+def v_sun(source, apex="18h00m00.00s +30d00m00.00s",
+          canon_velocity=20 * 1000 * u.meter / u.second):
     """
 
     :param source: observed source
@@ -40,7 +40,7 @@ def v_earth(source):
     time = source.obstime.jd
     _, velocity = kernel[0, 3].compute_and_differentiate(time)
     _, velocity2 = kernel[3, 399].compute_and_differentiate(time)
-    velocity = velocity - velocity2
+    velocity = velocity + velocity2
     source = source.cartesian
     return np.dot(((velocity * 1000 * u.meter / u.day).to(u.meter / u.second)).T, source.xyz)
 
