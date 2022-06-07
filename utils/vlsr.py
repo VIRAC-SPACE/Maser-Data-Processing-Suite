@@ -23,7 +23,7 @@ def v_sun(source, apex="18h00m00.00s +30d00m00.00s",
     else:
         equinox = source.obstime[0]
 
-    sky_coord = SkyCoord(apex, equinox="J2000", frame=FK5)
+    sky_coord = SkyCoord(apex, equinox="J1900", frame=FK5)
     sky_coord = sky_coord.transform_to(FK5(equinox=equinox, representation='cartesian'))
     sky_coord = sky_coord.cartesian
     source = source.cartesian

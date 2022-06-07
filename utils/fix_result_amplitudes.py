@@ -102,12 +102,12 @@ def change_result_amplitudes(output_files, result_file, output_file_path, source
 
     for output_file in output_files:
         iteration = get_iteration_from_output_file(output_file)
-        data_tmp = h5py.File(output_file_path + line + "/" + source + "/" +output_file, "r")
+        data_tmp = h5py.File(output_file_path + line + "/" + source + "/" + output_file, "r")
         if "amplitude_corrected_not_smooht" in data_tmp:
-            max_apmlitudes_u1, max_apmlitudes_u9, max_apmlitudes_uavg = get_local_max(data_tmp,
-                                                                                source_velocities, index_range_for_local_maxima)
+            max_apmlitudes_u1, max_apmlitudes_u9, max_apmlitudes_uavg = \
+                get_local_max(data_tmp, source_velocities, index_range_for_local_maxima)
             for key in result_json.keys():
-                if key.endswith( "_" + str( iteration ) ):
+                if key.endswith("_" + str(iteration)):
                     if result_json[key]["type"] == type_of_observation:
                         result_json[key]["polarizationU1"] = max_apmlitudes_u1
                         result_json[key]["polarizationU9"] = max_apmlitudes_u9
@@ -124,11 +124,13 @@ def change_result_amplitudes(output_files, result_file, output_file_path, source
 def main():
     output_file_path = get_configs('paths', "outputFilePath")
     result_file_path = get_configs('paths', "resultFilePath")
-    source_velocities = get_configs('velocities', get_args("source") + "_" + get_args("line")).replace(" ", "").split(",")
-    index_range_for_local_maxima = int( get_configs('parameters', "index_range_for_local_maxima"))
+    source_velocities = get_configs('velocities', get_args("source") + "_" +
+                                    get_args("line")).replace(" ", "").split(",")
+    index_range_for_local_maxima = int(get_configs('parameters', "index_range_for_local_maxima"))
     result_file = result_file_path + get_args("source") + "_" + get_args("line") + ".json"
     output_files = os.listdir(output_file_path + get_args("line") + "/" + get_args("source"))
-    change_result_amplitudes(output_files, result_file, output_file_path, source_velocities, index_range_for_local_maxima, get_args("source"), get_args("type"), get_args("line"))
+    change_result_amplitudes(output_files, result_file, output_file_path, source_velocities,
+                             index_range_for_local_maxima, get_args("source"), get_args("type"), get_args("line"))
 
     sys.exit()
 
