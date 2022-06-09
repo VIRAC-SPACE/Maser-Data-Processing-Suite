@@ -81,6 +81,7 @@ def main():
 
     for output_file in output_files[0:2]:
         output_file_data = output_file.replace(".h5", "").split("_")
+        iteration = output_file_data[-1]
         mjd = output_file_data[1]
 
         experiment_name = None
@@ -137,6 +138,8 @@ def main():
 
             else:
                 print(output_file + " wrong output file")
+        else:
+            print("Wrong iteration " + str(iteration))
 
     with open(result_file_path + result_file_name, "w") as output:
         output.write(json.dumps(result, indent=2))
