@@ -138,6 +138,9 @@ def main():
             else:
                 print(output_file + " wrong output file")
 
+    with open(result_file_path + result_file_name, "w") as output:
+        output.write(json.dumps(result, indent=2))
+
     sys.exit()
 
 
