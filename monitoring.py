@@ -268,6 +268,11 @@ class MonitoringView(PlottingView):
         self.line_dict = {"left": list(),
                           "right": list(),
                           "avg": list()}
+
+        for e in self.experiments:
+            if len(e.polarizationAVG) != len(self.source_velocities):
+                print(e.Iteration_number)
+
         for i in range(0, len(self.source_velocities)):
             l1 = self.monitoring_plot.plot(self.dates,
                                            [e.polarizationU1[i][1] for e in self.experiments],
