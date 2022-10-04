@@ -81,6 +81,29 @@ def get_velocities_tmp(source):
     return velocities_tmp
 
 
+def get_time_cut(source):
+    """
+
+    :param source: observed source
+    :return: stable time cut  for source
+    """
+    if source == "g32p745":
+        time_cut = [0,100]
+    elif source == "w51":
+        time_cut = [0,100]
+    elif source == "g59p783":
+        time_cut = [0,100]
+    elif source == "on1":
+        time_cut = [0,100]
+    elif source == "s252":
+        time_cut = [0,100]
+    elif source == "ngc7538":
+        time_cut = [0,100]
+    else:
+        time_cut = [0,100]
+    return time_cut
+
+
 def print_stats(stats, labels):
     headers = ["source", "nobs", "min", "max", "mean", "variance", "skewness", "kurtosis"]
     data = [headers]
@@ -176,11 +199,8 @@ def main():
 
     out = np.array([[],[]])
 
-    cut_indexies = [[0, 100], [100, 200], [200, 300], [300, 400], [400, 500], [500, 600], [600, 700]]
-
     for source in sources:
-        index = sources.index(source)
-        cut_index = cut_indexies[index]
+        cut_index = get_time_cut(source)
         date = lines[source]["date"]
         slider_min.append(min(date))
         slider_max.append(max(date))
@@ -206,9 +226,10 @@ def main():
             trend = plt.plot(date, p(date), "r--")
             trends.append(trend)
 
-            a = cut_index[0]
-            b = cut_index[1]
-            out = np.concatenate((out, [date[a:b], y_data[a:b]/np.mean(y_data[a:b])]), axis=1)
+            start_cut = cut_index[0]
+            end_cut = cut_index[1]
+            out = np.concatenate((out, [date[start_cut:end_cut],
+                                        y_data[start_cut:end_cut]/np.mean(y_data[start_cut:end_cut])]), axis=1)
             i += 1
 
     dtype = [('mjd', float), ('amp', float)]
@@ -218,7 +239,6 @@ def main():
         values.append((out[0][i], out[1][i]))
 
     out = np.array(values, dtype=dtype)
-
     out = np.sort(out, order='mjd')
 
     fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
