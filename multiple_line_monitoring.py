@@ -174,7 +174,13 @@ def main():
     fig1 = plt.figure()
     ax = gca()
 
+    out = np.array([[],[]])
+
+    cut_indexies = [[0, 100], [100, 200], [200, 300], [300, 400], [400, 500], [500, 600], [600, 700]]
+
     for source in sources:
+        index = sources.index(source)
+        cut_index = cut_indexies[index]
         date = lines[source]["date"]
         slider_min.append(min(date))
         slider_max.append(max(date))
@@ -199,7 +205,24 @@ def main():
             lines2.append(line)
             trend = plt.plot(date, p(date), "r--")
             trends.append(trend)
+
+            a = cut_index[0]
+            b = cut_index[1]
+            out = np.concatenate((out, [date[a:b], y_data[a:b]/np.mean(y_data[a:b])]), axis=1)
             i += 1
+
+    dtype = [('mjd', float), ('amp', float)]
+    values = []
+
+    for i in range(0, out.shape[1]):
+        values.append((out[0][i], out[1][i]))
+
+    out = np.array(values, dtype=dtype)
+
+    out = np.sort(out, order='mjd')
+
+    fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
+    ax1.scatter(out['mjd'], out['amp'])
 
     ax.legend()
     fig2 = plt.figure()
