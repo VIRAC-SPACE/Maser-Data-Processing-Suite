@@ -29,7 +29,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='''Monitoring multiple sources. ''')
     parser.add_argument("line", help="line", type=int)
     parser.add_argument("--sources", help="Sources Names", type=str, nargs='+',
-                        default="[g32p745, w51, g59p783, on1, s252, ngc7538, w3oh]")
+                        default="[g32p745, w51, g59p783, on1, s252, ngc7538, w3oh, w49n, g85p41, g78p12, g75p78]")
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str,
                         default="config/config.cfg")
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 2.0')
@@ -69,13 +69,21 @@ def get_velocities_tmp(source):
     elif source == "w51":
         velocities_tmp = ["59.29"]
     elif source == "g59p783":
-        velocities_tmp = ["19.2"]
+        velocities_tmp = ["27.15"]
     elif source == "on1":
         velocities_tmp = ["14.64"]
     elif source == "s252":
         velocities_tmp = ["10.84"]
     elif source == "ngc7538":
-        velocities_tmp = ["-58.04"]
+        velocities_tmp = ["-61.31"]
+    elif source == "w49n":
+        velocities_tmp = ["9.27"]
+    elif source == "g85p41":
+        velocities_tmp = ["-31.65"]
+    elif source == "g78p12":
+        velocities_tmp = ["-6.13"]
+    elif source == "g75p78":
+        velocities_tmp = ["-2.57"]
     else:
         velocities_tmp = ["-44.6"]
     return velocities_tmp
@@ -88,19 +96,19 @@ def get_time_cut(source):
     :return: stable time cut  for source
     """
     if source == "g32p745":
-        time_cut = [0,100]
+        time_cut = [0, 1000]
     elif source == "w51":
-        time_cut = [0,100]
+        time_cut = [0, 1000]
     elif source == "g59p783":
-        time_cut = [0,100]
+        time_cut = [0, 1000]
     elif source == "on1":
-        time_cut = [0,100]
+        time_cut = [0, 1000]
     elif source == "s252":
-        time_cut = [0,100]
+        time_cut = [0, 1000]
     elif source == "ngc7538":
-        time_cut = [0,100]
+        time_cut = [0, 1000]
     else:
-        time_cut = [0,100]
+        time_cut = [0, 1000]
     return time_cut
 
 
@@ -157,7 +165,7 @@ def read_monitoring_files(monitoring_files, sources):
 
 def get_iterations_from_mjd(star_time, stop_time):
     iterations = dict()
-    source_list = ["g32p745", "w51", "g59p783", "on1", "s252", "ngc7538", "w3oh"]
+    source_list = ["g32p745", "w51", "g59p783", "on1", "s252", "ngc7538", "w3oh", "w49n", "g85p41", "g78p12", "g75p78"]
     result_file_path = get_configs("paths", "resultFilePath")
 
     for source in source_list:
@@ -223,7 +231,7 @@ def main():
                 fit += " + " + str(z[2])
             line = plt.plot(date, y_data, "*", label=source + " velocity " + velocities_tmp[i] + " " + "y= " + fit)
             lines2.append(line)
-            trend = plt.plot(date, p(date), "r--")
+            trend = plt.plot(date, p(date), "r--", visible=False)
             trends.append(trend)
 
             start_cut = cut_index[0]
