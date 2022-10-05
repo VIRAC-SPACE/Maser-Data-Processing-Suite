@@ -8,6 +8,8 @@ import sys
 import argparse
 import re
 import json
+
+from scipy.ndimage import uniform_filter1d
 from sympy import lambdify
 from tabulate import tabulate
 import numpy as np
@@ -96,19 +98,19 @@ def get_time_cut(source):
     :return: stable time cut  for source
     """
     if source == "g32p745":
-        time_cut = [0, 1000]
+        time_cut = [58400, 58600]
     elif source == "w51":
-        time_cut = [0, 1000]
+        time_cut = [58400, 58600]
     elif source == "g59p783":
-        time_cut = [0, 1000]
+        time_cut = [58400, 58600]
     elif source == "on1":
-        time_cut = [0, 1000]
+        time_cut = [58400, 58600]
     elif source == "s252":
-        time_cut = [0, 1000]
+        time_cut = [58400, 58600]
     elif source == "ngc7538":
-        time_cut = [0, 1000]
+        time_cut = [58400, 58600]
     else:
-        time_cut = [0, 1000]
+        time_cut = [58400, 58600]
     return time_cut
 
 
@@ -165,7 +167,7 @@ def read_monitoring_files(monitoring_files, sources):
 
 def get_iterations_from_mjd(star_time, stop_time):
     iterations = dict()
-    source_list = ["g32p745", "w51", "g59p783", "on1", "s252", "ngc7538", "w3oh", "w49n", "g85p41", "g78p12", "g75p78"]
+    source_list = get_args("sources").replace("[", "").replace("]", "").replace("'", "").split(",")
     result_file_path = get_configs("paths", "resultFilePath")
 
     for source in source_list:
@@ -234,8 +236,8 @@ def main():
             trend = plt.plot(date, p(date), "r--", visible=False)
             trends.append(trend)
 
-            start_cut = cut_index[0]
-            end_cut = cut_index[1]
+            start_cut = find_nearest_index(date, cut_index[0])
+            end_cut = find_nearest_index(date, cut_index[1])
             out = np.concatenate((out, [date[start_cut:end_cut],
                                         y_data[start_cut:end_cut]/np.mean(y_data[start_cut:end_cut])]), axis=1)
             i += 1
@@ -248,9 +250,11 @@ def main():
 
     out = np.array(values, dtype=dtype)
     out = np.sort(out, order='mjd')
+    out_filtered = uniform_filter1d(out['amp'], 10, mode='nearest')
 
     fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
     ax1.scatter(out['mjd'], out['amp'])
+    ax1.plot(out['mjd'], out_filtered)
 
     ax.legend()
     fig2 = plt.figure()
