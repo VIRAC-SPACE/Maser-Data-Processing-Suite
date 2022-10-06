@@ -265,8 +265,14 @@ def main():
     ax1.plot(out['mjd'], out_filtered, color='red')
 
     fig2, ax2 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
-    out_filtered_2 = (out['amp'] + np.max(out_filtered))/out_filtered
+    out_filtered_2 = out['amp'] + np.max(out_filtered) / out_filtered - np.max(out_filtered)
     ax2.scatter(out['mjd'], out_filtered_2, color='yellow')
+    ax2.scatter(out['mjd'], out_filtered_2, color='yellow')
+    ax2.hlines(xmin=np.min(out['mjd']), xmax=np.max(out['mjd']), y=np.median(out_filtered_2), color='black')
+    ax2.hlines(xmin=np.min(out['mjd']), xmax=np.max(out['mjd']), y=out_filtered_2.std() + np.median(out_filtered_2),
+               color='green')
+    ax2.hlines(xmin=np.min(out['mjd']), xmax=np.max(out['mjd']), y=-out_filtered_2.std() + np.median(out_filtered_2),
+               color='green')
 
     ax.legend()
     fig2 = plt.figure()
