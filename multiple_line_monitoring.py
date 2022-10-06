@@ -9,7 +9,7 @@ import argparse
 import re
 import json
 
-from scipy.ndimage import uniform_filter1d
+from scipy.ndimage import uniform_filter1d, gaussian_filter1d
 from sympy import lambdify
 from tabulate import tabulate
 import numpy as np
@@ -98,19 +98,27 @@ def get_time_cut(source):
     :return: stable time cut  for source
     """
     if source == "g32p745":
-        time_cut = [58400, 58600]
+        time_cut = [58400, 59800]
     elif source == "w51":
-        time_cut = [58400, 58600]
+        time_cut = [58400, 59800]
     elif source == "g59p783":
-        time_cut = [58400, 58600]
+        time_cut = [58400, 59800]
     elif source == "on1":
-        time_cut = [58400, 58600]
+        time_cut = [58400, 59800]
     elif source == "s252":
-        time_cut = [58400, 58600]
+        time_cut = [58400, 59800]
     elif source == "ngc7538":
-        time_cut = [58400, 58600]
+        time_cut = [58400, 59800]
+    elif source == "w49n":
+        time_cut = [58400, 59800]
+    elif source == "g85p41":
+        time_cut = [58400, 59800]
+    elif source == "g78p12":
+        time_cut = [58400, 59800]
+    elif source == "g75p78":
+        time_cut = [58400, 59800]
     else:
-        time_cut = [58400, 58600]
+        time_cut = [58400, 59800]
     return time_cut
 
 
@@ -250,11 +258,15 @@ def main():
 
     out = np.array(values, dtype=dtype)
     out = np.sort(out, order='mjd')
-    out_filtered = uniform_filter1d(out['amp'], 10, mode='nearest')
+    out_filtered = gaussian_filter1d(out['amp'], 10, mode='nearest')
 
     fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
     ax1.scatter(out['mjd'], out['amp'])
-    ax1.plot(out['mjd'], out_filtered)
+    ax1.plot(out['mjd'], out_filtered, color='red')
+
+    fig2, ax2 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
+    out_filtered_2 = (out['amp'] + np.max(out_filtered))/out_filtered
+    ax2.scatter(out['mjd'], out_filtered_2, color='yellow')
 
     ax.legend()
     fig2 = plt.figure()
