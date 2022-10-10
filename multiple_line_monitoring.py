@@ -212,11 +212,10 @@ def main():
     slider_max = []
     trends = []
     lines2 = []
-    fig1 = plt.figure()
-    ax = gca()
 
     out = np.array([[],[]])
-
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
+    fig0, ax0 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
     for source in sources:
         cut_index = get_time_cut(source)
         date = lines[source]["date"]
@@ -239,16 +238,22 @@ def main():
                 fit += " + " + str(z[2])
             else:
                 fit += " + " + str(z[2])
-            line = plt.plot(date, y_data, "*", label=source + " velocity " + velocities_tmp[i] + " " + "y= " + fit)
+            line = ax.plot(date, y_data, "*", label=source + " velocity " + velocities_tmp[i] + " " + "y= " + fit)
             lines2.append(line)
-            trend = plt.plot(date, p(date), "r--", visible=False)
+            trend = ax.plot(date, p(date), "r--", visible=False)
             trends.append(trend)
 
             start_cut = find_nearest_index(date, cut_index[0])
             end_cut = find_nearest_index(date, cut_index[1])
             out = np.concatenate((out, [date[start_cut:end_cut],
                                         y_data[start_cut:end_cut]/np.mean(y_data[start_cut:end_cut])]), axis=1)
+
+            out_filtered_source = gaussian_filter1d(y_data, 10, mode='nearest')
+        
+            ax0.scatter(date, out_filtered_source, label=source + " velocity " + velocities_tmp[i])
             i += 1
+
+    ax0.legend()
 
     dtype = [('mjd', float), ('amp', float)]
     values = []
