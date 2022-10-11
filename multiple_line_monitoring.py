@@ -31,7 +31,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='''Monitoring multiple sources. ''')
     parser.add_argument("line", help="line", type=int)
     parser.add_argument("--sources", help="Sources Names", type=str, nargs='+',
-                        default="[g32p745, w51, g59p783, on1, s252, ngc7538, w3oh, w49n, g85p41, g78p12, g75p78]")
+                        default="[g32p745, w51, g59p783, on1, s252, ngc7538, w3oh, w49n, "
+                                "g85p41, g78p12, g75p78, g25p65, g25p710, s255, g90p92]")
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str,
                         default="config/config.cfg")
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 2.0')
@@ -81,11 +82,21 @@ def get_velocities_tmp(source):
     elif source == "w49n":
         velocities_tmp = ["9.27"]
     elif source == "g85p41":
-        velocities_tmp = ["-31.65"]
+        velocities_tmp = ["-29.4"]
     elif source == "g78p12":
         velocities_tmp = ["-6.13"]
     elif source == "g75p78":
         velocities_tmp = ["-2.57"]
+    elif source == "g25p65":
+        velocities_tmp = ["41.81"]
+    elif source == "g25p710":
+        velocities_tmp = ["95.46"]
+    elif source == "w3oh":
+        velocities_tmp = ["-44.6"]
+    elif source == "s255":
+        velocities_tmp = ["5.90"]
+    elif source == "g90p92":
+        velocities_tmp = ["-69.2"]
     else:
         velocities_tmp = ["-44.6"]
     return velocities_tmp
@@ -116,6 +127,16 @@ def get_time_cut(source):
     elif source == "g78p12":
         time_cut = [58400, 59800]
     elif source == "g75p78":
+        time_cut = [58400, 59800]
+    elif source == "g25p65":
+        time_cut = [58400, 59800]
+    elif source == "g25p710":
+        time_cut = [58400, 59800]
+    elif source == "w3oh":
+        time_cut = [58400, 59800]
+    elif source == "s255":
+        time_cut = [58400, 59800]
+    elif source == "g90p92":
         time_cut = [58400, 59800]
     else:
         time_cut = [58400, 59800]
@@ -248,12 +269,7 @@ def main():
             out = np.concatenate((out, [date[start_cut:end_cut],
                                         y_data[start_cut:end_cut]/np.mean(y_data[start_cut:end_cut])]), axis=1)
 
-            out_filtered_source = gaussian_filter1d(y_data, 10, mode='nearest')
-            y_new = y_data / (out_filtered_source / np.max(out_filtered_source))
-            ax0.scatter(date, y_new, label=source + " velocity " + velocities_tmp[i])
             i += 1
-
-    ax0.legend()
 
     dtype = [('mjd', float), ('amp', float)]
     values = []
@@ -265,6 +281,28 @@ def main():
     out = np.sort(out, order='mjd')
     out_filtered = gaussian_filter1d(out['amp'], 10, mode='nearest')
 
+    for source in sources:
+        cut_index = get_time_cut(source)
+        date = lines[source]["date"]
+        start_cut = find_nearest_index(date, cut_index[0])
+        end_cut = find_nearest_index(date, cut_index[1])
+        date = date[start_cut:end_cut]
+
+        velocities_tmp = get_velocities_tmp(source)
+        i = 0
+        for y_data in lines[source]["y_data"]:
+            y_data = y_data[start_cut:end_cut]
+            out_filtered_tmp = []
+
+            for d in range(0, len(date)):
+                index = find_nearest_index(out['mjd'], date[d])
+                out_filtered_tmp.append(out_filtered[index])
+
+            y_new = y_data / (out_filtered_tmp / np.max(out_filtered_tmp))
+            ax0.scatter(date, y_new, label=source + " velocity " + velocities_tmp[i])
+            i += 1
+
+    ax0.legend()
     fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
     ax1.scatter(out['mjd'], out['amp'])
     ax1.plot(out['mjd'], out_filtered, color='red')
