@@ -249,8 +249,8 @@ def main():
                                         y_data[start_cut:end_cut]/np.mean(y_data[start_cut:end_cut])]), axis=1)
 
             out_filtered_source = gaussian_filter1d(y_data, 10, mode='nearest')
-        
-            ax0.scatter(date, out_filtered_source, label=source + " velocity " + velocities_tmp[i])
+            y_new = y_data / (out_filtered_source / np.max(out_filtered_source))
+            ax0.scatter(date, y_new, label=source + " velocity " + velocities_tmp[i])
             i += 1
 
     ax0.legend()
