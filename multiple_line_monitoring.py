@@ -188,7 +188,7 @@ def read_monitoring_files(monitoring_files, sources):
 
         for c in range(1, column_nr+1):
             if c - 1 in idexie_for_lines_to_plot:
-                tmp = data[c] / np.mean(data[c])
+                tmp = data[c]
                 lines[source]["y_data"].append(tmp)
 
     return lines
