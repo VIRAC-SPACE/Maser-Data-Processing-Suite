@@ -237,6 +237,7 @@ def main():
     out = np.array([[],[]])
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
     fig0, ax0 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
+    fig00, ax00 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
     for source in sources:
         cut_index = get_time_cut(source)
         date = lines[source]["date"]
@@ -298,11 +299,16 @@ def main():
                 index = find_nearest_index(out['mjd'], date[d])
                 out_filtered_tmp.append(out_filtered[index])
 
-            y_new = y_data / (out_filtered_tmp / np.max(out_filtered_tmp))
+            y_data_ = y_data / np.mean(y_data)
+            y_new = y_data_ / (out_filtered_tmp / np.max(out_filtered_tmp))
             ax0.scatter(date, y_new, label=source + " velocity " + velocities_tmp[i])
+
+            y_new_ = y_data / (out_filtered_tmp / np.max(out_filtered_tmp))
+            ax00.scatter(date, y_new_, label=source + " velocity " + velocities_tmp[i])
             i += 1
 
     ax0.legend()
+    ax00.legend()
     fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
     ax1.scatter(out['mjd'], out['amp'])
     ax1.plot(out['mjd'], out_filtered, color='red')
