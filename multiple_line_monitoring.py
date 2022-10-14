@@ -8,6 +8,7 @@ import sys
 import argparse
 import re
 import json
+from functools import reduce
 
 from scipy.ndimage import uniform_filter1d, gaussian_filter1d
 from sympy import lambdify
@@ -238,6 +239,7 @@ def main():
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
     fig0, ax0 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
     fig00, ax00 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
+    fig000, ax000 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
     for source in sources:
         cut_index = get_time_cut(source)
         date = lines[source]["date"]
@@ -307,8 +309,23 @@ def main():
             ax00.scatter(date, y_new_, label=source + " velocity " + velocities_tmp[i])
             i += 1
 
+            N = len(y_new_)
+            variability_index = ((np.max(y_new_) - np.std(y_new_)) - (np.min(y_new_) + np.std(y_new_))) / \
+                                ((np.max(y_new_) - np.std(y_new_)) + (np.min(y_new_) + np.std(y_new_)))
+            fluctuation_index = np.sqrt(np.abs((N / reduce(lambda x_, y_: x_ + y_,
+                                                           [(1.5 + 0.05 * i) ** 2 for i in y_new_]))
+                                               * ((reduce(lambda x_, y_: x_ + y_,
+                                                          [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y_new_]) -
+                                                   np.mean(y_new_) * reduce(lambda x_, y_: x_ + y_,
+                                                                       [i * (1.5 + 0.05 * i) ** 2 for i in y_new_]))
+                                                  / (N - 1)) - 1)) / np.mean(y_new_)
+
+            ax000.scatter(variability_index, fluctuation_index)
+
     ax0.legend()
     ax00.legend()
+    ax000.set_xlabel("variability index")
+    ax000.set_ylabel("fluctuation index")
     fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
     ax1.scatter(out['mjd'], out['amp'])
     ax1.plot(out['mjd'], out_filtered, color='red')
