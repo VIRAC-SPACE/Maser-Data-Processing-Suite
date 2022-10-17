@@ -10,12 +10,11 @@ import re
 import json
 from functools import reduce
 
-from scipy.ndimage import uniform_filter1d, gaussian_filter1d
+from scipy.ndimage import gaussian_filter1d
 from sympy import lambdify
 from tabulate import tabulate
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import gca
 from matplotlib.widgets import Slider, TextBox, Button
 from pandas import DataFrame
 from scipy import stats
@@ -283,6 +282,10 @@ def main():
     out = np.array(values, dtype=dtype)
     out = np.sort(out, order='mjd')
     out_filtered = gaussian_filter1d(out['amp'], 10, mode='nearest')
+    correction = np.zeros((len(out_filtered), 2))
+    correction[:, 0] = out['mjd']
+    correction[:, 1] = out_filtered
+    np.save(get_configs('parameters', 'amplitude_correction_file'), correction)
 
     for source in sources:
         cut_index = get_time_cut(source)
