@@ -29,7 +29,7 @@ def get_configs(section, key):
 
 
 def main():
-    correction_file =  get_configs("parameters", "amplitude_correction_file") + ".npy"
+    correction_file = get_configs("parameters", "amplitude_correction_file") + ".npy"
     correction_data = np.load(correction_file)
     correction_mjd = correction_data[:, 0]
     correction_factor = correction_data[:, 1]
@@ -42,7 +42,7 @@ def main():
     result_files_dir = get_configs("paths", "resultFilePath")
     result_files = os.listdir(result_files_dir)
 
-    for result_file in result_files[0:10]:
+    for result_file in result_files:
         print(result_file)
         with open(result_files_dir + result_file) as results:
             if os.stat(result_files_dir + result_file).st_size != 0:
@@ -54,26 +54,23 @@ def main():
                 source_velocities = get_configs('velocities', source + "_" + line).split(",")
                 source_velocities = [x.strip() for x in source_velocities]
 
-                symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
-                colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
-                fig2, ax2 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
+                for experiments in results_data:
+                    mjd = experiments.split("_")[1]
+                    correction_index = find_nearest_index(correction_mjd, float(mjd))
+                    factor = correction_factor[correction_index]
 
-                for i in range(0, len(source_velocities)):
-                    x = []
-                    y = []
-                    for experiments in results_data:
-                        mjd = experiments.split("_")[1]
-                        correction_index = find_nearest_index(correction_mjd, float(mjd))
-                        factor = correction_factor[correction_index]
+                    for i in range(0, len(source_velocities)):
+                        results_data[experiments]['polarizationU1'][i][1] = \
+                            results_data[experiments]['polarizationU1'][i][1] / factor
 
-                        monnitoring_data = results_data[experiments]['polarizationAVG']
-                        mjd_monitoring = results_data[experiments]['modifiedJulianDays']
-                        x.append(float(mjd_monitoring))
-                        y.append(float(monnitoring_data[i][1]) / factor)
+                        results_data[experiments]['polarizationU9'][i][1] = \
+                            results_data[experiments]['polarizationU9'][i][1] / factor
 
-                    ax2.plot(x, y, symbols[i] + colors[i], label="Velocity " + source_velocities[i])
-                    ax2.set_title(source + "_" + line)
-                    ax2.legend()
+                        results_data[experiments]['polarizationAVG'][i][1] = \
+                            results_data[experiments]['polarizationAVG'][i][1] / factor
+
+        with open(result_files_dir + result_file, "w") as results_out:
+            results_out.write(json.dumps(results_data, indent=2))
 
     plt.show()
 
