@@ -21,7 +21,7 @@ import pandas as pd
 from astropy.convolution import Gaussian1DKernel, convolve
 import peakutils
 from parsers.configparser_ import ConfigParser
-from utils.help import indexies, compute_gauss
+from utils.help import indexies, compute_gauss, find_nearest_index
 from utils.ploting_qt5 import Plot
 
 
@@ -69,31 +69,43 @@ def is_outlier(points, threshold):
     return modified_z_score < threshold
 
 
-def replace_bad_points(xdata, ydata, x_bad_point, y_bad_point, data):
+def replace_bad_points(xdata, ydata, x_bad_points):
     """
 
     :param xdata: frequencies
     :param ydata: amplitudes
-    :param x_bad_point: frequencies bad points
-    :param y_bad_point: amplitudes bad points
-    :param data: data
-    :return: return data arrays where bad points are replaced with polinom values
+    :param x_bad_points: frequencies bad points
+    :return: return data array where bad points are replaced with polynomial values
     """
-    tempx = []
-    tempy = []
     xlist = xdata.tolist()
+
+    #ydata[ydata < 0] = np.median(ydata)
+
+    ytmp = ydata.tolist()
+    bad_index = []
+
+    for x in x_bad_points:
+        bad_index.append(xlist.index(x))
+
+    for i in sorted(bad_index, reverse=True):
+        del ytmp[i]
+
+    for x in x_bad_points:
+        ydata[xlist.index(x)] = np.median(ytmp[0:100])
+
+    #ydata[ydata < 0] = 0
+    '''
+    print("aaa", np.min(ydata))
+
     polyfit = np.polyfit(xdata, ydata, 10)
     poly1d = np.poly1d(polyfit)
 
-    for idx, point in enumerate(x_bad_point):
-        index = xlist.index(point)
-        if y_bad_point[idx] / ydata[index] > 1.10 or y_bad_point[idx] / ydata[index] < 0.90:
-            tempx.append(x_bad_point[idx])
-            tempy.append(y_bad_point[idx])
-            ydata[index] = poly1d(x_bad_point[idx])
-        else:
-            ydata[index] = data[index, 1]
-    return tempx, tempy
+    for x in x_bad_points:
+        ydata[xlist.index(x)] = poly1d(xlist.index(x))
+        
+    '''
+
+    return ydata
 
 
 def signal_to_noise_ratio(frequency, amplitude, cuts):
@@ -128,6 +140,56 @@ def signal_to_noise_ratio(frequency, amplitude, cuts):
     return ston
 
 
+def split_data_to_signal_and_noise(velocity, amplitude, cuts):
+    """
+
+    :param velocity: velocity
+    :param amplitude: amplitude
+    :param cuts: signal region
+    :return: list of signal and list of noise
+    """
+
+    cuts_index = list()
+    cuts_index.append(0)
+    cuts_index2 = list()
+
+    for cut in cuts:
+        cuts_index.append((np.abs(velocity - float(cut[0]))).argmin())
+        cuts_index.append((np.abs(velocity - float(cut[1]))).argmin())
+        cuts_index2.append((np.abs(velocity - float(cut[0]))).argmin())
+        cuts_index2.append((np.abs(velocity - float(cut[1]))).argmin())
+
+    cuts_index = sorted(cuts_index)
+    cuts_index.append(-1)
+    cuts_index2 = sorted(cuts_index2)
+
+    non_signal_amplitude = list()
+    signal_amplitude = list()
+
+    i = 0
+    j = 1
+    while i != len(cuts_index):
+        non_signal_amplitude.extend(amplitude[cuts_index[i]: cuts_index[j]])
+        i = i + 2
+        j = j + 2
+
+    m = 0
+    n = 1
+    while m != len(cuts_index2):
+        signal_amplitude.extend(amplitude[cuts_index2[m]: cuts_index2[n]])
+        m = m + 2
+        n = n + 2
+
+    return non_signal_amplitude, signal_amplitude
+
+
+def rms(noise):
+    std = np.std(noise)
+    number_of_points = len(noise)
+    rms = np.sqrt(sum([(n - std) ** 2 for n in noise]) / number_of_points)
+    return rms
+
+
 class Analyzer(QWidget):
     """
     GUI application
@@ -135,12 +197,12 @@ class Analyzer(QWidget):
 
     def __init__(self, output_file, line):
         super().__init__()
+        self.ydata = []
         self.setWindowIcon(QIcon('viraclogo.png'))
         self.center()
         self.grid = QGridLayout()
         self.setLayout(self.grid)
         self.grid.setSpacing(10)
-
         self.change_params_buttons = None
         self.change_params = False
         self.info_set = set()
@@ -633,7 +695,7 @@ class Analyzer(QWidget):
                     self.y_bad_point_left.append(self.ydata_left[index])
                     self.x_bad_points_left.append(self.xdata[index])
                     self.badplot_1_left[0].set_data(self.x_bad_points_left, self.y_bad_point_left)
-                    self.ydata_left[index] = poly1d(self.xdata[index])
+                    #self.ydata_left[index] = poly1d(self.xdata[index])
                     event.canvas.draw()
                     event.canvas.flush_events()
 
@@ -653,6 +715,9 @@ class Analyzer(QWidget):
         for cut in self.cuts:
             cuts_index.append((np.abs(self.xdata - float(cut[0]))).argmin())
             cuts_index.append((np.abs(self.xdata - float(cut[1]))).argmin())
+
+        self.ydata_left = \
+            replace_bad_points(self.xdata, self.ydata_left, self.x_bad_points_left)
 
         cuts_index.append(self.n)
         poly_array_x = list()
@@ -935,6 +1000,18 @@ class Analyzer(QWidget):
             signal_to_noise_ratio(self.xdata, self.z2_not_smooht_data, self.cuts)
         result[expername]["AVG_STON_AVG"] = \
             signal_to_noise_ratio(self.xdata, self.avg_y_not_smoohtData, self.cuts)
+
+        non_signal_amplitude_left, _ = split_data_to_signal_and_noise(self.xdata, self.z1_not_smooht_data, self.cuts)
+        non_signal_amplitude_right, _ = split_data_to_signal_and_noise(self.xdata, self.z2_not_smooht_data, self.cuts)
+        non_signal_amplitude_avg, _ = split_data_to_signal_and_noise(self.xdata, self.avg_y_not_smoohtData, self.cuts)
+
+        rms_left = rms(non_signal_amplitude_left)
+        rms_right = rms(non_signal_amplitude_right)
+        rms_avg = rms(non_signal_amplitude_avg)
+
+        result[expername]["rms_left"] = rms_left
+        result[expername]["rms_right"] = rms_right
+        result[expername]["rms_avg"] = rms_avg
 
         with open(result_file_path + result_file_name, "w") as output:
             output.write(json.dumps(result, indent=2))
