@@ -4,6 +4,7 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
+import h5py
 
 
 PACKAGE_PARENT = '..'
@@ -54,23 +55,53 @@ def main():
                 source_velocities = get_configs('velocities', source + "_" + line).split(",")
                 source_velocities = [x.strip() for x in source_velocities]
 
-                for experiments in results_data:
-                    mjd = experiments.split("_")[1]
+                output_file_path = get_configs("paths", "outputFilePath") + line + "/" + source + "/"
+
+                for experiment in results_data:
+                    mjd = results_data[experiment]["modifiedJulianDays"]
                     correction_index = find_nearest_index(correction_mjd, float(mjd))
                     factor = correction_factor[correction_index]
 
+                    station = experiment.split("_")[5]
+                    index = experiment.split("_")[6]
+                    output_file_name = source + "_" + str(mjd) + "_" + station + "_" + index + ".h5"
+                    print(output_file_name)
+
+                    output_file = h5py.File(output_file_path + output_file_name, "a")
+                    if "amplitude_corrected" in output_file and "gain_corrected" not in output_file:
+                        gain_corrected_results = output_file["amplitude_corrected"][()]
+                        gain_corrected_results[:, 1] = gain_corrected_results[:, 1]/factor
+                        gain_corrected_results[:, 2] = gain_corrected_results[:, 2]/factor
+                        gain_corrected_results[:, 3] = gain_corrected_results[:, 3]/factor
+                        output_file.create_dataset("gain_corrected", data=gain_corrected_results)
+
+                    if "amplitude_corrected_not_smooht" in output_file and "gain_corrected_smoothed" not in output_file:
+                        gain_corrected_smoothed_results = output_file["amplitude_corrected_not_smooht"][()]
+                        gain_corrected_smoothed_results[:, 1] = gain_corrected_smoothed_results[:, 1] / factor
+                        gain_corrected_smoothed_results[:, 2] = gain_corrected_smoothed_results[:, 2] / factor
+                        gain_corrected_smoothed_results[:, 3] = gain_corrected_smoothed_results[:, 3] / factor
+                        output_file.create_dataset("gain_corrected_smoothed", data=gain_corrected_smoothed_results)
+
+                    output_file.close()
+                    #break
+
+                    '''
                     for i in range(0, len(source_velocities)):
-                        results_data[experiments]['polarizationU1'][i][1] = \
+                        results_data[experiment]['polarizationU1'][i][1] = \
                             results_data[experiments]['polarizationU1'][i][1] / factor
 
-                        results_data[experiments]['polarizationU9'][i][1] = \
-                            results_data[experiments]['polarizationU9'][i][1] / factor
+                        results_data[experiment]['polarizationU9'][i][1] = \
+                            results_data[experiment]['polarizationU9'][i][1] / factor
 
-                        results_data[experiments]['polarizationAVG'][i][1] = \
-                            results_data[experiments]['polarizationAVG'][i][1] / factor
+                        results_data[experiment]['polarizationAVG'][i][1] = \
+                            results_data[experiment]['polarizationAVG'][i][1] / factor
+                    '''
 
+        '''
         with open(result_files_dir + result_file, "w") as results_out:
             results_out.write(json.dumps(results_data, indent=2))
+        '''
+        #break
 
     plt.show()
 
