@@ -1029,6 +1029,38 @@ class Analyzer(QWidget):
         else:
             result_file.create_dataset("amplitude_corrected", data=total_results)
             result_file.create_dataset("amplitude_corrected_not_smooht", data=total_results2)
+
+        factor = float(get_configs("parameters", "amplitude_correction"))
+
+        if "gain_corrected" not in result_file:
+            gain_corrected_results = total_results
+            gain_corrected_results[:, 1] = gain_corrected_results[:, 1] / factor
+            gain_corrected_results[:, 2] = gain_corrected_results[:, 2] / factor
+            gain_corrected_results[:, 3] = gain_corrected_results[:, 3] / factor
+            result_file.create_dataset("gain_corrected", data=gain_corrected_results)
+        else:
+            gain_corrected = result_file["gain_corrected"]
+            gain_corrected_results = total_results
+            gain_corrected_results[:, 1] = gain_corrected_results[:, 1] / factor
+            gain_corrected_results[:, 2] = gain_corrected_results[:, 2] / factor
+            gain_corrected_results[:, 3] = gain_corrected_results[:, 3] / factor
+            gain_corrected[...] = gain_corrected_results
+
+        if "gain_corrected_smoothed" not in result_file:
+            gain_corrected_smoothed_results = total_results2
+            gain_corrected_smoothed_results[:, 1] = gain_corrected_smoothed_results[:, 1] / factor
+            gain_corrected_smoothed_results[:, 2] = gain_corrected_smoothed_results[:, 2] / factor
+            gain_corrected_smoothed_results[:, 3] = gain_corrected_smoothed_results[:, 3] / factor
+            result_file.create_dataset("gain_corrected_smoothed", data=gain_corrected_smoothed_results)
+
+        else:
+            gain_corrected_smoothed = result_file["gain_corrected_smoothed"]
+            gain_corrected_smoothed_results = total_results2
+            gain_corrected_smoothed_results[:, 1] = gain_corrected_smoothed_results[:, 1] / factor
+            gain_corrected_smoothed_results[:, 2] = gain_corrected_smoothed_results[:, 2] / factor
+            gain_corrected_smoothed_results[:, 3] = gain_corrected_smoothed_results[:, 3] / factor
+            gain_corrected_smoothed[...] = gain_corrected_results
+
         result_file.close()
         self._quit()
 
