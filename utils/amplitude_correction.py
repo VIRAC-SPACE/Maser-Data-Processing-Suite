@@ -61,28 +61,36 @@ def main():
                     mjd = results_data[experiment]["modifiedJulianDays"]
                     correction_index = find_nearest_index(correction_mjd, float(mjd))
                     factor = correction_factor[correction_index]
+                    experiment_data = experiment.split("_")
 
-                    station = experiment.split("_")[5]
-                    index = experiment.split("_")[6]
+                    if len(experiment_data) == 7:
+                        station = experiment.split("_")[5]
+                        index = experiment.split("_")[6]
+                    elif len(experiment_data) == 4:
+                        station = experiment.split("_")[2]
+                        index = experiment.split("_")[3]
+
                     output_file_name = source + "_" + str(mjd) + "_" + station + "_" + index + ".h5"
                     print(output_file_name)
 
-                    output_file = h5py.File(output_file_path + output_file_name, "a")
-                    if "amplitude_corrected" in output_file and "gain_corrected" not in output_file:
-                        gain_corrected_results = output_file["amplitude_corrected"][()]
-                        gain_corrected_results[:, 1] = gain_corrected_results[:, 1]/factor
-                        gain_corrected_results[:, 2] = gain_corrected_results[:, 2]/factor
-                        gain_corrected_results[:, 3] = gain_corrected_results[:, 3]/factor
-                        output_file.create_dataset("gain_corrected", data=gain_corrected_results)
+                    if os.path.isfile(output_file_path + output_file_name):
+                        output_file = h5py.File(output_file_path + output_file_name, "a")
+                        if "amplitude_corrected" in output_file and "gain_corrected" not in output_file:
+                            gain_corrected_results = output_file["amplitude_corrected"][()]
+                            gain_corrected_results[:, 1] = gain_corrected_results[:, 1]/factor
+                            gain_corrected_results[:, 2] = gain_corrected_results[:, 2]/factor
+                            gain_corrected_results[:, 3] = gain_corrected_results[:, 3]/factor
+                            output_file.create_dataset("gain_corrected", data=gain_corrected_results)
 
-                    if "amplitude_corrected_not_smooht" in output_file and "gain_corrected_smoothed" not in output_file:
-                        gain_corrected_smoothed_results = output_file["amplitude_corrected_not_smooht"][()]
-                        gain_corrected_smoothed_results[:, 1] = gain_corrected_smoothed_results[:, 1] / factor
-                        gain_corrected_smoothed_results[:, 2] = gain_corrected_smoothed_results[:, 2] / factor
-                        gain_corrected_smoothed_results[:, 3] = gain_corrected_smoothed_results[:, 3] / factor
-                        output_file.create_dataset("gain_corrected_smoothed", data=gain_corrected_smoothed_results)
+                        if "amplitude_corrected_not_smooht" in output_file and "gain_corrected_smoothed" not in output_file:
+                            gain_corrected_smoothed_results = output_file["amplitude_corrected_not_smooht"][()]
+                            gain_corrected_smoothed_results[:, 1] = gain_corrected_smoothed_results[:, 1] / factor
+                            gain_corrected_smoothed_results[:, 2] = gain_corrected_smoothed_results[:, 2] / factor
+                            gain_corrected_smoothed_results[:, 3] = gain_corrected_smoothed_results[:, 3] / factor
+                            output_file.create_dataset("gain_corrected_smoothed", data=gain_corrected_smoothed_results)
 
-                    output_file.close()
+                        output_file.close()
+
                     #break
 
                     '''
