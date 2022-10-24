@@ -967,11 +967,12 @@ class Analyzer(QWidget):
         max_apmlitudes_u9 = [np.max(value) for value in max_amplitude_list_u9]
         max_apmlitudes_uavg = [np.max(value) for value in max_amplitude_list_uavg]
 
+        factor = float(get_configs("parameters", "amplitude_correction"))
         for maximum in range(0, len(max_apmlitudes_u1)):
-            max_apmlitudes_u1[maximum] = [source_velocities[maximum], max_apmlitudes_u1[maximum]]
-            max_apmlitudes_u9[maximum] = [source_velocities[maximum], max_apmlitudes_u9[maximum]]
+            max_apmlitudes_u1[maximum] = [source_velocities[maximum], max_apmlitudes_u1[maximum] / factor]
+            max_apmlitudes_u9[maximum] = [source_velocities[maximum], max_apmlitudes_u9[maximum] / factor]
             max_apmlitudes_uavg[maximum] = \
-                [source_velocities[maximum], max_apmlitudes_uavg[maximum]]
+                [source_velocities[maximum], max_apmlitudes_uavg[maximum] / factor]
 
         result[expername]["modifiedJulianDays"] = mjd
         result[expername]["location"] = location
