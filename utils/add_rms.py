@@ -130,6 +130,12 @@ def main():
                         results_data[experiment]["rms_right"] = rms_right
                         results_data[experiment]["rms_avg"] = rms_avg
 
+                    else:
+                        print("amplitude_corrected not in output file " + output_file_name)
+                        results_data[experiment]["rms_left"] = 1.5
+                        results_data[experiment]["rms_right"] = 1.5
+                        results_data[experiment]["rms_avg"] = 1.5
+
                 with open(result_files_dir + result_file, "w") as output:
                     output.write(json.dumps(results_data, indent=2))
 
