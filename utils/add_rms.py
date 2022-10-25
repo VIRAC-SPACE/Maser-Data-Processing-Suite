@@ -103,38 +103,42 @@ def main():
                     output_file_name = source + "_" + str(mjd) + "_" + station + "_" + index + ".h5"
                     print(output_file_name)
 
-                    output_file = h5py.File(output_file_path + output_file_name, "r")
-                    if "amplitude_corrected" in output_file:
-                        output_data = output_file["amplitude_corrected"][()]
+                    try:
+                        output_file = h5py.File(output_file_path + output_file_name, "r")
+                        if "amplitude_corrected" in output_file:
+                            output_data = output_file["amplitude_corrected"][()]
 
-                        xdata = output_data[:, 0]
-                        z1_not_smooht_data = output_data[:, 1]
-                        z2_not_smooht_data = output_data[:, 2]
-                        avg_y_not_smoohtData = output_data[:, 3]
+                            xdata = output_data[:, 0]
+                            z1_not_smooht_data = output_data[:, 1]
+                            z2_not_smooht_data = output_data[:, 2]
+                            avg_y_not_smoohtData = output_data[:, 3]
 
-                        cuts = get_configs('cuts', source + "_" + str(line)).split(";")
-                        cuts = [c.split(",") for c in cuts]
+                            cuts = get_configs('cuts', source + "_" + str(line)).split(";")
+                            cuts = [c.split(",") for c in cuts]
 
-                        non_signal_amplitude_left, _ = split_data_to_signal_and_noise(xdata, z1_not_smooht_data,
-                                                                                      cuts)
-                        non_signal_amplitude_right, _ = split_data_to_signal_and_noise(xdata, z2_not_smooht_data,
-                                                                                       cuts)
-                        non_signal_amplitude_avg, _ = split_data_to_signal_and_noise(xdata, avg_y_not_smoohtData,
-                                                                                     cuts)
+                            non_signal_amplitude_left, _ = split_data_to_signal_and_noise(xdata, z1_not_smooht_data,
+                                                                                          cuts)
+                            non_signal_amplitude_right, _ = split_data_to_signal_and_noise(xdata, z2_not_smooht_data,
+                                                                                           cuts)
+                            non_signal_amplitude_avg, _ = split_data_to_signal_and_noise(xdata, avg_y_not_smoohtData,
+                                                                                         cuts)
 
-                        rms_left = rms(non_signal_amplitude_left)
-                        rms_right = rms(non_signal_amplitude_right)
-                        rms_avg = rms(non_signal_amplitude_avg)
+                            rms_left = rms(non_signal_amplitude_left)
+                            rms_right = rms(non_signal_amplitude_right)
+                            rms_avg = rms(non_signal_amplitude_avg)
 
-                        results_data[experiment]["rms_left"] = rms_left
-                        results_data[experiment]["rms_right"] = rms_right
-                        results_data[experiment]["rms_avg"] = rms_avg
+                            results_data[experiment]["rms_left"] = rms_left
+                            results_data[experiment]["rms_right"] = rms_right
+                            results_data[experiment]["rms_avg"] = rms_avg
 
-                    else:
-                        print("amplitude_corrected not in output file " + output_file_name)
-                        results_data[experiment]["rms_left"] = 1.5
-                        results_data[experiment]["rms_right"] = 1.5
-                        results_data[experiment]["rms_avg"] = 1.5
+                        else:
+                            print("amplitude_corrected not in output file " + output_file_name)
+                            results_data[experiment]["rms_left"] = 1.5
+                            results_data[experiment]["rms_right"] = 1.5
+                            results_data[experiment]["rms_avg"] = 1.5
+
+                    except FileNotFoundError:
+                        print("This file do not exist " + output_file_name)
 
                 with open(result_files_dir + result_file, "w") as output:
                     output.write(json.dumps(results_data, indent=2))
