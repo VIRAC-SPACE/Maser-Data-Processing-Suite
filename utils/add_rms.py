@@ -138,6 +138,9 @@ def main():
                             results_data[experiment]["rms_avg"] = 1.5
 
                     except FileNotFoundError:
+                        results_data[experiment]["rms_left"] = 1.5
+                        results_data[experiment]["rms_right"] = 1.5
+                        results_data[experiment]["rms_avg"] = 1.5
                         print("This file do not exist " + output_file_name)
 
                 with open(result_files_dir + result_file, "w") as output:
