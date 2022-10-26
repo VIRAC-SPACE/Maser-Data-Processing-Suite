@@ -4,6 +4,7 @@
 """
 Create LATEX tables for publications
 """
+import json
 import sys
 import os
 import argparse
@@ -14,12 +15,13 @@ from matplotlib import rcParams
 from matplotlib.ticker import StrMethodFormatter
 import numpy as np
 
+
 PACKAGE_PARENT = '..'
 SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
 sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 
 from parsers.configparser_ import ConfigParser
-from utils.help import file_len, correct_numpy_read_data, convert_datetime_object_to_mjd
+from utils.help import file_len, correct_numpy_read_data, convert_datetime_object_to_mjd, find_nearest_index
 
 
 def parse_arguments():
@@ -78,6 +80,20 @@ def main():
     for key, value in configuration_items.items():
         rcParams[key] = value
 
+    result_file_name = get_args("source") + "_" + get_args("line") + ".json"
+    result_file_path = get_configs("paths", "resultFilePath")
+
+    correction_file = get_configs("parameters", "amplitude_correction_file") + ".npy"
+    correction_data = np.load(correction_file)
+    correction_mjd = correction_data[:, 0]
+    correction_factor = correction_data[:, 1]
+
+    rms = []
+    with open(result_file_path + result_file_name) as result_data:
+        result = json.load(result_data)
+        for experiment in result:
+            rms.append(result[experiment]['rms_avg'])
+
     old_monitoring_file = get_configs("paths", "oldMonitoringFilePath") + get_args("source") + ".dat"
     new_monitoring_file = get_configs("paths", "monitoringFilePath") + \
                           get_args("source") + "_" + \
@@ -90,6 +106,7 @@ def main():
                            get_args("line")).replace(" ", "").split(",")
     components = [i for i in range(1, component_count + 1)]
 
+    old_x = []
     if os.path.isfile(old_monitoring_file) and os.path.isfile(new_monitoring_file):
         new_data = np.load(new_monitoring_file, allow_pickle=True)
         new_x = new_data[0][0]
@@ -155,6 +172,8 @@ def main():
     variability_index = dict()
     variances_normal = dict()
     fluctuation_index = dict()
+    Xhi_sqer_red = dict()
+    Xhi_sqer = dict()
     result_org = [x]
 
     print("\n")
@@ -168,7 +187,18 @@ def main():
     print("\hline")
 
     ax1.plot([], [], ' ', label="km sec$^{-1}$")
+    if len(old_x) > 0:
+        rms_old = [np.mean(rms)] * len(old_x)
+        rms_old.extend(rms)
+        rms = rms_old
+
+    factor = []
+    for m in range(0, len(x)):
+        correction_index = find_nearest_index(correction_mjd, x[m])
+        factor.append(correction_factor[correction_index])
+
     for component in components:
+
         index = components.index(component)
         if old:
             y = data[:, index + 1]
@@ -182,28 +212,52 @@ def main():
             y = y[a:b]
         N = len(y)
 
-        ax1.scatter(x, y, color=colors[index], marker=symbols[index])
+        # ax1.scatter(x, y/y[1], color=colors[index], marker=symbols[index])
+        # ax1.scatter(x, y/y[1], color=colors[index], marker=symbols[index], label=str(velocity[index]))
 
+        ax1.scatter(x, y, color=colors[index], marker=symbols[index])
         ax1.scatter(x, y, color=colors[index], marker=symbols[index], label=str(velocity[index]))
 
-        ax1.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
+        np.savetxt(get_args("source") + "_" + str(index) + ".txt", np.vstack((x, y)).T, fmt='%8.1f  %8.1f')
+        ax1.errorbar(x[0], y[0], yerr=1.5 + 0.1 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
         result_org.append(y)
         variances[component] = reduce(lambda x_, y_: x_ + y_, [((i - np.mean(y)) / np.std(y)) ** 2 for i in y])
         variability_index[component] = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y))) \
-                                          / ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
+                                       / ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
         variances_normal[component] = variances[component] * (1 / N - 1)
 
+        error = []
+        for i in range(0, len(y)):
+            if 1-factor[i] < 0.05:
+                error.append(rms[i] + y[i] * 0.05)
+            else:
+                error.append(rms[i] + y[i] * (1-factor[i]))
+
         fluctuation_index[component] = np.sqrt(
-            np.abs((N / reduce(lambda x_, y_: x_ + y_, [(1.5 + 0.05 * i) ** 2 for i in y])) *
+            np.abs((N / reduce(lambda x_, y_: x_ + y_, [(rms[list(y).index(i)] +
+                                                         error[list(y).index(i)]) ** 2 for i in y])) *
                    ((reduce(lambda x_, y_: x_ + y_,
-                            [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y]) -
+                            [i ** 2 * (rms[list(y).index(i)] + error[list(y).index(i)]) ** 2 for i in y]) -
                      np.mean(y) * reduce(lambda x_, y_: x_ + y_,
-                                         [i * (1.5 + 0.05 * i) ** 2 for i in y]))
+                                         [i * (rms[list(y).index(i)] + 0.1 * i) ** 2 for i in y]))
                     / (N - 1)) - 1)) / np.mean(y)
 
+        Xhi_sqer_red[component] = reduce(lambda x_, y_: x_ + y_,
+                                         [((i - np.mean(y)) / (1.9 + 0.1 * i)) ** 2 for i in y]) / (N - 1)
+
+        Xhi_sqer[component] = reduce(lambda x_, y_: x_ + y_, [((i - np.mean(y)) / (1.9 + 0.2 * i)) ** 2 for i in y])
+
+        Xhi_sqer[component] = sum(((i - np.mean(y)) / (1.9 + 0.2 * i)) ** 2 for i in y)
+
         v = velocity[index]
-        print(get_args("source") + " & " + "{} &  {} & {} & {:.1f} & {:3} &  {:.3f} & {:.3f} & {:.3f}\\\\".
-              format(int(x[0]), int(x[-1]), N,  ((int(x[-1]) - int(x[0]))/N)/12,  v, np.mean(y), variability_index[component], fluctuation_index[component]))
+        # print(get_configs("Full_source_name", get_args("source")) + " & " + "{} &  {} & {} & {:.1f} & {:3} &  {:.3f} & {:.3f} & {:.3f}\\\\".
+        # format(int(x[0]), int(x[-1]), N,  len(x) / ((np.max(x) - np.min(x)) / 365) / 12,  v, np.mean(y), variability_index[component], fluctuation_index[component]))
+
+        print(get_configs("Full_source_name",
+                          get_args("source")) + "  {}  {}  {}  {:.1f}  {:3}  {:.3f}  {:.3f}  {:.3f}  {:.3f} {:.3f}".
+              format(int(x[0]), int(x[-1]), N, len(x) / ((np.max(x) - np.min(x)) / 365) / 12, v, np.mean(y),
+                     variability_index[component], fluctuation_index[component], Xhi_sqer_red[component],
+                     Xhi_sqer[component]))
 
         y_min = np.min(y)
         if y_min < 0:
