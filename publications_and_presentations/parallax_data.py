@@ -198,6 +198,12 @@ def main(infile):
                                                          [i * error[list(y_data).index(i)] ** 2 for i in y_data]))
                                     / (N - 1)) - 1)) / np.mean(y_data)
 
+                        xhi_sqer_red = reduce(lambda x_, y_: x_ + y_,
+                                              [((i - np.mean(y_data)) /
+                                                error[list(y_data).index(i)]) ** 2 for i in y_data]) / (
+                                               N - 1)
+                        print(xhi_sqer_red)
+
                         if not np.isnan(fluctuation_index):
                             maser.variability_indexes.append(np.float64(variability_index))
                             maser.fluctuation_indexes.append(np.float64(fluctuation_index))
