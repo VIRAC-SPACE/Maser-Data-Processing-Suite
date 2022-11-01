@@ -45,10 +45,10 @@ def main(infile):
 
     Maser = namedtuple('Maser', 'name  x y flux distance '
                                 'fluctuation_indexes variability_indexes mean_of_y absolute_mean_of_y, '
-                                'largest_y_mean_index  mean_of_y2 outlier')
+                                'largest_y_mean_index  mean_of_y2 xhi_sqer_red outlier')
 
     masers = [Maser(sources[i], x[i], y[i], [], distance[i], [], [], [], [],
-                    [-1], [], outlier=False) for i in range(0, len(sources))]
+                    [-1], [], [], outlier=False) for i in range(0, len(sources))]
     old_monitoring_file_path = get_configs("paths", "oldMonitoringFilePath")
     new_monitoring_file_path = get_configs("paths", "monitoringFilePath")
 
@@ -202,7 +202,8 @@ def main(infile):
                                               [((i - np.mean(y_data)) /
                                                 error[list(y_data).index(i)]) ** 2 for i in y_data]) / (
                                                N - 1)
-                        print(xhi_sqer_red)
+
+                        maser.xhi_sqer_red.append(xhi_sqer_red)
 
                         if not np.isnan(fluctuation_index):
                             maser.variability_indexes.append(np.float64(variability_index))
@@ -246,6 +247,8 @@ def main(infile):
     fig10, ax10 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)  # fig6
     fig11, ax11 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)  # fig7
     fig12, ax12 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)  # fig8
+    fig13, ax13 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)  # fig9
+    fig14, ax14 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)  # fig10
 
     x_ = []
     y_ = []
@@ -267,6 +270,7 @@ def main(infile):
     vis2 = []
     fis = []
     fis2 = []
+    xhi_sqer = []
 
     distances = []
     absolute_mean_of_ys = []
@@ -354,6 +358,7 @@ def main(infile):
 
             vis.extend(maser.variability_indexes)
             fis.extend(maser.fluctuation_indexes)
+            xhi_sqer.extend(maser.xhi_sqer_red)
             mean_of_ys2.extend(maser.mean_of_y)
 
         if len(absolute_mean_of_y) > 0:
@@ -390,8 +395,6 @@ def main(infile):
                 absolute_mean_of_ys.append(maser.absolute_mean_of_y[0])
                 mean_of_ys.append(np.mean(maser.mean_of_y))
                 mean_of_ys3.append(maser.mean_of_y2[0])
-
-
 
     titles_x_y = ["Flux", "CFlux", "Fluctuation indexes", "Variability indexes"]
     ax_x_y = [mw1, mw2, mw3, mw4]
@@ -450,6 +453,9 @@ def main(infile):
     ax9.scatter(mean_of_ys2, vis, alpha=0.3, c=color5)
     ax10.scatter(mean_of_ys2, fis, alpha=0.3, c=color5)
 
+    ax13.scatter(xhi_sqer, vis, alpha=0.3, c=color5)
+    ax14.scatter(xhi_sqer, fis, alpha=0.3, c=color5)
+
     ax9.set_xlabel("Flux density (Jy)")
     ax10.set_xlabel("Flux density (Jy)")
     ax9.set_ylabel("Variability indexes")
@@ -458,6 +464,10 @@ def main(infile):
     ax11.set_ylabel("Variability indexes")
     ax12.set_xlabel("Distance [Kpc]")
     ax12.set_ylabel("Fluctuation indexes")
+    ax13.set_xlabel("xhi sqer red")
+    ax13.set_ylabel("Variability indexes")
+    ax14.set_xlabel("xhi sqer red")
+    ax14.set_ylabel("Fluctuation indexes")
     plt.show()
 
 
