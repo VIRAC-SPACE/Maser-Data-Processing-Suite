@@ -256,8 +256,9 @@ class MonitoringView(PlottingView):
         self.monitoring_plot.creatPlot(self.grid, "Time", "Flux density (Jy)",
                                        get_configs("Full_source_name", source), (1, 0), "log")
 
-        symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
-        colors = ['#FF00FF', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
+        symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4", "s", "p", "+", "D", "d", "h", "X", "|", "_", "."]
+        colors = colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', '#FF00FF', '#FF4500', '#FF81C0', '#00FFFF', '#653700',
+                           '#C0C0C0', '#7E1E9C', '#C79FEF', '#D1B26F', '#FFD700', '#80800']
         self.dates = [float(e.modifiedJulianDays) for e in self.experiments]
         self.source_velocities = get_configs('velocities', self.source + "_" + self.line).split(",")
         self.source_velocities = [x.strip() for x in self.source_velocities]
