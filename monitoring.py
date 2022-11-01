@@ -10,7 +10,6 @@ import argparse
 import json
 import numpy as np
 from matplotlib import ticker
-import matplotlib.pylab as plt
 from astropy.timeseries import LombScargle
 from astropy.io import ascii
 from astropy.time import Time
@@ -258,7 +257,7 @@ class MonitoringView(PlottingView):
                                        get_configs("Full_source_name", source), (1, 0), "log")
 
         symbols = ["*", "o", "v", "^", "<", ">", "1", "2", "3", "4"]
-        colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
+        colors = ['#FF00FF', 'g', 'r', 'c', 'm', 'y', 'k', 'w']
         self.dates = [float(e.modifiedJulianDays) for e in self.experiments]
         self.source_velocities = get_configs('velocities', self.source + "_" + self.line).split(",")
         self.source_velocities = [x.strip() for x in self.source_velocities]
@@ -276,15 +275,15 @@ class MonitoringView(PlottingView):
         for i in range(0, len(self.source_velocities)):
             l1 = self.monitoring_plot.plot(self.dates,
                                            [e.polarizationU1[i][1] for e in self.experiments],
-                                           symbols[i] + colors[i],
+                                           symbols[i], color=colors[i],
                                            fontsize=8, visible=False, picker=False)
             l2 = self.monitoring_plot.plot(self.dates,
                                            [e.polarizationU9[i][1] for e in self.experiments],
-                                           symbols[i] + colors[i],
+                                           symbols[i], color=colors[i],
                                            fontsize=8, visible=False, picker=False)
             l3 = self.monitoring_plot.plot(self.dates,
                                            [e.polarizationAVG[i][1] for e in self.experiments],
-                                           symbols[i] + colors[i], fontsize=8,
+                                           symbols[i], color=colors[i], fontsize=8,
                                            label="Velocity " + self.source_velocities[i],
                                            visible=True, picker=5)
             monitoring_results.append(np.array([e.polarizationAVG[i][1] for e in self.experiments]))

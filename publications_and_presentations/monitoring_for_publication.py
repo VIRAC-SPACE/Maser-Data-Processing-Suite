@@ -172,8 +172,8 @@ def main():
     variability_index = dict()
     variances_normal = dict()
     fluctuation_index = dict()
-    Xhi_sqer_red = dict()
-    Xhi_sqer = dict()
+    xhi_sqer_red = dict()
+    xhi_sqer = dict()
     result_org = [x]
 
     print("\n")
@@ -222,32 +222,35 @@ def main():
         ax1.errorbar(x[0], y[0], yerr=1.5 + 0.1 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
         result_org.append(y)
         variances[component] = reduce(lambda x_, y_: x_ + y_, [((i - np.mean(y)) / np.std(y)) ** 2 for i in y])
-        variability_index[component] = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y))) \
-                                       / ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
-        variances_normal[component] = variances[component] * (1 / N - 1)
 
         error = []
         for i in range(0, len(y)):
-            if 1-factor[i] < 0.05:
-                error.append(rms[i] + y[i] * 0.05)
+            if 1 - factor[i] < 0.05:
+                error.append(2 * rms[i] + y[i] * 0.05)
             else:
-                error.append(rms[i] + y[i] * (1-factor[i]))
+                error.append(2 * rms[i] + y[i] * (1 - factor[i]))
+
+        variability_index[component] = ((np.max(y) - error[list(y).index(np.max(y))]) - (
+                    np.min(y) + error[list(y).index(np.min(y))])) \
+                                       / ((np.max(y) - error[list(y).index(np.max(y))]) + (
+                    np.min(y) + error[list(y).index(np.min(y))]))
+
+        variances_normal[component] = variances[component] * (1 / N - 1)
 
         fluctuation_index[component] = np.sqrt(
-            np.abs((N / reduce(lambda x_, y_: x_ + y_, [(rms[list(y).index(i)] +
-                                                         error[list(y).index(i)]) ** 2 for i in y])) *
+            np.abs((N / reduce(lambda x_, y_: x_ + y_, [error[list(y).index(i)] ** 2 for i in y])) *
                    ((reduce(lambda x_, y_: x_ + y_,
-                            [i ** 2 * (rms[list(y).index(i)] + error[list(y).index(i)]) ** 2 for i in y]) -
+                            [i ** 2 * (error[list(y).index(i)]) ** 2 for i in y]) -
                      np.mean(y) * reduce(lambda x_, y_: x_ + y_,
-                                         [i * (rms[list(y).index(i)] + 0.1 * i) ** 2 for i in y]))
+                                         [i * error[list(y).index(i)] ** 2 for i in y]))
                     / (N - 1)) - 1)) / np.mean(y)
 
-        Xhi_sqer_red[component] = reduce(lambda x_, y_: x_ + y_,
-                                         [((i - np.mean(y)) / (1.9 + 0.1 * i)) ** 2 for i in y]) / (N - 1)
+        xhi_sqer_red[component] = reduce(lambda x_, y_: x_ + y_,
+                                         [((i - np.mean(y)) / error[list(y).index(i)]) ** 2 for i in y]) / (N - 1)
 
-        Xhi_sqer[component] = reduce(lambda x_, y_: x_ + y_, [((i - np.mean(y)) / (1.9 + 0.2 * i)) ** 2 for i in y])
+        xhi_sqer[component] = reduce(lambda x_, y_: x_ + y_, [((i - np.mean(y)) / (1.9 + 0.2 * i)) ** 2 for i in y])
 
-        Xhi_sqer[component] = sum(((i - np.mean(y)) / (1.9 + 0.2 * i)) ** 2 for i in y)
+        xhi_sqer[component] = sum(((i - np.mean(y)) / (1.9 + 0.2 * i)) ** 2 for i in y)
 
         v = velocity[index]
         # print(get_configs("Full_source_name", get_args("source")) + " & " + "{} &  {} & {} & {:.1f} & {:3} &  {:.3f} & {:.3f} & {:.3f}\\\\".
@@ -256,8 +259,8 @@ def main():
         print(get_configs("Full_source_name",
                           get_args("source")) + "  {}  {}  {}  {:.1f}  {:3}  {:.3f}  {:.3f}  {:.3f}  {:.3f} {:.3f}".
               format(int(x[0]), int(x[-1]), N, len(x) / ((np.max(x) - np.min(x)) / 365) / 12, v, np.mean(y),
-                     variability_index[component], fluctuation_index[component], Xhi_sqer_red[component],
-                     Xhi_sqer[component]))
+                     variability_index[component], fluctuation_index[component], xhi_sqer_red[component],
+                     xhi_sqer[component]))
 
         y_min = np.min(y)
         if y_min < 0:

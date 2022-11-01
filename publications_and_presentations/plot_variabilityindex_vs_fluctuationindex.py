@@ -143,8 +143,6 @@ def main():
 
                 y = np.array([np.float128(yi) for yi in y]).clip(min=0)
                 N = len(y)
-                variability_index = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y))) / \
-                                    ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
 
                 error = []
                 factor = []
@@ -159,18 +157,26 @@ def main():
 
                 for i in range(0, len(y)):
                     if 1 - factor[i] < 0.05:
-                        error.append(rms[i] + y[i] * 0.05)
+                        error.append(2 * rms[i] + y[i] * 0.05)
                     else:
-                        error.append(rms[i] + y[i] * (1 - factor[i]))
+                        error.append(2 * rms[i] + y[i] * (1 - factor[i]))
+
+                variability_index = ((np.max(y) - error[list(y).index(np.max(y))]) - (
+                            np.min(y) + error[list(y).index(np.min(y))])) \
+                                               / ((np.max(y) - error[list(y).index(np.max(y))]) + (
+                            np.min(y) + error[list(y).index(np.min(y))]))
 
                 fluctuation_index = np.sqrt(
-                    np.abs((N / reduce(lambda x_, y_: x_ + y_, [(rms[list(y).index(i)] +
-                                                                 error[list(y).index(i)]) ** 2 for i in y])) *
+                    np.abs((N / reduce(lambda x_, y_: x_ + y_, [error[list(y).index(i)] ** 2 for i in y])) *
                            ((reduce(lambda x_, y_: x_ + y_,
-                                    [i ** 2 * (rms[list(y).index(i)] + error[list(y).index(i)]) ** 2 for i in y]) -
+                                    [i ** 2 * (error[list(y).index(i)]) ** 2 for i in y]) -
                              np.mean(y) * reduce(lambda x_, y_: x_ + y_,
-                                                 [i * (rms[list(y).index(i)] + 0.1 * i) ** 2 for i in y]))
+                                                 [i * error[list(y).index(i)] ** 2 for i in y]))
                             / (N - 1)) - 1)) / np.mean(y)
+
+                xhi_sqer_red = reduce(lambda x_, y_: x_ + y_,
+                                                 [((i - np.mean(y)) / error[list(y).index(i)]) ** 2 for i in y]) / (
+                                                      N - 1)
 
                 if not np.isnan(fluctuation_index):
                     variability_indexes.append(np.float64(variability_index))
@@ -219,7 +225,7 @@ def main():
     plt.xlabel("Variability index")
     plt.ylabel("Fluctuation index")
     plt.show()
- 
+
     sys.exit(0)
 
 
