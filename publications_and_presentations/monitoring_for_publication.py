@@ -229,11 +229,30 @@ def main():
         if int(get_args("start")) != -1 and int(get_args("stop")) != -1:
             y = y[a:b]
 
+        error = []
+        for i in range(0, len(y)):
+            if 1 - factor[i] < 0.05:
+                error.append(2 * rms[i] + y[i] * 0.05)
+            else:
+                error.append(2 * rms[i] + y[i] * (1 - factor[i]))
+
         y_binnings = []
 
         for i in range(0, len(bins_index)):
-            if len(y[bins_index[i][0]:bins_index[i][1]]) > 0:
-                y_binnings.append(np.mean(y[bins_index[i][0]:bins_index[i][1]]))
+            bin = y[bins_index[i][0]:bins_index[i][1]]
+            if len(bin) > 0:
+                y_binnings.append(np.mean(bin))
+
+                errors_for_bin = []
+                for b in bin:
+                    b_index = list(y[:]).index(b)
+                    if 1 - factor[b_index] < 0.05:
+                        error_bin_i = (2 * rms[b_index] + b * 0.05)
+                    else:
+                        error_bin_i = (2 * rms[b_index] + b * (1 - factor[b_index]))
+                    errors_for_bin.append(error_bin_i**2)
+
+                error_for_bin = np.sqrt(np.sum(errors_for_bin))
 
         N = len(y)
         # ax1.scatter(x, y/y[1], color=colors[index], marker=symbols[index])
@@ -249,13 +268,6 @@ def main():
         ax1.errorbar(x[0], y[0], yerr=1.5 + 0.1 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
         result_org.append(y)
         variances[component] = reduce(lambda x_, y_: x_ + y_, [((i - np.mean(y)) / np.std(y)) ** 2 for i in y])
-
-        error = []
-        for i in range(0, len(y)):
-            if 1 - factor[i] < 0.05:
-                error.append(2 * rms[i] + y[i] * 0.05)
-            else:
-                error.append(2 * rms[i] + y[i] * (1 - factor[i]))
 
         variability_index[component] = ((np.max(y) - error[list(y).index(np.max(y))]) - (
                     np.min(y) + error[list(y).index(np.min(y))])) \
