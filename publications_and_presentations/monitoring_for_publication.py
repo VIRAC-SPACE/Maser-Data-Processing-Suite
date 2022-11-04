@@ -172,9 +172,8 @@ def main():
         bins_index.append((find_nearest_index(x, bin[0]), find_nearest_index(x, bin[1])))
 
     for i in range(0, len(bins_index)):
-        x_binnings.append(np.mean(x[bins_index[i][0]:bins_index[i][1]]))
-
-    print(x_binnings)
+        if len(x[bins_index[i][0]:bins_index[i][1]]) > 0:
+            x_binnings.append(np.mean(x[bins_index[i][0]:bins_index[i][1]]))
 
     print("total time in years", (np.max(x) - np.min(x)) / 365)
     print("Nmbers of observations", len(x))
@@ -233,14 +232,18 @@ def main():
         y_binnings = []
 
         for i in range(0, len(bins_index)):
-            y_binnings.append(np.mean(y[bins_index[i][0]:bins_index[i][1]]))
+            if len(y[bins_index[i][0]:bins_index[i][1]]) > 0:
+                y_binnings.append(np.mean(y[bins_index[i][0]:bins_index[i][1]]))
 
         N = len(y)
         # ax1.scatter(x, y/y[1], color=colors[index], marker=symbols[index])
         # ax1.scatter(x, y/y[1], color=colors[index], marker=symbols[index], label=str(velocity[index]))
 
-        ax1.scatter(x_binnings, y_binnings, color=colors[index], marker=symbols[index])
-        ax1.scatter(x_binnings, y_binnings, color=colors[index], marker=symbols[index], label=str(velocity[index]))
+        ax1.scatter(x, y, color=colors[index], marker=symbols[index])
+        ax1.scatter(x, y, color=colors[index], marker=symbols[index], label=str(velocity[index]))
+
+        ax1.scatter(x_binnings, y_binnings, color='#FF00FF', marker=symbols[index])
+        ax1.scatter(x_binnings, y_binnings, color='#FF00FF', marker=symbols[index])
 
         np.savetxt(get_args("source") + "_" + str(index) + ".txt", np.vstack((x, y)).T, fmt='%8.1f  %8.1f')
         ax1.errorbar(x[0], y[0], yerr=1.5 + 0.1 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
