@@ -237,6 +237,7 @@ def main():
                 error.append(2 * rms[i] + y[i] * (1 - factor[i]))
 
         y_binnings = []
+        error_for_bin_tmp = []
 
         for i in range(0, len(bins_index)):
             bin = y[bins_index[i][0]:bins_index[i][1]]
@@ -254,6 +255,7 @@ def main():
                     errors_for_bin.append(error_bin_i)
 
                 error_for_bin = np.mean(errors_for_bin) / len(errors_for_bin)
+                error_for_bin_tmp.append(np.mean(errors_for_bin) / len(errors_for_bin))
 
         N = len(y)
         # ax1.scatter(x, y/y[1], color=colors[index], marker=symbols[index])
@@ -264,7 +266,11 @@ def main():
 
         ax1.scatter(x_binnings, y_binnings, color='#FF00FF', marker=symbols[index])
         ax1.scatter(x_binnings, y_binnings, color='#FF00FF', marker=symbols[index])
-        ax1.errorbar(x_binnings, y_binnings, yerr=error_for_bin, xerr=None, ls='none', ecolor='y')
+        ax1.errorbar(x_binnings, y_binnings, yerr=error_for_bin_tmp, xerr=None, ls='none', ecolor='y')
+
+        np.savetxt(get_args("source") + "_" + str(index) + ".txt", np.vstack((x_binnings, y_binnings,
+                                                                              error_for_bin_tmp)).T,
+                   fmt='%8.2f  %8.2f  %8.2f')
 
         np.savetxt(get_args("source") + "_" + str(index) + ".txt", np.vstack((x, y)).T, fmt='%8.1f  %8.1f')
         ax1.errorbar(x[0], y[0], yerr=1.5 + 0.1 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
