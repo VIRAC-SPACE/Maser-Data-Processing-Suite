@@ -35,6 +35,7 @@ def parse_arguments():
     parser.add_argument("-t0", "--start", help="start date in mjd", type=int, default=-1)
     parser.add_argument("-tn", "--stop", help="stop date in mjd", type=int, default=-1)
     parser.add_argument("-b", "--base", help="Base component", type=int, default=-1)
+    parser.add_argument("-bb", "--bin", help="Base component", type=int, default=5)
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="../config/config.cfg")
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 2.0')
     args = parser.parse_args()
@@ -126,6 +127,7 @@ def main():
             old_data_tmp[tmp2] = np.array(old_data_tmp[tmp2]).reshape(old_data.shape[0], )
             tmp2 += 1
         old_data = np.array(old_data_tmp)
+
         new_data[0] = new_data[0][0]
         data = []
 
@@ -152,18 +154,20 @@ def main():
         x = list(new_x)
         new = True
 
+    x_back = x
     if int(get_args("start")) != -1 and int(get_args("stop")) != -1:
         a = (np.abs(np.array(x) - int(get_args("start")))).argmin()
         b = (np.abs(np.array(x) - int(get_args("stop")))).argmin()
         x = x[a:b]
 
+    bin_days = int(get_args("bin"))
     x_bins = []
     bin_start = x[0]
-    bin_stop = x[0] + 5
+    bin_stop = x[0] + bin_days
     while bin_stop < x[-1]:
         x_bins.append((bin_start, bin_stop))
-        bin_start += 5
-        bin_stop += 5
+        bin_start += bin_days
+        bin_stop += bin_days
 
     x_binnings = []
 
@@ -215,9 +219,11 @@ def main():
         correction_index = find_nearest_index(correction_mjd, x[m])
         factor.append(correction_factor[correction_index])
 
-    for component in components:
+    sorted_velocities = sorted(velocity)
+    for vel in sorted_velocities:
+        index = velocity.index(vel)
+        component = components[index]
 
-        index = components.index(component)
         if old:
             y = data[:, index + 1]
         elif both:
@@ -227,6 +233,8 @@ def main():
 
         y = np.array([np.float128(yi) for yi in y]).clip(min=0)
         if int(get_args("start")) != -1 and int(get_args("stop")) != -1:
+            a = (np.abs(np.array(x_back) - int(get_args("start")))).argmin()
+            b = (np.abs(np.array(x_back) - int(get_args("stop")))).argmin()
             y = y[a:b]
 
         error = []
@@ -258,8 +266,6 @@ def main():
                 error_for_bin_tmp.append(np.mean(errors_for_bin) / len(errors_for_bin))
 
         N = len(y)
-        # ax1.scatter(x, y/y[1], color=colors[index], marker=symbols[index])
-        # ax1.scatter(x, y/y[1], color=colors[index], marker=symbols[index], label=str(velocity[index]))
 
         ax1.scatter(x, y, color=colors[index], marker=symbols[index])
         ax1.scatter(x, y, color=colors[index], marker=symbols[index], label=str(velocity[index]))
@@ -268,12 +274,11 @@ def main():
         ax1.scatter(x_binnings, y_binnings, color='#FF00FF', marker=symbols[index])
         ax1.errorbar(x_binnings, y_binnings, yerr=error_for_bin_tmp, xerr=None, ls='none', ecolor='y')
 
-        np.savetxt(get_args("source") + "_" + str(index) + ".txt", np.vstack((x_binnings, y_binnings,
-                                                                              error_for_bin_tmp)).T,
-                   fmt='%8.2f  %8.2f  %8.2f')
+        np.savetxt(get_args("source") + "_" + str(index) + ".txt",
+                   np.vstack((x_binnings, y_binnings, error_for_bin_tmp)).T,fmt='%8.2f  %8.2f  %8.2f')
 
         np.savetxt(get_args("source") + "_" + str(index) + ".txt", np.vstack((x, y)).T, fmt='%8.1f  %8.1f')
-        ax1.errorbar(x[0], y[0], yerr=1.5 + 0.1 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
+        ax1.errorbar(x[0], y[0], yerr=1.5 + 0.1 * y[0], xerr=None, ls='none', ecolor='k')  # 1st point error bar
         result_org.append(y)
         variances[component] = reduce(lambda x_, y_: x_ + y_, [((i - np.mean(y)) / np.std(y)) ** 2 for i in y])
 
@@ -300,9 +305,6 @@ def main():
         xhi_sqer[component] = sum(((i - np.mean(y)) / (1.9 + 0.2 * i)) ** 2 for i in y)
 
         v = velocity[index]
-        # print(get_configs("Full_source_name", get_args("source")) + " & " + "{} &  {} & {} & {:.1f} & {:3} &  {:.3f} & {:.3f} & {:.3f}\\\\".
-        # format(int(x[0]), int(x[-1]), N,  len(x) / ((np.max(x) - np.min(x)) / 365) / 12,  v, np.mean(y), variability_index[component], fluctuation_index[component]))
-
         print(get_configs("Full_source_name",
                           get_args("source")) + "  {}  {}  {}  {:.1f}  {:3}  {:.3f}  {:.3f}  {:.3f}  {:.3f} {:.3f}".
               format(int(x[0]), int(x[-1]), N, len(x) / ((np.max(x) - np.min(x)) / 365) / 12, v, np.mean(y),
