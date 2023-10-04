@@ -10,7 +10,6 @@ import argparse
 import json
 import numpy as np
 from matplotlib import ticker
-import matplotlib.pylab as plt
 from astropy.timeseries import LombScargle
 from astropy.io import ascii
 from astropy.time import Time
@@ -273,6 +272,7 @@ class MonitoringView(PlottingView):
             if len(e.polarizationAVG) != len(self.source_velocities):
                 print(e.Iteration_number)
 
+        print(self.experiments[0].areas)
         for i in range(0, len(self.source_velocities)):
             l1 = self.monitoring_plot.plot(self.dates,
                                            [e.polarizationU1[i][1] for e in self.experiments],
