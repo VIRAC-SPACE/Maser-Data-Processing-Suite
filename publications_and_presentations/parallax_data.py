@@ -1,3 +1,4 @@
+import json
 import sys
 import os
 from collections import namedtuple
@@ -18,7 +19,7 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.
 sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 
 from parsers.configparser_ import ConfigParser
-from utils.help import file_len, correct_numpy_read_data, convert_datetime_object_to_mjd
+from utils.help import file_len, correct_numpy_read_data, convert_datetime_object_to_mjd, find_nearest_index
 
 
 def get_configs(section, key):
@@ -44,10 +45,10 @@ def main(infile):
 
     Maser = namedtuple('Maser', 'name  x y flux distance '
                                 'fluctuation_indexes variability_indexes mean_of_y absolute_mean_of_y, '
-                                'largest_y_mean_index  mean_of_y2 outlier')
+                                'largest_y_mean_index  mean_of_y2 xhi_sqer_red outlier')
 
     masers = [Maser(sources[i], x[i], y[i], [], distance[i], [], [], [], [],
-                    [-1], [], outlier=False) for i in range(0, len(sources))]
+                    [-1], [], [], outlier=False) for i in range(0, len(sources))]
     old_monitoring_file_path = get_configs("paths", "oldMonitoringFilePath")
     new_monitoring_file_path = get_configs("paths", "monitoringFilePath")
 
@@ -61,133 +62,173 @@ def main(infile):
         new_monitoring_file = new_monitoring_file_path + "/" + maser.name + "_" + "6668" + ".npy"
         old_monitoring_file = old_monitoring_file_path + "/" + maser.name + ".dat"
 
+        result_file_name = maser.name + "_" + "6668" + ".json"
+        result_file_path = get_configs("paths", "resultFilePath")
+
         new_data = None
         old_data = None
         monitoring_data = None
-        if os.path.isfile(old_monitoring_file) and os.path.isfile(new_monitoring_file):
-            source_velocities = get_configs('velocities', maser.name + "_" + "6668").split(",")
-            source_velocities = [si.strip() for si in source_velocities]
-            component_count = len(
-                get_configs("velocities", maser.name + "_" + "6668").replace(" ", "").split(","))
-            components = [i for i in range(1, component_count + 1)]
-            new_data = np.load(new_monitoring_file, allow_pickle=True)
-            new_x = new_data[0][0]
-            old_data = np.loadtxt(old_monitoring_file, dtype=str).reshape(
-                (file_len(old_monitoring_file), component_count + 1))
-            old_x = correct_numpy_read_data(old_data[:, [0]])
-            old_x = [convert_datetime_object_to_mjd(datetime.strptime(x, "%Y-%m-%d%H:%M:%S")) for x in old_x]
-            old_data[:, 0] = old_x
-            x_data = old_x + list(new_x)
-            old_data_tmp = []
-            for tmp in range(0, len(new_data)):
-                old_data_tmp.append([])
-            tmp2 = 0
-            for j in range(0, old_data.shape[1]):
-                for i in range(0, old_data.shape[0]):
-                    old_data_tmp[tmp2].append(old_data[i][j])
-                old_data_tmp[tmp2] = np.array(old_data_tmp[tmp2]).reshape(old_data.shape[0])
-                tmp2 += 1
-            old_data = np.array(old_data_tmp)
-            new_data[0] = new_data[0][0]
-            monitoring_data = []
+        old_x = []
+        if os.path.isfile(result_file_path + result_file_name):
+            if os.path.isfile(new_monitoring_file) and os.path.isfile(old_monitoring_file):
+                old_data = np.loadtxt(old_monitoring_file, unpack=True, dtype=str)
+                old_x = old_data[0, :]
+                old_x = [convert_datetime_object_to_mjd(datetime.strptime(x, "%Y-%m-%d%H:%M:%S")) for x in old_x]
+                old_data[0, :] = old_x
+                new_data = np.load(new_monitoring_file, allow_pickle=True)
+                new_x = new_data[0][0]
+                x_mjd = []
+                x_mjd.extend(old_x)
+                x_mjd.extend(new_x)
 
-            for tmp3 in range(0, old_data.shape[0]):
-                data_tmp = np.concatenate((old_data[tmp3], new_data[tmp3]), axis=0)
+                monitoring_data = []
+                data_tmp = np.concatenate((old_data[0, :], new_data[0][0]), axis=0)
                 monitoring_data.append(data_tmp)
-            monitoring_data = np.array(monitoring_data)
-            both = True
 
-        elif os.path.isfile(old_monitoring_file) and not os.path.isfile(new_monitoring_file):
+                for tmp3 in range(1, old_data.shape[0]):
+                    data_tmp = np.concatenate((old_data[tmp3, :], new_data[tmp3]), axis=0)
+                    monitoring_data.append(data_tmp)
+                monitoring_data = np.array(monitoring_data)
+                both = True
+
+            elif os.path.isfile(new_monitoring_file) and not os.path.isfile(old_monitoring_file):
+                new_data = np.load(new_monitoring_file, allow_pickle=True)
+                new_x = new_data[0][0]
+                x_mjd = new_x
+                monitoring_data = new_data
+                new = True
+
+            elif not os.path.isfile(new_monitoring_file) and os.path.isfile(old_monitoring_file):
+                old_data = np.loadtxt(old_monitoring_file, unpack=True, dtype=str)
+                old_x = old_data[0, :]
+                old_x = [convert_datetime_object_to_mjd(datetime.strptime(x, "%Y-%m-%d%H:%M:%S")) for x in old_x]
+                old_data[0, :] = old_x
+                x_mjd = old_x
+                monitoring_data = old_data
+                old = True
+
+            else:
+                monitoring_data = None
+                continue
+
+            rms = []
+            with open(result_file_path + result_file_name) as result_data:
+                result = json.load(result_data)
+                for experiment in result:
+                    rms.append(result[experiment]['rms_avg'])
+
+            if len(old_x) > 0:
+                rms_old = [np.mean(rms)] * len(old_x)
+                rms_old.extend(rms)
+                rms = rms_old
+
             source_velocities = get_configs('velocities', maser.name + "_" + "6668").split(",")
             source_velocities = [si.strip() for si in source_velocities]
-            component_count = len(
-                get_configs("velocities", maser.name + "_" + "6668").replace(" ", "").split(","))
+            component_count = len(get_configs("velocities", maser.name + "_" + "6668").replace(" ", "").split(","))
             components = [i for i in range(1, component_count + 1)]
-            old_data = np.loadtxt(old_monitoring_file, dtype=str).reshape(
-                (file_len(old_monitoring_file), component_count + 1))
-            old_x = correct_numpy_read_data(old_data[:, [0]])
-            old_x = [convert_datetime_object_to_mjd(datetime.strptime(x, "%Y-%m-%d%H:%M:%S")) for x in old_x]
-            old_data[:, 0] = old_x
-            monitoring_data = old_data
-            x = list(old_x)
-            old = True
 
-        elif not os.path.isfile(old_monitoring_file) and os.path.isfile(new_monitoring_file):
-            source_velocities = get_configs('velocities', maser.name + "_" + "6668").split(",")
-            source_velocities = [si.strip() for si in source_velocities]
-            component_count = len(
-                get_configs("velocities", maser.name + "_" + "6668").replace(" ", "").split(","))
-            components = [i for i in range(1, component_count + 1)]
-            new_data = np.load(new_monitoring_file, allow_pickle=True)
-            monitoring_data = new_data
-            new = True
+            if len(old_x) > 0:
+                components = components[0:len(old_data) - 1]
 
-        else:
-            components = []
-            source_velocities = []
-            data = None
+            if len(components) > 0:
+                if monitoring_data is not None:
+                    for component in components:
 
-        if len(components) > 0:
-            if monitoring_data is not None:
-                largest_y_mean_index = -1
-                largest_y_mean = 0
-                for component in components:
-                    index = components.index(component)
-                    if old:
-                        y_data = monitoring_data[:, index + 1]
-                    elif both:
-                        y_data = monitoring_data[index + 1, :]
-                    else:
-                        y_data = monitoring_data[index + 1]
-                    y_data = np.array([np.float128(yi) for yi in y_data]).clip(min=0)
-
-                    if np.mean(y_data) > largest_y_mean:
-                        largest_y_mean = np.mean(y_data)
-                        largest_y_mean_index = index
-                        maser.largest_y_mean_index[0] = index
-
-                    N = len(y_data)
-                    variability_index = ((np.max(y_data) - np.std(y_data)) -
-                                         (np.min(y_data) + np.std(y_data))) / \
-                                        ((np.max(y_data) - np.std(y_data)) +
-                                         (np.min(y_data) + np.std(y_data)))
-
-                    fluctuation_index = np.sqrt(np.abs((N / reduce(lambda x__, y__: x__ + y__,
-                                                            [(1.5 + 0.05 * i) ** 2 for i in y_data])) *
-                                                ((reduce(lambda x__, y__: x__ + y__,
-                                                         [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y_data]) -
-                                                  np.mean(y_data) * reduce(lambda x__, y__: x__ + y__,
-                                                                           [i * (1.5 + 0.05 * i) ** 2 for i
-                                                                            in y_data])) / (N - 1)) - 1)) / \
-                                        np.mean(y_data)
-
-                    if not np.isnan(fluctuation_index):
-                        maser.variability_indexes.append(np.float64(variability_index))
-                        maser.fluctuation_indexes.append(np.float64(fluctuation_index))
-                        maser.mean_of_y.append(np.float64(np.mean(y_data)))
-                        maser.flux.extend(y_data)
-                    del y_data, variability_index, fluctuation_index
-
-                for component in components:
-                    index2 = components.index(component)
-                    if index2 == largest_y_mean_index:
-                        if old:
-                            y_data2 = monitoring_data[:, index2 + 1]
-                        elif both:
-                            y_data2 = monitoring_data[index2 + 1, :]
+                        index = components.index(component)
+                        if len(old_x) > 0:
+                            y_old = old_data[index + 1]
+                            y_new = new_data[index + 1]
+                            y_data = []
+                            y_data.extend(y_old)
+                            y_data.extend(y_new)
                         else:
-                            y_data2 = monitoring_data[index2 + 1]
-                        y_data2 = np.array([np.float128(yi) for yi in y_data2]).clip(min=0)
+                            y_new = new_data[index + 1]
+                            y_data = y_new
 
-                        if maser.distance != "*":
-                            maser.absolute_mean_of_y.append(np.float64(np.mean(y_data2)) *
-                                                            (np.float64(maser.distance) / 2) ** 2)
+                        y_data = np.array([np.float128(yi) for yi in y_data]).clip(min=0)
 
-                        maser.mean_of_y2.append(np.float64(np.mean(y_data2)))
-                        del y_data2
+                        largest_y_mean_index = -1
+                        largest_y_mean = 0
 
-                del monitoring_data
-            del new_monitoring_file, old_monitoring_file
+                        if np.mean(y_data) > largest_y_mean:
+                            largest_y_mean = np.mean(y_data)
+                            largest_y_mean_index = index
+                            maser.largest_y_mean_index[0] = index
+
+                        N = len(y_data)
+                        rms = []
+                        with open(result_file_path + result_file_name) as result_data:
+                            result = json.load(result_data)
+                            for experiment in result:
+                                rms.append(result[experiment]['rms_avg'])
+
+                        if len(old_x) > 0:
+                            rms_old = [np.mean(rms)] * len(old_x)
+                            rms_old.extend(rms)
+                            rms = rms_old
+
+                        error = []
+                        factor = []
+                        correction_file = get_configs("parameters", "amplitude_correction_file") + ".npy"
+                        correction_data = np.load(correction_file)
+                        correction_mjd = correction_data[:, 0]
+                        correction_factor = correction_data[:, 1]
+
+                        for m in range(0, len(x_mjd)):
+                            correction_index = find_nearest_index(correction_mjd, x_mjd[m])
+                            factor.append(correction_factor[correction_index])
+
+                        for i in range(0, len(y_data)):
+                            if 1 - factor[i] < 0.05:
+                                error.append(2 * rms[i] + y_data[i] * 0.05)
+                            else:
+                                error.append(2 * rms[i] + y_data[i] * (1 - factor[i]))
+
+                        variability_index = ((np.max(y_data) - error[list(y_data).index(np.max(y_data))]) - (
+                                np.min(y_data) + error[list(y_data).index(np.min(y_data))])) \
+                                            / ((np.max(y_data) - error[list(y_data).index(np.max(y_data))]) + (
+                                np.min(y_data) + error[list(y_data).index(np.min(y_data))]))
+
+                        fluctuation_index = np.sqrt(
+                            np.abs((N / reduce(lambda x_, y_: x_ + y_,
+                                               [error[list(y_data).index(i)] ** 2 for i in y_data])) *
+                                   ((reduce(lambda x_, y_: x_ + y_,
+                                            [i ** 2 * (error[list(y_data).index(i)]) ** 2 for i in y_data]) -
+                                     np.mean(y_data) * reduce(lambda x_, y_: x_ + y_,
+                                                         [i * error[list(y_data).index(i)] ** 2 for i in y_data]))
+                                    / (N - 1)) - 1)) / np.mean(y_data)
+
+                        xhi_sqer_red = reduce(lambda x_, y_: x_ + y_,
+                                              [((i - np.mean(y_data)) /
+                                                error[list(y_data).index(i)]) ** 2 for i in y_data]) / (
+                                               N - 1)
+
+                        maser.xhi_sqer_red.append(xhi_sqer_red)
+
+                        if not np.isnan(fluctuation_index):
+                            maser.variability_indexes.append(np.float64(variability_index))
+                            maser.fluctuation_indexes.append(np.float64(fluctuation_index))
+                            maser.mean_of_y.append(np.float64(np.mean(y_data)))
+                            maser.flux.extend(y_data)
+                        del y_data, variability_index, fluctuation_index
+
+                        index2 = components.index(component)
+
+                        if index2 == largest_y_mean_index:
+                            if old:
+                                y_data2 = monitoring_data[:, index2 + 1]
+                            elif both:
+                                y_data2 = monitoring_data[index2 + 1, :]
+                            else:
+                                y_data2 = monitoring_data[index2 + 1]
+                            y_data2 = np.array([np.float128(yi) for yi in y_data2]).clip(min=0)
+
+                            if maser.distance != "*":
+                                maser.absolute_mean_of_y.append(np.float64(np.mean(y_data2)) *
+                                                                (np.float64(maser.distance) / 2) ** 2)
+
+                            maser.mean_of_y2.append(np.float64(np.mean(y_data2)))
+                            del y_data2
 
     mw1 = MWPlot(rot90=45, r0=8.5, radius=20 * u.kpc, unit=u.kpc, coord='galactocentric', annotation=True,
                  figsize=(16, 16), dpi=150)
@@ -206,6 +247,8 @@ def main(infile):
     fig10, ax10 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)  # fig6
     fig11, ax11 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)  # fig7
     fig12, ax12 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)  # fig8
+    fig13, ax13 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)  # fig9
+    fig14, ax14 = plt.subplots(nrows=1, ncols=1, figsize=(16, 16), dpi=150)  # fig10
 
     x_ = []
     y_ = []
@@ -227,12 +270,14 @@ def main(infile):
     vis2 = []
     fis = []
     fis2 = []
+    xhi_sqer = []
 
     distances = []
     absolute_mean_of_ys = []
     mean_of_ys = []
     mean_of_ys2 = []
     mean_of_ys3 = []
+
     for maser in masers:
         if maser.distance != "*":
             if np.mean(maser.variability_indexes) < 0.5:
@@ -295,6 +340,7 @@ def main(infile):
                 color5.append("red")
 
         if len(means_y) > 0:
+
             for my in means_y:
                 if 0.5 < my <= 20:
                     ss = 100
@@ -312,6 +358,7 @@ def main(infile):
 
             vis.extend(maser.variability_indexes)
             fis.extend(maser.fluctuation_indexes)
+            xhi_sqer.extend(maser.xhi_sqer_red)
             mean_of_ys2.extend(maser.mean_of_y)
 
         if len(absolute_mean_of_y) > 0:
@@ -376,9 +423,11 @@ def main(infile):
 
     for ax in ax_vi_fi:
         ax_index = ax_vi_fi.index(ax)
-        scatter = ax.scatter(viss[ax_index], fiss[ax_index], c=colors_vi_fi[ax_index], s=sizes_vi_fi[ax_index],
-                             alpha=0.3)
+
+        scatter = ax.scatter(viss[ax_index], fiss[ax_index], c=colors_vi_fi[ax_index],
+                             s=sizes_vi_fi[ax_index], alpha=0.3)
         handles, labels = scatter.legend_elements(prop="sizes", alpha=0.6)
+
         if len(labels) == 5:
             ranges = ["0.5 < Jy <= 20", "20 < Jy <= 200", "200 < Jy <= 800", "800 < Jy <= 2000", "2000 < Jy <= 3005"]
         elif len(labels) == 6:
@@ -404,6 +453,9 @@ def main(infile):
     ax9.scatter(mean_of_ys2, vis, alpha=0.3, c=color5)
     ax10.scatter(mean_of_ys2, fis, alpha=0.3, c=color5)
 
+    ax13.scatter(xhi_sqer, vis, alpha=0.3, c=color5)
+    ax14.scatter(xhi_sqer, fis, alpha=0.3, c=color5)
+
     ax9.set_xlabel("Flux density (Jy)")
     ax10.set_xlabel("Flux density (Jy)")
     ax9.set_ylabel("Variability indexes")
@@ -412,6 +464,10 @@ def main(infile):
     ax11.set_ylabel("Variability indexes")
     ax12.set_xlabel("Distance [Kpc]")
     ax12.set_ylabel("Fluctuation indexes")
+    ax13.set_xlabel("xhi sqer red")
+    ax13.set_ylabel("Variability indexes")
+    ax14.set_xlabel("xhi sqer red")
+    ax14.set_ylabel("Fluctuation indexes")
     plt.show()
 
 

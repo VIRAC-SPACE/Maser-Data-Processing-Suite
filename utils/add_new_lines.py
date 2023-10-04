@@ -79,6 +79,8 @@ def main():
     with open(result_file_path + result_file_name) as result_data:
         result = json.load(result_data)
 
+    experiments_processed = []
+
     for output_file in output_files[0:2]:
         output_file_data = output_file.replace(".h5", "").split("_")
         iteration = output_file_data[-1]
@@ -92,6 +94,8 @@ def main():
                 break
 
         if experiment_name is not None:
+            experiments_processed.append(experiment_name)
+
             output_data = h5py.File(output_path + output_file, "r")
             if "amplitude_corrected_not_smooht" in output_data:
 
@@ -99,7 +103,7 @@ def main():
                 velocity = total_results[:, 0]
                 z1_not_smooht_data = total_results[:, 1]
                 z2_not_smooht_data = total_results[:, 2]
-                avg_y_not_smooht_data= total_results[:, 2]
+                avg_y_not_smooht_data = total_results[:, 3]
 
                 indexies_for_source_velocities = [0] * len(source_velocities)
                 for index in range(0, len(source_velocities)):
@@ -143,6 +147,10 @@ def main():
 
     with open(result_file_path + result_file_name, "w") as output:
         output.write(json.dumps(result, indent=2))
+
+    for experiment in result.keys():
+        if experiment not in experiments_processed:
+            print("experiment not processed " +  experiment)
 
     sys.exit()
 

@@ -8,11 +8,13 @@ import sys
 import argparse
 import re
 import json
+from functools import reduce
+
+from scipy.ndimage import gaussian_filter1d
 from sympy import lambdify
 from tabulate import tabulate
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import gca
 from matplotlib.widgets import Slider, TextBox, Button
 from pandas import DataFrame
 from scipy import stats
@@ -29,7 +31,8 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='''Monitoring multiple sources. ''')
     parser.add_argument("line", help="line", type=int)
     parser.add_argument("--sources", help="Sources Names", type=str, nargs='+',
-                        default="[g32p745, w51, g59p783, on1, s252, ngc7538, w3oh]")
+                        default="[g32p745, w51, g59p783, on1, s252, ngc7538, w3oh, w49n, "
+                                "g85p41, g78p12, g75p78, g25p65, g25p710, s255, g90p92]")
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str,
                         default="config/config.cfg")
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 2.0')
@@ -69,16 +72,75 @@ def get_velocities_tmp(source):
     elif source == "w51":
         velocities_tmp = ["59.29"]
     elif source == "g59p783":
-        velocities_tmp = ["19.2"]
+        velocities_tmp = ["27.15"]
     elif source == "on1":
         velocities_tmp = ["14.64"]
     elif source == "s252":
         velocities_tmp = ["10.84"]
     elif source == "ngc7538":
-        velocities_tmp = ["-58.04"]
+        velocities_tmp = ["-61.31"]
+    elif source == "w49n":
+        velocities_tmp = ["9.27"]
+    elif source == "g85p41":
+        velocities_tmp = ["-29.4"]
+    elif source == "g78p12":
+        velocities_tmp = ["-6.13"]
+    elif source == "g75p78":
+        velocities_tmp = ["-2.57"]
+    elif source == "g25p65":
+        velocities_tmp = ["41.81"]
+    elif source == "g25p710":
+        velocities_tmp = ["95.46"]
+    elif source == "w3oh":
+        velocities_tmp = ["-44.6"]
+    elif source == "s255":
+        velocities_tmp = ["5.90"]
+    elif source == "g90p92":
+        velocities_tmp = ["-69.2"]
     else:
         velocities_tmp = ["-44.6"]
     return velocities_tmp
+
+
+def get_time_cut(source):
+    """
+
+    :param source: observed source
+    :return: stable time cut  for source
+    """
+    if source == "g32p745":
+        time_cut = [58400, 59800]
+    elif source == "w51":
+        time_cut = [58400, 59800]
+    elif source == "g59p783":
+        time_cut = [58400, 59800]
+    elif source == "on1":
+        time_cut = [58400, 59800]
+    elif source == "s252":
+        time_cut = [58400, 59800]
+    elif source == "ngc7538":
+        time_cut = [58400, 59800]
+    elif source == "w49n":
+        time_cut = [58400, 59800]
+    elif source == "g85p41":
+        time_cut = [58400, 59800]
+    elif source == "g78p12":
+        time_cut = [58400, 59800]
+    elif source == "g75p78":
+        time_cut = [58400, 59800]
+    elif source == "g25p65":
+        time_cut = [58400, 59800]
+    elif source == "g25p710":
+        time_cut = [58400, 59800]
+    elif source == "w3oh":
+        time_cut = [58400, 59800]
+    elif source == "s255":
+        time_cut = [58400, 59800]
+    elif source == "g90p92":
+        time_cut = [58400, 59800]
+    else:
+        time_cut = [58400, 59800]
+    return time_cut
 
 
 def print_stats(stats, labels):
@@ -126,7 +188,7 @@ def read_monitoring_files(monitoring_files, sources):
 
         for c in range(1, column_nr+1):
             if c - 1 in idexie_for_lines_to_plot:
-                tmp = data[c] / np.mean(data[c])
+                tmp = data[c]
                 lines[source]["y_data"].append(tmp)
 
     return lines
@@ -134,7 +196,7 @@ def read_monitoring_files(monitoring_files, sources):
 
 def get_iterations_from_mjd(star_time, stop_time):
     iterations = dict()
-    source_list = ["g32p745", "w51", "g59p783", "on1", "s252", "ngc7538", "w3oh"]
+    source_list = get_args("sources").replace("[", "").replace("]", "").replace("'", "").split(",")
     result_file_path = get_configs("paths", "resultFilePath")
 
     for source in source_list:
@@ -171,10 +233,14 @@ def main():
     slider_max = []
     trends = []
     lines2 = []
-    fig1 = plt.figure()
-    ax = gca()
 
+    out = np.array([[],[]])
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
+    fig0, ax0 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
+    fig00, ax00 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
+    fig000, ax000 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
     for source in sources:
+        cut_index = get_time_cut(source)
         date = lines[source]["date"]
         slider_min.append(min(date))
         slider_max.append(max(date))
@@ -195,11 +261,87 @@ def main():
                 fit += " + " + str(z[2])
             else:
                 fit += " + " + str(z[2])
-            line = plt.plot(date, y_data, "*", label=source + " velocity " + velocities_tmp[i] + " " + "y= " + fit)
+            line = ax.plot(date, y_data, "*", label=source + " velocity " + velocities_tmp[i] + " " + "y= " + fit)
             lines2.append(line)
-            trend = plt.plot(date, p(date), "r--")
+            trend = ax.plot(date, p(date), "r--", visible=False)
             trends.append(trend)
+
+            start_cut = find_nearest_index(date, cut_index[0])
+            end_cut = find_nearest_index(date, cut_index[1])
+            out = np.concatenate((out, [date[start_cut:end_cut],
+                                        y_data[start_cut:end_cut]/np.mean(y_data[start_cut:end_cut])]), axis=1)
+
             i += 1
+
+    dtype = [('mjd', float), ('amp', float)]
+    values = []
+
+    for i in range(0, out.shape[1]):
+        values.append((out[0][i], out[1][i]))
+
+    out = np.array(values, dtype=dtype)
+    out = np.sort(out, order='mjd')
+    out_filtered = gaussian_filter1d(out['amp'], 10, mode='nearest')
+    correction = np.zeros((len(out_filtered), 2))
+    correction[:, 0] = out['mjd']
+    correction[:, 1] = out_filtered
+    np.save(get_configs('parameters', 'amplitude_correction_file'), correction)
+
+    for source in sources:
+        cut_index = get_time_cut(source)
+        date = lines[source]["date"]
+        start_cut = find_nearest_index(date, cut_index[0])
+        end_cut = find_nearest_index(date, cut_index[1])
+        date = date[start_cut:end_cut]
+
+        velocities_tmp = get_velocities_tmp(source)
+        i = 0
+        for y_data in lines[source]["y_data"]:
+            y_data = y_data[start_cut:end_cut]
+            out_filtered_tmp = []
+
+            for d in range(0, len(date)):
+                index = find_nearest_index(out['mjd'], date[d])
+                out_filtered_tmp.append(out_filtered[index])
+
+            y_data_ = y_data / np.mean(y_data)
+            y_new = y_data_ / (out_filtered_tmp / np.max(out_filtered_tmp))
+            ax0.scatter(date, y_new, label=source + " velocity " + velocities_tmp[i])
+
+            y_new_ = y_data / (out_filtered_tmp / np.max(out_filtered_tmp))
+            ax00.scatter(date, y_new_, label=source + " velocity " + velocities_tmp[i])
+            i += 1
+
+            N = len(y_new_)
+            variability_index = ((np.max(y_new_) - np.std(y_new_)) - (np.min(y_new_) + np.std(y_new_))) / \
+                                ((np.max(y_new_) - np.std(y_new_)) + (np.min(y_new_) + np.std(y_new_)))
+            fluctuation_index = np.sqrt(np.abs((N / reduce(lambda x_, y_: x_ + y_,
+                                                           [(1.5 + 0.05 * i) ** 2 for i in y_new_]))
+                                               * ((reduce(lambda x_, y_: x_ + y_,
+                                                          [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y_new_]) -
+                                                   np.mean(y_new_) * reduce(lambda x_, y_: x_ + y_,
+                                                                       [i * (1.5 + 0.05 * i) ** 2 for i in y_new_]))
+                                                  / (N - 1)) - 1)) / np.mean(y_new_)
+
+            ax000.scatter(variability_index, fluctuation_index)
+
+    ax0.legend()
+    ax00.legend()
+    ax000.set_xlabel("variability index")
+    ax000.set_ylabel("fluctuation index")
+    fig1, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
+    ax1.scatter(out['mjd'], out['amp'])
+    ax1.plot(out['mjd'], out_filtered, color='red')
+
+    fig2, ax2 = plt.subplots(nrows=1, ncols=1, figsize=(8, 8), dpi=90)
+    out_filtered_2 = out['amp'] + np.max(out_filtered) / out_filtered - np.max(out_filtered)
+    ax2.scatter(out['mjd'], out_filtered_2, color='yellow')
+    ax2.scatter(out['mjd'], out_filtered_2, color='yellow')
+    ax2.hlines(xmin=np.min(out['mjd']), xmax=np.max(out['mjd']), y=np.median(out_filtered_2), color='black')
+    ax2.hlines(xmin=np.min(out['mjd']), xmax=np.max(out['mjd']), y=out_filtered_2.std() + np.median(out_filtered_2),
+               color='green')
+    ax2.hlines(xmin=np.min(out['mjd']), xmax=np.max(out['mjd']), y=-out_filtered_2.std() + np.median(out_filtered_2),
+               color='green')
 
     ax.legend()
     fig2 = plt.figure()

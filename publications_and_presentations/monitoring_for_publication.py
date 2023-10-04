@@ -4,6 +4,7 @@
 """
 Create LATEX tables for publications
 """
+import json
 import sys
 import os
 import argparse
@@ -14,12 +15,13 @@ from matplotlib import rcParams
 from matplotlib.ticker import StrMethodFormatter
 import numpy as np
 
+
 PACKAGE_PARENT = '..'
 SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
 sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 
 from parsers.configparser_ import ConfigParser
-from utils.help import file_len, correct_numpy_read_data, convert_datetime_object_to_mjd
+from utils.help import file_len, correct_numpy_read_data, convert_datetime_object_to_mjd, find_nearest_index
 
 
 def parse_arguments():
@@ -33,6 +35,7 @@ def parse_arguments():
     parser.add_argument("-t0", "--start", help="start date in mjd", type=int, default=-1)
     parser.add_argument("-tn", "--stop", help="stop date in mjd", type=int, default=-1)
     parser.add_argument("-b", "--base", help="Base component", type=int, default=-1)
+    parser.add_argument("-bb", "--bin", help="Base component", type=int, default=5)
     parser.add_argument("-c", "--config", help="Configuration cfg file", type=str, default="../config/config.cfg")
     parser.add_argument("-v", "--version", action="version", version='%(prog)s - Version 2.0')
     args = parser.parse_args()
@@ -78,6 +81,20 @@ def main():
     for key, value in configuration_items.items():
         rcParams[key] = value
 
+    result_file_name = get_args("source") + "_" + get_args("line") + ".json"
+    result_file_path = get_configs("paths", "resultFilePath")
+
+    correction_file = get_configs("parameters", "amplitude_correction_file") + ".npy"
+    correction_data = np.load(correction_file)
+    correction_mjd = correction_data[:, 0]
+    correction_factor = correction_data[:, 1]
+
+    rms = []
+    with open(result_file_path + result_file_name) as result_data:
+        result = json.load(result_data)
+        for experiment in result:
+            rms.append(result[experiment]['rms_avg'])
+
     old_monitoring_file = get_configs("paths", "oldMonitoringFilePath") + get_args("source") + ".dat"
     new_monitoring_file = get_configs("paths", "monitoringFilePath") + \
                           get_args("source") + "_" + \
@@ -90,6 +107,7 @@ def main():
                            get_args("line")).replace(" ", "").split(",")
     components = [i for i in range(1, component_count + 1)]
 
+    old_x = []
     if os.path.isfile(old_monitoring_file) and os.path.isfile(new_monitoring_file):
         new_data = np.load(new_monitoring_file, allow_pickle=True)
         new_x = new_data[0][0]
@@ -109,6 +127,7 @@ def main():
             old_data_tmp[tmp2] = np.array(old_data_tmp[tmp2]).reshape(old_data.shape[0], )
             tmp2 += 1
         old_data = np.array(old_data_tmp)
+
         new_data[0] = new_data[0][0]
         data = []
 
@@ -135,10 +154,30 @@ def main():
         x = list(new_x)
         new = True
 
+    x_back = x
     if int(get_args("start")) != -1 and int(get_args("stop")) != -1:
         a = (np.abs(np.array(x) - int(get_args("start")))).argmin()
         b = (np.abs(np.array(x) - int(get_args("stop")))).argmin()
         x = x[a:b]
+
+    bin_days = int(get_args("bin"))
+    x_bins = []
+    bin_start = x[0]
+    bin_stop = x[0] + bin_days
+    while bin_stop < x[-1]:
+        x_bins.append((bin_start, bin_stop))
+        bin_start += bin_days
+        bin_stop += bin_days
+
+    x_binnings = []
+
+    bins_index = []
+    for bin in x_bins:
+        bins_index.append((find_nearest_index(x, bin[0]), find_nearest_index(x, bin[1])))
+
+    for i in range(0, len(bins_index)):
+        if len(x[bins_index[i][0]:bins_index[i][1]]) > 0:
+            x_binnings.append(np.mean(x[bins_index[i][0]:bins_index[i][1]]))
 
     print("total time in years", (np.max(x) - np.min(x)) / 365)
     print("Nmbers of observations", len(x))
@@ -155,6 +194,8 @@ def main():
     variability_index = dict()
     variances_normal = dict()
     fluctuation_index = dict()
+    xhi_sqer_red = dict()
+    xhi_sqer = dict()
     result_org = [x]
 
     print("\n")
@@ -168,8 +209,21 @@ def main():
     print("\hline")
 
     ax1.plot([], [], ' ', label="km sec$^{-1}$")
-    for component in components:
-        index = components.index(component)
+    if len(old_x) > 0:
+        rms_old = [np.mean(rms)] * len(old_x)
+        rms_old.extend(rms)
+        rms = rms_old
+
+    factor = []
+    for m in range(0, len(x)):
+        correction_index = find_nearest_index(correction_mjd, x[m])
+        factor.append(correction_factor[correction_index])
+
+    sorted_velocities = sorted(velocity)
+    for vel in sorted_velocities:
+        index = velocity.index(vel)
+        component = components[index]
+
         if old:
             y = data[:, index + 1]
         elif both:
@@ -179,31 +233,83 @@ def main():
 
         y = np.array([np.float128(yi) for yi in y]).clip(min=0)
         if int(get_args("start")) != -1 and int(get_args("stop")) != -1:
+            a = (np.abs(np.array(x_back) - int(get_args("start")))).argmin()
+            b = (np.abs(np.array(x_back) - int(get_args("stop")))).argmin()
             y = y[a:b]
+
+        error = []
+        for i in range(0, len(y)):
+            if 1 - factor[i] < 0.05:
+                error.append(2 * rms[i] + y[i] * 0.05)
+            else:
+                error.append(2 * rms[i] + y[i] * (1 - factor[i]))
+
+        y_binnings = []
+        error_for_bin_tmp = []
+
+        for i in range(0, len(bins_index)):
+            bin = y[bins_index[i][0]:bins_index[i][1]]
+            if len(bin) > 0:
+                y_binnings.append(np.mean(bin))
+
+                errors_for_bin = []
+                for b in bin:
+                    b_index = list(y[:]).index(b)
+                    if 1 - factor[b_index] < 0.05:
+                        error_bin_i = (2 * rms[b_index] + b * 0.05)
+                    else:
+                        error_bin_i = (2 * rms[b_index] + b * (1 - factor[b_index]))
+
+                    errors_for_bin.append(error_bin_i)
+
+                error_for_bin = np.mean(errors_for_bin) / len(errors_for_bin)
+                error_for_bin_tmp.append(np.mean(errors_for_bin) / len(errors_for_bin))
+
         N = len(y)
 
         ax1.scatter(x, y, color=colors[index], marker=symbols[index])
-
         ax1.scatter(x, y, color=colors[index], marker=symbols[index], label=str(velocity[index]))
 
-        ax1.errorbar(x[0], y[0], yerr=1.5 + 0.05 * y[0], xerr=None, ls='none', ecolor='k')  # 1st poiont error bar
+        ax1.scatter(x_binnings, y_binnings, color='#FF00FF', marker=symbols[index])
+        ax1.scatter(x_binnings, y_binnings, color='#FF00FF', marker=symbols[index])
+        ax1.errorbar(x_binnings, y_binnings, yerr=error_for_bin_tmp, xerr=None, ls='none', ecolor='y')
+
+        np.savetxt(get_args("source") + "_" + str(index) + ".txt",
+                   np.vstack((x_binnings, y_binnings, error_for_bin_tmp)).T,fmt='%8.2f  %8.2f  %8.2f')
+
+        np.savetxt(get_args("source") + "_" + str(index) + ".txt", np.vstack((x, y)).T, fmt='%8.1f  %8.1f')
+        ax1.errorbar(x[0], y[0], yerr=1.5 + 0.1 * y[0], xerr=None, ls='none', ecolor='k')  # 1st point error bar
         result_org.append(y)
         variances[component] = reduce(lambda x_, y_: x_ + y_, [((i - np.mean(y)) / np.std(y)) ** 2 for i in y])
-        variability_index[component] = ((np.max(y) - np.std(y)) - (np.min(y) + np.std(y))) \
-                                          / ((np.max(y) - np.std(y)) + (np.min(y) + np.std(y)))
+
+        variability_index[component] = ((np.max(y) - error[list(y).index(np.max(y))]) - (
+                    np.min(y) + error[list(y).index(np.min(y))])) \
+                                       / ((np.max(y) - error[list(y).index(np.max(y))]) + (
+                    np.min(y) + error[list(y).index(np.min(y))]))
+
         variances_normal[component] = variances[component] * (1 / N - 1)
 
         fluctuation_index[component] = np.sqrt(
-            np.abs((N / reduce(lambda x_, y_: x_ + y_, [(1.5 + 0.05 * i) ** 2 for i in y])) *
+            np.abs((N / reduce(lambda x_, y_: x_ + y_, [error[list(y).index(i)] ** 2 for i in y])) *
                    ((reduce(lambda x_, y_: x_ + y_,
-                            [i ** 2 * (1.5 + 0.05 * i) ** 2 for i in y]) -
+                            [i ** 2 * (error[list(y).index(i)]) ** 2 for i in y]) -
                      np.mean(y) * reduce(lambda x_, y_: x_ + y_,
-                                         [i * (1.5 + 0.05 * i) ** 2 for i in y]))
+                                         [i * error[list(y).index(i)] ** 2 for i in y]))
                     / (N - 1)) - 1)) / np.mean(y)
 
+        xhi_sqer_red[component] = reduce(lambda x_, y_: x_ + y_,
+                                         [((i - np.mean(y)) / error[list(y).index(i)]) ** 2 for i in y]) / (N - 1)
+
+        xhi_sqer[component] = reduce(lambda x_, y_: x_ + y_, [((i - np.mean(y)) / (1.9 + 0.2 * i)) ** 2 for i in y])
+
+        xhi_sqer[component] = sum(((i - np.mean(y)) / (1.9 + 0.2 * i)) ** 2 for i in y)
+
         v = velocity[index]
-        print(get_args("source") + " & " + "{} &  {} & {} & {:.1f} & {:3} &  {:.3f} & {:.3f} & {:.3f}\\\\".
-              format(int(x[0]), int(x[-1]), N,  ((int(x[-1]) - int(x[0]))/N)/12,  v, np.mean(y), variability_index[component], fluctuation_index[component]))
+        print(get_configs("Full_source_name",
+                          get_args("source")) + "  {}  {}  {}  {:.1f}  {:3}  {:.3f}  {:.3f}  {:.3f}  {:.3f} {:.3f}".
+              format(int(x[0]), int(x[-1]), N, len(x) / ((np.max(x) - np.min(x)) / 365) / 12, v, np.mean(y),
+                     variability_index[component], fluctuation_index[component], xhi_sqer_red[component],
+                     xhi_sqer[component]))
 
         y_min = np.min(y)
         if y_min < 0:
