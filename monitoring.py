@@ -13,7 +13,11 @@ from matplotlib import ticker
 from astropy.timeseries import LombScargle
 from astropy.io import ascii
 from astropy.time import Time
+import pycwt as wavelet
+import scipy
 import matplotlib.tri as mtri
+from matplotlib import pyplot
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import h5py
 from PyQt5.QtWidgets import QApplication, QWidget, QDesktopWidget, \
     QGridLayout, QLabel, QLineEdit, QComboBox, QPushButton, QGroupBox
@@ -150,8 +154,7 @@ class Monitoring(PlottingView):
         :return: None
         """
         if len(self.source_input.text()) > 1:
-            self.monitoring_view = MonitoringView(self.source_input.text(),
-                                                  self.source_line_input.text(), self.flag)
+            self.monitoring_view = MonitoringView(self.source_input.text(), self.source_line_input.text(), self.flag)
             self.monitoring_view.show()
 
 
@@ -273,7 +276,6 @@ class MonitoringView(PlottingView):
             if len(e.polarizationAVG) != len(self.source_velocities):
                 print(e.Iteration_number)
 
-        print(self.experiments[0].areas)
         for i in range(0, len(self.source_velocities)):
             l1 = self.monitoring_plot.plot(self.dates,
                                            [e.polarizationU1[i][1] for e in self.experiments],
@@ -297,8 +299,7 @@ class MonitoringView(PlottingView):
             self.line_dict["right"].append(l2)
             self.line_dict["avg"].append(l3)
 
-        np.save(get_configs("paths", "monitoringFilePath") +
-                self.source + "_" + str(self.line), np.transpose(monitoring_results))
+        #np.save(get_configs("paths", "monitoringFilePath") + self.source + "_" + str(self.line), np.transpose(monitoring_results))
         self.monitoring_plot.addCursor(labels2)
         self.monitoring_plot.addPickEvent(self.choose_spectrum)
         self.add_widget(self.monitoring_plot, 0, 0)
@@ -464,6 +465,10 @@ class MonitoringView(PlottingView):
         plot_changes_button.clicked.connect(self.create_change_view)
         control_grid.addWidget(plot_changes_button, 5, 0)
 
+        plot_wavelet_button = QPushButton('Plot wavelet', self)
+        plot_wavelet_button.clicked.connect(self.create_wavelet_view)
+        control_grid.addWidget(plot_wavelet_button, 6, 0)
+
         group_box.setLayout(control_grid)
         return group_box
 
@@ -532,6 +537,19 @@ class MonitoringView(PlottingView):
     def create_map_view(self):
         self.maps_view = MapsView(self.dates, self.source, self.line)
         self.maps_view.show()
+
+    def create_wavelet_view(self):
+        component = self.component_input.text()
+        max_mjd = self.max_mjd.text()
+        min_mjd = self.min_mjd.text()
+
+        if component in self.source_velocities:
+            component_index = self.source_velocities.index(component)
+            amplitude = [e.polarizationAVG[component_index][1] for e in self.experiments]
+            self.wavelet_view = WaveletView(self.dates, amplitude, component, max_mjd, min_mjd, self.source)
+            self.wavelet_view.show()
+        else:
+            print("wrong velocity selected")
 
     def create_change_view(self):
         component = self.component_input.text()
@@ -650,6 +668,145 @@ class PeriodView(PlottingView):
         self.add_widget(self.period_plot, 0, 0)
         self.period_plot.plot(times, power, self.plot_symbol,
                               label="polarization AVG " + "Velocity " + self.velocity_name, rasterized=True)
+
+class WaveletView(PlottingView):
+    """
+    Wavelet View
+    """
+
+    def __init__(self, time, amplitude, velocity_name, max_mjd, min_mjd, source_name):
+        PlottingView.__init__(self)
+        self.grid = QGridLayout()
+        self.grid.setSpacing(10)
+        self.setLayout(self.grid)
+        self.setWindowTitle("Wavelets")
+        self.time = time
+        self.amplitude = amplitude
+        self.velocity_name = velocity_name
+        self.max_mjd = max_mjd
+        self.min_mjd = min_mjd
+        self.source_name = source_name
+
+        if self.max_mjd != "" or self.min_mjd != "":
+            self.max_mjd_index = find_nearest_index(self.time, float(self.max_mjd))
+            self.min_mjd_index = find_nearest_index(self.time, float(self.min_mjd))
+            self.time = self.time[self.min_mjd_index:self.max_mjd_index]
+            self.amplitude = self.amplitude[self.min_mjd_index:self.max_mjd_index]
+
+        resampling_period = int(max(self.time) - min(self.time))
+        resampling_mjd = np.linspace(min(self.time), max(self.time), resampling_period, endpoint=False)
+        inter = scipy.interpolate.interp1d(self.time, amplitude, kind='linear')
+        resampling_interval = inter(resampling_mjd)
+
+        t0 = self.time[0]
+        dt = 1  # days
+        p = np.polyfit(resampling_mjd - t0, resampling_interval, 1)
+        dat_notrend = resampling_interval - np.polyval(p, resampling_mjd - t0)
+        std = dat_notrend.std()  # Standard deviation
+        var = std ** 2  # Variance
+        dat_norm = dat_notrend / std  # Normalized dataset
+
+        mother = wavelet.Morlet(6)
+        s0 = 6 * dt  # Starting scale, in this case 2 * 0.25 years = 6 months
+        dj = 1 / 12  # Twelve sub-octaves per octaves
+        J = 7 / dj  # Seven powers of two with dj sub-octaves
+        # alpha, _, _ = wavelet.ar1(dat)  # Lag-1 autocorrelation for red noise
+        alpha = 0.72
+
+        wave, scales, freqs, coi, fft, fftfreqs = wavelet.cwt(dat_norm, dt, dj, s0, J, mother)
+        iwave = wavelet.icwt(wave, scales, dt, dj, mother) * std
+
+        power = (np.abs(wave)) ** 2
+        fft_power = np.abs(fft) ** 2
+        period = 1 / freqs
+
+        signif, fft_theor = wavelet.significance(1.0, dt, scales, 0, alpha, significance_level=0.95, wavelet=mother)
+        n = len(resampling_interval)
+        sig95 = np.ones([1, n]) * signif[:, None]
+        sig95 = power / sig95
+
+        glbl_power = power.mean(axis=1)
+        dof = n - scales  # Correction for padding at edges
+        glbl_signif, tmp = wavelet.significance(var, dt, scales, 1, alpha, significance_level=0.95, dof=dof,
+                                                wavelet=mother)
+        org_data_title = (self.source_name + ' (' + self.velocity_name + 'km s$^{-1}$) time series')
+        self.org_data = Plot()
+        self.org_data.creatPlot(self.grid, "", r'{} ({})'.format('Flux density', 'Jy'),
+                                'a) {}'.format(org_data_title), (1, 0), "linear")
+        self.org_data.plot(time, amplitude, "r*", linewidth=1.5)
+        self.org_data.plot(resampling_mjd, resampling_interval, 'k', linewidth=1.5)
+        self.org_data.set_xlim((min(resampling_mjd), max(resampling_mjd)))
+        self.org_data.graph.tick_params(bottom=True, top=True, left=True, right=True, direction="in")
+        self.add_widget(self.org_data, 0, 0)
+
+        levels = [0.0625, 0.125, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 128]
+        self.walet_data = Plot()
+        self.walet_data.creatPlot(self.grid, "Period (Days)", "Time (MJD)",
+                                  'b) {} Wavelet Power Spectrum ({})'.format("Flux density", mother.name),
+                                  (3, 0), "linear")
+        wavelet_im = self.walet_data.graph.contourf(resampling_mjd, np.log2(period), np.log2(power), np.log2(levels),
+                         extend='both', cmap="jet")
+
+        bx = pyplot.axes([0.1, 0.37, 0.65, 0.28], sharex=self.org_data.graph)
+        axins = inset_axes(bx, width="100%", height="5%", loc='lower center', borderpad=-5)
+        self.walet_data.colorbar(wavelet_im, orientation="horizontal", label='Power', extend='both')
+
+        self.walet_data.graph.contour(resampling_mjd, np.log2(period), sig95, [-99, 1], colors='k', linewidths=2,
+                extent=[resampling_mjd.min(), resampling_mjd.max(), 0, max(period)])
+        self.walet_data.graph.fill(np.concatenate([resampling_mjd, resampling_mjd[-1:] + dt, resampling_mjd[-1:] + dt,
+                             resampling_mjd[:1] - dt, resampling_mjd[:1] - dt]),
+             np.concatenate([np.log2(coi), [1e-9], np.log2(period[-1:]),
+                             np.log2(period[-1:]), [1e-9]]),
+             facecolor='k', alpha=0.3, hatch='x')
+        self.add_widget(self.walet_data, 2, 0)
+
+        def LS(time, flux, error, period_range):
+            '''
+            A very simple Lomb - Scargle function
+            Takes arguments:
+            time - epochs from time series
+            flux - epochs from flux series
+            error - flus density errors (for Torun typically RMS + 0.1 * flux)
+            period_range - two-element list with minimum and maximum expected period
+
+            Returns:
+            two lists: times and power (x and y of the periodogram graph, respectively)
+            '''
+            ls_range = np.linspace(period_range[0], period_range[1], 10000)
+            freq = 1. / ls_range
+            time = np.array(time) - time[0]
+            ls = LombScargle(time, flux, error, fit_mean=True, normalization='model', nterms=1)
+            power = ls.power(freq)
+            times = 1. / freq
+            return times, power
+
+        error = np.array(self.amplitude) * 0.1
+        times0, power0 = LS(time, amplitude, error, [1, 512])
+        normalpower0 = (power0 - np.min(power0)) / (np.max(power0) - np.min(power0)) + 0.001
+
+        self.lsdata = Plot()
+        self.lsdata.creatPlot(self.grid, "r'Power'", "", 'c) Global Wavelet Spectrum', (3, 1), "linear")
+        self.lsdata.plot(np.log2(glbl_signif / var), np.log2(period), 'k--', label='95% confidence')
+        self.lsdata.plot(np.log2(fft_power), np.log2(1. / fftfreqs), 'c-', linewidth=1.2, label='Fourier spectrum')
+        self.lsdata.plot(np.log2(glbl_power), np.log2(period), 'b-', linewidth=1.5, label='Wavelet spectrum')
+        self.lsdata.plot(normalpower0 * max(np.log2(glbl_power)), np.log2(times0),
+                         'r-', linewidth=1.5, label='Lomb - Scargle')
+
+        self.lsdata.set_xlim([0, 1.05 * np.log2(glbl_power.max())])
+        self.lsdata.set_ylim(np.log2([period.min(), period.max()]))
+
+        yticks = 2 ** np.arange(np.ceil(np.log2(period.min())), np.ceil(np.log2(period.max())))
+        self.lsdata.graph.set_yticks(np.log2(yticks))
+        self.lsdata.graph.set_yticklabels(yticks)
+        self.lsdata.graph.tick_params(bottom=True, top=True, left=True, right=True, direction="in")
+        self.lsdata.graph.legend(loc='lower right', fontsize=12)
+        self.add_widget(self.lsdata, 2, 1)
+
+        print("Max Power to period", max(var * glbl_power),
+              np.log2(period)[list(var * glbl_power).index(max(var * glbl_power))])
+        print("Max Power to period", max(var * glbl_power), period[list(var * glbl_power).index(max(var * glbl_power))])
+        print("Period_Lomb - Scargle", max(normalpower0 * max(np.log2(glbl_power))),
+              times0[list(normalpower0).index(max(normalpower0))])
 
 
 class MapsView(PlottingView):
