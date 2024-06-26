@@ -23,6 +23,7 @@ import peakutils
 from parsers.configparser_ import ConfigParser
 from utils.help import indexies, compute_gauss, find_nearest_index
 from utils.ploting_qt5 import Plot
+from scipy.signal import savgol_filter
 
 
 def get_configs(section, key):
@@ -188,6 +189,20 @@ def rms(noise):
     number_of_points = len(noise)
     rms = np.sqrt(sum([(n - std) ** 2 for n in noise]) / number_of_points)
     return rms
+
+
+def smooth_signal(xdata, ydata, window_length, polyorder):
+    """
+    Savitzky-Golay filter to smooth the signal
+
+    :param xdata: frequencies
+    :param ydata: amplitudes
+    :param window_length: the length of the filter window
+    :param polyorder: the order of the polynomial used to fit the samples
+    :return: smoothed ydata
+    """
+    smoothed_ydata = savgol_filter(ydata, window_length, polyorder)
+    return smoothed_ydata
 
 
 class Analyzer(QWidget):
@@ -842,28 +857,32 @@ class Analyzer(QWidget):
         self.z2_smooht_data = convolve(self.local_max_array_u9, g2, boundary='extend')
         self.avg_y_smooht_data = (self.z1_smooht_data + self.z2_smooht_data) / 2
 
+        self.smoothed_amplitude_u1 = smooth_signal(self.local_max_array_u1, window_length=17, polyorder=2)
+        self.smoothed_amplitude_u9 = smooth_signal(self.local_max_array_u9, window_length=17, polyorder=2)
+        self.smoothed_amplitude = (self.smoothed_amplitude_u1 +  self.smoothed_amplitude_u9)/2
+
         three_sigma_u1 = 3 * np.std(self.polyu1)
         three_sigma_u9 = 3 * np.std(self.polyu9)
         polyu_avg = (self.polyu1 + self.polyu9) / 2
         three_sigma_uavg = 3 * np.std(polyu_avg)
 
-        smart_tres_u1 = 2.5 * three_sigma_u1 / np.max(self.z1_smooht_data)
-        smart_tres_u9 = 2.5 * three_sigma_u9 / np.max(self.z2_smooht_data)
-        smart_tres_uavg = 2.5 * three_sigma_uavg / np.max(self.avg_y_smooht_data)
+        smart_tres_u1 = 2.5 * three_sigma_u1 / np.max(self.smoothed_amplitude_u1)
+        smart_tres_u9 = 2.5 * three_sigma_u9 / np.max(self.smoothed_amplitude_u9)
+        smart_tres_uavg = 2.5 * three_sigma_uavg / np.max(self.smoothed_amplitude)
 
         # indexsu apreikinasana
-        indexes_for_ceb = peakutils.indexes(self.z1_smooht_data, thres=smart_tres_u1, min_dist=3)
-        indexes_for_ceb2 = peakutils.indexes(self.z2_smooht_data, thres=smart_tres_u9, min_dist=3)
-        indexes_for_avg = peakutils.indexes(self.avg_y_smooht_data, thres=smart_tres_uavg, min_dist=3)
+        indexes_for_ceb = peakutils.indexes(self.smoothed_amplitude_u1, thres=smart_tres_u1, min_dist=3)
+        indexes_for_ceb2 = peakutils.indexes(self.smoothed_amplitude_u9, thres=smart_tres_u9, min_dist=3)
+        indexes_for_avg = peakutils.indexes(self.smoothed_amplitude, thres=smart_tres_uavg, min_dist=3)
 
         # u1
         self.plot_7 = Plot()
         self.plot_7.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
                               'Flux density (Jy)', "Left Polarization", (1, 0), "linear")
-        self.plot_7.plot(self.xdata, self.z1_smooht_data,
+        self.plot_7.plot(self.xdata, self.smoothed_amplitude_u1,
                          'b', label='Signal - polynomial', markersize=1)
         self.plot_7.plot(self.xdata[indexes_for_ceb],
-                         self.z1_smooht_data[indexes_for_ceb],
+                         self.smoothed_amplitude_u1[indexes_for_ceb],
                          'dr', label="Local Maximums for signal", markersize=2)
         '''
         if len(indexes_for_ceb) != 0:
@@ -874,11 +893,11 @@ class Analyzer(QWidget):
         self.plot_8 = Plot()
         self.plot_8.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
                               'Flux density (Jy)', "Right Polarization", (1, 1), "linear")
-        self.plot_8.plot(self.xdata, self.z2_smooht_data,
+        self.plot_8.plot(self.xdata,self.smoothed_amplitude_u9,
                          'b', label='Signal - polynomial', markersize=1)
 
         self.plot_8.plot(self.xdata[indexes_for_ceb2],
-                         self.z2_smooht_data[indexes_for_ceb2],
+                         self.smoothed_amplitude_u9[indexes_for_ceb2],
                          'dr', label="Local Maximums for signal", markersize=2)
 
         '''
@@ -892,10 +911,10 @@ class Analyzer(QWidget):
         self.plot_9 = Plot()
         self.plot_9.creatPlot(self.grid, 'Velocity (km sec$^{-1}$)',
                               'Flux density (Jy)', "Average Polarization", (1, 2), "linear")
-        self.plot_9.plot(self.xdata, self.avg_y_smooht_data,
+        self.plot_9.plot(self.xdata, self.smoothed_amplitude,
                          'b', label='Signal - polynomial', markersize=1)
         self.plot_9.plot(self.xdata[indexes_for_avg],
-                         self.avg_y_smooht_data[indexes_for_avg],
+                         self.self.smoothed_amplitude[indexes_for_avg],
                          'dr', label="Local Maximums for signal", markersize=2)
         '''
         if len(indexes_for_avg) != 0:
@@ -956,9 +975,9 @@ class Analyzer(QWidget):
             max_amplitude_list_tmp_uavg = list()
             for i in range(index - index_range_for_local_maxima,
                            index + index_range_for_local_maxima):
-                max_amplitude_list_tmp_u1.append(self.z1_not_smooht_data[i])
-                max_amplitude_list_tmp_u9.append(self.z2_not_smooht_data[i])
-                max_amplitude_list_tmp_uavg.append(self.avg_y_not_smoohtData[i])
+                max_amplitude_list_tmp_u1.append(self.smoothed_amplitude_u1[i])
+                max_amplitude_list_tmp_u9.append(self.smoothed_amplitude_u9[i])
+                max_amplitude_list_tmp_uavg.append(self.smoothed_amplitude[i])
             max_amplitude_list_u1.append(max_amplitude_list_tmp_u1)
             max_amplitude_list_u9.append(max_amplitude_list_tmp_u9)
             max_amplitude_list_uavg.append(max_amplitude_list_tmp_uavg)
@@ -996,15 +1015,15 @@ class Analyzer(QWidget):
         result[expername]["gauss_STD"] = gaussiana_std
 
         result[expername]["AVG_STON_LEFT"] = \
-            signal_to_noise_ratio(self.xdata, self.z1_not_smooht_data, self.cuts)
+            signal_to_noise_ratio(self.xdata, self.smoothed_amplitude_u1, self.cuts)
         result[expername]["AVG_STON_RIGHT"] = \
-            signal_to_noise_ratio(self.xdata, self.z2_not_smooht_data, self.cuts)
+            signal_to_noise_ratio(self.xdata, self.smoothed_amplitude_u9, self.cuts)
         result[expername]["AVG_STON_AVG"] = \
-            signal_to_noise_ratio(self.xdata, self.avg_y_not_smoohtData, self.cuts)
+            signal_to_noise_ratio(self.xdata, self.smoothed_amplitude, self.cuts)
 
-        non_signal_amplitude_left, _ = split_data_to_signal_and_noise(self.xdata, self.z1_not_smooht_data, self.cuts)
-        non_signal_amplitude_right, _ = split_data_to_signal_and_noise(self.xdata, self.z2_not_smooht_data, self.cuts)
-        non_signal_amplitude_avg, _ = split_data_to_signal_and_noise(self.xdata, self.avg_y_not_smoohtData, self.cuts)
+        non_signal_amplitude_left, _ = split_data_to_signal_and_noise(self.xdata, self.smoothed_amplitude_u1, self.cuts)
+        non_signal_amplitude_right, _ = split_data_to_signal_and_noise(self.xdata, self.smoothed_amplitude_u9, self.cuts)
+        non_signal_amplitude_avg, _ = split_data_to_signal_and_noise(self.xdata, self.smoothed_amplitude, self.cuts)
 
         rms_left = rms(non_signal_amplitude_left)
         rms_right = rms(non_signal_amplitude_right)
@@ -1021,6 +1040,8 @@ class Analyzer(QWidget):
                                       self.z2_smooht_data, self.avg_y_smooht_data])
         total_results2 = np.transpose([self.xdata, self.z1_not_smooht_data,
                                        self.z2_not_smooht_data, self.avg_y_not_smoohtData])
+        total_results3 = np.transpose([self.xdata, self.smoothed_amplitude_u1,
+                                      self.smoothed_amplitude_u1, self.smoothed_amplitude])
         result_file = h5py.File(self.data_file, "a")
         if "amplitude_corrected" in result_file:
             amplitude_corrected = result_file["amplitude_corrected"]
@@ -1060,7 +1081,22 @@ class Analyzer(QWidget):
             gain_corrected_smoothed_results[:, 1] = gain_corrected_smoothed_results[:, 1] / factor
             gain_corrected_smoothed_results[:, 2] = gain_corrected_smoothed_results[:, 2] / factor
             gain_corrected_smoothed_results[:, 3] = gain_corrected_smoothed_results[:, 3] / factor
-            gain_corrected_smoothed[...] = gain_corrected_results
+            gain_corrected_smoothed[...] = gain_corrected_smoothed_results
+
+        if "gain_corrected_smoothed2" not in result_file:
+            gain_corrected_smoothed_results2 = total_results3
+            gain_corrected_smoothed_results2[:, 1] = gain_corrected_smoothed_results2[:, 1] / factor
+            gain_corrected_smoothed_results2[:, 2] = gain_corrected_smoothed_results2[:, 2] / factor
+            gain_corrected_smoothed_results2[:, 3] = gain_corrected_smoothed_results2[:, 3] / factor
+            result_file.create_dataset("gain_corrected_smoothed2", data=gain_corrected_smoothed_results2)
+
+        else:
+            gain_corrected_smoothed2 = result_file["gain_corrected_smoothed2"]
+            gain_corrected_smoothed_results2 = total_results3
+            gain_corrected_smoothed_results2[:, 1] = gain_corrected_smoothed_results2[:, 1] / factor
+            gain_corrected_smoothed_results2[:, 2] = gain_corrected_smoothed_results2[:, 2] / factor
+            gain_corrected_smoothed_results2[:, 3] = gain_corrected_smoothed_results2[:, 3] / factor
+            gain_corrected_smoothed2[...] = gain_corrected_smoothed_results2
 
         result_file.close()
         self._quit()

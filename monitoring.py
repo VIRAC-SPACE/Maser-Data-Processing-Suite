@@ -669,6 +669,7 @@ class PeriodView(PlottingView):
         self.period_plot.plot(times, power, self.plot_symbol,
                               label="polarization AVG " + "Velocity " + self.velocity_name, rasterized=True)
 
+
 class WaveletView(PlottingView):
     """
     Wavelet View
